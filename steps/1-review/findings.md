@@ -169,6 +169,15 @@ the human.
    - The log writer (`lib/log.js`, and the shell's): left until the logs
      are a mycelium repository.
 
+2. **Docker** (2): one single-concern module, `pear-full-square/docker-manager`
+   (the human's name; Docker is neither HAICC nor p2p): the call, networks
+   (with a subnet; addresses), the node image, hardened containers (run,
+   stop, remove, pause, inspect, logs as JSON lines); taken from the code
+   as it is. Used by `haicc-base-boot`, `haicc-deployment`,
+   `p2p-node-manager` (its Docker calls only; whether host B runs HAICC is
+   a later question) and Splectral's p2p side; copied into each package
+   that needs it. Its product repository: the human creates it.
+
 ## Product repositories (2026-11-08, the human)
 
 Archived on GitHub by the human: `pear-full-square/haicc-reconcile`,
