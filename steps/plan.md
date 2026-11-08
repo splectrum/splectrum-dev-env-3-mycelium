@@ -50,6 +50,19 @@ by step with the human.
   loader for Bare reading through mycelium (as Pear loads from a
   Hyperdrive), to be probed. The host's mounted `packages/` is a
   transitional shortcut for one host.
+- **Portable execution, triggered by data** (the human): the equivalence of
+  structure makes execution portable. With self-contained repositories,
+  execution is triggered by data: code executing puts a request into a
+  repository; an active repository (an executor attached) takes it, runs
+  it as a unit and writes the response; a passive one syncs to an active
+  one, the execution happens there, and the result syncs back. Where
+  something executes is a matter of which repository is active, not of the
+  code; a unit gives the same result wherever it ran. The structure built
+  in this phase must allow it; the triggering itself is out of this
+  phase's scope (the request: "Triggers and internal processing requests"
+  not in this phase).
+- **The rename held** (`haicc-deployment` to `haicc-base-node`): until the
+  two HAICCs converge (the human).
 - Open, to settle with the human: logs as topics (records appended, Kafka
   style) rather than a commit per line, state as git objects; how config
   is changed (a `haicc` command, or a view edited and committed); a
