@@ -1,3 +1,0 @@
-{ "name": "haicc-deployment", "contract": "0.2", "provides": [
-  { "kind": "action", "id": "reconcile-project", "module": "splectral-action.js" }
-] }

@@ -1,8 +1,5 @@
-// The host's prerequisites, checked and fixed by the root's boot: the
-// boot's own copy (it depends on nothing: haicc-reconcile's machine kinds
-// hold the same checks for projects in managers; a test in the development
-// repository keeps the two agreeing). Each fix only with a person's yes,
-// with sudo unless root.
+// The host's prerequisites, checked and fixed by the root's boot. Each fix
+// only with a person's yes, with sudo unless root.
 //   for (const c of CHECKS) { const a = c.observe(); c.met(a); await c.fix(ask, a) }
 import { spawnSync } from 'bare-subprocess'
 import process from 'bare-process'

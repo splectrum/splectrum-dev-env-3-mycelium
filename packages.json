@@ -2,9 +2,8 @@
   "description": "haiccing's packages, as the package writer (tools/package-writer) writes them: each self-contained (no requires), in the package structure (notes/packages.md). Rebuilt one package a step: haicc first; the package manager next. modules: ours it starts from (and its swarms' modules.json); with: other definitions' modules, written in with it (the writer's convenience); together: packages always written with it (the platform's pair); the hand-written parts from haiccing/<repo>/.",
   "packages": {
     "haicc": {
-      "description": "HAICC, the platform's levels: its boot (haicc-base-boot), declaring and reconciling (haicc-reconcile), the lifecycle (haicc-deployment). With the package manager (base-package-pkgm), the platform's pair: HAICC uses it from beside it. On Bare.",
+      "description": "HAICC, the platform's levels: the root's and the swarms' (haicc-base-boot), the nodes' (haicc-deployment). With the package manager (base-package-pkgm), the platform's pair: HAICC uses it from beside it. On Bare.",
       "modules": [
-        "pear-full-square/haicc-reconcile",
         "pear-full-square/haicc-deployment",
         "pear-full-square/haicc-base-boot"
       ],
@@ -27,7 +26,7 @@
         "",
         "Everything it does is logged in the work folder's `log/` (`~/haicc-work/log/`): files named by their start, newest last. Everything is in plain sight: `boot`, `shutdown`, `haicc`, `haiccing/`, `packages/`, `bare/`, `log/`; no hidden folders. `./shutdown` takes it all back to the setup (keeping `haiccing/`, `log/`, `bare/`); `./boot` again sets it up.",
         "",
-        "The rest of HAICC (`haicc-reconcile`, `haicc-deployment`) runs in the nodes, with the package manager (`base-package-pkgm`, the platform's other package). A swarm is made from a package: `./haicc boot base-swarm-three-nodes` (fetched from the sources, checked intact; its swarm made from its configuration, its codebase assembled into the master's `packages/`, each node in a container of its own, running it). `haicc boot` and `haicc shutdown` work on the config of the folder they are called from: the work folder, a swarm (`<swarm>/haicc`), a node (`<swarm>/<node>/haicc`).",
+        "The nodes' HAICC (`haicc-deployment`) runs in the nodes, with the package manager (`base-package-pkgm`, the platform's other package). A swarm is made from a package: `./haicc boot base-swarm-three-nodes` (fetched from the sources, checked intact; its swarm made from its configuration, its codebase assembled into the master's `packages/`, each node in a container of its own, running it). `haicc boot` and `haicc shutdown` work on the config of the folder they are called from: the work folder, a swarm (`<swarm>/haicc`), a node (`<swarm>/<node>/haicc`).",
         "",
         "Tested by its own tests, on your machine: after the boot, `./haicc boot base-package-haicc/test` (the full set: the modules' tests, the package's, and the platform test, which sets up a fresh install inside its run and works it through every level), or `--set=validation` (the package as it is, nothing started)."
       ],

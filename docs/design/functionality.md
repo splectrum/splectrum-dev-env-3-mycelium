@@ -61,7 +61,7 @@ lifecycle, so the package is the environment (the human).
 
 | test | how | sets | checks |
 |---|---|---|---|
-| the modules' own | in place, brittle | full | `haicc-base-boot`, `haicc-deployment`, `haicc-reconcile`, `pkgm-base-manager` |
+| the modules' own | in place, brittle | full | `haicc-base-boot`, `haicc-deployment`, `pkgm-base-manager` |
 | `modules-load` | in place (written by the package writer) | validation, full | every module of ours loads |
 | `sets` | in place | validation, full | the sets and the tests' categories agree |
 | `platform` | booted; needs Docker | full | a fresh install of the package under test, set up inside its run: `./boot`, a swarm and two nodes made from the test's own configuration (`--from`; mixed), booted again from its own copy, a node added by hand and torn down, each node validated, a file replaced in a node's copy (not intact, not up, the swarm's boot stops, repaired), every level shut down and booted, teardown, the cold shutdown, `./boot` again (24 steps); its teardown removes the install |

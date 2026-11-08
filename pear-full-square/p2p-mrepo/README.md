@@ -49,7 +49,3 @@ ids, keys and counts, never a secret.
 - `npm test`: create, reopen, import (native and bundle), clone, a replica
   read lazily, events without secrets; and mycelium-git's contract suite
   on a p2p-mrepo repository (23 tests).
-- `test/commands.txt`, `test/commands-bare.txt`: mycelium-git's command set
-  on a p2p-mrepo repository, through its CLI with this module as engine,
-  on Node and on Bare (the fixture imported by `test/fixture.sh`);
-  `node test/variants.js` generates them.

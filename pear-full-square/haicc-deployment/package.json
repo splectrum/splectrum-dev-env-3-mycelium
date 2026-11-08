@@ -1,10 +1,8 @@
 {
   "name": "haicc-deployment",
   "id": "9f22d92e-7430-44cc-8192-90620cee5f67",
-  "description": "A deployment as an object: its declared configuration and lifecycle (deploy, start, stop, teardown) as records, reconciled by haicc-reconcile",
+  "description": "A node's HAICC (haicc.js): the node's warm boot (its packages intact, validated by the node itself, its container started from its config), its shutdown, its tests; run from the platform's package",
   "type": "module",
-  "exports": "./index.js",
-  "bin": { "haicc-deployment": "./cli.js" },
   "scripts": {
     "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
   },

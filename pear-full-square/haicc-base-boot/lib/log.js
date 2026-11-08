@@ -8,7 +8,7 @@
 // level) and a close line (its exit code, how long it took), on stdout too:
 // where each command starts and ends. The setup and
 // the boot's stage 1 (in shell) write the same way. The root's own copy
-// (haicc-deployment has the managers').
+// (haicc-deployment has the nodes').
 //   const log = openLog({ dir, command, level })   its stdout and stderr, teed from now
 //   openLog({ command, file: false })   the header and close line on stdout only (a command
 //        run by another that echoes and logs it)
