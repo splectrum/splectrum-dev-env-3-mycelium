@@ -173,6 +173,14 @@ by step with the human.
     itself is out of this phase's scope (the request: Pear not in this
     phase; `vision.md`: Pear when versions are fixed); the probe and the
     folder layout prepare it.
+  - **The HAICC bridgehead** (the human): the Pear release, from its
+    folder on the host, boots into a HAICC bridgehead (a level set up as a
+    node is, the one this design makes), where Pear's world hands over to
+    ours. From there, our design: the container node model (hardened
+    containers, Docker through `docker-manager`, a node's Docker by the
+    host's proxy, granted narrowly) and the additional swarm security (our
+    own DHT per swarm, authorised keys, invitations, the warm boot's
+    validation).
   - **Pear's upgrade model, our reference** (as we know its design, to
     verify): versions are lengths of the app's append-only drive (`pear
     stage` appends; `pear release` marks the released length; a link may
