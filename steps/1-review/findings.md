@@ -229,6 +229,17 @@ the human.
    product repository: the human creates it. Where it sits, and the
    envelope and content of values: `vision.md`, "Values on the wire and at
    rest".
+   Refined (with the human): three concerns, a module each. The data type
+   (`mycelium-value`: values in memory, data names; encoding handed to a
+   handler); an encoding, a handler module from the start
+   (`mycelium-value-json`: one value to bytes and back; `-avro` later);
+   storage containers, by layout, each using the encoding it is given
+   (`mycelium-container-document`: one value per file, written atomically;
+   `mycelium-container-lines`: one value per line, appended, read in order,
+   for a line-safe text encoding such as JSON). Values at rest move from
+   `mycelium-value` to the containers.
+7. **The observer call** (2): `p2p-observe`, the emitter and `hex` of the
+   eight p2p modules (the human's yes).
 
 ## Product repositories (2026-11-08, the human)
 
