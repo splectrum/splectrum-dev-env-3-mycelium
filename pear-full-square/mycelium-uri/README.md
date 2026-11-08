@@ -49,6 +49,3 @@ reproduces every call inside it.
 ## Tests
 
 - `npm test`: the unit tests
-- `test/commands.txt`: commands for a test run (`<expect> <command>`),
-  most through `cli.js`, which
-  prints the outcome as one JSON line

@@ -84,8 +84,6 @@ Making and removing one thing, from its parent:
 - **The root's commands**: `boot [<swarm>]`, `shutdown`, `teardown <swarm>`, `fetch
   <repository>` (with what it requires, from `haiccing/sources`: `folder
   <path>`, `github <org>`), `list` (the swarms, their nodes and roles).
-- **The host checks are the boot's own copy**: `haicc-reconcile`'s machine
-  kinds hold the same for projects; a test keeps the two agreeing.
 
 ## A package's functionality, by its URI: tests
 

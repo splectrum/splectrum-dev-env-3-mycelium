@@ -159,11 +159,3 @@ the same writes give the same oids on every engine (`test/engines.test.js`).
 
 - `npm test`: the contract suite on each engine, and the cross-engine test,
   on a fixture repository (bare)
-- `test/commands.txt`: invocations for a test run. The first line builds
-  the fixture (`test/fixture.sh`, fixed dates, so its oids are stable);
-  the writes commit as `cli` at a fixed time, so their oids are stable too,
-  and each line's state carries on to the next. `test/commands-isogit.txt`
-  is the same on isomorphic-git (`--engine=isogit`), and
-  `test/commands-p2pgit.txt` on p2p-git, and `test/commands-bare-*.txt` the
-  same on Bare, all with the same expectations. `node test/variants.js`
-  generates those from `commands.txt`

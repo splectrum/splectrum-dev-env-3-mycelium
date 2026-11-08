@@ -26,5 +26,3 @@ them from their arguments.
 ## Tests
 
 - `npm test`: the unit tests
-- `test/commands.txt`: invocations for a test run, on `test/tree.json`,
-  through `cli.js`, each with its expected response

@@ -1,7 +1,7 @@
 // layer/request, intake: a request taken into pending/default, as
 // pending/<name>/, in one commit. The request is a folder on disk; its files
 // go in as they are. A request that's already there is refused: requests
-// are only added. (Executing requests is still the test-run machinery.)
+// are only added.
 
 import fs from 'bare-fs'
 import { join } from 'bare-path'

@@ -42,7 +42,7 @@ expect 'node-9 added to nodes.json'
 step "the master's cold boot: the platform's pair, and nothing else" sh -c "[ \"\$(ls '$w/hosts/master/packages' | tr '\\n' ' ')\" = 'base-package-haicc base-package-pkgm ' ]"
 step 'the node tests a package' "$w/hosts/master/haicc" test base-package-haicc
 expect 'test base-package-haicc: passed'
-f=packages/base-package-haicc/modules/pear-full-square/haicc-reconcile/index.js
+f=packages/base-package-haicc/modules/pear-full-square/haicc-base-boot/lib/host.js
 step "a file replaced in node-1's copy (a new file: its original, hard-linked, untouched)" sh -c "rm '$w/hosts/node-1/$f' && echo '// changed' > '$w/hosts/node-1/$f' && cmp -s '$w/hosts/master/$f' '$w/haiccing/base-package-haicc/${f#packages/base-package-haicc/}'"
 step "  node-1's warm boot: not intact, said, not up" sh -c "! '$w/hosts/node-1/haicc' boot"
 expect 'FAILED base-package-haicc: changed since it was written'
