@@ -150,6 +150,15 @@ the human.
    the booted-test runner, sources, the cold shutdown). The extraction into
    `lib/` is M; whether Splectral and Docker leave the boot is D.
 
+## Product repositories (2026-11-08, the human)
+
+Archived on GitHub by the human: `pear-full-square/haicc-reconcile`,
+`p2p-swarm-manager`. To archive: `pear-full-square/mycelium-repo`.
+`haiccing` stays untouched for now: `base-package-third-party` and the
+code-only packages (`base-package-mycelium`, `-p2p`, `-splectral`) are
+kept, and `docs/design/packages.md`'s "the code-only packages ... return
+one at a time" stays as it is.
+
 ## Proposed order
 
 1. Remove the dead layer (1), with the human's yes: the code becomes what
