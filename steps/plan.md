@@ -124,6 +124,40 @@ by step with the human.
     request layers it subscribes to); whether any branch needs several
     writers (Autobase) or one writer per branch is enough (proposed: one
     writer per branch to start).
+- **Code without a code folder; Pear as the reference** (with the human):
+  - How running code picks up modules: Bare's module loader (`bare-module`)
+    resolves and loads through a protocol (`resolve`, `exists`, `read`,
+    `addon`, `asset`); a custom protocol can load from a Hyperdrive. Two
+    constraints: `read` is synchronous, so the code must be local before it
+    runs (replicated, prefetched, or one bundle file); native addons
+    (`.bare`, by `dlopen`: RocksDB, sodium, UDX) must be real files.
+    `bare-bundle` holds many modules in one file Bare runs directly.
+  - Pear, as we understand its design (not checked here): an app by its
+    key (a stage or channel its own key); its code in Pear's shared
+    platform store (deduplicated); each app its own storage folder for its
+    data, kept apart from other apps' and from the code; separation by
+    convention and the user's trust, not a sandbox. In our terms the app is
+    the package.
+  - A level's folder then (to probe and settle): `store/` (the level's own
+    repositories, the packages repository among them), `addons/` (native
+    addons by hash), `apps/<package>/` (a package's own data: its store,
+    its repositories; made at deploy, removed at teardown), `log/` (the
+    minimal plain-file log), `haicc`. No code folder: a package runs
+    through a mycelium protocol (its tree at the commit its
+    `packages/<purpose>` link names; its closure fetched first, as the
+    package manager's `closure.js` computes it), or from a `bare-bundle`
+    built from that tree. A view of the code only where Docker or a person
+    needs it. Unlike Pear's drive of files, ours holds git objects: every
+    version addressable by its commit and checked against its hash.
+  - **The probe**, before designing further: (1) a custom protocol loading
+    a small package from a commit's tree in a p2p-git repository, on Bare;
+    (2) the same package as a `bare-bundle` built from that tree; (3) how
+    native addons are handled (Pear's way; extracted by hash).
+  - **A Pear app as our release** (the human): potentially the full package
+    set included; booting it installs the HAICC platform and runs it, in
+    place of today's `haicc-setup.sh`. The release itself is out of this
+    phase's scope (the request: Pear not in this phase; `vision.md`: Pear
+    when versions are fixed); the probe and the folder layout prepare it.
 - **The rename held** (`haicc-deployment` to `haicc-base-node`): until the
   two HAICCs converge (the human).
 - Open, to settle with the human: logs as topics (records appended, Kafka
