@@ -11,7 +11,7 @@ it goes"); each step a request of its own, its record in `steps/<step>/`.
 | 0 | The setup: the seed planted, the development state from phase 2 (`0-setup/`) | done |
 | 1 | The review of phase 2's code, and the refactor (`1-review/`) | the review discussed with the human, decisions in `1-review/findings.md`; the dead layer and the unused CLIs removed; the fixes and new modules next |
 | 2 | The documentation: the stale notes cleaned up, the documentation split into clear sections | to come |
-| 3 | Mycelium repositories on a swarm: data hives, mounting, a repository for the logs | to come, designed with the human step by step; needed everywhere (the human): every level's config and state in its own repository, the node's first |
+| 3 | Mycelium repositories on a swarm: data hives, mounting, a repository for the logs | to come, designed with the human step by step; needed everywhere (the human): every level's config and state in its own repository, the node's first; the branch model for portable execution at its core |
 
 ## Direction: the folder structure and mycelium repositories
 
@@ -61,6 +61,36 @@ by step with the human.
   in this phase must allow it; the triggering itself is out of this
   phase's scope (the request: "Triggers and internal processing requests"
   not in this phase).
+- **The branch model for portable execution** (the human: crucial to make
+  it work; the starting point, worked out in step 3). Hypercore has one
+  writer per core, so a repository on a Hyperdrive has one writer: the
+  branch model follows the writers. Each branch is written by exactly one
+  party, in a store of its own; what looks like one repository is a
+  composition of layers from several writers (`rules.md`, Layers: disjoint
+  layers, never merged, only referenced; local, imported or virtual).
+  - The passive repository writes only its requests (`pending/<…>`); it has
+    no `main` and no `execute/*` of its own; it reads the active one's
+    `main` by replication, as a read-only layer.
+  - The active repository writes only `execute/main` and `main`; it reads
+    the passive one's requests by replication, as a read-only layer.
+  - The flow: a request committed on the passive side; replicated, an
+    imported layer on the active side; executed as a unit on
+    `execute/main` (the request layer's commit among the unit's fixed
+    states, so it reruns exactly); merged into `main`; replicated back, the
+    passive side's composed view showing the response. Nothing merged
+    across writers; each side moves only its own branches.
+  - Several requesters are several request layers, one per writer: the
+    request manager's "several source types", a source being a layer of
+    another repository. Composition (read-only references into another
+    repository's data) is this phase's hives and mounting; the request
+    flow is its first user. One repository both requester and executor
+    (active for its own requests) is a configuration of the same model.
+  - Open: how a composed repository names another writer's layer (by key,
+    by URI) and whether it is pinned to a commit or follows the latest;
+    where the request manager runs (in the active repository, over the
+    request layers it subscribes to); whether any branch needs several
+    writers (Autobase) or one writer per branch is enough (proposed: one
+    writer per branch to start).
 - **The rename held** (`haicc-deployment` to `haicc-base-node`): until the
   two HAICCs converge (the human).
 - Open, to settle with the human: logs as topics (records appended, Kafka
