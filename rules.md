@@ -8,8 +8,16 @@ it.
 - **Every part has one concern**: a module, a repository, an operator, a
   process, a step. When a part grows a second concern, it is split by
   concern, not by convenience.
-- **One concern, one place.** A concern is implemented once and used
-  everywhere it is needed, never copied into the parts that need it.
+- **One concern, one place.** In development, a concern is implemented
+  once, in a single-concern module, and the modules that need it use that
+  module; it is never copied by hand into them, nor written again.
+- **Shared in development, copied into packages.** When a package is
+  written, every module it needs is copied into it whole (by the package
+  writer, never by hand); the package is then tested and sealed, and runs
+  on its own copies. Packages share nothing at run time, so there is no
+  fine-grained versioning, upgrading or testing between them: a package is
+  replaced as a whole, by a newer one tested as a whole. Like genes: every
+  cell carries its own copy, from one source.
 - **Validation is a concern of the boundary.** Input is validated once,
   where it enters (network handlers, command-line arguments, external
   files and imports), by the one validator for its kind (`mycelium-uri`
