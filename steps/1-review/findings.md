@@ -2,7 +2,9 @@
 
 Status: **findings, for discussion** (2026-11-08). Read only: nothing
 changed by it. The code as set up from `splectrum/dev-env-2-p2p-cluster@c6b73bb`
-(`../0-setup/`). Request: `d9444b2:pending/phase-3/step-1-review/request.md`.
+(`../0-setup/`). Request: `b8d67a7:pending/phase-3/step-1-review/request.md` (first written as
+`d9444b2`, which took `node_modules/` along by mistake; rewritten with the
+human's word, 2026-11-08, so the commit messages naming `d9444b2` mean this one).
 Three reviewers in parallel (mycelium and p2p; HAICC, the
 package manager and tools; Splectral), each against `rules.md` (single
 concern first) and `docs/rules.md`; their main claims spot-checked here.
