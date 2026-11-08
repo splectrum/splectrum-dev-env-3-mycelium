@@ -85,6 +85,16 @@ by step with the human.
     repository's data) is this phase's hives and mounting; the request
     flow is its first user. One repository both requester and executor
     (active for its own requests) is a configuration of the same model.
+  - Near real time (the human): RPC with the replication, on the same
+    connection (`vision.md`, "Values on the wire and at rest"): RPC as the
+    signal, replication as the record. The passive side commits its
+    request and sends "request <name> at commit <id>"; the active side
+    fetches exactly those objects at once, executes, and answers "response
+    at main commit <id>"; no polling, no reader having to notice. A small
+    request may travel in the RPC message itself, so the work starts before
+    replication completes; but the unit runs only on what is in the
+    replica (the request layer at its commit): what is recorded, and what a
+    rerun uses, is always the replicated commit.
   - Open: how a composed repository names another writer's layer (by key,
     by URI) and whether it is pinned to a commit or follows the latest;
     where the request manager runs (in the active repository, over the
