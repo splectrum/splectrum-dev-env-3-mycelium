@@ -42,6 +42,11 @@ the human.
 
 2. **One concern, several places** (M where the place is obvious, D where
    it is not):
+   (The form of a fix, with the human, 2026-11-08: a shared concern becomes a
+   single-concern module of its own, used by the modules that need it and
+   copied into each package by the writer; not one module reaching into
+   another's files. `rules.md`, "One concern, one place" and "Shared in
+   development, copied into packages".)
    - `lib/pkgm.js` byte-identical in `haicc-base-boot` and
      `haicc-deployment`; `lib/log.js` the same but a comment; the "newest
      log or a new file" logic again in `boot.sh`, `shutdown.sh`,

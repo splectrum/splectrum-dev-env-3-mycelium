@@ -47,8 +47,16 @@ by one algorithm (`pkgm-base-manager/lib/closure.js`): ours by their imports
 package.json; third-party code by its dependencies, nearest first. Every
 package also carries `brittle`, which its own tests run on.
 
+In development the code is single-concern modules, each concern in one
+place, modules using each other; a package is where they are copied
+together. Shared in development, copied into packages: no copy is kept by
+hand in a module.
+
 *Why*: a package tested as the whole it is stays valid; a newer version of
-something else changes nothing in it; and it works without a network.
+something else changes nothing in it; and it works without a network. No
+fine-grained versioning, upgrading and testing between packages: a package
+is replaced as a whole (the human: like genes, each cell carries its own
+copies, from one source).
 
 ## Sealed, validated, mixed
 
