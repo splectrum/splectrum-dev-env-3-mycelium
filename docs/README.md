@@ -9,7 +9,9 @@ Three kinds of document, each with its own job:
 - **Design** (`design/`): the decisions. What was decided, and why, once,
   by topic. Each decision carries its status:
   - **built**: in the code, tested (where: named);
-  - **agreed**: decided with the human, not built yet.
+  - **agreed**: decided with the human, not built yet;
+  - **open**: to settle with the human;
+  - **to probe**: to try before designing further.
   When practice shows a decision wrong, it is changed here (and the change
   said in the commit), not added beside it.
 - **Rules** (`rules.md`): the consistency rules. What every package,
@@ -28,6 +30,10 @@ Three kinds of document, each with its own job:
 | [design/bare.md](design/bare.md) | Bare only; the runtime in the setup; hard links; brittle |
 | [design/releases.md](design/releases.md) | the setup; publishing; who tests what |
 | [design/pipeline.md](design/pipeline.md) | the development pipeline: modules as the source of truth, cloud and local, candidates |
+| [design/repositories.md](design/repositories.md) | mycelium repositories: the truth and its views, the branch model (one writer per branch, passive and active, requests, packages), portable execution |
+| [design/structure.md](design/structure.md) | every level set up as a node is; a level's folder; code without a code folder; Pear below HAICC, the bridgehead, upgrades |
+| [design/values.md](design/values.md) | values: the data type, encodings and containers; envelope and content; RPC on the replication connection |
+| [design/modules.md](design/modules.md) | the modules: removed, new, moved; wrapped in HAICC; Splectral done properly |
 | [rules.md](rules.md) | the consistency rules |
 | [guides/install.md](guides/install.md) | setting up and booting a work folder; testing a release |
 | [guides/swarms.md](guides/swarms.md) | swarms and nodes: the commands, level by level |
