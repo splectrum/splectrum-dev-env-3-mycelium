@@ -73,10 +73,51 @@ assembled on the host, mounted read-only (a transitional shortcut for one
 host); host B's node gets its code by replication and extraction
 (`p2p-node/boot.js`), the direction `vision.md` names.
 
+### Bundles: a package's runnable form
+
+**To probe.** Tried (2026-11-08, the installed `bare-bundle`): a two-module
+bundle built by hand runs directly (`bare app.bundle`), no folder, nothing
+resolved on disk; Bare itself runs its own JavaScript from a bundle
+(`bare:/bare.bundle/…`). What it teaches:
+
+- **Resolution at build time**: the header's `resolutions` maps each
+  module's specifiers to exact URLs; running looks up, resolves nothing. A
+  sealed package fixes which modules it carries; a bundle also fixes how
+  they find each other: deterministic, checkable before it runs.
+- **One file, one identity**: a closure in one file, one hash; in a
+  mycelium repository one git blob. Fetch one blob and the whole closure is
+  local (`read`'s synchronous constraint met); no tree walk, extract or view
+  for Bare; a `packages/<purpose>` link can name a bundle blob, its commit
+  and hash checked as one.
+- **Addons and assets listed apart**: native addons still files
+  (`addons/` by hash).
+- **`imports`, an import map** for the whole bundle: where the `bare-node-*`
+  aliases could live per package instead of in every module's
+  `package.json`.
+- **Details matter**: a bundled `.js` was not taken as a module from
+  `package.json`'s `"type"` without help (it ran as `.mjs`); a bundle
+  builder carries each package's `package.json` with resolutions to it, or
+  names modules by extension.
+- **`bare-module-traverse`** (installed): Holepunch's module-graph
+  traversal, what a bundler uses for a closure; to compare with the package
+  manager's `closure.js`: one way to compute a closure, for what a package
+  carries and for what its bundles hold.
+
+If the probe holds: **a bundle is a package's runnable form, beside the
+package, not instead of it**. The package stays the self-contained folder
+(modules whole, README, tests, swarms, platform definitions: read by people,
+tested, viewed); a bundle is the closure of one entry point (the node's
+program, HAICC, Splectral's server: a bundle per entry point, not per
+package), made by the package writer when it writes the package (tested,
+hashed and sealed with it; only the writer makes them, the package manager
+checks them), and the package's tests run the bundles too: what runs is
+what was tested.
+
 **The probe**: (1) a custom protocol loading a small package from a commit's
-tree in a p2p-git repository, on Bare; (2) the same package as a
-`bare-bundle` built from that tree; (3) native addons (Pear's way; extracted
-by hash).
+tree in a p2p-git repository, on Bare; (2) a real package's closure as a
+bundle (`p2p-node`'s): does it run, its size, its addons, its module types;
+`closure.js` against `bare-module-traverse`; (3) native addons (Pear's way;
+extracted by hash).
 
 ## Pear as a substrate execution layer below HAICC
 
