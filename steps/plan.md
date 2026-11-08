@@ -155,9 +155,39 @@ by step with the human.
     native addons are handled (Pear's way; extracted by hash).
   - **A Pear app as our release** (the human): potentially the full package
     set included; booting it installs the HAICC platform and runs it, in
-    place of today's `haicc-setup.sh`. The release itself is out of this
-    phase's scope (the request: Pear not in this phase; `vision.md`: Pear
-    when versions are fixed); the probe and the folder layout prepare it.
+    place of today's `haicc-setup.sh`.
+  - **Pear as a substrate execution layer below HAICC** (the human,
+    agreed): Pear distributes our releases (extracted, the packages
+    preloaded); a release, booted, installs the HAICC platform on the part
+    of a swarm that has the Pear distribution, or makes a separate swarm.
+    Pear only ever triggers our cold boot: nothing of Pear reaches into
+    HAICC, so HAICC's design proceeds without Pear's constraints. Kept
+    clean by: two upgrade mechanisms, each its own scope (Pear updates the
+    release, the bootstrap; HAICC updates everything after it, by its
+    repositories and links; a newer release matters at the next cold boot,
+    never to a running platform, as "the setup's pair is a bootstrap"
+    today); the preloaded packages a starting point only (after the boot,
+    packages come through our sources and repositories); the network
+    boundary visible (Pear distributes over its DHT; our swarms keep their
+    own: `vision.md`, a public component and air-gapping). The release
+    itself is out of this phase's scope (the request: Pear not in this
+    phase; `vision.md`: Pear when versions are fixed); the probe and the
+    folder layout prepare it.
+  - **Pear's upgrade model, our reference** (as we know its design, to
+    verify): versions are lengths of the app's append-only drive (`pear
+    stage` appends; `pear release` marks the released length; a link may
+    pin key and length, which is also how to go back); the drive replicates
+    in the background and the running app is told of a new release and
+    decides (restart now, or at its next start; nothing swapped under
+    running code); someone seeds it (`pear seed`); Pear's platform updates
+    itself the same way. Ours: a commit of the package's repository (a
+    length); the link in `packages/default`, promoted from `packages/test`
+    (the release mark); pinned or following, per layer (the branch model's
+    open point); replication signalled by RPC (the notification); the
+    level's HAICC decides, after validating the new version (intact, its
+    validation set: the warm boot's check, which Pear lacks), restarting
+    onto it or waiting; a rollback points the link back to the previous
+    commit; the platform's pair refreshed by the same mechanism.
 - **The rename held** (`haicc-deployment` to `haicc-base-node`): until the
   two HAICCs converge (the human).
 - Open, to settle with the human: logs as topics (records appended, Kafka
