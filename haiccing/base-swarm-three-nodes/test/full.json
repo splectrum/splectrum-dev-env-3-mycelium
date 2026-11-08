@@ -1,0 +1,10 @@
+{
+  "description": "Everything: the modules' own tests, the swarm's configuration, the package's named tests, and the package deployed through a fresh root (deploy).",
+  "modules": true,
+  "swarms": true,
+  "tests": [
+    "modules-load",
+    "sets",
+    "deploy"
+  ]
+}

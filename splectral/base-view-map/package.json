@@ -1,0 +1,6 @@
+{
+  "name": "base-view-map",
+  "description": "A map of hosts, nodes and resources by URI, with activity drawn live, and node, manager and metrics pages",
+  "type": "module",
+  "license": "MIT"
+}

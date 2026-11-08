@@ -1,0 +1,8 @@
+#!/bin/sh
+# Bare's runtime for the development side (the package writer, tests run
+# here): the binary in this repository's node_modules (npm leaves it without
+# its exec bit, and links no `bare`), run with what it is given.
+dev=$(cd "$(dirname "$0")/.." && pwd)
+bin=$dev/node_modules/bare-runtime-linux-x64/bin/bare
+[ -x "$bin" ] || chmod +x "$bin" || exit 1
+exec "$bin" "$@"

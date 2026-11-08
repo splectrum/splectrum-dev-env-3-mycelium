@@ -1,0 +1,3 @@
+{ "name": "splectral-replay", "contract": "0.1", "provides": [
+  { "kind": "source", "id": "replay", "module": "index.js" }
+] }

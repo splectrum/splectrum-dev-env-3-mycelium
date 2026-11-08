@@ -1,0 +1,10 @@
+{
+  "description": "Everything: the modules' own tests, the package's in place, and the platform booted, each test from its own boot. Before a release, and on a downloaded release (./haicc boot base-package-haicc/test).",
+  "modules": true,
+  "swarms": true,
+  "tests": [
+    "modules-load",
+    "sets",
+    "platform"
+  ]
+}

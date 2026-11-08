@@ -1,0 +1,9 @@
+node_modules/
+pear-full-square/mycelium-git/fixture/
+pear-full-square/mycelium-git/fixture.git/
+pear-full-square/p2p-mrepo/fixture/
+pear-full-square/p2p-mrepo/fixture.git/
+manager/
+
+# A HAICC command run in a source folder logs there (HAICC_WORK defaults to .): never kept.
+pear-full-square/*/log/

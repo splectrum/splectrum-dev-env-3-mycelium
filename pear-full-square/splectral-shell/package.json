@@ -1,0 +1,13 @@
+{
+  "name": "splectral-shell",
+  "id": "2c0116fd-818e-48e0-8b60-a503bf7235a0",
+  "description": "The Splectral browser shell: a menu built from the available topics, routing, hosting applications and pages",
+  "type": "module",
+  "browser": "./app.js",
+  "license": "MIT",
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "htm": "3.1.1"
+  }
+}

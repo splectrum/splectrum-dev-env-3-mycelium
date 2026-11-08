@@ -1,0 +1,11 @@
+{ "name": "splectral-p2p-actions", "contract": "0.2", "provides": [
+  { "kind": "action", "id": "start-node", "module": "start.js" },
+  { "kind": "action", "id": "stop-node", "module": "stop.js" },
+  { "kind": "action", "id": "send-request", "module": "request.js" },
+  { "kind": "action", "id": "pause-node", "module": "pause.js" },
+  { "kind": "action", "id": "resume-node", "module": "resume.js" },
+  { "kind": "action", "id": "invite", "module": "invite.js" },
+  { "kind": "action", "id": "start-node-from-invitation", "module": "start-from-invitation.js" },
+  { "kind": "action", "id": "state", "module": "state.js" },
+  { "kind": "action", "id": "write", "module": "write.js" }
+] }

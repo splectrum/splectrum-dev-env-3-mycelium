@@ -1,0 +1,9 @@
+{
+  "description": "The package as it is, nothing started: what an install and a node's warm boot run.",
+  "modules": false,
+  "swarms": false,
+  "tests": [
+    "modules-load",
+    "sets"
+  ]
+}

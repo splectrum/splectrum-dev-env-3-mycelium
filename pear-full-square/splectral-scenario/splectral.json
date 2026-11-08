@@ -1,0 +1,4 @@
+{ "name": "splectral-scenario", "contract": "0.1", "provides": [
+  { "kind": "action", "id": "run-scenario", "module": "run.js" },
+  { "kind": "page", "id": "scenario", "title": "Scenario", "needs": ["scenario"], "module": "page.js" }
+] }

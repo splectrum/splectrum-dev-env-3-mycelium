@@ -1,0 +1,6 @@
+{ "name": "splectral-p2p-watchers", "contract": "0.2", "provides": [
+  { "kind": "source", "id": "haicc-swarm", "module": "swarm.js" },
+  { "kind": "source", "id": "p2p-host", "module": "host.js" },
+  { "kind": "mapper", "id": "haicc", "holds": "haicc-node/*", "module": "mapper.js" },
+  { "kind": "mapper", "id": "p2p", "holds": "p2p-*", "module": "mapper.js" }
+] }

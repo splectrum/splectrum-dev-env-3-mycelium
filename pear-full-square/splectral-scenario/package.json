@@ -1,0 +1,11 @@
+{
+  "name": "splectral-scenario",
+  "id": "1260ceca-364f-4dd0-9140-8d1b6ffbfcf0",
+  "description": "The Splectral scenario runner: steps of actions, expectations and explanatory messages, recorded",
+  "type": "module",
+  "exports": "./run.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

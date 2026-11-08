@@ -1,0 +1,6 @@
+{
+  "description": "The package as it is, nothing started: its modules load, its sets agree.",
+  "modules": false,
+  "swarms": false,
+  "tests": ["modules-load", "sets"]
+}

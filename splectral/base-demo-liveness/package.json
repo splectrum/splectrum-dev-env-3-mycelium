@@ -1,0 +1,6 @@
+{
+  "name": "base-demo-liveness",
+  "description": "A node goes quiet and the swarm notices within its lease; it comes back; it leaves gracefully, with explanatory messages",
+  "type": "module",
+  "license": "MIT"
+}

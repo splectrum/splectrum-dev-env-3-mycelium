@@ -1,0 +1,11 @@
+{
+  "name": "splectral-contract",
+  "id": "211b40c4-ecda-4459-af25-e1d4f9721561",
+  "description": "The Splectral extension contract: manifests, the abstract world, topics and actions, versioned",
+  "type": "module",
+  "exports": "./index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "splectral-p2p-observer",
+  "id": "d6f6fd6a-26e7-4782-a43c-a9422c4d85df",
+  "description": "A privileged node application: the node's events and state, and named actions, to its own manager only; never a secret",
+  "type": "module",
+  "exports": "./index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "hypercore-crypto": "3.7.0",
+    "p2p-node": "*"
+  }
+}

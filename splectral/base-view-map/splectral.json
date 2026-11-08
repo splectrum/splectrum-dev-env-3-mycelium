@@ -1,0 +1,4 @@
+{ "name": "base-view-map", "contract": "0.1", "provides": [
+  { "kind": "page", "id": "map", "title": "Map", "needs": ["world"], "module": "map.js" },
+  { "kind": "page", "id": "node", "title": "Node", "needs": ["node"], "module": "node.js" }
+] }

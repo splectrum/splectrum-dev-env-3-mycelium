@@ -1,0 +1,14 @@
+{
+  "title": "A node goes quiet",
+  "description": "Host A runs a swarm: its master and node-1. node-1 is frozen, says nothing, and the swarm flags it absent once its lease runs out; a request to it is refused at once. Thawed, it is present again. Then it stops gracefully and leaves, and the swarm runs on.",
+  "steps": [
+    { "say": "Host A runs the swarm: the master, which keeps the names, and node-1, which renews its lease with the master every few seconds.", "await": "joined:/hosts/node-1", "timeout": 120000 },
+    { "say": "node-1 is frozen: its container paused. It says nothing, and no graceful path sees it.", "do": "pause-node", "with": { "node": "/hosts/node-1" } },
+    { "say": "The master hears nothing from node-1. When its lease runs out, node-1 is flagged absent: a dashed ring. Its name and records stay, flagged.", "await": "absent:/hosts/node-1", "timeout": 60000 },
+    { "say": "A request to node-1 now is refused at once, not left waiting on its address.", "do": "send-request", "with": { "from": "host-a", "to": "/hosts/node-1/node", "name": "status-while-absent" }, "refused": true, "hold": 4000 },
+    { "say": "node-1 is thawed. Its next heartbeat reaches the master, and it is present again.", "do": "resume-node", "with": { "node": "/hosts/node-1" }, "await": "present:/hosts/node-1", "timeout": 60000 },
+    { "say": "A request to node-1 is answered again.", "do": "send-request", "with": { "from": "host-a", "to": "/hosts/node-1/node", "name": "status-after-resume" }, "await": "requestAnswered:/hosts/node-1/node", "timeout": 60000 },
+    { "say": "node-1 is stopped gracefully: it leaves the master's names first, so its name is free at once.", "do": "stop-node", "with": { "node": "/hosts/node-1" }, "await": "left:/hosts/node-1", "timeout": 60000 },
+    { "say": "The swarm runs on: a request to the master's own repository is answered.", "do": "send-request", "with": { "from": "host-a", "to": "/hosts/master/node", "name": "status-after-leave" }, "await": "requestAnswered:/hosts/master/node", "timeout": 60000 }
+  ]
+}

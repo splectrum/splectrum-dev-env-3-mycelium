@@ -1,0 +1,15 @@
+{
+  "name": "p2p-rns",
+  "id": "a832d035-32d8-4818-9b53-6b3f37bf7d78",
+  "description": "The resource name service: URIs for a swarm's nodes and resources, rooted in p2p, abstracted for its users",
+  "type": "module",
+  "exports": "./index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@hyperswarm/secret-stream": "6.9.2",
+    "p2p-channel": "*"
+  }
+}

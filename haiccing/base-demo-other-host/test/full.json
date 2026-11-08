@@ -1,0 +1,6 @@
+{
+  "description": "Everything: the modules' own tests, the package's named tests, and the demo played on a fresh install (other-host).",
+  "modules": true,
+  "swarms": false,
+  "tests": ["modules-load", "sets", "other-host"]
+}

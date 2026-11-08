@@ -1,0 +1,16 @@
+{
+  "modules": [
+    "pear-full-square/p2p-node",
+    "pear-full-square/p2p-node-manager",
+    "pear-full-square/splectral-p2p-observer",
+    "pear-full-square/splectral-server",
+    "pear-full-square/splectral-shell",
+    "pear-full-square/splectral-scenario",
+    "pear-full-square/splectral-timeline",
+    "pear-full-square/splectral-replay",
+    "pear-full-square/splectral-p2p-watchers",
+    "pear-full-square/splectral-p2p-actions",
+    "splectral/base-view-map",
+    "splectral/base-demo-other-host"
+  ]
+}

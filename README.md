@@ -12,5 +12,6 @@ as in phase 2; `haiccing/` holds the hand-written parts of the packages.
   guides), as returned by phase 2; worked on in this phase.
 - `vision.md`: directions that are not settled, for information.
 
-Status: seed — prepared in `splectrum/roadmap-1`, 2026-11-08. Seeded from
+Status: set up (2026-11-08, `steps/0-setup/`); the review next
+(`steps/1-review/`). Seeded from
 `splectrum/dev-env-2-p2p-cluster@c6b73bb`.

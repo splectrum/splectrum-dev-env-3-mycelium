@@ -1,0 +1,11 @@
+{
+  "name": "splectral-server",
+  "id": "14e7e831-6f15-4bdd-b5aa-553ea776d366",
+  "description": "The Splectral server: extensions, configuration, sources, topics, actions dispatched and recorded, the app served",
+  "type": "module",
+  "exports": "./index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,18 @@
+{
+  "name": "p2p-channel",
+  "id": "6977acad-3c12-4778-889e-a7bb1a38505c",
+  "description": "Messages and requests on a p2p connection, not stored",
+  "type": "module",
+  "exports": "./index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "compact-encoding": "3.5.2",
+    "protomux": "3.13.0"
+  },
+  "devDependencies": {
+    "@hyperswarm/secret-stream": "6.9.2"
+  }
+}

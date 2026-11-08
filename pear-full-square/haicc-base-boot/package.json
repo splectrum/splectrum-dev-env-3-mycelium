@@ -1,0 +1,10 @@
+{
+  "name": "haicc-base-boot",
+  "id": "3f6e1a52-9b0d-4c8e-a7d1-2e5b8c4f9a60",
+  "description": "HAICC's boot and the root's HAICC: stage 1 in plain shell (Linux x86-64, Bare's runtime as the setup placed it in bare/), then HAICC on Bare: the host's prerequisites, swarms and nodes, a package's functionality by its URI. No secrets",
+  "type": "module",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}
