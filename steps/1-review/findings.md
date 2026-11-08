@@ -270,6 +270,12 @@ the human.
     p2p-git), whatever opens repositories on disk (native git). The
     Hyperdrive test moves to `p2p-mrepo`. No new modules (the human's yes).
 
+11. **`p2p-node` knows Splectral** (3): Splectral was plumbed in for the
+    demos only and is to be done properly in this phase (the human); the
+    recommendation (an application attached to a node from its
+    configuration, naming none) is in `../plan.md`, taken up when the work
+    touches that area.
+
 ## Product repositories (2026-11-08, the human)
 
 Archived on GitHub by the human: `pear-full-square/haicc-reconcile`,
