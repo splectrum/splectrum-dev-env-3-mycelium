@@ -155,6 +155,20 @@ the human.
    the booted-test runner, sources, the cold shutdown). The extraction into
    `lib/` is M; whether Splectral and Docker leave the boot is D.
 
+## Decided, section by section (2026-11-08, with the human)
+
+1. **HAICC's own copies** (2: `lib/pkgm.js`, `lib/log.js`, `fetch.sh`):
+   - Fetching from the sources (`fetch.sh`: fetch, list, refresh) is the
+     package manager's, not HAICC's: it moves into `pkgm-base-manager`,
+     its open findings fixed with it (4, 6, 5's rule 7).
+   - HAICC uses the package manager at its one fixed place: the
+     `base-package-pkgm` beside `base-package-haicc`, which every cold
+     boot copies in (the pair). `lib/pkgm.js`'s development path (the
+     module next door) goes; the tests set the pair up as a work folder
+     has it.
+   - The log writer (`lib/log.js`, and the shell's): left until the logs
+     are a mycelium repository.
+
 ## Product repositories (2026-11-08, the human)
 
 Archived on GitHub by the human: `pear-full-square/haicc-reconcile`,
