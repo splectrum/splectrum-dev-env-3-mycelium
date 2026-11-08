@@ -260,6 +260,16 @@ the human.
    concern of its own, shared with the development pipeline. Both product
    repositories created by the human.
 
+10. **p2p in `mycelium-git`** (3): the engine is handed in, once, by the
+    owner of the storage. `mycelium-git` keeps the contract, the iso-style
+    adapter (`isoStyleBackend(engine, gitdir, { fs })`) and the native
+    backend; the `p2pgitBackend` and `isogitBackend` wrappers go, and its
+    dependencies on `p2p-git` and `isomorphic-git` with them (development
+    dependencies only, for the contract suite on every engine). A storage
+    kind's owner chooses its engine once: `p2p-mrepo` (a Hyperdrive:
+    p2p-git), whatever opens repositories on disk (native git). The
+    Hyperdrive test moves to `p2p-mrepo`. No new modules (the human's yes).
+
 ## Product repositories (2026-11-08, the human)
 
 Archived on GitHub by the human: `pear-full-square/haicc-reconcile`,
