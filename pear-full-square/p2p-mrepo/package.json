@@ -3,10 +3,7 @@
   "id": "ae524823-e434-456b-9db9-9c97506eb037",
   "description": "Mycelium repositories on the p2p layer: created, imported, cloned and opened on a p2p-store, each a mycelium backend",
   "type": "module",
-  "exports": {
-    ".": "./index.js",
-    "./engine": "./engine.js"
-  },
+  "exports": "./index.js",
   "scripts": {
     "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
   },

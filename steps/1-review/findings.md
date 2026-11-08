@@ -210,8 +210,12 @@ the human.
    - **Implementation**: an analysis of the shell commands (the scripts in
      the modules, the booted tests, the setup) and how best to wrap them
      in HAICC.
-   - Open: the CLIs nothing calls since `test-run/` went (`mycelium-git`,
-     `-layer`, `-uri`, `-xpath`, `p2p-mrepo`).
+   - The CLIs nothing called since `test-run/` went (`mycelium-git`,
+     `-layer`, `-uri`, `-xpath`, `p2p-mrepo`, with `p2p-mrepo`'s
+     `engine.js` and `test/fixture.sh`): removed, redundant; their
+     operations HAICC-wrapped from now (the human).
+   - A shell script is glue (`docs/rules.md` 30, the human): plain `sh`,
+     as evolved as the functionality needs, its logic in modules.
 
 ## Product repositories (2026-11-08, the human)
 
