@@ -89,9 +89,14 @@ work in this repository, branches, commits, URIs and data names: the root
 27. **The setup carries what HAICC runs on**; the boot downloads nothing.
 28. **One platform per work folder**, the one it was set up from.
 29. **Nothing is force-pushed**; what is published stays in the history.
+30. **A shell script is glue**: it composes commands (HAICC's, the
+    packages' functionality) into functionality, and may grow as evolved as
+    that needs; its logic lives in modules, reached through `haicc`. Plain
+    POSIX `sh` (`#!/bin/sh`), no own script language: a language is the
+    language layer's (`splectrum`).
 
 ## Documentation
 
-30. **A decision lives once, in `design/`**, with its status (built /
+31. **A decision lives once, in `design/`**, with its status (built /
     agreed) and why; a changed decision is changed there, not added beside.
     A rule lives here; a how-to in `guides/`.
