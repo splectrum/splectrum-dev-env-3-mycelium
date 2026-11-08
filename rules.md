@@ -21,8 +21,11 @@ it.
 - **Validation is a concern of the boundary.** Input is validated once,
   where it enters (network handlers, command-line arguments, external
   files and imports), by the one validator for its kind (`mycelium-uri`
-  for names and URIs). Internal traffic is valid: internal APIs trust
-  their callers and do not check again.
+  for names and URIs). Inside the boundary, work follows the happy path:
+  internal APIs trust their callers and do not check again, and code does
+  not anticipate errors. When something does fail, it is handled where it
+  shows: the work stops and says why, or takes corrective action as part
+  of the error handling.
 - **Knowledge stays with its concern.** A part knows only what its
   concern needs: mycelium knows no p2p, Splectral's applications know no
   p2p, the p2p series knows no git or management.
