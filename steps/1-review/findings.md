@@ -196,6 +196,23 @@ the human.
    error anticipation; a failure handled where it shows (stop and say, or
    correct). Sections 4 and 6 sorted against it.
 
+5. **Command lines** (2): only HAICC takes commands from a person; every
+   other command line gets its arguments from our own code (internal: the
+   happy path). `haicc-cli-parser` (the human's name) for HAICC's commands,
+   the transitional tools using it until HAICC replaces them; the internal
+   command lines keep their plain parsing, values kept whole.
+   - **Design / refactor list** (the human):
+     - HAICC in the container too: the node's program started through the
+       node's HAICC, not `p2p-node/cli.js` directly.
+     - Splectral wrapped in HAICC: the server and its `act` through HAICC.
+     - The cold boots: the initial one (the setup's `./boot`) may use the
+       module directly; every other cold boot is wrapped in HAICC.
+   - **Implementation**: an analysis of the shell commands (the scripts in
+     the modules, the booted tests, the setup) and how best to wrap them
+     in HAICC.
+   - Open: the CLIs nothing calls since `test-run/` went (`mycelium-git`,
+     `-layer`, `-uri`, `-xpath`, `p2p-mrepo`).
+
 ## Product repositories (2026-11-08, the human)
 
 Archived on GitHub by the human: `pear-full-square/haicc-reconcile`,
