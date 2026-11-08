@@ -1,0 +1,3 @@
+#!/bin/sh
+# The test sets (test/<set>.json) and the tests' categories (test/<test>/test.json) agree.
+exec bare "$(dirname "$0")/sets.mjs"

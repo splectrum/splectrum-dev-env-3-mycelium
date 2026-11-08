@@ -1,0 +1,6 @@
+{
+  "name": "base-demo-other-host",
+  "description": "A node on another host joins, a request crosses the hosts, and the node stops while the rest runs on, with explanatory messages",
+  "type": "module",
+  "license": "MIT"
+}

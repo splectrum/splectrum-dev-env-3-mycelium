@@ -1,0 +1,8 @@
+{
+  "name": "splectral-replay",
+  "id": "ddb60790-ad0e-4a72-9fc0-c97726b4ca32",
+  "description": "A Splectral source kind: recorded runs played back at a chosen speed",
+  "type": "module",
+  "exports": "./index.js",
+  "license": "MIT"
+}

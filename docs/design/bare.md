@@ -13,7 +13,8 @@ Downloads stay in the shell (`curl`).
 
 *Why*: one runtime everywhere (the nodes already ran on Bare); switching at
 the start of the rebuild, before more was built on Node.js (the human).
-The probe that preceded it: `steps/phase-3/2-package-structure/2-bare-probe/`.
+The probe that preceded it: `steps/phase-3/2-package-structure/2-bare-probe/`
+in `splectrum/dev-env-2-p2p-cluster`.
 
 ## The runtime is carried by the setup
 

@@ -1,0 +1,33 @@
+#!/bin/sh
+# The demo, as a user runs it: a fresh install inside this run (the
+# platform this one runs on, its setup built here, sourced from this
+# haiccing/), the package deployed (its swarm `hosts`: the master and node-1
+# in their containers; its Splectral server on the host), the scenario
+# `liveness` played through the server (as the page's Run does), then torn
+# down. Stops at the first step that fails (exit 1), saying which.
+set -u
+pkg=$HAICC_PACKAGE; run=$HAICC_RUN; platform=$HAICC_PLATFORM
+runtime=$HAICC_WORK/bare/bare; sources=$HAICC_WORK/haiccing
+unset HAICC_WORK HAICC_NOLOG HAICC_SWARM HAICC_AS
+w=$run/install
+n=0
+short () { printf '%s ' "$@" | sed "s#$w#install#g; s#$run#run#g; s#$pkg#package#g; s#$(dirname "$pkg")#packages#g; s#$platform#platform#g; s#$runtime#this-runtime#g; s# \$##"; }
+step () { n=$((n + 1)); what=$1; shift; printf '%2d %s\n     $ %s ... ' "$n" "$what" "$(short "$@")"; if out_=$("$@" 2>&1); then echo ok; else echo FAILED; echo "$out_" | tail -30 | sed 's/^/     /'; exit 1; fi; }
+expect () { printf '%s' "$out_" | grep -q "$1" || { echo "   expected: $1"; echo "$out_" | tail -20 | sed 's/^/     /'; exit 1; }; }
+
+step 'a setup of the platform this runs on' sh "$platform/modules/pear-full-square/haicc-base-boot/release.sh" "$platform" "$run/haicc-setup.sh" "$runtime"
+step 'a fresh install, sourced from this haiccing/' sh "$run/haicc-setup.sh" "$w" "--sources=folder:$sources"
+step './boot' "$w/boot" --yes
+expect 'Booted'
+step 'the demo deployed: ./haicc boot <package>' "$w/haicc" boot "$(basename "$pkg")" "--from=$(dirname "$pkg")"
+expect 'The node hosts/master: up'
+expect 'The node hosts/node-1: up'
+expect 'its Splectral: http://127.0.0.1:4400'
+server=$w/hosts/master/packages/$(basename "$pkg")/modules/pear-full-square/splectral-server/cli.js
+step '  its page answers: the shell, the menu with the scenario, the browser libraries' sh -c "curl -sf http://127.0.0.1:4400/ | grep -q '<html' && curl -sf http://127.0.0.1:4400/menu | grep -q '\"param\":\"liveness\"' && curl -sf -o /dev/null http://127.0.0.1:4400/vendor/react.js"
+step '  the scenario played: node-1 frozen, absent, back, a request answered, node-1 leaving' "$w/bare/bare" "$server" act "--config=$w/hosts/splectral/config.json" --action=run-scenario '--with={"id":"liveness"}'
+expect '"ok":true'
+expect '"steps":8'
+step '  the world as the page shows it: node-1 left, the master running' sh -c "curl -sf -m 3 http://127.0.0.1:4400/stream | head -c 200000 | head -1 | grep -q '\"/hosts/master\"'"
+step 'teardown: the swarm, its server, nothing left in Docker' sh -c "'$w/haicc' teardown hosts --yes && [ ! -e '$w/hosts' ] && ! curl -sf -m 2 http://127.0.0.1:4400/ >/dev/null && [ -z \"\$(docker ps -aq --filter 'label=haicc.install=$w')\" ] && [ -z \"\$(docker network ls -q --filter 'label=haicc.install=$w')\" ]"
+echo "the demo: all $n steps passed"

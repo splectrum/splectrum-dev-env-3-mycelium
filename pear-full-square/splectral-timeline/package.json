@@ -1,0 +1,7 @@
+{
+  "name": "splectral-timeline",
+  "id": "298afa9e-57f6-480b-9136-13812d04e34e",
+  "description": "A Splectral page: every event on a timeline, scrubbable",
+  "type": "module",
+  "license": "MIT"
+}

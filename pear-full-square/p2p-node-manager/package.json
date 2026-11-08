@@ -1,0 +1,20 @@
+{
+  "name": "p2p-node-manager",
+  "id": "4c9acc1a-7bbe-4add-99f0-75396b40bbd6",
+  "description": "One node's manager on the host: its container started (the boot program's code mounted), its secret handed over, followed, recorded and stopped; a node joining from an invitation",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./vault": "./vault.js"
+  },
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "hypercore-crypto": "3.7.0",
+    "p2p-channel": "*",
+    "p2p-connect": "*",
+    "p2p-dht": "*"
+  }
+}

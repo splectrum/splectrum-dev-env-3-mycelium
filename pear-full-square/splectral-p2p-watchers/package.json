@@ -1,0 +1,11 @@
+{
+  "name": "splectral-p2p-watchers",
+  "id": "7454a751-6396-4512-8e52-2b8ed777ff5f",
+  "description": "Splectral's p2p adapter in: a swarm's nodes as HAICC runs them (their containers' logs), mapped to the abstract world",
+  "type": "module",
+  "exports": "./mapper.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

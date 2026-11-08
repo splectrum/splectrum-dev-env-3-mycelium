@@ -1,0 +1,4 @@
+#!/bin/sh
+# The swarm's configuration holds: each file there and JSON, one master, its codebase named.
+cd "$(dirname "$0")" || exit 1
+exec bare config.mjs

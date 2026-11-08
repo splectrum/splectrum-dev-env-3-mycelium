@@ -9,7 +9,7 @@ From this repository at the commit to publish, its changes committed:
 
 ```bash
 npm install
-sh steps/phase-3/1-packages-and-boot/5-validation/publish.sh <folder for the haiccing clones> [--no-push]
+sh tools/publish.sh <folder for the haiccing clones> [--no-push]
 ```
 
 It clones each published repository into the folder (if not there), writes

@@ -1,0 +1,7 @@
+{
+  "nodes": {
+    "master": { "role": "master" },
+    "node-1": { "role": "node" },
+    "node-2": { "role": "node" }
+  }
+}

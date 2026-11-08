@@ -1,0 +1,14 @@
+{
+  "name": "pkgm-base-manager",
+  "id": "8d0b2f6e-3c51-4a7e-9e2d-5f1c6a0b7d42",
+  "description": "The package manager: a swarm's codebase assembled from a package into its master's package repository; a package's tests, bottom up. on Bare",
+  "type": "module",
+  "exports": "./index.js",
+  "bin": {
+    "pkgm": "./cli.js"
+  },
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,75 @@
+{
+  "title": "A node on another host",
+  "description": "Host A runs a swarm: its master and a node it controls. Host B has its own manager and nothing else. It is given an invitation, its node joins, a request crosses the hosts, the node writes, then stops, and the swarm runs on.",
+  "steps": [
+    {
+      "say": "Host A runs the swarm: the master and node-1, both controlled by host A's manager.",
+      "await": "joined:/hosts/node-1",
+      "timeout": 120000
+    },
+    {
+      "say": "Host A gives host B an invitation: public facts only, no secret.",
+      "do": "invite",
+      "with": {
+        "from": "host-a",
+        "to": "host-b"
+      }
+    },
+    {
+      "say": "Host B's own manager starts its node from the invitation, provisions it from host B's vault, on host B's own management network.",
+      "do": "start-node-from-invitation",
+      "with": {
+        "host": "host-b",
+        "name": "remote-1",
+        "auxSubnet": "172.36.0"
+      },
+      "await": "joined:/hosts/remote-1",
+      "timeout": 180000
+    },
+    {
+      "say": "remote-1 is part of the swarm, reached by name, but host A does not control it: it is outlined on the map."
+    },
+    {
+      "say": "A request from host A crosses to remote-1's repository: in as a bundle, out on its main.",
+      "do": "send-request",
+      "with": {
+        "from": "host-a",
+        "to": "/hosts/remote-1/node",
+        "name": "status-from-host-a"
+      },
+      "await": "requestAnswered:/hosts/remote-1/node",
+      "timeout": 60000
+    },
+    {
+      "say": "remote-1 writes a note in its own repository: activity its replicas see.",
+      "do": "write",
+      "with": {
+        "node": "/hosts/remote-1",
+        "name": "hello",
+        "text": "Hello from host B.\n"
+      },
+      "await": "changed:/hosts/remote-1/node",
+      "timeout": 60000
+    },
+    {
+      "say": "Host B's manager stops remote-1, gracefully.",
+      "do": "stop-node",
+      "with": {
+        "node": "/hosts/remote-1"
+      },
+      "await": "gone:/hosts/remote-1",
+      "timeout": 60000
+    },
+    {
+      "say": "The swarm runs on: a request from host A to node-1 is still answered.",
+      "do": "send-request",
+      "with": {
+        "from": "host-a",
+        "to": "/hosts/node-1/node",
+        "name": "status-after-remote-stop"
+      },
+      "await": "requestAnswered:/hosts/node-1/node",
+      "timeout": 60000
+    }
+  ]
+}

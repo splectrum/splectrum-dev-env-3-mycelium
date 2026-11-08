@@ -1,0 +1,3 @@
+{ "name": "base-demo-liveness", "contract": "0.2", "provides": [
+  { "kind": "scenario", "id": "liveness", "title": "A node goes quiet", "file": "scenario.json" }
+] }

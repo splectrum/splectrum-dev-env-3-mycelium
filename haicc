@@ -1,0 +1,37 @@
+#!/bin/sh
+# The demo projects, from the development repository's root:
+#   sh haicc check|deploy|start|stop|teardown|status|reconcile <project> [--work=<folder>]
+# <project>: a folder under haiccing/ (base-demo-liveness, base-demo-other-host).
+# The work folder defaults to manager/<project>, in this repository (git ignores it). After start, the browser
+# opens where it can (Linux desktop, WSL); the URL is printed either way.
+set -eu
+root=$(cd "$(dirname "$0")" && pwd)
+cd "$root"
+verb=${1:-}; project=${2:-}
+[ -n "$verb" ] && [ -n "$project" ] || { sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
+shift 2
+file=$root/haiccing/$project/project.json
+[ -f "$file" ] || { echo "no project: $project (haiccing/$project/project.json)"; exit 2; }
+[ "$verb" = check ] && verb=status
+d=$root/pear-full-square/haicc-deployment
+# The code runs from this repository ({packages} in a project is its root).
+HAICC_PACKAGES=$root; export HAICC_PACKAGES
+# The dependencies, for this layout: an existing clone from before the move
+# to <org>/<repo> folders, or one never installed, says so here.
+if ! (cd "$root" && node --input-type=module -e "await import('p2p-dht'); await import('p2p-swarm-manager')" >/dev/null 2>&1); then
+  echo "the dependencies are not installed for this layout: run demos.md section 2 (npm install at the root)"
+  exit 2
+fi
+set +e
+out=$(node "$d/cli.js" "$verb" "$file" "$@")
+code=$?
+set -e
+printf '%s\n' "$out" | node "$d/human.js"
+if [ "$verb" = start ] && [ $code -eq 0 ]; then
+  url=$(printf '%s\n' "$out" | grep -o 'http://127.0.0.1:[0-9]*' | head -1)
+  if [ -n "$url" ]; then
+    if grep -qi microsoft /proc/version 2>/dev/null && command -v cmd.exe >/dev/null; then cmd.exe /c start "$url" >/dev/null 2>&1 || true
+    elif command -v xdg-open >/dev/null && [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then xdg-open "$url" >/dev/null 2>&1 || true; fi
+  fi
+fi
+exit $code

@@ -1,0 +1,21 @@
+{
+  "name": "p2p-node",
+  "id": "4a1e7ded-6fd4-4670-a1ba-b49320173724",
+  "description": "The node application: a node of a swarm, composed from the p2p series, its repositories and the resource name service",
+  "type": "module",
+  "exports": "./index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "hypercore-crypto": "3.7.0",
+    "p2p-channel": "*",
+    "p2p-connect": "*",
+    "p2p-dht": "*",
+    "p2p-mrepo": "*",
+    "p2p-replicate": "*",
+    "p2p-rns": "*",
+    "p2p-store": "*"
+  }
+}

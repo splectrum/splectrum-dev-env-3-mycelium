@@ -1,0 +1,14 @@
+{
+  "name": "p2p-dht",
+  "id": "748c78d2-875f-4a2d-8272-428e6db9beec",
+  "description": "Discovery for the p2p layer: DHT nodes and a private DHT's bootstrap",
+  "type": "module",
+  "exports": "./index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "hyperdht": "6.35.0"
+  }
+}

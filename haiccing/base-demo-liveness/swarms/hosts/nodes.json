@@ -1,0 +1,6 @@
+{
+  "nodes": {
+    "master": { "role": "master" },
+    "node-1": { "role": "node" }
+  }
+}

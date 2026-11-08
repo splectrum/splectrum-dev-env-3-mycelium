@@ -1,0 +1,11 @@
+{
+  "name": "mycelium-topic",
+  "id": "f5b85e5b-b696-4b3b-8649-4989698ab7c6",
+  "description": "Topics of Kafka records, single partition, on any storage: produce, consume, follow, fold; segments archived and sealed",
+  "type": "module",
+  "exports": "./index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}
