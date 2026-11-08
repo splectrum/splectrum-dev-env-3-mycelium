@@ -182,7 +182,7 @@ the human.
    as it is. Used by `haicc-base-boot`, `haicc-deployment`,
    `p2p-node-manager` (its Docker calls only; whether host B runs HAICC is
    a later question) and Splectral's p2p side; copied into each package
-   that needs it. Its product repository: the human creates it.
+   that needs it. Its product repository: created by the human.
 
 3. **Names** (2, 4): two concerns, not one twice. The boot cleans a new
    name (lowercase; every run of other characters a `-`; the change said);
@@ -226,7 +226,7 @@ the human.
    atomically); data names (lowerCamelCase, their URI form both ways),
    moved from `mycelium-uri`, where nothing uses them. Used by HAICC, the
    package manager and the records, copied into their packages. Its
-   product repository: the human creates it. Where it sits, and the
+   product repository: created by the human. Where it sits, and the
    envelope and content of values: `vision.md`, "Values on the wire and at
    rest".
    Refined (with the human): three concerns, a module each. The data type
@@ -247,6 +247,18 @@ the human.
    HAICC (Splectral wrapped in HAICC), not read from its files; the node
    manager's topic layout exported by `p2p-node-manager`. The code reviewed
    further for improvements as the work builds on these components.
+
+9. **Requests** (2: `p2p-node`'s intake a copy of `mycelium-layer`'s):
+   `mycelium-layer` keeps the branches; the request's concerns split out,
+   by its life (the human's yes): `mycelium-request-submit` (a request from
+   a source placed into `pending/default`, once, one function per source
+   type, each validated where it enters: a folder, a peer's bundle) and
+   `mycelium-request-execute` (execution and its response, one unit, as
+   `executeRequests` is). The queue (`plan` today) waits for the request
+   manager, to be designed; `p2p-node` keeps its own part (queueing, the
+   sender, its events). Recording a unit for an exact rerun may later be a
+   concern of its own, shared with the development pipeline. Both product
+   repositories created by the human.
 
 ## Product repositories (2026-11-08, the human)
 
