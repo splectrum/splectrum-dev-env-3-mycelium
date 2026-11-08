@@ -85,6 +85,29 @@ by step with the human.
     repository's data) is this phase's hives and mounting; the request
     flow is its first user. One repository both requester and executor
     (active for its own requests) is a configuration of the same model.
+  - **The request branches** (the human): `pending/default` restructured as
+    `request/pending`, written by the passive side (the requests as
+    submitted, append-only); `request/executing` and `request/done`,
+    written by the active side (the requests it has taken, by name and the
+    pending commit taken; those finished, with their outcome and the
+    `main` commit holding the response, or why there is none). Nothing
+    moves across writers: each side records its own facts, and a request's
+    state is read by composing them. The reserved segment `pending`
+    becomes `request`; `pending/default`'s notes and metadata go to the
+    side that writes them.
+  - **A packages layer instead of the capability layer** (the human): code
+    runs from folders, so the layer only references; `packages/<purpose>`
+    (`packages/default` operating the repository's own functionality,
+    `packages/test` for development's tests; promotion from test to
+    default) holds links, not code: each package by its identity (its
+    repository's key, the commit, the hash the package writer recorded),
+    the one the package manager checks, so the folder that runs can always
+    be checked against its link (`vision.md`: a package repository holds
+    the bytes, everything else holds links). The reserved segment
+    `capability` becomes `packages`.
+  - The renames in `rules.md` (`pending` to `request`, `capability` to
+    `packages`) when they are built: the documentation follows the
+    implementation.
   - Near real time (the human): RPC with the replication, on the same
     connection (`vision.md`, "Values on the wire and at rest"): RPC as the
     signal, replication as the record. The passive side commits its
