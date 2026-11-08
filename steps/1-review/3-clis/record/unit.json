@@ -1,0 +1,12 @@
+{
+  "invocation": "steps/record.sh 1-review 3-clis modules=sh steps/0-setup/modules.sh packages=sh steps/0-setup/packages.sh ",
+  "state": { "dev": "7af595b54d6c9f575910dcb574ca2ef9d33d2348", "pendingDefault": "b8d67a7" },
+  "environment": {
+    "node": "v22.23.4",
+    "bare": "v1.36.0",
+    "git": "git version 2.43.0",
+    "os": "Linux 6.18.44-fc-v310",
+    "docker": "none"
+  },
+  "nondeterministic": { "started": "2026-11-08T11:24:16Z", "finished": "2026-11-08T11:28:26Z" }
+}
