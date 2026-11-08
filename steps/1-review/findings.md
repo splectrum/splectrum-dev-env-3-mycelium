@@ -217,6 +217,19 @@ the human.
    - A shell script is glue (`docs/rules.md` 30, the human): plain `sh`,
      as evolved as the functionality needs, its logic in modules.
 
+6. **The data type** (2: JSON read and written in five places, one of them
+   atomic): one single-concern module, `pear-full-square/mycelium-value`
+   (the human's yes): the value's form in memory (plain objects, as avsc
+   gives them); its serialisation (JSON now; AVRO later, through the
+   barified avsc; compact-encoding where a value needs binary), decided
+   only there; values at rest (a file read into a value, a value written
+   atomically); data names (lowerCamelCase, their URI form both ways),
+   moved from `mycelium-uri`, where nothing uses them. Used by HAICC, the
+   package manager and the records, copied into their packages. Its
+   product repository: the human creates it. Where it sits, and the
+   envelope and content of values: `vision.md`, "Values on the wire and at
+   rest".
+
 ## Product repositories (2026-11-08, the human)
 
 Archived on GitHub by the human: `pear-full-square/haicc-reconcile`,
