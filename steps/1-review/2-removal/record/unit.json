@@ -1,0 +1,12 @@
+{
+  "invocation": "steps/record.sh 1-review 2-removal modules=sh steps/0-setup/modules.sh packages=sh steps/0-setup/packages.sh ",
+  "state": { "dev": "5ac906229c8cf090b2c57e8249e6a5ae8795aae1", "pendingDefault": "b8d67a7" },
+  "environment": {
+    "node": "v22.23.4",
+    "bare": "v1.36.0",
+    "git": "git version 2.43.0",
+    "os": "Linux 6.18.44-fc-v310",
+    "docker": "none"
+  },
+  "nondeterministic": { "started": "2026-11-08T08:31:24Z", "finished": "2026-11-08T08:35:41Z" }
+}

@@ -15,7 +15,8 @@ the human.
 
 ## The big picture
 
-1. **A dead layer from phase 2's first platform** (D, removal proposed).
+1. **A dead layer from phase 2's first platform** (D, removal proposed;
+   **removed**, all of it, with the human's yes: `2-removal/`).
    The project model (`project.json`) went with phase 3's restructure; what
    was built on it still sits beside the current platform:
    - the root `haicc` launcher (needs `haiccing/<p>/project.json`: none
