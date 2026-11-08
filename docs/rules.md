@@ -9,9 +9,12 @@ work in this repository, branches, commits, URIs and data names: the root
 ## Names and folders
 
 1. **A name is a URI part**: lowercase letters, digits, single hyphens.
-   A name given that is not one is cleaned into one, and the change said; a
-   path where a name is expected is refused (exit 2), with the command to
-   use. *(boot.test.js: a path for a name)*
+   A **new** name given that is not one is cleaned into one, and the
+   change said. A name that **refers to something existing** (a swarm, a
+   node, a package) is taken as given: one that matches nothing is an
+   error (exit 2), saying what exists. A path where a name is expected is
+   refused (exit 2), with the command to use. *(boot.test.js: a path for a
+   name)*
 2. **No hidden files or folders**, anywhere HAICC writes: everything in
    plain sight. *(the platform test, the release checks)*
 3. **The folder is the context**: a level's `haicc` works on its own

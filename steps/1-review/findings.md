@@ -92,8 +92,11 @@ the human.
      invitation's fields and `--master`/`--bootstrap` (a bad hex gives an
      empty key), `p2p-rns`'s `key`/`id`/`type`, Splectral's action
      arguments (D: declared in the manifests, checked by the server).
-   - Validated again inside: `p2p-rns`'s `resolve`/`list`,
-     `haicc-reconcile`'s engine, `pkgm`'s `assemble`.
+   - Validated again inside: `p2p-rns`'s `resolve`/`list`, `pkgm`'s
+     `assemble`: the checks removed (happy path inside; `haicc-reconcile`
+     gone).
+   - Names (decided, 3 below): a new name cleaned, an existing one taken
+     as given; the boot cleans existing swarm and node names today.
 
 5. **The rules, broken by the code** (M):
    - Rule 2 (no hidden files): `mycelium-topic`'s folder storage writes
@@ -124,8 +127,11 @@ the human.
    - The committed offset: Kafka's next offset in `splectral-server`, the
      last processed in `p2p-node-manager`: one meaning, as Kafka's.
    - `p2p-connect`'s `closed` list grows without bound, sent in every
-     metrics event; `p2p-channel`'s `request` has no timeout.
-   - Splectral scenarios: two runs at once interleave in one topic.
+     metrics event.
+   - Withdrawn as error anticipation (`rules.md`, the boundary: happy path
+     inside): `p2p-channel`'s `request` without a timeout (a closed channel
+     already rejects what is pending); a guard against two scenario runs at
+     once.
    - `base-demo-other-host/test` fails 2 runs in 3 here (`../0-setup/`):
      `send-request` (`splectral-p2p-actions/request.js`) keeps the channel
      of the first connection it saw and never notices it closing (`channel
@@ -177,6 +183,18 @@ the human.
    `p2p-node-manager` (its Docker calls only; whether host B runs HAICC is
    a later question) and Splectral's p2p side; copied into each package
    that needs it. Its product repository: the human creates it.
+
+3. **Names** (2, 4): two concerns, not one twice. The boot cleans a new
+   name (lowercase; every run of other characters a `-`; the change said);
+   `mycelium-uri` validates at the boundary. A name referring to something
+   existing is taken as given, else an error (`docs/rules.md` 1, reworded):
+   the boot cleans only where a name is made (a new swarm, a node added by
+   hand), looks the rest up exactly (which closes `../x`). The branch-name
+   helper copied in the `mycelium-git` and `mycelium-layer` CLIs moves into
+   `mycelium-uri`.
+4. **The boundary** (`rules.md`, reworded): inside, the happy path; no
+   error anticipation; a failure handled where it shows (stop and say, or
+   correct). Sections 4 and 6 sorted against it.
 
 ## Product repositories (2026-11-08, the human)
 
