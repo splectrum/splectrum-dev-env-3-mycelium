@@ -241,6 +241,13 @@ the human.
 7. **The observer call** (2): `p2p-observe`, the emitter and `hex` of the
    eight p2p modules (the human's yes).
 
+8. **Splectral's p2p side reading others' layouts** (2): each piece back to
+   its owner (the human's yes): Docker's through `docker-manager`; the
+   swarm's nodes and their configs (HAICC's work folder layout) asked of
+   HAICC (Splectral wrapped in HAICC), not read from its files; the node
+   manager's topic layout exported by `p2p-node-manager`. The code reviewed
+   further for improvements as the work builds on these components.
+
 ## Product repositories (2026-11-08, the human)
 
 Archived on GitHub by the human: `pear-full-square/haicc-reconcile`,
