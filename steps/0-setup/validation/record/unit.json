@@ -1,0 +1,12 @@
+{
+  "invocation": "steps/record.sh 0-setup validation modules=sh steps/0-setup/modules.sh packages=sh steps/0-setup/packages.sh ",
+  "state": { "dev": "4be2fdf342fc9354392c0a0760416fbfd54e3cc5", "pendingDefault": "72ce26b" },
+  "environment": {
+    "node": "v22.23.4",
+    "bare": "v1.36.0",
+    "git": "git version 2.43.0",
+    "os": "Linux 6.18.44-fc-v310",
+    "docker": "29.9.2"
+  },
+  "nondeterministic": { "started": "2026-11-08T06:44:38Z", "finished": "2026-11-08T06:49:08Z" }
+}
