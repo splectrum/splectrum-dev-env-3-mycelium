@@ -13,6 +13,49 @@ it goes"); each step a request of its own, its record in `steps/<step>/`.
 | 2 | The documentation: the stale notes cleaned up, the documentation split into clear sections | to come |
 | 3 | Mycelium repositories on a swarm: data hives, mounting, a repository for the logs | to come, designed with the human step by step; needed everywhere (the human): every level's config and state in its own repository, the node's first |
 
+## Direction: the folder structure and mycelium repositories
+
+Discussed with the human, 2026-11-08; to start in this phase, designed step
+by step with the human.
+
+- **Every level set up as a node is.** The host, a swarm's master, a node:
+  the same layout; its code a folder (a view of the packages repository);
+  its config, state and log in its own p2p repositories, in a store of its
+  own; its own HAICC. Then it does not matter where HAICC runs (a
+  container, the host, another machine): one structure, one set of
+  commands, one test path. HAICC is mainly a wrapper (of the package
+  manager, `docker-manager`, mycelium's operations) with what a wrapper
+  needs (config, the levels); `haicc-base-boot` and `haicc-deployment`
+  converge into one HAICC; host B simply runs a node setup.
+- **What differs is what is provided, an organisational matter**: Docker, a
+  person at a terminal, the network, the runtime. HAICC asks what is
+  provided, not where it is (the agreed `host.json`, generalised). A
+  capability may be provided from elsewhere: a node managing Docker
+  through a proxy on the host (`docker-manager` exposed to authorised
+  peers, narrowly: its swarm's containers, hardened), as `vision.md`'s
+  configurable authority.
+- **The repository is the truth; a working tree is a view at the
+  boundary.** Our code reads and writes repositories through mycelium,
+  never files; a working tree is only for what cannot go through mycelium:
+  a person, Bare loading code, Docker's mounts, the browser. A repository
+  on the p2p layer is stored in its Corestore (RocksDB through
+  `hypercore-storage`: on disk, not as readable files; a Hyperdrive holding
+  the git directory), so a view is made from it: extracted by mycelium
+  (incrementally, by tree differences; atomically where readers must not
+  see half a commit), later a read-only, lazy mount. Changes go back only
+  as commits. Syncing a `.git` folder file by file is not a way: not
+  atomic, the working tree does not follow, hooks would come along.
+- **Code reaches a level by replication, then a view**: extracted today
+  (host B already does: `p2p-node/boot.js`); later perhaps a module
+  loader for Bare reading through mycelium (as Pear loads from a
+  Hyperdrive), to be probed. The host's mounted `packages/` is a
+  transitional shortcut for one host.
+- Open, to settle with the human: logs as topics (records appended, Kafka
+  style) rather than a commit per line, state as git objects; how config
+  is changed (a `haicc` command, or a view edited and committed); a
+  minimal plain-file log kept for the cold boot and the store's own
+  failures.
+
 ## To pick up when the work touches the area
 
 Recommendations and decisions waiting for the area to be worked on; each
