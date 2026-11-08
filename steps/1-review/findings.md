@@ -276,6 +276,12 @@ the human.
     configuration, naming none) is in `../plan.md`, taken up when the work
     touches that area.
 
+12. **Management knowledge in the p2p layer** (3): the node's config, state
+    and events in the node's own repository, the manager writing there and
+    subscribing, the node knowing no manager (with the human): in
+    `../plan.md`, "The node's own repository", with the Splectral work and
+    step 3.
+
 ## Product repositories (2026-11-08, the human)
 
 Archived on GitHub by the human: `pear-full-square/haicc-reconcile`,

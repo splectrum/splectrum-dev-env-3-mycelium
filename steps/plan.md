@@ -11,7 +11,7 @@ it goes"); each step a request of its own, its record in `steps/<step>/`.
 | 0 | The setup: the seed planted, the development state from phase 2 (`0-setup/`) | done |
 | 1 | The review of phase 2's code, and the refactor (`1-review/`) | the review discussed with the human, decisions in `1-review/findings.md`; the dead layer and the unused CLIs removed; the fixes and new modules next |
 | 2 | The documentation: the stale notes cleaned up, the documentation split into clear sections | to come |
-| 3 | Mycelium repositories on a swarm: data hives, mounting, a repository for the logs | to come, designed with the human step by step |
+| 3 | Mycelium repositories on a swarm: data hives, mounting, a repository for the logs | to come, designed with the human step by step; needed everywhere (the human): every level's config and state in its own repository, the node's first |
 
 ## To pick up when the work touches the area
 
@@ -39,6 +39,16 @@ improvements as the work builds on it.
     at the boundary, the browser side without tests.
   - Its real-time communication: the RPC server on AVRO, on the replication
     connection (`vision.md`, "Values on the wire and at rest").
+- **The node's own repository** (the human, 2026-11-08: why a mycelium
+  repository operational matters, it is needed everywhere): the node's
+  config and state, and its events as a topic, in the node's own
+  repository (the node has one, `node.repos.node`). The manager writes
+  what it decides there (container, image, address) instead of a shadow on
+  stdin; the node reads its own data and knows no manager; the manager and
+  Splectral subscribe by replication, knowing no event kinds. Today
+  `p2p-node` keeps the manager's shadow (`index.js:259`, `:293`) and
+  `p2p-node-manager` knows `p2p-node`'s and the observer's event kinds
+  (`index.js:166-182`): findings, decided 12.
 - **HAICC in the container**: the node's program started through the
   node's HAICC (findings, decided 5).
 - **The cold boots**: the initial one may use the module directly; every
