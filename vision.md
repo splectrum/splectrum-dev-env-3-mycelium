@@ -47,42 +47,13 @@ boundary is found, not assumed, once Hypercore is understood. Links over
 copies follow naturally from the cluster: a node holds links and loads
 lazily what it reads.
 
-## Values on the wire and at rest: compact-encoding and AVRO
+## Values on the wire and at rest
 
-Discussed with the human, 2026-11-08; a direction, not built.
-
-- **Envelope and content.** compact-encoding (Holepunch's binary
-  encoding, native to Bare; with hyperschema for declared, append-only
-  versioned schemas) is the p2p layer's envelope: a Hypercore block, a
-  Protomux message, carrying what the layer needs (message type, ids,
-  lengths, offsets). AVRO is the content: the typed value, encoded against
-  its schema, carried in the envelope as opaque bytes (`c.buffer`). The p2p
-  layer knows no schemas. Today the content is JSON (`p2p-channel`'s
-  `c.json`; the topics' records as JSON files); AVRO replaces the content's
-  encoding, the envelope stays.
-- **A Kafka record on Hypercore**: the block a compact-encoded envelope
-  (timestamp, key, headers), its `value` AVRO bytes, in AVRO's
-  single-object form (the schema's fingerprint first), so any reader knows
-  the schema that wrote it.
-- **avsc is barified already** (`bare-for-pear/avsc-rpc`), with its RPC
-  server split out (`bare-for-pear/rpc-server`; later avsc versions dropped
-  it). The RPC server is the real-time data communication tool, run over
-  several protocols; Splectral's server gets it with the move to AVRO.
-- **RPC on the replication connection.** Between two peers there is one
-  connection (Hyperswarm, UDX and Noise) and on it Protomux's channels:
-  Hypercore's replication, `p2p-rns`, `p2p-request` (as today), and an
-  AVRO RPC channel would be one more: the AVRO handshake once, then each
-  call a message name and its encoded arguments, one AVRO message per
-  Protomux message. Not an inline call, a message on an open connection:
-  no connection to set up (no DHT lookup, holepunch or Noise handshake),
-  and one round trip where communicating through replicated data takes
-  several (append, `have`, `want`, the block) and needs the reader
-  following. To measure, not to anticipate: replication's large transfers
-  queued ahead of a call on the one ordered connection.
-- **Replication for state, RPC for the conversation**: repositories and
-  topics replicated (durable, recomputable); Splectral's live view, actions
-  and requests by RPC (immediate, recorded at the boundary); one
-  connection per pair of peers for both.
+Agreed with the human, 2026-11-08: `docs/design/values.md` (the data type,
+encodings and containers; compact-encoding the envelope, AVRO the content;
+RPC on the replication connection). Mycelium repositories, the branch model
+and portable execution: `docs/design/repositories.md`; the levels'
+structure and Pear below HAICC: `docs/design/structure.md`.
 
 ## Packages, deployments and the cluster
 
