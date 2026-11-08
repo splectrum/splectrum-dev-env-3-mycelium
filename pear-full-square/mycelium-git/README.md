@@ -22,9 +22,9 @@ unambiguous. `mycelium-xpath` navigates it, `*` steps included:
 - `pinned(backend, state)` → the backend with its branches fixed to the
   commits in `state` (`{ branch: commit }`): a repository at a recorded
   state, such as a unit's
-- Inside, paths are stored names and match exactly. The boundary (here,
-  `cli.js`) runs its own process for an external URI: `validate` it with
-  `mycelium-uri`, then select with `sameName` to find the stored names;
+- Inside, paths are stored names and match exactly. At the boundary (the
+  caller, where an external URI comes in) the URI is validated with
+  `mycelium-uri`, then selected with `sameName` to find the stored names;
   `select(path, match)` and `read(path, match)` take it.
 
 ## Writing under the rules
@@ -128,11 +128,6 @@ Adapters, one per engine, each run against the same contract suite
   not this module's concern: mycelium knows nothing of p2p. The contract
   suite runs on a drive too (`test/hyperdrive.test.js`), with Corestore and
   Hyperdrive as development dependencies, for that test only.
-- An engine given as a module: the CLI's `--engine=<path>` (relative to
-  `cli.js`, ending in `.js`) imports a module exporting
-  `openBackend(dir) → { backend, close }`. That is how repositories on the
-  p2p layer (`p2p-mrepo/engine.js`) run mycelium-git's command sets:
-  mycelium-git runs on the backend without knowing what it is.
 - A tree's entries come in git's order on every engine (a folder's name
   compared as if it ended in `/`, as native git stores them): the
   isomorphic-git-style adapter sorts them so, since isomorphic-git gives

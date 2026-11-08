@@ -29,17 +29,6 @@ openRepo(repo.backend).read('/main/readme.md')             // mycelium, unchange
 - **mycelium-git** is a sibling folder (`../mycelium-git`), as the mycelium
   modules are to each other; p2p-git comes from `pear-full-square/p2p-git`.
 
-## From the command line
-
-`engine.js` is an engine for mycelium-git's CLI: every mycelium operation
-runs on a p2p-mrepo repository (`repo`, in the store at the path given):
-
-```sh
-node ../mycelium-git/cli.js --engine=../p2p-mrepo/engine.js select <storage> /main/*
-node cli.js import <storage> <native-repo>     # the boundary in
-node cli.js export <storage> <bundle>          # the boundary out
-```
-
 **Instrumentation** (the series' contract): `repo-created`,
 `repo-imported`, `repo-cloned`, `repo-opened`, `replica-opened`: names,
 ids, keys and counts, never a secret.
