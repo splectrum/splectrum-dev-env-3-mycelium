@@ -29,6 +29,21 @@ commands, one test path; execution becomes portable (`repositories.md`).
   authorised peers, narrowly: its swarm's containers, hardened), as
   `vision.md`'s configurable authority.
 
+- **Mycelium repositories at every level, the host's install included**
+  (agreed, the human, 2026-11-09: it closes the loop). A level's code is
+  its packages layer (the bundles; the host's is the host's global store),
+  its config and state its own layers, its log a topic, its requests the
+  request branches; what it runs, bundles copied out of its packages layer
+  into its scope. Swarms and nodes the same, their packages layers filled
+  by replication. Outside, at every level, by necessity: the cold boot
+  (the bootstrap: it runs before any repository exists, from the setup's or
+  the Pear release's bundle and shell, creates the level's repository and
+  commits the release's bundles into its packages layer; the warm boot runs
+  out of the repository); the substrate (the store: Corestore and RocksDB
+  on disk; Bare; Docker; native addons as files); the minimal plain-file
+  log. The host is no longer special: the first level, made by the cold
+  boot.
+
 *Why*: the same structure everywhere makes execution portable and the
 platform one thing to build and test.
 
@@ -64,7 +79,8 @@ write. (`wait` queues a writer for the lock.)
 - **What else RocksDB means for us** (substrate, never used directly): a
   native addon (`rocksdb-native`, in `addons/`); backups are a closed store
   copied or replication to a backup peer, not a copy of an open store's
-  folder; the store holds the Corestore's primary key in clear (`p2p-store`),
+  folder (backups belong to the repositories: `repositories.md`); the store
+  holds the Corestore's primary key in clear (`p2p-store`),
   so its folder is protected as a key is; opaque by design, views coming
   from the repositories.
 
