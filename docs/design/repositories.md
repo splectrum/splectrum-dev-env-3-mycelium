@@ -60,7 +60,9 @@ Nothing is merged across writers; each side moves only its own branches.
 
 ### Passive and active repositories
 
-**Agreed.**
+**Direction, not an initial concern** (the human, 2026-11-09: it needs a
+design of its own, later; not part of the repository implementation now).
+The sketch, kept as the starting point for that design:
 
 | | the passive repository (requester) | the active repository (executor) |
 |---|---|---|
@@ -126,8 +128,9 @@ branches to commits.)
 
 ### Open
 
-- Where the request manager runs (proposed: in the active repository, over
-  the request layers it subscribes to).
+- The request manager (the human, 2026-11-09): it runs where the requests
+  are generated, one manager (and queue) per source; settled with the
+  repository implementation.
 - Whether any branch needs several writers (Autobase), or one writer per
   branch is enough (proposed: one writer per branch to start).
 
@@ -145,7 +148,7 @@ not of the code; a unit gives the same result wherever it ran.
 
 ## Near real time: RPC as the signal, replication as the record
 
-**Agreed.** On the connection replication already uses (`values.md`): the
+**Direction**, with passive and active repositories (their own design, later). On the connection replication already uses (`values.md`): the
 passive side commits its request and sends "request `<name>` at commit
 `<id>`"; the active side fetches exactly those objects at once, executes, and
 answers "response at `main` commit `<id>`". No polling, no reader having to
