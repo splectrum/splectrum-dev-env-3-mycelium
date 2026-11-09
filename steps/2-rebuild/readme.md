@@ -101,6 +101,27 @@ nodes, centralised logs, the demos.
   up to `store/`. End to end again: called from `/` by its bundle's path,
   it reads `/packages/default`.
 
+**The layout, the visible proof, the first release round** (2026-11-09):
+
+- The repository mounted at `<work>/haicc/` (the human): one `packages`
+  layer (a layer of its own, like `main`), bundles by `[org]/[package]`
+  (`haiccing/base-package-boot`, `haiccing/base-package-haicc`), the addons
+  store two levels up (`/../../addons/<sha256>`); a source, the packages
+  layer and its view one format; the substrate beside the mount point
+  (`store/`, `setup/`). Testing as a separate instance with a custom
+  `mixed` manifest (design only).
+- `haicc status`: the level at a glance (its repository's name, id, key;
+  its layers; the pinned manifest; each package installed, deployed or
+  not). Tests 21 of 21.
+- `tools/setup/keygen.js` (the publisher's key pair) and `tools/publish.sh`
+  rewritten for the new release: written, signed, the setup built, checked
+  from a fresh folder with Node.js off the PATH (`haicc status`), published
+  only with `--push`. Run here without `--push`: the setup checked, the
+  tag `setup-a6d039296165`; the bundles identical to the build before
+  (reproducible).
+- For local: `handover-local.md` (the key, the build and check, publishing
+  with the human's word, the check from GitHub, the record).
+
 Not yet: the tests run from the bundle (their third-party code, brittle,
 is not reached from the entry); the other packages (`swarm-three-nodes`, the
 demos) still defined on the old platform, written with `--only` meanwhile;
