@@ -1,7 +1,7 @@
 #!/bin/sh
 # A release of HAICC's platform, for the local agent (a machine with push
 # access to github.com/haiccing and `gh`), with the human's word. From this
-# repository at the commit to publish, installed (npm install).
+# repository at the commit to publish, installed (sh tools/install.sh).
 #   sh tools/publish.sh <folder> --key-dir=<folder> [--push]
 # 1. The boot and HAICC's packages written as bundles, signed with the
 #    publisher's key (<key-dir>/publisher.secret; make one with

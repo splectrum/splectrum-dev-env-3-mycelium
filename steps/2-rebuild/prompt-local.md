@@ -1,12 +1,12 @@
 # Prompt for the local agent
 
-Give this to Claude Code on the local machine (Linux x86-64; git, Node.js,
-npm; `gh` logged in with push access to github.com/haiccing):
+Give this to Claude Code on the local machine (Linux x86-64; git, curl;
+`gh` logged in with push access to github.com/haiccing):
 
 > Build, test and publish the first release of the rebuilt HAICC platform.
 >
 > 1. Clone https://github.com/splectrum/splectrum-dev-env-3-mycelium (branch
->    `main`) and run `PUPPETEER_SKIP_DOWNLOAD=1 npm install` in it.
+>    `main`) and run `sh tools/install.sh` in it (no Node.js needed).
 > 2. If `~/haicc-publisher/publisher.secret` does not exist, make the
 >    publisher's key: `tools/bare tools/setup/keygen.js ~/haicc-publisher`.
 >    Keep `publisher.secret` on this machine only; never commit or print it;

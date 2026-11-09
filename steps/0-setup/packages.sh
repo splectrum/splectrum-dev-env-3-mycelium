@@ -6,6 +6,6 @@ set -u
 out=$(mktemp -d)
 tools/bare tools/package-writer/cli.js --out="$out" --quiet > "$out.json"
 code=$?
-node -e 'const r = JSON.parse(require("fs").readFileSync(process.argv[1])); console.log(JSON.stringify({ ok: r.ok, written: r.written.map(w => ({ package: w.package, hash: w.hash.slice(0, 12) })), failed: r.failed }))' "$out.json"
+tools/bare -e "const r = $(cat "$out.json"); console.log(JSON.stringify({ ok: r.ok, written: r.written.map(w => ({ package: w.package, hash: String(w.hash).slice(0, 12) })), failed: r.failed }))"
 rm -rf "$out" "$out.json"
 exit $code
