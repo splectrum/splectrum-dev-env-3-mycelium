@@ -25,6 +25,8 @@ npm; `gh` logged in with push access to github.com/haiccing):
 > 5. Record it in `steps/2-rebuild/local-run.md`: the commit, the release
 >    tag, the commands, each result (paste `haicc status`), how long the
 >    setup took, and anything found (for the implementer, not fixed there).
->    Commit and push to `main`. Then tell me the result.
+>    Commit it on `execute/main`, merge it into `main` (a plain merge:
+>    `main` changes only by merges from `execute/*`, `rules.md`), push both.
+>    Then tell me the result.
 >
 > Background, if needed: `steps/2-rebuild/handover-local.md`.
