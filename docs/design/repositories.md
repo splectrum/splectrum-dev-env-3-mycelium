@@ -184,5 +184,7 @@ the node's first: the manager writes what it decides (container, image,
 address) there, the node reads its own data and knows no manager; the
 manager and Splectral subscribe by replication, knowing no event kinds (in
 place of today's shadow on stdin and the manager knowing the node's event
-kinds). Logs as topics (records appended) rather than a commit per line:
-**open**, with state as git objects.
+kinds). **Logs** (direction, the human, 2026-11-09; the design in detail
+when the implementation starts): individual topics (records appended, not a
+commit per line), which the swarm can centralise, and which are added to
+the local mycelium repository as well; state as git objects.
