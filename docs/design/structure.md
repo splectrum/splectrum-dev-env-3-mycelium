@@ -73,6 +73,31 @@ write. (`wait` queues a writer for the lock.)
   partial (sparse replication: the blocks it downloaded) and cleared when
   no longer needed (retention per node), the producer's log untouched:
   redundancy and local reads, authority where it belongs.
+- **The single writer is the one open store** (tried 2026-11-09): a store
+  opens writable once; a second open fails even in the same thread, and
+  from a child thread (`bare-thread`) of the same process; a Bare thread
+  cannot share the main thread's store (each its own isolate, sharing only
+  messages). The store's writer is the open store, held by
+  `mycelium-repo-main`'s main thread; the cores' writer is the same open
+  store (every core of the repository, its layers' drive, its topics, its
+  outbox, keyed from the store's primary key). Child threads and launched
+  commands are its clients, never writers: a child thread sends what it
+  wants written as a message; a launched command (a request's execution)
+  writes into the execute layer through the main thread's local connection
+  (a value put at a path, one removed, a record appended), the main thread
+  applying each write and, on completion, committing, merging and
+  recording. Long writes need care not to block the watchers.
+- **More writers, more stores** (agreed, the human, 2026-11-09): another
+  store (its own folder, its own primary key) has its own single writer (a
+  child thread, another process, a package's process); the repository
+  attaches it by reference (its cores' keys in the repository's mappings,
+  pinned at its commits) and reads it by replication from that store's
+  writer (followed live and verified; replicated into its own store or read
+  sparsely). Writes never cross stores; what joins them is a reference and
+  replication, as between machines. So a level may have several stores,
+  each with one writer, composed by reference: the level's repository
+  (`mycelium-repo-main`), a log store written by a logging thread (heavy
+  appends kept off the main thread), a package's own store.
 - **A read-only reader sees a snapshot as of its opening** (tried
   2026-11-09: a reader kept open while the writer appended five times saw
   none of them, `update()` returning `false`; a reader opened afterwards saw
