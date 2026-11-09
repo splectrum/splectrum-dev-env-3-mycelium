@@ -271,6 +271,14 @@ functionality (the bundles in `packages/`) is not exposed.
   the outbox's key and length, the latest length standing for a burst; the
   receiver fetches those blocks sparsely and checks them; for occasional
   senders). Both land in the receiver's inbox topic.
+- **The boxes are a level's** (the human, 2026-11-09): the host (the first
+  level) as any swarm or node; "node" above stands for any level. Each
+  level has its own root; a URI is read in its level's URI space, its
+  dispatcher matching its own root by prefix (local: a repository's file
+  inbox) and sending anything else out. Translating between roots is done
+  mostly by repository referencing (the mappings). **Open**: each
+  context's root (the host's differs from a swarm node's, `p2p-rns`'s
+  `/<swarm>/<node>/…`).
 - At implementation: the addressee by URI, resolved by the resource name
   service; a message as a Kafka record (its value the message; headers:
   from, to, a correlation id).
