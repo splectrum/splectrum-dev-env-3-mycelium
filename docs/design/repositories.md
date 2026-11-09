@@ -287,7 +287,10 @@ functionality (the bundles in `packages/`) is not exposed.
   first built as `PUT`): the inbox names the new message. The REST verbs
   everywhere for the CRUD operations, in their meaning: `GET` reads, `PUT`
   writes at a URI the caller names, `POST` adds to a collection that names
-  the item, `DELETE` removes. The host's root is the host's repository, so
+  the item, `DELETE` removes. **The verbs are the transport between
+  repositories** (the human, 2026-11-09): an RPC server has a fixed set of
+  messages, the verbs; the real requests (a command of a repository's API)
+  travel wrapped, as the body of a `POST` to an inbox. The host's root is the host's repository, so
   its inbox is `/inbox`; from outside a root, through its mapping, only
   `POST /inbox` is allowed (the gate); inside, code writes any layer under
   the layer rules. Folders for now, no layer kind (**built** at
@@ -303,6 +306,10 @@ functionality (the bundles in `packages/`) is not exposed.
   more only where it is itself a repository's application. **No command
   stays outside**: each passes through the inbox and is recorded (starting
   and stopping the host's main thread, the boot's own record).
+- **An API package maps the API to internal functionality** (the human,
+  2026-11-09): the `haicc` package declares the commands (their arguments,
+  validated at the inbox) and maps each to the functions that do it; how a
+  command is executed follows the repository's configuration settings.
 - **The boxes are a level's** (the human, 2026-11-09): the host (the first
   level) as any swarm or node; "node" above stands for any level. Each
   level has its own root; a URI is read in its level's URI space, its
