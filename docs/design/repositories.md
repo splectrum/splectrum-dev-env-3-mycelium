@@ -178,8 +178,9 @@ commit.
 mycelium's, not HAICC's: HAICC sets a level up (`init`) and starts it; the
 package manager puts bundles in its packages layer.
 
-- **An always-on process per repository** (a mycelium module, its name
-  open): it holds the store as its single writer, keeps the required
+- **An always-on process per repository**, the repository's main thread:
+  `mycelium-repo-main` (the human; module and process names are one
+  namespace, git layers another): it holds the store as its single writer, keeps the required
   watchers running (the local queue, the sources it follows, replication),
   serves the local connection (short-lived and long-lived readers,
   submits), and restarts what stops.
