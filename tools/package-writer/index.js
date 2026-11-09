@@ -24,6 +24,8 @@ import { closure } from '../../pear-full-square/pkgm-base-manager/lib/closure.js
 import { copy, hashTree, remove } from '../../pear-full-square/pkgm-base-manager/lib/tree.js'
 import { testPackage, packageHash } from '../../pear-full-square/pkgm-base-manager/index.js'
 import process from 'bare-process'
+import { spawnSync } from 'bare-subprocess'
+import { writeRelease } from './bundle.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const ORG = 'haiccing'
@@ -155,7 +157,7 @@ function readme (repo, def, m) {
     'Self-contained: it carries what it runs on. Written from the development repository ([splectrum/dev-env-3-mycelium](https://github.com/splectrum/dev-env-3-mycelium)): not edited here.', ''].join('\n')
 }
 
-export function writePackages ({ dev, out, only = null, keep = false, log = () => {} }) {
+export async function writePackages ({ dev, out, only = null, keep = false, log = () => {} }) {
   dev = resolve(dev); out = resolve(out)
   const defs = readJson(join(dev, 'packages.json'))
   const ours = oursOf(dev, defs)
@@ -175,13 +177,23 @@ export function writePackages ({ dev, out, only = null, keep = false, log = () =
     const results = staged.map(s => testPackage(s.dir, { log }))
     if (results.some(r => !r.ok)) return { ok: false, written: [], results, scratch: keep ? scratch : null }
     const written = []
+    const commit = String(spawnSync('git', ['-C', dev, 'rev-parse', 'HEAD'], { stdio: ['ignore', 'pipe', 'ignore'] }).stdout || '').trim() || null
     for (const s of staged) {
       const to = join(out, s.repo)
       mkdirSync(to, { recursive: true })
       for (const n of readdirSync(to)) if (n !== '.git') remove(join(to, n))
-      for (const n of readdirSync(s.dir)) copy(join(s.dir, n), join(to, n))
-      written.push({ package: s.name, dir: to, hash: s.pkgm.hash })
-      log({ kind: 'written', package: s.name, dir: to, hash: s.pkgm.hash.slice(0, 12) })
+      const entries = defs.packages[s.name].entries
+      if (entries) {
+        // Its release: the full package as one bundle, its addons beside it.
+        const [main] = Object.values(entries)
+        const m = await writeRelease({ staged: s.dir, release: to, repo: s.repo, entry: `modules/${main}`, commit })
+        written.push({ package: s.name, dir: to, hash: m.bundle.sha256, release: m })
+        log({ kind: 'released', package: s.name, dir: to, bundle: m.bundle.sha256.slice(0, 12), bytes: m.bundle.bytes, addons: m.addons.length })
+      } else {
+        for (const n of readdirSync(s.dir)) copy(join(s.dir, n), join(to, n))
+        written.push({ package: s.name, dir: to, hash: s.pkgm.hash })
+        log({ kind: 'written', package: s.name, dir: to, hash: s.pkgm.hash.slice(0, 12) })
+      }
     }
     return { ok: true, written, results }
   } finally {

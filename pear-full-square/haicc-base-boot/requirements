@@ -1,7 +1,0 @@
-# What HAICC needs to run, checked by step0.sh (stage 1 of the boot, before
-# anything of HAICC runs). Bare's runtime is carried by the setup (in
-# bare/): checked that it runs on this host. The host's other
-# prerequisites (git, Docker) are HAICC's own, checked and fixed by ./haicc boot.
-# name   required
-os       linux-x86_64
-bare     runs

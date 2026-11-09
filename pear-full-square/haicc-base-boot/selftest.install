@@ -1,7 +1,0 @@
-# The self-test: a work folder's install file (copy it to haiccing/install,
-# then ./boot). The root's part, for now; the managers' (each
-# package's tests, each demo run, tested, torn down) come with the manager
-# boot.
-list
-fetch base-package-p2p
-list

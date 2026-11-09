@@ -2,46 +2,19 @@
   "description": "haiccing's packages, as the package writer (tools/package-writer) writes them: each self-contained (no requires), in the package structure (notes/packages.md). Rebuilt one package a step: haicc first; the package manager next. modules: ours it starts from (and its swarms' modules.json); with: other definitions' modules, written in with it (the writer's convenience); together: packages always written with it (the platform's pair); the hand-written parts from haiccing/<repo>/.",
   "packages": {
     "haicc": {
-      "description": "HAICC, the platform's levels: the root's and the swarms' (haicc-base-boot), the nodes' (haicc-deployment). With the package manager (base-package-pkgm), the platform's pair: HAICC uses it from beside it. On Bare.",
+      "description": "HAICC, the platform: its release is the setup (Bare, the package's bundle, native addons by hash); booted, it makes the host a mycelium repository and runs HAICC from it. On Bare.",
       "modules": [
-        "pear-full-square/haicc-deployment",
         "pear-full-square/haicc-base-boot"
       ],
-      "readme": [
-        "## Start here",
-        "",
-        "Linux on x86-64 (on Windows: inside WSL2), with `curl` and `tar`. The setup is this package's release, `haicc-setup.sh`; one command, stopping at the first step that fails:",
-        "",
-        "```sh",
-        "rm -f haicc-setup.sh && curl -fL --progress-bar --retry 5 --retry-all-errors --connect-timeout 20 --speed-time 30 --speed-limit 1000 \\",
-        "     -o haicc-setup.sh https://github.com/haiccing/base-package-haicc/releases/latest/download/haicc-setup.sh \\",
-        "  && sh haicc-setup.sh ~/haicc-work \\",
-        "  && ~/haicc-work/boot \\",
-        "  && cd ~/haicc-work && ./haicc list",
-        "```",
-        "",
-        "The setup is about 39 MB (it carries Bare's runtime: nothing more to download). On a poor connection: if the download stops, `curl -fL -C - --speed-time 30 --speed-limit 1000 -o haicc-setup.sh https://github.com/haiccing/base-package-haicc/releases/latest/download/haicc-setup.sh` continues it where it stopped; run it again until it ends without an error, then `sh haicc-setup.sh ~/haicc-work && ~/haicc-work/boot`.",
-        "",
-        "The boot runs in two stages. Stage 1, `./boot`, in plain shell: Linux x86-64, and Bare's runtime (carried by this package: nothing to download) placed in `bare/`; HAICC's package copied whole into `packages/base-package-haicc/`; `./haicc` written (HAICC runs on Bare). Stage 2, `./haicc boot`: the host's other prerequisites (git 2.25 or later; Docker Engine installed, running, rootful, native, and you in the `docker` group), each fixed only with your yes (`--yes` agrees beforehand); then `haiccing/install` if there (one `./haicc` command a line), or the next commands.",
-        "",
-        "Everything it does is logged in the work folder's `log/` (`~/haicc-work/log/`): files named by their start, newest last. Everything is in plain sight: `boot`, `shutdown`, `haicc`, `haiccing/`, `packages/`, `bare/`, `log/`; no hidden folders. `./shutdown` takes it all back to the setup (keeping `haiccing/`, `log/`, `bare/`); `./boot` again sets it up.",
-        "",
-        "The nodes' HAICC (`haicc-deployment`) runs in the nodes, with the package manager (`base-package-pkgm`, the platform's other package). A swarm is made from a package: `./haicc boot base-swarm-three-nodes` (fetched from the sources, checked intact; its swarm made from its configuration, its codebase assembled into the master's `packages/`, each node in a container of its own, running it). `haicc boot` and `haicc shutdown` work on the config of the folder they are called from: the work folder, a swarm (`<swarm>/haicc`), a node (`<swarm>/<node>/haicc`).",
-        "",
-        "Tested by its own tests, on your machine: after the boot, `./haicc boot base-package-haicc/test` (the full set: the modules' tests, the package's, and the platform test, which sets up a fresh install inside its run and works it through every level), or `--set=validation` (the package as it is, nothing started)."
-      ],
-      "together": [
-        "pkgm"
-      ]
+      "entries": {
+        "haicc": "pear-full-square/haicc-base-boot/haicc.js"
+      }
     },
     "pkgm": {
       "repo": "base-package-pkgm",
       "description": "The package manager: a package checked intact, deployed with its validation tests, its tests run bottom up; a swarm's codebase assembled into its master's package repository. The platform's pair, with HAICC. On Bare.",
       "modules": [
         "pear-full-square/pkgm-base-manager"
-      ],
-      "together": [
-        "haicc"
       ]
     },
     "swarm-three-nodes": {

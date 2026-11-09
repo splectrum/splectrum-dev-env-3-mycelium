@@ -55,6 +55,7 @@
     "path": "npm:bare-node-path@1.0.1",
     "process": "npm:bare-node-process@1.0.1",
     "url": "npm:bare-node-url@1.0.1",
-    "util": "npm:bare-node-util@1.0.0"
+    "util": "npm:bare-node-util@1.0.0",
+    "bare-pack": "3.0.2"
   }
 }
