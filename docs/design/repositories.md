@@ -155,8 +155,12 @@ nothing of the store beneath (Corestore, RocksDB):
   replication, self-contained, immutable, verifiable): a checkpoint at a
   commit; restored by importing it. (A git bundle, not Bare's code bundle.)
 
-Each repository by its own policy; the roadmap's teardown with checkpointing
-and backup builds on it.
+Backups may happen at different levels, for different purposes (a node's
+state, a swarm's, the host's install), each by its own policy; the
+important point is that they are **disjoint** (the human): a backup covers
+its own repositories only, never another level's, so each can be taken and
+restored on its own. The roadmap's teardown with checkpointing and backup
+builds on it.
 
 ## The node's own repository
 
