@@ -163,8 +163,25 @@ nodes, centralised logs, the demos.
   (`mycelium-repo-main 0.1.0`). The tag it would publish:
   `setup-3a5c9a551c31`.
 
-Next: 3, `mycelium-repo-main` started by the boot as the level's main
-thread (the store held as its single writer).
+## 3. The main thread: done (2026-11-09)
+
+- `mycelium-repo-main` runs the level's main thread: it opens the store as
+  its single writer, serves `<work>/main.sock` (owner only, JSON lines;
+  `status`, `stop`), logs to `<work>/log/main.log`, stops on `stop`,
+  SIGTERM or SIGINT. `start` launches it detached and waits for its answer;
+  `ask` talks to it.
+- The boot starts it after closing its own store; HAICC gets `start`,
+  `stop`, and `status` shows it (asked through the socket).
+- Found: `bare-subprocess` ends its own children when its process ends,
+  detached or not; main is started through the shell (`sh -c '… &'`, with
+  `setsid` where there is one), so it outlives the boot.
+- Tests: boot 28, HAICC 21, main 18 (a second writer refused, a read-only
+  reader meanwhile, the store writable again after stop). `tools/publish.sh`
+  without `--push`: the boot's step `main` running, `haicc status` main
+  running, `haicc stop` stopped it, no process left. The tag it would
+  publish: `setup-f3062550a1b6`.
+
+Next: 4, the inbox and outbox, and a minimal dispatcher.
 
 Not yet: the tests run from the bundle (their third-party code, brittle,
 is not reached from the entry); the other packages (`swarm-three-nodes`, the
