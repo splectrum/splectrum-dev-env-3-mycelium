@@ -35,10 +35,10 @@ commands, one test path; execution becomes portable (`repositories.md`).
   its config and state its own layers, its log a topic, its requests the
   request branches; what it runs, bundles copied out of its packages layer
   into its scope. Swarms and nodes the same, their packages layers filled
-  by replication. Outside, at every level, by necessity: the cold boot
+  by replication. Outside, at every level, by necessity: the boot
   (the bootstrap: it runs before any repository exists, from the setup's or
   the Pear release's bundle and shell, creates the level's repository and
-  commits the release's bundles into its packages layer; the warm boot runs
+  commits the release's bundles into its packages layer; initialisation runs
   out of the repository); the substrate (the store: Corestore and RocksDB
   on disk; Bare; Docker; native addons as files); the minimal plain-file
   log. The host is no longer special: the first level, made by the cold
@@ -138,9 +138,9 @@ process needs files.)
 | the log topic | the level's log | no (the minimal file log aside) |
 | child levels | each its own repository, named in this one's mappings by URI | a child's folder, where the child runs on this host |
 
-Always there, outside the layers: `haicc` (the cold boot's way in, shell),
+Always there, outside the layers: `haicc` (the boot's way in, shell),
 `store/` (the substrate: the repository itself, Corestore and RocksDB),
-`log/` (the minimal plain-file log, **open**: its scope, for the cold boot
+`log/` (the minimal plain-file log, **open**: its scope, for the boot
 and the store's own failures).
 
 - **The folders are an install-internal issue** (agreed, the human,
@@ -196,9 +196,9 @@ and the store's own failures).
   runs, inside the container; the host holds only the views the container
   needs (its bundles, its addons).
 
-### The cold boot: getting the level's repository
+### Boot: getting the host's repository (the lifecycle's `boot`)
 
-**Agreed** (the human, 2026-11-09). The cold boot's job: get the level's
+**Agreed** (the human, 2026-11-09). The boot's job: get the level's
 repository, then start its single writer from it. Its source:
 
 | Source | Getting the repository | For |
@@ -207,7 +207,7 @@ repository, then start its single writer from it. Its source:
 | existing (later) | opened from a backup: a git bundle imported (`p2p-mrepo`'s `import`, the id kept), or replicated from a backup peer by key | a restore |
 
 After that, one path: the addons bound, HAICC's bundle copied into the
-scope, HAICC started as the writer, the warm boot refreshing from the
+scope, HAICC started as the writer, initialisation refreshing from the
 sources (a restored repository's older bundles handled as the setup's
 bootstrap bundles are). Kept in mind for restore: a restore brings the old
 identity back, keys included (a backup that allows one holds secrets);
@@ -223,7 +223,7 @@ provided: the level's shape, HAICC's concern, its own module,
 `haicc-base-level`, when a second repository paradigm needs a shape); the
 package manager installs the release's bundles and addons into
 `packages` (checked against the release's manifest) and deploys HAICC's
-bundle into the layer's view. The cold boot's shell runs the checks, then
+bundle into the layer's view. The boot's shell runs the checks, then
 Bare runs HAICC's bundle with `init`, then starts HAICC as the writer.
 
 **How people and agents interact with the platform** (agreed, the human,
@@ -342,7 +342,7 @@ Where packages are used at a level today, and with bundles:
 | the node's program (the master's `packages/`, mounted; `p2p-node/cli.js`) | a node-program bundle |
 | Splectral's server (`splectral-server/cli.js`, its extensions) | a server bundle, its browser files as assets, read from the bundle (below) |
 | the package manager, imported by HAICC from beside it (the pair) | the package manager's code in HAICC's bundle; its own release a bundle of its own (bundles disjoint: below) |
-| the cold boot's shell (`boot.sh`, `shutdown.sh`, the setup) | stays shell (before Bare; scripts are glue) |
+| the boot's shell (`boot.sh`, `shutdown.sh`, the setup) | stays shell (before Bare; scripts are glue) |
 | a swarm's config (`nodes.json`, `modules.json`, `splectral.json`) | stays data, in the level's repositories |
 | the tests (modules' `test/`, the package's named tests) | not bundles (the human, 2026-11-09): a test has the package structure (recursive), its entry point a local cold boot (`boot`, shell), as no level's cold boot is a bundle; the tests are files in the package's bundle, read from it, nothing extracted: the executing code finds everything in the bundle (`mycelium-container-bundle`; a `boot` script given to `sh` on its standard input), the test's run holding only what it writes; exercising the package's own bundle, the one the level runs: what runs is what was tested. The detail at implementation |
 
@@ -380,7 +380,7 @@ repository's history (as `haicc-setup.sh`, a release asset of
 - **A level fetches only what it runs**: a release's bundles and the addons
   they name, through the sources (a folder of release files; GitHub's
   release downloads), each checked against the manifest's hash; the
-  package manager's verify and the warm boot's "intact" become the
+  package manager's verify and initialisation's "intact" become the
   bundle's hash.
 - **On our p2p layer, the bundles are objects in the packages layer**, the
   code store (`repositories.md`; changed 2026-11-09 from a releases drive
@@ -437,7 +437,7 @@ repository's history (as `haicc-setup.sh`, a release asset of
   the setup 7.8 MB (from 29 MB), the air-gapped one 35 MB; both boot from
   a fresh folder with no Node.js on the PATH. The same script ensures Bare
   on the development side, first step of `tools/install.sh`.
-- **The cold boot is in the bundle** (agreed, the human, 2026-11-09). Bare
+- **The boot is in the bundle** (agreed, the human, 2026-11-09). Bare
   is the one program needed, but its binary has no filesystem of its own
   (`bare-fs`, `bare-os`, `bare-crypto` are addons, not linked in: tried), so
   the addons must be files before anything in a bundle runs, and a bundle
@@ -445,7 +445,7 @@ repository's history (as `haicc-setup.sh`, a release asset of
   `addons/`, the manifest, Bare) needs nothing before Bare; the setup is its
   packed form, its shell only unpacking, checking the bundle's hash against
   the manifest (`sha256sum`) and handing over (`bare
-  base-package-haicc.bundle boot`). Everything else of the cold boot (the
+  base-package-haicc.bundle boot`). Everything else of the boot (the
   machine check, `init`, what follows) is the bundle's: tested, hashed and
   released with the package; a restore boots from the repository's own
   bundle.
@@ -469,9 +469,9 @@ repository's history (as `haicc-setup.sh`, a release asset of
   manager from beside it; `lib/pkgm.js` and the pair's lookup go; rule 12's
   exception and "the platform is a pair" (`platform.md`, `packages.md`)
   are changed when this is built.
-- **The cold-to-warm move is a switch of bundles**: the cold boot runs the
+- **The move from boot to initialise is a switch of bundles**: the boot runs the
   bundle the setup or the release brought (the bootstrap); it fetches the
-  current one, checks its hash, copies it into the scope; the warm boot runs
+  current one, checks its hash, copies it into the scope; initialisation runs
   that one.
 - **An install is a plain copy of bundles into an execution scope**: a level
   (host, swarm, node, a test's run) gets exactly the bundles it may run,
@@ -492,7 +492,7 @@ repository's history (as `haicc-setup.sh`, a release asset of
 - **What changes from what is built**: the package manager's `assemble` (a
   swarm's codebase into the master's `packages/`) becomes copying bundles
   into the swarm's store; the mount of the master's `packages/` into the
-  nodes goes; the warm boot's "intact" becomes a hash per bundle.
+  nodes goes; initialisation's "intact" becomes a hash per bundle.
 
 **The probe**: done (2026-11-09): a real package's closure as a bundle,
 native addons (above, "Probe 1" and "Native addons"), a long-lived
@@ -505,17 +505,17 @@ not in this phase; `vision.md`: Pear when versions are fixed).
 
 - **Pear distributes our releases**: a Pear app is our release, extracted,
   potentially the full package set preloaded, in place of `haicc-setup.sh`.
-- **Pear only ever triggers our cold boot**: from its folder on the host,
+- **Pear only ever triggers our boot**: from its folder on the host,
   the release boots into a **HAICC bridgehead** (a level set up as a node
   is), where Pear's world hands over to ours; it installs the HAICC platform
   on the part of a swarm that has the Pear distribution, or makes a separate
   swarm. From there, our design: the container node model (hardened
   containers, Docker through `docker-manager`, a node's Docker by the host's
   proxy) and the additional swarm security (our own DHT per swarm,
-  authorised keys, invitations, the warm boot's validation).
+  authorised keys, invitations, initialisation's validation).
 - **Kept clean by**: two upgrade mechanisms, each its own scope (Pear
   updates the release, the bootstrap; HAICC updates everything after it, by
-  its repositories and links; a newer release matters at the next cold boot,
+  its repositories and links; a newer release matters at the next boot,
   never to a running platform, as "the setup's pair is a bootstrap" today);
   the preloaded packages a starting point only (after the boot, packages
   come through our sources and repositories); the network boundary visible
@@ -560,7 +560,7 @@ Ours (**agreed**): a version is a bundle (its id and hash); the release
 mark is its entry in the publisher's signed manifest (a newer sequence),
 the level's `packages` layer holding what it installed; pinned or following, per layer (`repositories.md`, open); replication
 signalled by RPC is the notification; the level's HAICC decides, after
-validating the new version (intact, its validation set: the warm boot's
+validating the new version (intact, its validation set: initialisation's
 check, which Pear lacks), restarting onto it or waiting; a rollback points
 the link back to the previous commit; the platform's bundles are refreshed
 by the same mechanism.

@@ -60,4 +60,7 @@ The words used:
   repository (`base-package-haicc`, ...).
 - **the package writer**: writes packages (the development side).
   **The package manager**: installs, assembles and tests them (the host side).
-- **cold boot**: makes and copies in; **warm boot**: what then runs and checks.
+- **the lifecycle** (`docs/design/repositories.md`): `boot` (makes and
+  copies in; was the cold boot) and `teardown`; `initialise` (what then
+  sets up and checks; was the warm boot) and `shutdown`; `start` and `stop`;
+  `run` the whole cycle.

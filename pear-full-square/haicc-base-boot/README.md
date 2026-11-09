@@ -1,6 +1,6 @@
 # haicc-base-boot
 
-HAICC's cold boot, the boot package's entry: from a setup (a source folder:
+HAICC's boot (the lifecycle's `boot`), the boot package's entry: from a setup (a source folder:
 the packages' bundles, their native addons by hash, the publisher's signed
 manifest; with Bare and `boot.json`) into a host. Built step by step
 (phase 3, step 2; `docs/design/structure.md` of the development repository).

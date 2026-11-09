@@ -1,4 +1,4 @@
-// The cold boot's command line, the boot package's entry (its bundle's main):
+// The boot's command line (the lifecycle's boot), the boot package's entry (its bundle's main):
 //   bare base-package-boot.bundle boot --work=<folder> [--setup=<folder>]
 //   bare base-package-boot.bundle fetch <package> --work=<folder> [--setup=<folder>]
 // --setup defaults to the folder holding boot.json, up from the bundle. Each step as a JSON line;

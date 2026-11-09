@@ -324,11 +324,13 @@ functionality (the bundles in `packages/`) is not exposed.
     replace), `post` (to a collection, which names the item), `delete`. No
     update: a URI goes deep (into a JSON document, to a single value), so a
     `put` at a deeper URI is the partial update. Extended if ever needed.
-  - **`lifecycle`**: `boot` (brought into existence from a source; inverse
-    `teardown`), `initialise` (configuration and state set up, ready to
-    run), `start` (its processes running; inverse `stop`), `stop` (halted,
-    everything kept), `shutdown` (**open**: its meaning), `teardown`
-    (removed entirely).
+  - **`lifecycle`**, three pairs, each the other's inverse: `boot`
+    (brought into existence from a source: what we called the cold boot) and
+    `teardown` (removed entirely); `initialise` (configuration and state set
+    up, checked, ready to run: what we called the warm boot) and `shutdown`
+    (undone, back to booted); `start` (its processes running) and `stop`
+    (halted, everything kept). And `run`: the whole cycle, from boot to
+    teardown (a test's run, a one-off execution).
 - **A request is fully qualified**: `{ protocol, action, uri, body }`, as it
   travels and as it is recorded (an action unique today may not stay so; a
   recorded request keeps its meaning for an exact rerun). The URI names the

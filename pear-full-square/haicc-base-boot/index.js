@@ -1,9 +1,9 @@
-// haicc-base-boot: the cold boot, as a library (boot.js is its command line,
+// haicc-base-boot: the boot (the lifecycle's boot), as a library (boot.js is its command line,
 // the boot package's entry). From a setup (a source folder: the packages'
 // bundles, their addons by hash, the publisher's signed manifest; with Bare
 // and boot.json: the publisher's public key, the other sources) into a
-// host: its mycelium repository, created (docs/design/structure.md, "The
-// cold boot"; repositories.md):
+// host: its mycelium repository, created (docs/design/structure.md,
+// "Boot"; repositories.md):
 //   boot({ setup, work })          the machine checked; the manifest loaded from
 //                                  the sources (the setup's own folder first),
 //                                  its signature checked; the boot's and HAICC's
