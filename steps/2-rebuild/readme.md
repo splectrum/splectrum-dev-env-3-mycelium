@@ -181,7 +181,37 @@ nodes, centralised logs, the demos.
   running, `haicc stop` stopped it, no process left. The tag it would
   publish: `setup-f3062550a1b6`.
 
-Next: 4, the inbox and outbox, and a minimal dispatcher.
+## 4. The boxes and the local dispatcher: done (2026-11-09)
+
+Discussed first (recorded in `docs/design/repositories.md`): layers by their
+writes (atomic or not, visible or local: only atomic layers through the main
+thread, the disk layers taking parallel writers); the boxes placed (a
+repository a file inbox; a level a file outbox, an outbox and an inbox
+topic, followed or announced between levels, a local dispatcher); a root set
+by a validation boundary (outside input entering the host's repository); a
+crossing a mapping; a repository's URIs its own.
+
+- Two new modules, agreed in `values.md`: `mycelium-value-json` (an
+  encoding, a handler) and `mycelium-container-document` (one value per
+  file, written under a temporary name then renamed; time-ordered names).
+  Their product repositories to be created by the human.
+- `mycelium-repo-main`'s `lib/boxes.js`: `<work>/boxes/outbox/`,
+  `<work>/boxes/inbox/<repository>/`, and for now `boxes/received/`; the
+  dispatcher matches the addressee's prefix (`/level/…`, the host's space,
+  its root a placeholder), delivers under the same name with the URI the
+  repository's own (`/main/…`), holds any other; the repository takes its
+  inbox in (logged `received`; step 5 makes it a request). Run by the main
+  thread every 200 ms.
+- `haicc message <uri> <json>`: validated at the terminal, written into the
+  outbox, `from` none; `haicc status` shows the messages waiting.
+- Tests: value-json 1, container-document 1, main 5 (dispatch, take-in,
+  and the main thread delivering a message), HAICC 5. `tools/publish.sh`
+  checks a message taken in; run without `--push`: passed, nothing left
+  running. The tag it would publish: `setup-721f28ea5888`.
+
+Next: 5, requests flowing (a message becoming a request, executed, its
+result committed and merged by the main thread, recorded in
+`request/done`, answered).
 
 Not yet: the tests run from the bundle (their third-party code, brittle,
 is not reached from the entry); the other packages (`swarm-three-nodes`, the
