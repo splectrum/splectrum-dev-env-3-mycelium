@@ -39,6 +39,13 @@ once), each marked built, agreed, open or to probe:
 
 ## Work to come
 
+- **Packages as bundles, published as releases** (`docs/design/structure.md`;
+  the human: implemented straight away): the probe's deciding points first
+  (one bundle loading another, assets, module types, a real closure); then
+  the package writer making bundles per entry point (tests included),
+  `tools/publish.sh` making releases (built by local), the package manager
+  and the warm boot checking bundles by hash, the levels fetching and
+  running bundles.
 - **Step 1, the implementation**: the new modules and the moves
   (`docs/design/modules.md`); the mechanical fixes (`1-review/findings.md`,
   sections 4 to 8); the full sets from a fresh release after each group.
