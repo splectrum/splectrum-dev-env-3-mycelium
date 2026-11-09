@@ -37,7 +37,7 @@ setup. The keygen never overwrites an existing key.
 ## 3. Build and check, not published
 
 ```sh
-sh tools/publish.sh ~/haicc-release --key-dir=~/haicc-publisher
+sh tools/publish.sh ~/haicc-release --key-dir="$HOME/haicc-publisher"
 ```
 
 It writes the two packages from the commit checked out (signed), builds
@@ -64,7 +64,7 @@ B=~/haicc-release/check/haicc/packages/haiccing/base-package-haicc.bundle
 The repository `haiccing/base-package-boot` must exist (created by the human).
 
 ```sh
-sh tools/publish.sh ~/haicc-release --key-dir=~/haicc-publisher --push
+sh tools/publish.sh ~/haicc-release --key-dir="$HOME/haicc-publisher" --push
 ```
 
 It does 1 to 3 again, then publishes the setup and the manifest as the
