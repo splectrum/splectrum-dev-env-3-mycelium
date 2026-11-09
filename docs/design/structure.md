@@ -144,6 +144,48 @@ cold boot's shell; the package folder lives in the package repository, the
 source and where tests run. Deciding whether it holds: the pair (one bundle
 loading another) and assets (served from inside a bundle).
 
+### Packages as bundles, published as releases
+
+**Agreed** (the human, 2026-11-09; implemented next, the probe's points
+first). Our haiccing and splectral packages are bundles; a bundle is a
+built artifact, not source: it is published as a release, not kept in the
+repository's history (as `haicc-setup.sh`, a release asset of
+`base-package-haicc`, already is).
+
+- **A release** (a version, one hash, immutable) carries a bundle per entry
+  point (the programs, and the tests: a test is a mini package triggered by
+  its `boot`, an entry point like any other), the native addons they name,
+  and a manifest (each bundle's hash; the commit it was made from). Data
+  files (a swarm's configuration, a default, a page) travel inside the
+  bundles, read without unpacking (`bare-bundle`: the files listed, one
+  read by its offset and length; tried 2026-11-09) or extracted where a
+  person or a tool needs them.
+- **Made by the package writer**: `packages.json` declares a package's entry
+  points; the writer bundles each entry point's closure (resolutions fixed),
+  runs the tests as bundles, records the hashes. Only the writer makes
+  bundles (rules 13, 17).
+- **Built and published by local** (the local agent, with the human's word,
+  as the releases today): a release per package (`tools/publish.sh`
+  creating releases instead of pushing written folders).
+- **The repository** holds what people read and the writer works from: the
+  README, the manifest's history, the hand-written parts; no longer the
+  copied `modules/` and `node_modules/` (the source lives in the
+  development repository and the module repositories).
+- **A level fetches only what it runs**: a release's bundles and the addons
+  they name, through the sources (a folder of release files; GitHub's
+  release downloads), each checked against the manifest's hash; the
+  package manager's verify and the warm boot's "intact" become the
+  bundle's hash.
+- **On our p2p layer, the same split**: a release a blob outside the
+  repository's git history (a releases drive per package repository, a
+  record per release: version, commit, the bundles' hashes); a
+  `packages/<purpose>` link names a release (repository key, release,
+  bundle, hash). No deltas needed for bundles (the human).
+- **To settle in the probe first**: one bundle loading another (the pair:
+  HAICC and the package manager as two releases); assets served from inside
+  a bundle (Splectral's browser files); module types (a bundled `.js` taken
+  as a module); a real closure's size and addons.
+
 **The probe**: (1) a custom protocol loading a small package from a commit's
 tree in a p2p-git repository, on Bare; (2) a real package's closure as a
 bundle (`p2p-node`'s): does it run, its size, its addons, its module types;
