@@ -133,7 +133,7 @@ Where packages are used at a level today, and with bundles:
 | the root's and swarms' HAICC (`haicc-base-boot/haicc.js` in `packages/base-package-haicc/`) | a HAICC bundle |
 | a node's HAICC (`haicc-deployment/haicc.js`) | a node-HAICC bundle (one, after the convergence) |
 | the node's program (the master's `packages/`, mounted; `p2p-node/cli.js`) | a node-program bundle |
-| Splectral's server (`splectral-server/cli.js`, its extensions) | a server bundle, its browser files as assets (**to probe**) |
+| Splectral's server (`splectral-server/cli.js`, its extensions) | a server bundle, its browser files as assets, read from the bundle (below) |
 | the package manager, imported by HAICC from beside it (the pair) | the package manager's code in HAICC's bundle; its own release a bundle of its own (bundles disjoint: below) |
 | the cold boot's shell (`boot.sh`, `shutdown.sh`, the setup) | stays shell (before Bare; scripts are glue) |
 | a swarm's config (`nodes.json`, `modules.json`, `splectral.json`) | stays data, in the level's repositories |
@@ -141,8 +141,7 @@ Where packages are used at a level today, and with bundles:
 
 So a level holds bundles and runs them, with its addons, its data and the
 cold boot's shell; the package folder lives in the package repository, the
-source and where tests run. Deciding whether it holds: assets (served from
-inside a bundle).
+source and where tests run.
 
 ### Packages as bundles, published as releases
 
@@ -181,9 +180,18 @@ repository's history (as `haicc-setup.sh`, a release asset of
   record per release: version, commit, the bundles' hashes); a
   `packages/<purpose>` link names a release (repository key, release,
   bundle, hash). No deltas needed for bundles (the human).
-- **To settle in the probe first**: assets served from inside a bundle
-  (Splectral's browser files); module types (a bundled `.js` taken as a
-  module); a real closure's size and addons.
+- **Assets are read from the bundle** (agreed, the human, 2026-11-09).
+  Tried: Bare resolves an asset to a URL inside the bundle file
+  (`import.meta.asset('./page.html')` gives
+  `file:///…/app.bundle/app/page.html`), nothing extracted, so the
+  filesystem cannot read it. The code reads its assets from its own bundle,
+  by the header's offset and length, through `mycelium-container-bundle`
+  (`values.md`): Splectral's server serves its pages and the browser's
+  libraries that way. Nothing extracted; the release stays one file; what
+  is served is what was hashed. (Not taken: extracting assets at install,
+  a second form of the same bytes; a separate data bundle.)
+- **To settle in the probe first**: module types (a bundled `.js` taken as
+  a module); a real closure's size and addons.
 
 ### Bundles disjoint, installs as copies, the stores
 

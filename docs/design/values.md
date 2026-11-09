@@ -15,6 +15,7 @@ step 1's review).
 | `mycelium-value-json` | an encoding, a handler module from the start: one value to bytes and back (`-avro` later, the same way) |
 | `mycelium-container-document` | a storage container: one value per file, written atomically (a temporary file, then rename), in the encoding it is given |
 | `mycelium-container-lines` | a storage container: one value per line, appended, read in order, for a line-safe text encoding such as JSON |
+| `mycelium-container-bundle` | a read-only storage container of files: a bundle's files listed, one read by its offset and length (the header and a slice, never the whole file in memory), extracted where needed; written only by the package writer (agreed 2026-11-09: a bundle's assets and data files read this way, `structure.md`) |
 
 They replace JSON read and written in five places (`haicc-base-boot`,
 `haicc-deployment`, `pkgm-base-manager`, the package writer; only the
@@ -24,6 +25,19 @@ package manager atomic) and JSON lines split in three. AVRO's own container
 *Why*: the data type, its encoding and its storage are three concerns; with
 the encoding a handler, moving from JSON to AVRO is a new module, not a
 change to the users.
+
+## URIs name a logical structure
+
+**Agreed** (the human, 2026-11-09). Our URIs apply to a logical structure,
+not a physical one: a path goes on through an object whose type mycelium
+knows. A bundle added to a repository as an object is browsed as if it were
+extracted, once `mycelium-xpath` handles the bundle type (through
+`mycelium-container-bundle`): `/main/releases/haicc.bundle/app/page.html`
+names a file inside the bundle, read by its offset and length, nothing
+extracted. Reading assets from a bundle (`structure.md`) is the first case
+of it; other object types (a JSON document's values, a topic's records)
+follow the same way. `rules.md` (URIs: "a leaf is an object") is changed
+when it is built.
 
 ## Formats on Bare
 
