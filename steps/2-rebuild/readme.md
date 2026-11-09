@@ -208,7 +208,7 @@ crossing a mapping; a repository's URIs its own.
 - Tests: value-json 1, container-document 1, main 6 (the boxes, dispatch,
   take-in, the main thread taking a message in), HAICC 5. `tools/publish.sh`
   checks a message taken in; run without `--push`: passed, nothing left
-  running. The tag it would publish: `setup-721f28ea5888`.
+  running. The tag it would publish: `setup-fe821759a88c`.
 
 Next: 5, requests flowing (a message becoming a request, executed, its
 result committed and merged by the main thread, recorded in
