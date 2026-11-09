@@ -220,6 +220,10 @@ when it is made.
 | **visible** (replicated) | `main`, `packages`: in the store (Corestore), committed by the main thread only | `request/done`, logs: topics, each appended by its own writer, held by reference |
 | **local** | (none yet) | `execute/*`, `request/pending/*`, `request/executing`, the local inbox and outbox: on disk (native git, plain folders) |
 
+Stored, so, in three modes (`structure.md`): atomic (the Corestore),
+replicated (the Corestore, copied out as files where a process needs them:
+`packages`), non-atomic (the filesystem).
+
 - **Only atomic layers go through the main thread**; it moves a result in
   (`transfer`: the same object ids, nothing copied twice) and merges it.
 - **The disk layers take parallel writers** (threads, processes), one per
@@ -279,13 +283,26 @@ functionality (the bundles in `packages/`) is not exposed.
   the outbox's key and length, the latest length standing for a burst; the
   receiver fetches those blocks sparsely and checks them; for occasional
   senders). Both land in the receiver's inbox topic.
-- **Posting is `PUT <inbox URI> {message}`** (the human, 2026-11-09). The
-  host's root is the HAICC repository (the level's), so its inbox is
-  `/inbox`; from outside a root, through its mapping, only `PUT /inbox` is
-  allowed (the gate); inside, code writes any layer under the layer rules.
-  **Built**, for now as folders in the view, no layer kind: `/inbox` at
-  `<work>/haicc/inbox/`, `/outbox` at `<work>/haicc/outbox/` (`{ to, body }`,
-  PUT by the dispatcher); more advanced implementations later.
+- **Posting is `POST <inbox URI> {message}`** (the human, 2026-11-09;
+  first built as `PUT`): the inbox names the new message. The REST verbs
+  everywhere for the CRUD operations, in their meaning: `GET` reads, `PUT`
+  writes at a URI the caller names, `POST` adds to a collection that names
+  the item, `DELETE` removes. The host's root is the host's repository, so
+  its inbox is `/inbox`; from outside a root, through its mapping, only
+  `POST /inbox` is allowed (the gate); inside, code writes any layer under
+  the layer rules. Folders for now, no layer kind (**built** at
+  `<work>/haicc/inbox/` and `outbox/`, moving to `<work>/mrepos/host/`);
+  more advanced implementations later.
+- **HAICC is a repository's API** (the human, 2026-11-09): the host's
+  repository is of type `haicc`, instance `host`; it is the host (the node
+  bridgehead), a node's the same type. Every command is a message to its
+  inbox, from any input (the terminal one of them; a node, a peer, the web
+  others); **every repository's inbox is a validation point** (the root
+  mapping): taken in, checked against the API, then a request in
+  `request/pending/default`, or refused and answered. The terminal checks
+  more only where it is itself a repository's application. **No command
+  stays outside**: each passes through the inbox and is recorded (starting
+  and stopping the host's main thread, the boot's own record).
 - **The boxes are a level's** (the human, 2026-11-09): the host (the first
   level) as any swarm or node; "node" above stands for any level. Each
   level has its own root; a URI is read in its level's URI space, its
