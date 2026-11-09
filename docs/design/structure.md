@@ -118,8 +118,17 @@ and the store's own failures).
   runs, inside the container; the host holds only the views the container
   needs (its bundles, its addons).
 
-How config is changed, once it is in a repository (a `haicc` command, a
-Splectral component, both): **open**.
+**How a person changes something** (config included; agreed, the human,
+2026-11-09): HAICC runs inside the boundary, its input valid. A person's
+input enters at a boundary and becomes an internal `haicc` command:
+
+| From | The boundary | Then |
+|---|---|---|
+| the browser | Splectral's server (initially a command line typed in the page), validated there | launched as an internal `haicc` command |
+| the host's terminal | the command line: parsed (`haicc-cli-parser`) and validated | launched as an internal `haicc` command |
+
+Inside, a `haicc` command trusts its input (the happy path); a change is
+committed by the level's single writer.
 
 ## Code without a code folder
 
