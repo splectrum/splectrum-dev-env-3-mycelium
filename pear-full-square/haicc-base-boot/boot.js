@@ -21,7 +21,7 @@ if (!['boot', 'fetch'].includes(command) || typeof flags.work !== 'string' || (c
   const work = resolve(flags.work)
   let r
   try {
-    r = command === 'boot' ? boot({ setup, work, say }) : fetch({ setup, work, repo: name, say })
+    r = command === 'boot' ? await boot({ setup, work, say }) : await fetch({ setup, work, repo: name, say })
   } catch (err) { r = { ok: false, why: err.message } }
   if (r.ok && command === 'boot') {
     // HAICC's package, run once from the scope: it answers.

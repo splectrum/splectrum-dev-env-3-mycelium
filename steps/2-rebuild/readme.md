@@ -67,6 +67,33 @@ nodes, centralised logs, the demos.
   (`haicc-base-cli 0.1.0`). The publisher's key for the test generated in
   the scratch folder; local holds the real one, never in a repository.
 
+**init: the level's repository** (2026-11-09):
+
+- The cold boot creates the level: the store (`<work>/store`, `p2p-store`)
+  and the repository (`level`, `p2p-mrepo`), its layers `main` (empty),
+  `packages/default`, `execute/main` (from `main`),
+  `request/pending/default`, `request/executing`, `request/done`;
+  `packages/default` laid out as a source (the pinned manifest, the boot's
+  and HAICC's bundles, their addons): a repository's packages layer is
+  itself a source. HAICC's package deployed into the scope from the layer.
+  A level already booted is not booted again (a restore later); `fetch`
+  adds a package to the layer and the scope, the pin untouched. Tests 25 of
+  25.
+- `mycelium-git`: `request` and `packages` layer segments (`pending` and
+  `capability` until the code using them is rebuilt); its tests 341 of 341.
+  `p2p-store`: a read-only store (no lock; a short-lived reader); 20 of 20.
+- HAICC's commands (`haicc-base-cli`): `read <uri>`, the level's
+  repository read-only by URI (validated at the terminal's boundary): a
+  file's size and small text, a folder's or a branch's entries, `*`
+  steps; JSON. Tests 14 of 14.
+- The writer carries this repository's aliases for Node's built-ins (`util`
+  to `bare-node-util`, ...) into every package: third-party code imports
+  them by those names, listed nowhere. 33 of 33.
+- End to end, a fresh folder, only the system's tools on the PATH: the 29 MB
+  setup boots; machine, manifest, both packages loaded (3.4 MB bundles, 25
+  addons each), init, installed, deployed; `haicc read /` the branches,
+  `/packages/default` the installed source, `/main` empty.
+
 Not yet: the tests run from the bundle (their third-party code, brittle,
 is not reached from the entry); the other packages (`swarm-three-nodes`, the
 demos) still defined on the old platform, written with `--only` meanwhile;

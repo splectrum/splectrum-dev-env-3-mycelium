@@ -92,7 +92,11 @@ function stage (dev, defs, name, ours, lock, dir, out) {
   const def = defs.packages[name]
   const repo = repoOf(name, def)
   // brittle too: the package's own tests run on it (test/modules-load, written here).
-  const set = closure({ ours, third: join(dev, 'node_modules'), start: startOf(dev, defs, name), also: ['brittle'] })
+  // And this repository's aliases for Node's built-ins (util -> bare-node-util,
+  // ...): third-party code imports them by those names, listed nowhere.
+  const root = existsSync(join(dev, 'package.json')) ? readJson(join(dev, 'package.json')) : {}
+  const aliases = Object.entries(root.dependencies || {}).filter(([, v]) => String(v).startsWith('npm:')).map(([k]) => k)
+  const set = closure({ ours, third: join(dev, 'node_modules'), start: startOf(dev, defs, name), also: ['brittle', ...aliases] })
   const byPath = new Map([...ours.values()].map(m => [m.path, m]))
   for (const p of set.ours) copy(byPath.get(p).dir, join(dir, 'modules', p), { skip: skipOurs })
   for (const t of set.third) copy(join(dev, 'node_modules', t), join(dir, 'modules', 'node_modules', t), { skip: skipThird })

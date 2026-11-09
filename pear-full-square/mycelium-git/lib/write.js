@@ -12,7 +12,9 @@ const TREE = '040000'
 
 // First segments of layers, which start as orphans. execute and publish
 // branches are derived from another branch, not created as layers.
-const LAYERS = ['main', 'pending', 'overlay', 'data', 'capability']
+// request and packages: phase 3's (docs/design/repositories.md); pending
+// and capability go when the code using them is rebuilt.
+const LAYERS = ['main', 'request', 'packages', 'pending', 'overlay', 'data', 'capability']
 // Every reserved first segment: a branch name starts with one.
 const RESERVED = [...LAYERS, 'execute', 'publish']
 // Permanent: never deleted.
