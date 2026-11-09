@@ -32,6 +32,42 @@ commands, one test path; execution becomes portable (`repositories.md`).
 *Why*: the same structure everywhere makes execution portable and the
 platform one thing to build and test.
 
+## One writer per store, any number of readers
+
+**Agreed** (the human, 2026-11-09: single writer is the design we want).
+A level's store (Corestore, persisted by `hypercore-storage` in RocksDB)
+has one writer process at a time: it takes a lock (the store's `CORESTORE`
+file) when opened writable. Tried 2026-11-09 on our stack, on Bare, a writer
+holding a store: a second process opening it to write fails (`File
+descriptor could not be locked`); opened read-only it works, taking no lock,
+and a reader opened after an append sees it; the writer closed, another may
+write. (`wait` queues a writer for the lock.)
+
+- **Each level has one writer process for its store**: the level's HAICC
+  process; commands that change something go through it (or wait for the
+  lock). Commands that only read (status, a list, browsing by URI) open the
+  store read-only, any time, in parallel. The same single-writer rule as
+  Hypercore's, one level down.
+- **Two writers, two meanings**: a core's writer holds its key pair (a
+  topic's producer: the only one who can append, every block signed into
+  its Merkle tree); a store's writer is the process holding the store's
+  lock (each level's own: it stores what the level holds, its own cores and
+  replicas of others'). A node following another's topic holds a copy in
+  its own store, written by its own store's writer, each block verified
+  against the producer's signature; it cannot append. The copy may be
+  partial (sparse replication: the blocks it downloaded) and cleared when
+  no longer needed (retention per node), the producer's log untouched:
+  redundancy and local reads, authority where it belongs.
+- **To probe**: whether a reader that stays open sees writes made after it
+  opened (RocksDB's read-only mode usually a snapshot as of opening: a
+  long-lived reader reopening, or following by replication).
+- **What else RocksDB means for us** (substrate, never used directly): a
+  native addon (`rocksdb-native`, in `addons/`); backups are a closed store
+  copied or replication to a backup peer, not a copy of an open store's
+  folder; the store holds the Corestore's primary key in clear (`p2p-store`),
+  so its folder is protected as a key is; opaque by design, views coming
+  from the repositories.
+
 ## A level's folder
 
 **Open** (to probe and settle):
