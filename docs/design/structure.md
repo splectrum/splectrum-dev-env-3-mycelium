@@ -237,7 +237,7 @@ Where packages are used at a level today, and with bundles:
 | the package manager, imported by HAICC from beside it (the pair) | the package manager's code in HAICC's bundle; its own release a bundle of its own (bundles disjoint: below) |
 | the cold boot's shell (`boot.sh`, `shutdown.sh`, the setup) | stays shell (before Bare; scripts are glue) |
 | a swarm's config (`nodes.json`, `modules.json`, `splectral.json`) | stays data, in the level's repositories |
-| the tests (modules' `test/`, the package's named tests) | **open**: tests running the bundles (what runs is what was tested); the module tests where the package is written; the warm boot's validation set against the bundle the level will run |
+| the tests (modules' `test/`, the package's named tests) | not bundles (the human, 2026-11-09): a test has the package structure (recursive), its entry point a local cold boot (`boot`, shell), as no level's cold boot is a bundle; the tests are files in the package's bundle, a booted test's folder extracted into its run (`mycelium-container-bundle`), exercising the package's own bundle, the one the level runs: what runs is what was tested. The detail at implementation |
 
 So a level holds bundles and runs them, with its addons, its data and the
 cold boot's shell; the package folder lives in the package repository, the
@@ -252,8 +252,7 @@ repository's history (as `haicc-setup.sh`, a release asset of
 `base-package-haicc`, already is).
 
 - **A release** (a version, one hash, immutable) carries a bundle per entry
-  point (the programs, and the tests: a test is a mini package triggered by
-  its `boot`, an entry point like any other), the native addons they name,
+  point (the programs), the native addons they name,
   and a manifest (each bundle's hash; the commit it was made from). Data
   files (a swarm's configuration, a default, a page) travel inside the
   bundles, read without unpacking (`bare-bundle`: the files listed, one
@@ -261,7 +260,7 @@ repository's history (as `haicc-setup.sh`, a release asset of
   person or a tool needs them.
 - **Made by the package writer**: `packages.json` declares a package's entry
   points; the writer bundles each entry point's closure (resolutions fixed),
-  runs the tests as bundles, records the hashes. Only the writer makes
+  runs the package's tests against the bundles, records the hashes. Only the writer makes
   bundles (rules 13, 17).
 - **Built and published by local** (the local agent, with the human's word,
   as the releases today): a release per package (`tools/publish.sh`

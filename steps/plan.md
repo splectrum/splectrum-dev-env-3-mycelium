@@ -42,7 +42,7 @@ once), each marked built, agreed, open or to probe:
 - **Packages as bundles, published as releases** (`docs/design/structure.md`;
   the human: implemented straight away): the probe's deciding points first
   (one bundle loading another, assets, module types, a real closure); then
-  the package writer making bundles per entry point (tests included),
+  the package writer making bundles per entry point (the tests files in them),
   `tools/publish.sh` making releases (built by local), the package manager
   and the warm boot checking bundles by hash, the levels fetching and
   running bundles.
