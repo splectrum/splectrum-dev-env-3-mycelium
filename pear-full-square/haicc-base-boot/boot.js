@@ -24,8 +24,8 @@ if (!['boot', 'fetch'].includes(command) || typeof flags.work !== 'string' || (c
     r = command === 'boot' ? await boot({ setup, work, say }) : await fetch({ setup, work, repo: name, say })
   } catch (err) { r = { ok: false, why: err.message } }
   if (r.ok && command === 'boot') {
-    // HAICC's package, run once from the scope: it answers.
-    const v = spawnSync(process.execPath, [join(work, 'scope', `${HAICC}.bundle`), 'version'], { stdio: ['ignore', 'pipe', 'pipe'] })
+    // HAICC's package, run once from its layer's folder: it answers.
+    const v = spawnSync(process.execPath, [r.bundle, 'version'], { stdio: ['ignore', 'pipe', 'pipe'] })
     r.haicc = v.status === 0 ? JSON.parse(String(v.stdout)) : { failed: String(v.stderr).trim() }
     if (v.status !== 0) r.ok = false
   }

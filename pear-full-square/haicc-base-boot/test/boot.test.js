@@ -30,7 +30,7 @@ async function level (work, fn) {
   try { return await fn(openRepo((await mrepos({ store }).open(LEVEL)).backend)) } finally { await store.close() }
 }
 
-test('boot: init, the repository and its layers; packages/default as a source; the scope from it', async (t) => {
+test('boot: init, the repository and its layers; packages/default as a source; its folder at its URI\'s path', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'boot-'))
   try {
     const k = keyPair()
@@ -50,8 +50,8 @@ test('boot: init, the repository and its layers; packages/default as a source; t
       t.is((await repo.read(`/packages/default/addons/${sha256('addon')}`)).toString(), 'addon')
       t.is((await repo.select('/main/*')).length, 0, 'main empty')
     })
-    t.is(readFileSync(join(work, 'scope', `${HAICC}.bundle`), 'utf8'), 'haicc bundle', 'deployed into the scope')
-    t.ok(existsSync(join(work, 'scope', 'addons', sha256('addon'))))
+    t.is(readFileSync(join(work, 'packages', 'default', `${HAICC}.bundle`), 'utf8'), 'haicc bundle', 'deployed: the layer\'s folder, at its URI\'s path')
+    t.ok(existsSync(join(work, 'packages', 'default', 'addons', sha256('addon'))))
     t.absent(existsSync(join(work, 'scratch')), 'no scratch left')
     t.is((await boot({ setup: join(root, 'setup'), work })).ok, false, 'booted already: not again')
     // Lazily, later: from the manifest pinned in the repository.
@@ -60,7 +60,7 @@ test('boot: init, the repository and its layers; packages/default as a source; t
       t.is((await repo.read('/packages/default/base-package-demo.bundle')).toString(), 'demo bundle')
       t.is(JSON.parse((await repo.read('/packages/default/manifest.json')).toString()).sequence, 10, 'the pin untouched')
     })
-    t.ok(existsSync(join(work, 'scope', 'base-package-demo.bundle')))
+    t.ok(existsSync(join(work, 'packages', 'default', 'base-package-demo.bundle')))
     t.is((await fetch({ setup: join(root, 'setup'), work, repo: 'base-package-none' })).ok, false)
   } finally { rmSync(root, { recursive: true, force: true }) }
 })

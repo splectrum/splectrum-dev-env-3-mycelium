@@ -127,7 +127,7 @@ a translation of a layer, made only where a host process requires files.
 | Layer | Holds | Translated to a folder |
 |---|---|---|
 | `main` | the level's data (config, state) | no (seen by URI) |
-| `packages/default` (`packages/test` when development deploys there) | the bundles and their native addons, as objects | the scope: the bundles this level runs, copied out (Bare runs a bundle from its file); the addons they name, by hash (`dlopen` needs files) |
+| `packages/default` (`packages/test` when development deploys there) | the bundles and their native addons, as objects (laid out as a source: the pinned manifest, `<repo>.bundle`, `addons/<sha256>`) | `<work>/packages/default/`: the bundles this level runs and the addons they name, at the layer's own path (Bare runs a bundle from its file; `dlopen` needs files) |
 | `execute/main` | executions: only the visible change to `main` (from `main`, synced before each) | no |
 | `request/pending/default`, `request/executing`, `request/done` | the requests and their metadata (`repositories.md`) | no |
 | the log topic | the level's log | no (the minimal file log aside) |
@@ -144,6 +144,20 @@ and the store's own failures).
   folders are set up is the install's own concern, not part of the
   platform's interface. What follows is how the install translates, free to
   change.
+- **The level's folder is the repository's root** (agreed, the human,
+  2026-11-09): the git root of all its layers, as mycelium sees a
+  repository (`/` all the branches, each layer's tree at its branch path).
+  A layer that a host process needs as files appears in the folder at the
+  same path as its URI (`<work>/packages/default/` the view of
+  `/packages/default`: the bundles deployed, `addons/` beside them, Bare
+  runs them from there), holding only what that process needs, and owned
+  by the install, never edited. So **every reserved first segment is
+  reserved as a folder name at the level's root** (`main`, `request`,
+  `packages`, `execute`, `overlay`, `data`): the substrate's folders
+  (`store/` the repository itself, `setup/` the source the boot came from,
+  `log/` later) never use one. A command finds its level by walking up from
+  its bundle to the folder holding `store/`. Built (2026-11-09):
+  `<work>/packages/default/`, `<work>/store/`, `<work>/setup/`.
 - **A layer becomes a folder only where a host process needs files**: Bare
   (the bundles), `dlopen` (the addons), Docker (its mounts). A person never
   needs one: the terminal reads the repository by URI, and Splectral shows

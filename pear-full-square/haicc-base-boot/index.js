@@ -14,12 +14,15 @@
 //                                  request/pending/default, request/executing,
 //                                  request/done; packages/default holding the
 //                                  pinned manifest, the bundles, their addons
-//                                  (laid out as a source); HAICC's package
-//                                  deployed into the scope (<work>/scope),
-//                                  read back from the repository
+//                                  (laid out as a source); the layer deployed
+//                                  as a folder at its own path
+//                                  (<work>/packages/default: the work folder's
+//                                  root is the repository's root, the git root
+//                                  of all its layers), read back from the
+//                                  repository
 //   fetch({ setup, work, repo })   another package, lazily, as the pinned
-//                                  manifest lists it: into packages/default and
-//                                  the scope
+//                                  manifest lists it: into packages/default,
+//                                  the layer and its folder
 // Each returns its result; `say` gets each step as it happens. A level
 // already booted is not booted again (a restore comes later).
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync } from 'bare-fs'
@@ -63,14 +66,15 @@ async function commitPackages (backend, staged, repos, manifest, message, { pin 
   return c.commit(message, { author })
 }
 
-// A package deployed into the scope: its bundle and its addons, read from
-// the packages layer (install-internal: the folder Bare runs from).
-async function deploy (backend, manifest, repo, scope) {
+// A package deployed: its bundle and its addons, read from the packages
+// layer into the layer's folder, at the same path as its URI (Bare runs the
+// bundle from there, its addons beside it).
+async function deploy (backend, manifest, repo, folder) {
   const r = openRepo(backend)
-  mkdirSync(join(scope, 'addons'), { recursive: true })
-  writeFileSync(join(scope, `${repo}.bundle`), await r.read(`/${PACKAGES}/${repo}.bundle`))
-  for (const a of manifest.packages[repo].addons || []) if (!existsSync(join(scope, 'addons', a))) writeFileSync(join(scope, 'addons', a), await r.read(`/${PACKAGES}/addons/${a}`))
-  return join(scope, `${repo}.bundle`)
+  mkdirSync(join(folder, 'addons'), { recursive: true })
+  writeFileSync(join(folder, `${repo}.bundle`), await r.read(`/${PACKAGES}/${repo}.bundle`))
+  for (const a of manifest.packages[repo].addons || []) if (!existsSync(join(folder, 'addons', a))) writeFileSync(join(folder, 'addons', a), await r.read(`/${PACKAGES}/addons/${a}`))
+  return join(folder, `${repo}.bundle`)
 }
 
 export async function boot ({ setup, work, say = () => {} }) {
@@ -98,7 +102,7 @@ export async function boot ({ setup, work, say = () => {} }) {
       say({ step: 'init', repository: LEVEL, id: repo.id, key: repo.key, layers: [...LAYERS, 'execute/main'] })
       const commit = await commitPackages(repo.backend, staged, [BOOT, HAICC], manifest, `Installed from the setup: manifest ${manifest.sequence}`, { pin: true })
       say({ step: 'installed', layer: PACKAGES, commit, packages: [BOOT, HAICC] })
-      const bundle = await deploy(repo.backend, manifest, HAICC, join(work, 'scope'))
+      const bundle = await deploy(repo.backend, manifest, HAICC, join(work, PACKAGES))
       say({ step: 'deployed', package: HAICC })
       return { ok: true, sequence: manifest.sequence, id: repo.id, key: repo.key, bundle }
     } finally { await store.close() }
@@ -119,7 +123,7 @@ export async function fetch ({ setup, work, repo: name, say = () => {} }) {
     say({ step: 'loaded', package: name, fetched: r.fetched.length })
     const commit = await commitPackages(repo.backend, staged, [name], manifest, `Installed ${name}: manifest ${manifest.sequence}`)
     say({ step: 'installed', layer: PACKAGES, commit, package: name })
-    const bundle = await deploy(repo.backend, manifest, name, join(work, 'scope'))
+    const bundle = await deploy(repo.backend, manifest, name, join(work, PACKAGES))
     return { ok: true, bundle }
   } finally {
     await store.close()

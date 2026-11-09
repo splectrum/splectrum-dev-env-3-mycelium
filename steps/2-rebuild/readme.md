@@ -94,6 +94,13 @@ nodes, centralised logs, the demos.
   addons each), init, installed, deployed; `haicc read /` the branches,
   `/packages/default` the installed source, `/main` empty.
 
+- The level's folder is the repository's root (the human): the layer
+  deployed at its own path (`<work>/packages/default/`, not a separate
+  scope); the reserved first segments reserved as folder names at the root;
+  the substrate in `store/` and `setup/`. HAICC finds its level by walking
+  up to `store/`. End to end again: called from `/` by its bundle's path,
+  it reads `/packages/default`.
+
 Not yet: the tests run from the bundle (their third-party code, brittle,
 is not reached from the entry); the other packages (`swarm-three-nodes`, the
 demos) still defined on the old platform, written with `--only` meanwhile;

@@ -2,10 +2,12 @@
 //   bare base-package-haicc.bundle <command> [args] [--work=<level folder>]
 //   version            this module's name and version
 //   read <uri>         what the level's repository holds at a URI
-// The level's folder: --work, else the one the scope is in (<work>/scope/
-// holds the bundle). Prints one JSON value. Exit 0 done; 1 not done; 2 a bad call.
+// The level's folder: --work, else the one this bundle runs in (the folder
+// holding store/, up from the bundle: <work>/packages/default/). Prints one
+// JSON value. Exit 0 done; 1 not done; 2 a bad call.
 import process from 'bare-process'
-import { dirname, resolve } from 'bare-path'
+import { dirname, resolve, join } from 'bare-path'
+import { existsSync } from 'bare-fs'
 import { commands } from './index.js'
 
 const argv = process.argv.slice(2)
@@ -16,7 +18,8 @@ if (!commands[command]) {
   console.error(`haicc: ${command ? `no command '${command}'` : 'a command is needed'} (${Object.keys(commands).join(', ')})`)
   process.exitCode = 2
 } else {
-  const work = typeof flags.work === 'string' ? resolve(flags.work) : dirname(dirname(process.argv[1]))
+  let work = typeof flags.work === 'string' ? resolve(flags.work) : dirname(process.argv[1])
+  if (typeof flags.work !== 'string') while (!existsSync(join(work, 'store')) && dirname(work) !== work) work = dirname(work)
   const r = await commands[command](args, { work })
   console.log(JSON.stringify(r.out, null, 2))
   process.exitCode = r.code
