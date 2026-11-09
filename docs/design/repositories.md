@@ -172,6 +172,32 @@ before replication completes; but the unit runs only on what is in the
 replica: what is recorded, and what a rerun uses, is always the replicated
 commit.
 
+## A running repository: mycelium's framework
+
+**Agreed** (the human, 2026-11-09). A repository's own behaviour is
+mycelium's, not HAICC's: HAICC sets a level up (`init`) and starts it; the
+package manager puts bundles in its packages layer.
+
+- **An always-on process per repository** (a mycelium module, its name
+  open): it holds the store as its single writer, keeps the required
+  watchers running (the local queue, the sources it follows, replication),
+  serves the local connection (short-lived and long-lived readers,
+  submits), and restarts what stops.
+- **Submit** (`mycelium-request-submit`): a request validated where it enters
+  (its command included) and placed in its queue
+  (`request/pending/<source>`); from the terminal, `haicc request add`
+  hands it to the repository's process, which commits it.
+- **Execute** (`mycelium-request-execute`): the queue watched; a request
+  taken (`request/executing`); the command it contains launched as a unit,
+  the repository's state pinned; the command writes the data it changes into
+  the execute layer (`execute/main`); on completion the framework commits,
+  merges into `main`, and moves the request with its record to
+  `request/done` (the command as launched, the states it ran on, its exit
+  code and output, the environment); then the next request. One at a time,
+  in queue order: each starts from the `main` the previous left.
+- **The first bundle**: `packages/default` starts with `base-package-haicc`,
+  committed at `init`.
+
 ## Backup at the repository level
 
 **Agreed** (the human, 2026-11-09). With every level's state in mycelium
