@@ -209,6 +209,26 @@ package manager puts bundles in its packages layer.
 - **The first bundles**: `packages` starts with `haiccing/base-package-boot`
   and `haiccing/base-package-haicc`, committed at `init`.
 
+## Layers by their writes: atomic or not, visible or local
+
+**Agreed** (the human, 2026-11-09). A layer's kind says how it is written,
+so its storage follows from its name; an extension layer declares both
+when it is made.
+
+| | atomic (one commit) | not atomic (records, each whole) |
+|---|---|---|
+| **visible** (replicated) | `main`, `packages`: in the store (Corestore), committed by the main thread only | `request/done`, logs: topics, each appended by its own writer, held by reference |
+| **local** | (none yet) | `execute/*`, `request/pending/*`, `request/executing`, the local inbox and outbox: on disk (native git, plain folders) |
+
+- **Only atomic layers go through the main thread**; it moves a result in
+  (`transfer`: the same object ids, nothing copied twice) and merges it.
+- **The disk layers take parallel writers** (threads, processes), one per
+  branch: objects content-addressed and renamed into place, a ref moved
+  under its own lock only from the commit expected, a message written under
+  a temporary name and renamed.
+- *Why*: git gives the consistency, our use needs no indexes; RocksDB (and
+  the single writer it brings) only where replication needs it.
+
 ## How repositories communicate: inbox, outbox, dispatcher
 
 **Agreed** (the human, 2026-11-09; the details at implementation).
@@ -225,9 +245,17 @@ functionality (the bundles in `packages/`) is not exposed.
   validated where it crosses into the repository, then processed by the
   repository's own code (which may place a request in its queue: the queue
   is fed from inside only); on its outbox, it follows what it sent.
-- **Validation at both edges**: the dispatcher checks the envelope (sender,
-  addressee) as it routes; the repository checks the content as it takes a
-  message in.
+- **A root is set by a validation boundary** (the human, 2026-11-09;
+  replaces validation at both edges): where data is validated, a URI space
+  begins. All input on the host (the terminal, the web) is validated, so
+  the host is a root; all data entering a swarm is validated, so the swarm
+  is a root (a node inside it, `p2p-rns`'s `/<swarm>/<node>/…`). Input from
+  outside (no root of its own) enters the host's repository: validated
+  there once, and translated into the host's URIs. Inside a root, the
+  happy path: the dispatcher matches prefixes, a repository takes a
+  message unchecked. Between roots (host and swarm), traffic crosses a
+  boundary both ways: validated, translated, and where a security policy
+  goes, in each direction.
 - **Everyone the same way**: the owner's terminal (`haicc request add`)
   posts a message, through the dispatcher, to the repository's inbox, as
   any sender does.
@@ -235,10 +263,46 @@ functionality (the bundles in `packages/`) is not exposed.
   (pinned, versioned), declaring which commands are accepted, with their
   arguments, from whom (capability URIs mapped to commands: `rules.md`,
   Layers, deferred to that level); a policy over the inbox.
-- At implementation: where the dispatcher runs (per swarm, per host); the
-  addressee by URI, resolved by the resource name service; a message as a
-  Kafka record (its value the message; headers: from, to, a correlation
-  id).
+- **The boxes, placed** (the human, 2026-11-09; supersedes the two topics
+  per repository above): a repository has a **file inbox** only; a node has
+  a **file outbox**, written directly by its repositories (each message
+  under a temporary name, then renamed), copied by the node into its
+  **outbox topic**, and an **inbox topic**, written by the node with what
+  it takes from other nodes' outbox topics. The node's **local
+  dispatcher** delivers from its inbox topic into the addressed
+  repository's file inbox. One core per node crosses the network; a
+  repository never handles a topic.
+- **Two modes between nodes**, chosen by the receiver: **followed** (the
+  sender's outbox topic kept open and replicated live: Hypercore's own
+  notice of an append is the signal; for regular partners) and
+  **announced** (the sender signals the addressee only, by `p2p-request`,
+  the outbox's key and length, the latest length standing for a burst; the
+  receiver fetches those blocks sparsely and checks them; for occasional
+  senders). Both land in the receiver's inbox topic.
+- **The boxes are a level's** (the human, 2026-11-09): the host (the first
+  level) as any swarm or node; "node" above stands for any level. Each
+  level has its own root; a URI is read in its level's URI space, its
+  dispatcher matching its own root by prefix (local: a repository's file
+  inbox) and sending anything else out. Translating between roots is done
+  mostly by repository referencing (the mappings). **Open**: each
+  context's root (the host's differs from a swarm node's, `p2p-rns`'s
+  `/<swarm>/<node>/…`).
+- **A crossing is a mapping** (the human, 2026-11-09): from a root (none,
+  for input from outside) to a root; the prefix translated; validation
+  required or not, and its type (full: the content; the envelope only;
+  none: a trusted translation); a policy per direction. Host input: none →
+  host, full. Where roots sit is then configuration, not design.
+- **A repository's URIs are its own** (the human, 2026-11-09): stored data
+  names by repository-scoped URIs (`/main/x/y`), never by a swarm's or a
+  host's; a mapping at the repository's boundary translates (inside a root,
+  validation none). The naming scope (the repository) and the trust root
+  (the validation boundary: host, swarm) are two things. *Why*: a
+  repository moves, is restored and replicated across roots unchanged, and a
+  recorded unit reruns exactly wherever it is; host- and swarm-scoped URIs
+  exist only for addressing (the dispatcher, the RNS).
+- At implementation: the addressee by URI, resolved by the resource name
+  service; a message as a Kafka record (its value the message; headers:
+  from, to, a correlation id).
 
 ## Backup at the repository level
 

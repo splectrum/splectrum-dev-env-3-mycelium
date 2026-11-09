@@ -4,6 +4,7 @@
 //   status             the level at a glance
 //   start | stop       the level's main thread
 //   read <uri>         what the level's repository holds at a URI
+//   message <uri> <json>  a message sent, to a URI in the host's space
 // The level's folder: --work, else the one this bundle runs in (the folder
 // holding store/, up from the bundle: <work>/haicc/packages/<org>/). Prints one
 // JSON value. Exit 0 done; 1 not done; 2 a bad call.

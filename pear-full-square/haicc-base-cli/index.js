@@ -9,20 +9,25 @@
 //                      id, key), its main thread (running: its pid, since
 //                      when; or not), its layers, the pinned manifest's
 //                      sequence, each package installed (its id, its size,
-//                      deployed or not)
+//                      deployed or not), the messages waiting in its boxes
 //   start              the level's main thread started, if it is not running
 //   stop               the level's main thread stopped (the store released)
 //   read <uri>         what the level's repository holds at a URI (from a
 //                      branch: /main/…, /packages/…), read-only: a file's
 //                      size (and its text, when small text), a folder's or a
 //                      branch's entries; '*' steps select
+//   message <uri> <json>  a message sent: into the level's outbox, to a URI in
+//                      the host's space (/<repository>/<its URI>: /level/main/x),
+//                      its body a JSON value; input from outside the host's
+//                      root, validated here (the URI, the JSON) and never
+//                      again. The level's main thread dispatches it.
 import { join } from 'bare-path'
 import { existsSync, statSync } from 'bare-fs'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo } from '../mycelium-git/index.js'
 import { validate, sameName } from '../mycelium-uri/index.js'
-import { ask, start as startMain } from '../mycelium-repo-main/index.js'
+import { ask, start as startMain, outbox, inbox } from '../mycelium-repo-main/index.js'
 import pkg from './package.json' with { type: 'json' }
 
 export const version = { name: pkg.name, version: pkg.version }
@@ -61,7 +66,8 @@ export const commands = {
     }))
     const m = await ask({ work, op: 'status' })
     const main = m ? { running: true, pid: m.pid, started: m.started } : { running: false }
-    return { code: 0, out: { level: { repository: level.name, id: level.id, key: level.key, work }, main, layers: layers.sort(), manifest: { sequence: manifest.sequence, signed: Boolean(manifest.signature), runtime: manifest.runtime }, packages } }
+    const boxes = { outbox: outbox(work).list().length, inbox: { [LEVEL]: inbox(work, LEVEL).list().length } }
+    return { code: 0, out: { level: { repository: level.name, id: level.id, key: level.key, work }, main, layers: layers.sort(), manifest: { sequence: manifest.sequence, signed: Boolean(manifest.signature), runtime: manifest.runtime }, packages, boxes } }
   }),
 
   async start (args, { work }) {
@@ -73,6 +79,15 @@ export const commands = {
   async stop (args, { work }) {
     const r = await ask({ work, op: 'stop' })
     return r ? { code: 0, out: { main: { stopping: true } } } : { code: 1, out: { error: 'no main thread running here' } }
+  },
+
+  async message ([uri, body], { work }) {
+    let to, value
+    try { to = validate(uri ?? '') } catch (err) { return { code: 2, out: { error: err.message } } }
+    try { value = JSON.parse(body ?? '') } catch { return { code: 2, out: { error: `not a JSON value: ${body ?? '(none)'}` } } }
+    if (!work || !existsSync(join(work, 'store'))) return { code: 1, out: { error: `no level here: ${work} (not booted)` } }
+    const name = outbox(work).add({ to, from: null, body: value })
+    return { code: 0, out: { message: name, to } }
   },
 
   async read ([uri], { work }) {

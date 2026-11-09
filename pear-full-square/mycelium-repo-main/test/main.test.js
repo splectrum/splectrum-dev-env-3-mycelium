@@ -6,7 +6,7 @@ import { tmpdir } from 'bare-os'
 import { fileURLToPath } from 'bare-url'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
-import { start, ask, LEVEL } from '../index.js'
+import { start, ask, LEVEL, outbox, received } from '../index.js'
 
 const here = join(dirname(fileURLToPath(import.meta.url)), '..')
 const main = (...args) => spawnSync(Bare.argv[0], [join(here, 'main.js'), ...args], { stdio: ['ignore', 'pipe', 'pipe'] })
@@ -42,6 +42,10 @@ test('the main thread: started detached, the store held, asked over its connecti
     const ro = await openStore({ storage: join(work, 'store'), readOnly: true })
     t.is((await mrepos({ store: ro }).open(LEVEL)).id, level.id, 'a reader meanwhile, read-only')
     await ro.close()
+    const m = outbox(work).add({ to: '/level/main/hello', from: null, body: { text: 'hi' } })
+    for (let i = 0; i < 50 && !received(work, LEVEL).list().length; i++) await new Promise(resolve => setTimeout(resolve, 100))
+    t.alike(received(work, LEVEL).list(), [m], 'a message in the outbox: dispatched, taken in by the repository')
+    t.is(received(work, LEVEL).read(m).to, '/main/hello')
     t.alike(await ask({ work, op: 'nothing' }), { ok: false, error: 'not a request (status, stop)' })
     t.ok((await ask({ work, op: 'stop' }))?.stopping)
     const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
@@ -52,6 +56,6 @@ test('the main thread: started detached, the store held, asked over its connecti
     t.pass('the store free again: opened writable')
     await again.close()
     const log = readFileSync(join(work, 'log', 'main.log'), 'utf8').trim().split('\n').map(l => JSON.parse(l).main)
-    t.alike(log.filter(m => m !== 'failed'), ['running', 'stopping', 'stopped'])
+    t.alike(log.filter(m => m !== 'failed'), ['running', 'dispatched', 'received', 'stopping', 'stopped'])
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
