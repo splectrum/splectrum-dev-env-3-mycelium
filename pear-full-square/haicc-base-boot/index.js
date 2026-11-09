@@ -32,6 +32,7 @@ import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { writer, openRepo } from '../mycelium-git/index.js'
 import { loadManifest, loadPackage } from '../pkgm-base-manager/lib/sources.js'
+import { start as startMain } from '../mycelium-repo-main/index.js'
 
 export const BOOT = 'haiccing/base-package-boot'
 export const HAICC = 'haiccing/base-package-haicc'
@@ -84,7 +85,7 @@ async function deploy (backend, manifest, repo, folder) {
   return join(folder, `${repo}.bundle`)
 }
 
-export async function boot ({ setup, work, say = () => {} }) {
+export async function boot ({ setup, work, say = () => {}, main = true }) {
   const m = machine()
   say({ step: 'machine', ...m })
   if (!m.ok) return { ok: false, why: `not supported: ${m.platform} (linux-x64 only, for now)` }
@@ -100,6 +101,7 @@ export async function boot ({ setup, work, say = () => {} }) {
     for (const repo of INSTALL) loadPackage({ sources, manifest, repo, to: staged, scratch: join(scratch, 'fetch') })
     say({ step: 'loaded', packages: INSTALL })
     // init: the store, the repository, its layers.
+    let result
     const store = await openStore({ storage: join(work, 'store') })
     try {
       const repo = await mrepos({ store }).create(LEVEL)
@@ -112,8 +114,17 @@ export async function boot ({ setup, work, say = () => {} }) {
       let bundle = null
       for (const p of DEPLOY) { const b = await deploy(repo.backend, manifest, p, join(work, MOUNT, PACKAGES)); if (p === HAICC) bundle = b }
       say({ step: 'deployed', packages: DEPLOY })
-      return { ok: true, sequence: manifest.sequence, id: repo.id, key: repo.key, bundle }
+      result = { ok: true, sequence: manifest.sequence, id: repo.id, key: repo.key, bundle }
     } finally { await store.close() }
+    // The level's main thread (mycelium-repo-main): started detached, the
+    // store's single writer from now on (the boot's hold closed above).
+    if (main) {
+      const m = await startMain({ work })
+      say({ step: 'main', running: Boolean(m), pid: m?.pid ?? null })
+      if (!m) return { ...result, ok: false, why: 'the main thread did not start (see log/main.log)' }
+      result.main = { pid: m.pid }
+    }
+    return result
   } finally { rmSync(scratch, { recursive: true, force: true }) }
 }
 
