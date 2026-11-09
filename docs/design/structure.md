@@ -249,9 +249,12 @@ resolved on disk; Bare itself runs its own JavaScript from a bundle
 If the probe holds: **a bundle is a package's runnable form, beside the
 package, not instead of it**. The package stays the self-contained folder
 (modules whole, README, tests, swarms, platform definitions: read by people,
-tested, viewed); a bundle is the closure of one entry point (the node's
-program, HAICC, Splectral's server: a bundle per entry point, not per
-package), made by the package writer when it writes the package (tested,
+tested, viewed); **one bundle per package, the full package** (changed
+2026-11-09 from a bundle per entry point, the human): the closure of all
+its entry points (resolutions fixed), its tests and its data (README,
+platform definitions, configuration) as files, its `main` the package's
+entry, the other entry points reached from it; native addons outside it
+(below); made by the package writer when it writes the package (tested,
 hashed and sealed with it; only the writer makes them, the package manager
 checks them), and the package's tests run the bundles too: what runs is
 what was tested.
@@ -259,7 +262,7 @@ what was tested.
 **A closed release, single files at the levels.** A bundle fixes the
 modules, how they resolve and the entry point, in one hashed file: nothing
 about running it changes without a new bundle, a new identity. A level then
-holds the bundles it runs (one file per entry point, the same hash
+holds the bundles it runs (one file per package, the same hash
 everywhere) and its native addons, instead of whole packages copied in
 (`modules/`, `node_modules/`: thousands of files each); distributing,
 checking, deduplicating and rolling back become operations on single files.
@@ -294,16 +297,17 @@ built artifact, not source: it is published as a release, not kept in the
 repository's history (as `haicc-setup.sh`, a release asset of
 `base-package-haicc`, already is).
 
-- **A release** (a version, one hash, immutable) carries a bundle per entry
-  point (the programs), the native addons they name,
-  and a manifest (each bundle's hash; the commit it was made from). Data
+- **A release** (a version, one hash, immutable) carries the package's
+  bundle (the full package: one package, one bundle, one hash), the native
+  addons it names, and a manifest (each bundle's hash; the commit it was made from). Data
   files (a swarm's configuration, a default, a page) travel inside the
   bundles, read without unpacking (`bare-bundle`: the files listed, one
   read by its offset and length; tried 2026-11-09) or extracted where a
   person or a tool needs them.
 - **Made by the package writer**: `packages.json` declares a package's entry
-  points; the writer bundles each entry point's closure (resolutions fixed),
-  runs the package's tests against the bundles, records the hashes. Only the writer makes
+  points; the writer bundles the package (the closure of its entry points,
+  paths canonicalised, its tests and data as files; addons offloaded by
+  hash), runs the package's tests from the bundle, records the hashes. Only the writer makes
   bundles (rules 13, 17).
 - **Built and published by local** (the local agent, with the human's word,
   as the releases today): a release per package (`tools/publish.sh`
@@ -350,12 +354,34 @@ repository's history (as `haicc-setup.sh`, a release asset of
   stored by content: `addons/<sha256>`, no name, no extension (tried: Bare
   loads them so; a master ran with all 26), one namespace for every package,
   version and platform, each stored once, checked by its hash, swept when no
-  installed bundle names it. Their location is a local concern of execution:
-  a release names its addons by hash under one canonical base
-  (`file:///addons/<sha256>`, a placeholder); the install makes it real for
-  the scope (in a container, the store mounted at `/addons`, the bundle as
-  released; on a host, the base rewritten at the copy into the scope, the
-  release's hash checked before and the installed bundle's recorded after).
+  installed bundle names it. **Beside the bundle** (changed 2026-11-09, from
+  a canonical base bound at install): a bundle names each addon as
+  `/../addons/<sha256>`, a sibling of the bundle file, `bare-pack`'s
+  convention for offloaded addons; tried: the same bundle, unchanged, runs
+  wherever it is placed with `addons/` beside it (a master live at two
+  different paths). No rewriting, no fixed path, no root. Why it works:
+  Bare mounts a bundle at its own file's URL and falls through to the
+  filesystem for anything not in it (`bare-module`); `/` starts at the
+  mount, `..` steps out of the bundle file. (A relative `../` is refused; an
+  absolute URL works but ties the bundle to a place.) A scope is then a
+  folder with the bundle and its `addons/`, hard links from a store where
+  they share a disk.
+- **The cold boot is in the bundle** (agreed, the human, 2026-11-09). Bare
+  is the one program needed, but its binary has no filesystem of its own
+  (`bare-fs`, `bare-os`, `bare-crypto` are addons, not linked in: tried), so
+  the addons must be files before anything in a bundle runs, and a bundle
+  cannot verify its own hash. So: a release in extracted form (the bundle,
+  `addons/`, the manifest, Bare) needs nothing before Bare; the setup is its
+  packed form, its shell only unpacking, checking the bundle's hash against
+  the manifest (`sha256sum`) and handing over (`bare
+  base-package-haicc.bundle boot`). Everything else of the cold boot (the
+  machine check, `init`, what follows) is the bundle's: tested, hashed and
+  released with the package; a restore boots from the repository's own
+  bundle.
+- **Linked addons** (known, not used): Bare supports addons statically
+  linked into a runtime binary (`linked:`; `bare-pack --linked`, built
+  with `bare-make`: CMake, Ninja, Clang), documented by Holepunch for mobile;
+  not needed with addons beside the bundle.
 
 ### Bundles disjoint, installs as copies, the stores
 
@@ -429,6 +455,21 @@ not in this phase; `vision.md`: Pear when versions are fixed).
 constraints spilling into HAICC's design.
 
 ### Pear's model, our reference
+
+From Pear's documentation (docs.pears.com, read 2026-11-09; its repositories
+unreachable then), to verify when Pear comes in: Pear v3 installs apps
+(`pear install pear://<key>`) into its Corestore under its platform folder
+(`~/.config/pear` on Linux); `pear stage` writes a deployment folder (a
+`package.json`, `by-arch/…/app` trees) into the app's Hyperdrive; an app's
+`package.json` `upgrade` field names the link it follows, a running app is
+told (`updating`, `updated`) and `applyUpdate()` swaps its folder (desktop
+apps run from materialised folders, it seems); bundles and linked addons
+documented for mobile and embedded use; Pear installed by
+`install.pears.com`'s script (whether the first install needs the public DHT:
+not found). Not used now (the human, 2026-11-09): the release built as a
+folder (the bundle, `addons/` beside it, the manifest, Bare), the setup its
+packed form; a Pear release later delivers the same folder.
+
 
 As we know Pear's design (**to verify** with the probe):
 
