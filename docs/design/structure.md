@@ -73,9 +73,18 @@ write. (`wait` queues a writer for the lock.)
   partial (sparse replication: the blocks it downloaded) and cleared when
   no longer needed (retention per node), the producer's log untouched:
   redundancy and local reads, authority where it belongs.
-- **To probe**: whether a reader that stays open sees writes made after it
-  opened (RocksDB's read-only mode usually a snapshot as of opening: a
-  long-lived reader reopening, or following by replication).
+- **A read-only reader sees a snapshot as of its opening** (tried
+  2026-11-09: a reader kept open while the writer appended five times saw
+  none of them, `update()` returning `false`; a reader opened afterwards saw
+  all). So read-only opening is for short-lived readers: a command that
+  opens, reads and closes (status, a list, `haicc read <uri>`) sees all
+  written before it opened. A long-lived reader (Splectral watching a
+  level, a log viewer, anything waiting for new data) follows the writer
+  instead (proposed): the level's writer process serves its cores to local
+  followers over a local connection, the same Hypercore replication as
+  between peers, appends arriving live and verified: one mechanism for the
+  next process and the next machine; reopening periodically only as a
+  stopgap.
 - **What else RocksDB means for us** (substrate, never used directly): a
   native addon (`rocksdb-native`, in `addons/`); backups are a closed store
   copied or replication to a backup peer, not a copy of an open store's
@@ -357,10 +366,9 @@ repository's history (as `haicc-setup.sh`, a release asset of
   into the swarm's store; the mount of the master's `packages/` into the
   nodes goes; the warm boot's "intact" becomes a hash per bundle.
 
-**The probe**: (1) a real package's closure as a bundle (`p2p-node`'s):
-does it run, its size, its addons, its module types; `closure.js` against
-`bare-module-traverse`; (2) native addons (Pear's way; extracted by hash);
-(3) a long-lived read-only reader of a store (above).
+**The probe**: done (2026-11-09): a real package's closure as a bundle,
+native addons (above, "Probe 1" and "Native addons"), a long-lived
+read-only reader (above, "One writer per store").
 
 ## Pear as a substrate execution layer below HAICC
 
