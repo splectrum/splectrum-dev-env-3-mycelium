@@ -255,10 +255,25 @@ functionality (the bundles in `packages/`) is not exposed.
   (pinned, versioned), declaring which commands are accepted, with their
   arguments, from whom (capability URIs mapped to commands: `rules.md`,
   Layers, deferred to that level); a policy over the inbox.
-- At implementation: where the dispatcher runs (per swarm, per host); the
-  addressee by URI, resolved by the resource name service; a message as a
-  Kafka record (its value the message; headers: from, to, a correlation
-  id).
+- **The boxes, placed** (the human, 2026-11-09; supersedes the two topics
+  per repository above): a repository has a **file inbox** only; a node has
+  a **file outbox**, written directly by its repositories (each message
+  under a temporary name, then renamed), copied by the node into its
+  **outbox topic**, and an **inbox topic**, written by the node with what
+  it takes from other nodes' outbox topics. The node's **local
+  dispatcher** delivers from its inbox topic into the addressed
+  repository's file inbox. One core per node crosses the network; a
+  repository never handles a topic.
+- **Two modes between nodes**, chosen by the receiver: **followed** (the
+  sender's outbox topic kept open and replicated live: Hypercore's own
+  notice of an append is the signal; for regular partners) and
+  **announced** (the sender signals the addressee only, by `p2p-request`,
+  the outbox's key and length, the latest length standing for a burst; the
+  receiver fetches those blocks sparsely and checks them; for occasional
+  senders). Both land in the receiver's inbox topic.
+- At implementation: the addressee by URI, resolved by the resource name
+  service; a message as a Kafka record (its value the message; headers:
+  from, to, a correlation id).
 
 ## Backup at the repository level
 
