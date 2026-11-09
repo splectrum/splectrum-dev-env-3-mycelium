@@ -331,7 +331,7 @@ repository's history (as `haicc-setup.sh`, a release asset of
 **The probe**: (1) a real package's closure as a bundle (`p2p-node`'s):
 does it run, its size, its addons, its module types; `closure.js` against
 `bare-module-traverse`; (2) native addons (Pear's way; extracted by hash);
-(3) a long-lived read-only reader of a store (below).
+(3) a long-lived read-only reader of a store (above).
 
 ## Pear as a substrate execution layer below HAICC
 
