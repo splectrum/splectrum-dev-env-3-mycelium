@@ -111,23 +111,33 @@ built.
 
 ### The packages layer
 
-**Agreed** (the human, 2026-11-09; changed from a layer of links, decided
-2026-11-08, once packages became bundles: `structure.md`). `packages/<purpose>`,
-in place of `capability/<purpose>`, is the code store: it holds the bundles
-themselves as objects (`packages/<purpose>/<package>/<entry>.bundle`). A
-bundle is a blob, its id its content's hash: the same bundle in many
-repositories is one object, replication moves only what a peer lacks, and
-the check is the object id (with the hash in the release's manifest).
-`packages/default` operates the repository's own functionality,
-`packages/test` is where development deploys and tests; promotion (test to
-default) and rollback are commits. Mycelium browses a bundle's contents by
-URI, as if extracted (`values.md`, "URIs name a logical structure":
-`/packages/default/haicc/haicc.bundle/app/page.html`); an execution scope
-gets a bundle as a file, a plain copy out of the layer, since Bare runs a
-bundle from its file. Releases outside git history stay where the outside
-world meets us (GitHub's haiccing releases, built by local). The reserved
-segment `capability` becomes `packages`; `rules.md` is changed when it is
-built.
+**Agreed** (the human, 2026-11-09; changed twice: from a layer of links,
+decided 2026-11-08, once packages became bundles; then from
+`packages/<purpose>` to one layer). `packages`, a layer of its own like
+`main`, in place of `capability/<purpose>`, is the code store: it holds the
+bundles themselves as objects, by `[org]/[package]`
+(`/packages/haiccing/base-package-haicc.bundle`), their native addons by
+hash (`/packages/addons/<sha256>`) and the pinned manifest
+(`/packages/manifest.json`): laid out as a source, so a repository's
+packages layer is itself a source for others. A bundle is a blob, its id
+its content's hash: the same bundle in many repositories is one object,
+replication moves only what a peer lacks. Mycelium browses a bundle's
+contents by URI, as if extracted (`values.md`); a level runs a bundle from
+its view (`structure.md`). Releases outside git history stay where the
+outside world meets us (GitHub's haiccing releases, built by local).
+
+**No purposes in the layer, no test organisations**: a level's packages
+layer holds what that level runs. Testing is **a separate instance** (a
+test HAICC platform, its own repository), composing what it needs by
+reference (`rules.md`, Layers): its packages a mix of production and
+development builds, by **a custom manifest** listing them (production
+entries exactly as the publisher's, the same id and hash; development
+builds beside them), marked `mixed` (`packages.md`: validated and mixed),
+signed by a development key that only a level set up for testing accepts
+(its `boot.json`); its sources may include a production level's packages
+layer. Every bundle still checked by its hash: mixing changes who vouches
+for the list, not how bundles are checked. Promotion: a tested build
+published under its organisation, through the release path.
 
 ### Naming another writer's layer: pinned, then resolved by URI
 
@@ -196,8 +206,8 @@ package manager puts bundles in its packages layer.
   `request/done` (the command as launched, the states it ran on, its exit
   code and output, the environment); then the next request. One at a time,
   in queue order: each starts from the `main` the previous left.
-- **The first bundle**: `packages/default` starts with `base-package-haicc`,
-  committed at `init`.
+- **The first bundles**: `packages` starts with `haiccing/base-package-boot`
+  and `haiccing/base-package-haicc`, committed at `init`.
 
 ## How repositories communicate: inbox, outbox, dispatcher
 

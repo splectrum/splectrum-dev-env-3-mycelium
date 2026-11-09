@@ -191,7 +191,7 @@ export async function writePackages ({ dev, out, only = null, keep = false, sequ
       if (entries) {
         // Its release: the full package as one bundle, its addons beside it.
         const [main] = Object.values(entries)
-        const m = await writeRelease({ staged: s.dir, release: to, repo: s.repo, entry: `modules/${main}`, commit })
+        const m = await writeRelease({ staged: s.dir, release: to, org: defs.packages[s.name].org || ORG, repo: s.repo, entry: `modules/${main}`, commit })
         written.push({ package: s.name, dir: to, hash: m.bundle.sha256, release: m })
         log({ kind: 'released', package: s.name, dir: to, bundle: m.bundle.sha256.slice(0, 12), bytes: m.bundle.bytes, addons: m.addons.length })
       } else {
@@ -200,9 +200,10 @@ export async function writePackages ({ dev, out, only = null, keep = false, sequ
         log({ kind: 'written', package: s.name, dir: to, hash: s.pkgm.hash.slice(0, 12) })
       }
     }
-    // The released packages as one source (docs/design/structure.md): flat,
-    // their bundles, their addons, one manifest listing each (its id, its
-    // hash, its commit, its addons), signed when the publisher's key is given.
+    // The released packages as one source (docs/design/structure.md): their
+    // bundles by [org]/[package], their addons, one manifest listing each by
+    // that key (its id, its hash, its commit, its addons), signed when the
+    // publisher's key is given.
     const released = written.filter(w => w.release)
     let source = null
     if (released.length) {
@@ -212,9 +213,10 @@ export async function writePackages ({ dev, out, only = null, keep = false, sequ
       const packages = {}
       for (const w of released) {
         const m = w.release
+        mkdirSync(join(dir, m.org), { recursive: true })
         copy(join(w.dir, m.bundle.file), join(dir, m.bundle.file))
         for (const a of m.addons) if (!existsSync(join(dir, 'addons', a))) copy(join(w.dir, 'addons', a), join(dir, 'addons', a))
-        packages[m.repo] = { id: m.bundle.id, sha256: m.bundle.sha256, bytes: m.bundle.bytes, main: m.bundle.main, commit, addons: m.addons }
+        packages[m.key] = { id: m.bundle.id, sha256: m.bundle.sha256, bytes: m.bundle.bytes, main: m.bundle.main, commit, addons: m.addons }
       }
       let manifest = { sequence: sequence ?? Math.floor(Date.now() / 1000), commit, runtime: released[0].release.runtime, packages }
       if (secretKey) manifest = sign(manifest, secretKey)

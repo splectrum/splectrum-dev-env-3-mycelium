@@ -10,19 +10,18 @@
 //                                  packages loaded, each checked by hash; init:
 //                                  the store (<work>/store) and the repository
 //                                  (`level`) created, its layers main,
-//                                  packages/default, execute/main,
+//                                  packages, execute/main,
 //                                  request/pending/default, request/executing,
-//                                  request/done; packages/default holding the
-//                                  pinned manifest, the bundles, their addons
-//                                  (laid out as a source); the layer deployed
-//                                  as a folder at its own path
-//                                  (<work>/packages/default: the work folder's
-//                                  root is the repository's root, the git root
-//                                  of all its layers), read back from the
+//                                  request/done; packages holding the pinned
+//                                  manifest, the bundles by [org]/[package],
+//                                  their addons (laid out as a source); HAICC's
+//                                  bundle deployed into the layer's view
+//                                  (<work>/haicc/packages: the repository
+//                                  mounted at <work>/haicc), read back from the
 //                                  repository
 //   fetch({ setup, work, repo })   another package, lazily, as the pinned
-//                                  manifest lists it: into packages/default,
-//                                  the layer and its folder
+//                                  manifest lists it ([org]/[package]): into
+//                                  the packages layer and its view
 // Each returns its result; `say` gets each step as it happens. A level
 // already booted is not booted again (a restore comes later).
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync } from 'bare-fs'
@@ -33,11 +32,13 @@ import { mrepos } from 'p2p-mrepo'
 import { writer, openRepo } from '../mycelium-git/index.js'
 import { loadManifest, loadPackage } from '../pkgm-base-manager/lib/sources.js'
 
-export const BOOT = 'base-package-boot'
-export const HAICC = 'base-package-haicc'
+export const BOOT = 'haiccing/base-package-boot'
+export const HAICC = 'haiccing/base-package-haicc'
 export const LEVEL = 'level'
-export const LAYERS = ['main', 'packages/default', 'request/pending/default', 'request/executing', 'request/done']
-const PACKAGES = 'packages/default'
+export const LAYERS = ['main', 'packages', 'request/pending/default', 'request/executing', 'request/done']
+const PACKAGES = 'packages'
+// The repository's root, viewed: <work>/haicc (its mount point).
+export const MOUNT = 'haicc'
 const author = { name: 'haicc-base-boot', email: 'haicc-base-boot@localhost' }
 
 const readJson = f => JSON.parse(readFileSync(f, 'utf8'))
@@ -67,11 +68,12 @@ async function commitPackages (backend, staged, repos, manifest, message, { pin 
 }
 
 // A package deployed: its bundle and its addons, read from the packages
-// layer into the layer's folder, at the same path as its URI (Bare runs the
-// bundle from there, its addons beside it).
+// layer into the layer's view, at the same path as its URI under the mount
+// point (Bare runs the bundle from there, the addons store two levels up).
 async function deploy (backend, manifest, repo, folder) {
   const r = openRepo(backend)
   mkdirSync(join(folder, 'addons'), { recursive: true })
+  mkdirSync(join(folder, repo, '..'), { recursive: true })
   writeFileSync(join(folder, `${repo}.bundle`), await r.read(`/${PACKAGES}/${repo}.bundle`))
   for (const a of manifest.packages[repo].addons || []) if (!existsSync(join(folder, 'addons', a))) writeFileSync(join(folder, 'addons', a), await r.read(`/${PACKAGES}/addons/${a}`))
   return join(folder, `${repo}.bundle`)
@@ -102,7 +104,7 @@ export async function boot ({ setup, work, say = () => {} }) {
       say({ step: 'init', repository: LEVEL, id: repo.id, key: repo.key, layers: [...LAYERS, 'execute/main'] })
       const commit = await commitPackages(repo.backend, staged, [BOOT, HAICC], manifest, `Installed from the setup: manifest ${manifest.sequence}`, { pin: true })
       say({ step: 'installed', layer: PACKAGES, commit, packages: [BOOT, HAICC] })
-      const bundle = await deploy(repo.backend, manifest, HAICC, join(work, PACKAGES))
+      const bundle = await deploy(repo.backend, manifest, HAICC, join(work, MOUNT, PACKAGES))
       say({ step: 'deployed', package: HAICC })
       return { ok: true, sequence: manifest.sequence, id: repo.id, key: repo.key, bundle }
     } finally { await store.close() }
@@ -123,7 +125,7 @@ export async function fetch ({ setup, work, repo: name, say = () => {} }) {
     say({ step: 'loaded', package: name, fetched: r.fetched.length })
     const commit = await commitPackages(repo.backend, staged, [name], manifest, `Installed ${name}: manifest ${manifest.sequence}`)
     say({ step: 'installed', layer: PACKAGES, commit, package: name })
-    const bundle = await deploy(repo.backend, manifest, name, join(work, PACKAGES))
+    const bundle = await deploy(repo.backend, manifest, name, join(work, MOUNT, PACKAGES))
     return { ok: true, bundle }
   } finally {
     await store.close()

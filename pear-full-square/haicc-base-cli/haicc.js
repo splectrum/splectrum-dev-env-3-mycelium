@@ -1,9 +1,10 @@
 // haicc: HAICC's command line, the package's entry (its bundle's main).
 //   bare base-package-haicc.bundle <command> [args] [--work=<level folder>]
 //   version            this module's name and version
+//   status             the level at a glance
 //   read <uri>         what the level's repository holds at a URI
 // The level's folder: --work, else the one this bundle runs in (the folder
-// holding store/, up from the bundle: <work>/packages/default/). Prints one
+// holding store/, up from the bundle: <work>/haicc/packages/<org>/). Prints one
 // JSON value. Exit 0 done; 1 not done; 2 a bad call.
 import process from 'bare-process'
 import { dirname, resolve, join } from 'bare-path'

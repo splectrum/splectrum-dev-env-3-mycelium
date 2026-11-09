@@ -1,11 +1,12 @@
 // The cold boot's command line, the boot package's entry (its bundle's main):
 //   bare base-package-boot.bundle boot --work=<folder> [--setup=<folder>]
 //   bare base-package-boot.bundle fetch <package> --work=<folder> [--setup=<folder>]
-// --setup defaults to the folder the bundle is in. Each step as a JSON line;
+// --setup defaults to the folder holding boot.json, up from the bundle. Each step as a JSON line;
 // the result last. Exit 0 done; 1 not done; 2 a bad call.
 import process from 'bare-process'
 import { spawnSync } from 'bare-subprocess'
 import { dirname, join, resolve } from 'bare-path'
+import { existsSync } from 'bare-fs'
 import { boot, fetch, HAICC } from './index.js'
 
 const args = process.argv.slice(2)
@@ -17,7 +18,10 @@ if (!['boot', 'fetch'].includes(command) || typeof flags.work !== 'string' || (c
   console.error('usage: boot --work=<folder> [--setup=<folder>] | fetch <package> --work=<folder> [--setup=<folder>]')
   process.exitCode = 2
 } else {
-  const setup = resolve(typeof flags.setup === 'string' ? flags.setup : dirname(process.argv[1]))
+  // The setup: --setup, else the folder holding boot.json, up from this bundle
+  // (<setup>/<org>/base-package-boot.bundle).
+  let setup = resolve(typeof flags.setup === 'string' ? flags.setup : dirname(process.argv[1]))
+  if (typeof flags.setup !== 'string') while (!existsSync(join(setup, 'boot.json')) && dirname(setup) !== setup) setup = dirname(setup)
   const work = resolve(flags.work)
   let r
   try {

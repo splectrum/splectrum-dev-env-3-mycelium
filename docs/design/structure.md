@@ -127,7 +127,7 @@ a translation of a layer, made only where a host process requires files.
 | Layer | Holds | Translated to a folder |
 |---|---|---|
 | `main` | the level's data (config, state) | no (seen by URI) |
-| `packages/default` (`packages/test` when development deploys there) | the bundles and their native addons, as objects (laid out as a source: the pinned manifest, `<repo>.bundle`, `addons/<sha256>`) | `<work>/packages/default/`: the bundles this level runs and the addons they name, at the layer's own path (Bare runs a bundle from its file; `dlopen` needs files) |
+| `packages` (a layer of its own, like `main`) | the bundles and their native addons, as objects, laid out as a source (the pinned manifest, `<org>/<package>.bundle`, `addons/<sha256>`) | `<work>/haicc/packages/`: the bundles this level runs and the addons they name (Bare runs a bundle from its file; `dlopen` needs files) |
 | `execute/main` | executions: only the visible change to `main` (from `main`, synced before each) | no |
 | `request/pending/default`, `request/executing`, `request/done` | the requests and their metadata (`repositories.md`) | no |
 | the log topic | the level's log | no (the minimal file log aside) |
@@ -144,20 +144,31 @@ and the store's own failures).
   folders are set up is the install's own concern, not part of the
   platform's interface. What follows is how the install translates, free to
   change.
-- **The level's folder is the repository's root** (agreed, the human,
-  2026-11-09): the git root of all its layers, as mycelium sees a
-  repository (`/` all the branches, each layer's tree at its branch path).
-  A layer that a host process needs as files appears in the folder at the
-  same path as its URI (`<work>/packages/default/` the view of
-  `/packages/default`: the bundles deployed, `addons/` beside them, Bare
-  runs them from there), holding only what that process needs, and owned
-  by the install, never edited. So **every reserved first segment is
-  reserved as a folder name at the level's root** (`main`, `request`,
-  `packages`, `execute`, `overlay`, `data`): the substrate's folders
-  (`store/` the repository itself, `setup/` the source the boot came from,
-  `log/` later) never use one. A command finds its level by walking up from
-  its bundle to the folder holding `store/`. Built (2026-11-09):
-  `<work>/packages/default/`, `<work>/store/`, `<work>/setup/`.
+- **The repository mounted on a folder of its own** (agreed, the human,
+  2026-11-09; replacing the level's folder as the repository's root, built
+  first, which reserved the layers' names at the work folder's root): the
+  repository's root, the git root of all its layers, is viewed at
+  `<work>/haicc/` (its mount point); a layer a host process needs as files
+  appears under it at the same path as its URI (`<work>/haicc/packages/` the
+  view of `/packages`); the substrate beside it (`<work>/store/` the
+  repository itself, `<work>/setup/` the source the boot came from, `log/`
+  later). No reserved names at the work folder's root. A view holds only
+  what its process needs, owned by the install, never edited. A command
+  finds its level by walking up from its bundle to the folder holding
+  `store/`.
+
+```
+<work>/
+  haicc/                                     the repository's root, viewed (the mount point)
+    packages/                                the packages layer
+      haiccing/base-package-boot.bundle      bundles by [org]/[package]
+      haiccing/base-package-haicc.bundle
+      addons/<sha256>                        native addons, one store; bundles name them /../../addons/<sha256>
+      manifest.json                          the pinned manifest, packages keyed [org]/[package]
+  store/                                     the substrate: the repository itself
+  setup/                                     the source the boot came from
+```
+
 - **A layer becomes a folder only where a host process needs files**: Bare
   (the bundles), `dlopen` (the addons), Docker (its mounts). A person never
   needs one: the terminal reads the repository by URI, and Splectral shows
@@ -193,15 +204,15 @@ nothing the level needs lives outside its repository (the scope and the
 addons rebuilt from it); nothing after "get the repository" assumes it new.
 
 **Seeding a new repository, `init`**: its initial layers `main`,
-`packages/default`, `execute/main` (from `main`), `request/pending/default`,
+`packages`, `execute/main` (from `main`), `request/pending/default`,
 `request/executing`, `request/done`. Two concerns, two owners, both
 committing through `mycelium-git`'s writer: HAICC creates the repository
 (`p2p-mrepo`) and its layers and seeds `main` (the level's name, what is
 provided: the level's shape, HAICC's concern, its own module,
 `haicc-base-level`, when a second repository paradigm needs a shape); the
 package manager installs the release's bundles and addons into
-`packages/default` (checked against the release's manifest) and deploys
-HAICC's bundle into the scope. The cold boot's shell runs the checks, then
+`packages` (checked against the release's manifest) and deploys HAICC's
+bundle into the layer's view. The cold boot's shell runs the checks, then
 Bare runs HAICC's bundle with `init`, then starts HAICC as the writer.
 
 **How people and agents interact with the platform** (agreed, the human,
@@ -524,9 +535,9 @@ As we know Pear's design (**to verify** with the probe):
   now, or at its next start; nothing swapped under running code); someone
   seeds it (`pear seed`); Pear's platform updates itself the same way.
 
-Ours (**agreed**): a version is a commit of the package's repository; the
-link in `packages/default`, promoted from `packages/test`, is the release
-mark; pinned or following, per layer (`repositories.md`, open); replication
+Ours (**agreed**): a version is a bundle (its id and hash); the release
+mark is its entry in the publisher's signed manifest (a newer sequence),
+the level's `packages` layer holding what it installed; pinned or following, per layer (`repositories.md`, open); replication
 signalled by RPC is the notification; the level's HAICC decides, after
 validating the new version (intact, its validation set: the warm boot's
 check, which Pear lacks), restarting onto it or waiting; a rollback points

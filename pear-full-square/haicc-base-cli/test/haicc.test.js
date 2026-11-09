@@ -50,3 +50,27 @@ test('read: a level\'s repository by URI, read-only', async (t) => {
     t.is(JSON.parse(String(cli.stdout)).text, 'hello\n')
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
+
+test('status: the level at a glance', async (t) => {
+  const work = mkdtempSync(join(tmpdir(), 'cli-'))
+  try {
+    const author = { name: 'test', email: 'test@localhost' }
+    const store = await openStore({ storage: join(work, 'store') })
+    const repo = await mrepos({ store }).create('level')
+    const w = writer(repo.backend)
+    for (const l of ['main', 'packages', 'request/pending/default']) await w.createLayer(l, `Create ${l}`, { author })
+    const c = await w.change('packages')
+    await c.put('/manifest.json', Buffer.from(JSON.stringify({ sequence: 7, packages: { 'haiccing/base-package-x': { id: 'ab'.repeat(32), bytes: 12 } } })))
+    await c.put('/haiccing/base-package-x.bundle', Buffer.from('a bundle'))
+    await c.commit('Installed', { author })
+    await store.close()
+    const r = await commands.status([], { work })
+    t.is(r.code, 0)
+    t.is(r.out.level.repository, 'level')
+    t.is(r.out.level.id, repo.id)
+    t.alike(r.out.layers, ['/main', '/packages', '/request/pending/default'])
+    t.is(r.out.manifest.sequence, 7)
+    t.alike(r.out.packages, [{ package: 'haiccing/base-package-x', id: 'ab'.repeat(8), bytes: 12, deployed: false }])
+    t.is((await commands.status([], { work: join(work, 'none') })).code, 1)
+  } finally { rmSync(work, { recursive: true, force: true }) }
+})

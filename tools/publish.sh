@@ -1,47 +1,42 @@
 #!/bin/sh
-# The haiccing repositories, written by the package writer (tools/package-writer)
-# from this repository and pushed: the packages, the demos, the swarms. For a machine
-# with push access to github.com/haiccing (the local agent); this
-# repository at the commit to publish, installed (npm install at its root:
-# the third-party code and Bare's runtime are taken from its node_modules; the
-# package writer runs on Bare: tools/bare).
-#   sh tools/publish.sh <folder for the haiccing clones> [--no-push]
-# Each repository cloned into <folder> if not there (its LICENSE kept),
-# written (each self-contained, all tested first: nothing is written if a
-# test fails), committed when changed, pushed.
-# Then the setup (haicc-setup.sh, base-package-haicc's release) built into
-# <folder>; uploaded as a GitHub release of base-package-haicc when `gh` is
-# there and base-package-haicc changed (tag: its hash), else said.
+# A release of HAICC's platform, for the local agent (a machine with push
+# access to github.com/haiccing and `gh`), with the human's word. From this
+# repository at the commit to publish, installed (npm install).
+#   sh tools/publish.sh <folder> --key-dir=<folder> [--push]
+# 1. The boot and HAICC's packages written as bundles, signed with the
+#    publisher's key (<key-dir>/publisher.secret; make one with
+#    tools/setup/keygen.js), as one source (<folder>/source).
+# 2. The setup built from it (<folder>/haicc-setup.sh): Bare, the source,
+#    boot.json (the publisher's public key).
+# 3. Checked as a user would: a fresh folder, Node.js off the PATH: the
+#    setup run, then `haicc status`.
+# 4. With --push only: the setup and the manifest published as a release of
+#    haiccing/base-package-boot (tag setup-<the boot bundle's hash, 12>).
 set -eu
 dev=$(cd "$(dirname "$0")/.." && pwd)
+[ $# -ge 2 ] || { echo "usage: sh tools/publish.sh <folder> --key-dir=<folder> [--push]"; exit 2; }
 folder=$(mkdir -p "$1" && cd "$1" && pwd)
-push=1; [ "${2:-}" = --no-push ] && push=0
-repos="base-package-haicc base-package-pkgm base-swarm-three-nodes base-demo-liveness base-demo-other-host"
+keys=""; push=0
+for a in "$@"; do case $a in --key-dir=*) keys=${a#--key-dir=} ;; --push) push=1 ;; esac; done
+[ -n "$keys" ] && [ -f "$keys/publisher.secret" ] && [ -f "$keys/publisher.public" ] || { echo "no publisher key in --key-dir (tools/setup/keygen.js makes one)"; exit 2; }
+[ -z "$(git -C "$dev" status --porcelain -- pear-full-square tools packages.json package.json package-lock.json)" ] || { echo "uncommitted changes in $dev: commit first"; exit 2; }
 commit=$(git -C "$dev" rev-parse --short HEAD)
-[ -z "$(git -C "$dev" status --porcelain -- pear-full-square splectral haiccing tools packages.json package.json package-lock.json)" ] || { echo "uncommitted changes in $dev: commit first"; exit 2; }
-for r in $repos; do
-  [ -d "$folder/$r/.git" ] || git clone -q "https://github.com/haiccing/$r" "$folder/$r"
-done
-"$dev/tools/bare" "$dev/tools/package-writer/cli.js" --out="$folder" --quiet > "$folder/written.json" || { echo "a package's tests failed: nothing written (see $folder/written.json)"; exit 1; }
-for r in $repos; do
-  cd "$folder/$r"
-  git add -A
-  if git diff --cached --quiet; then
-    # Committed by an earlier --no-push: still to go out.
-    if [ $push = 1 ] && [ -n "$(git rev-list '@{u}..HEAD')" ]; then git push -q origin HEAD; echo "$r: $(git log --oneline -1), pushed (committed earlier)"; else echo "$r: unchanged"; fi
-    continue
-  fi
-  hash=$(sed -n 's/.*"hash": *"\([0-9a-f]\{12\}\).*/\1/p' package.json | head -1)
-  git commit -q -m "Written by the package writer from dev-env-3-mycelium $commit (hash $hash)"
-  [ $push = 1 ] && git push -q origin HEAD
-  echo "$r: $(git log --oneline -1)$([ $push = 1 ] && echo ', pushed')"
-done
-cd "$folder"
-sh "$dev/pear-full-square/haicc-base-boot/release.sh" "$folder/base-package-haicc" "$folder/haicc-setup.sh" "$dev/node_modules/bare-runtime-linux-x64/bin/bare"
-tag=setup-$(sed -n 's/.*"hash": *"\([0-9a-f]\{12\}\).*/\1/p' "$folder/base-package-haicc/package.json" | head -1)
-if [ $push = 1 ] && command -v gh >/dev/null 2>&1; then
-  if gh release view "$tag" -R haiccing/base-package-haicc >/dev/null 2>&1; then echo "release $tag: there already"
-  else gh release create "$tag" "$folder/haicc-setup.sh" -R haiccing/base-package-haicc --title "Setup $tag" --notes "The setup: sh haicc-setup.sh <work folder>, then <work folder>/boot. Written from dev-env-3-mycelium $commit." --latest && echo "release $tag: published"; fi
+rm -rf "$folder/out" "$folder/check"
+mkdir -p "$folder/out"
+echo "== 1. the packages, from $commit, signed"
+"$dev/tools/bare" "$dev/tools/package-writer/cli.js" --out="$folder/out" --only=boot,haicc --sign-key="$keys/publisher.secret" --quiet > "$folder/written.json" || { echo "a package's tests failed: nothing written (see $folder/written.json)"; exit 1; }
+echo "== 2. the setup"
+"$dev/tools/bare" "$dev/tools/setup/build.js" --source="$folder/out/source" --out="$folder/out" --public-key="$keys/publisher.public"
+echo "== 3. checked: a fresh folder, Node.js off the PATH"
+(cd / && env -i PATH=/usr/local/sbin:/usr/sbin:/sbin:/bin:/usr/bin HOME="$HOME" sh "$folder/out/haicc-setup.sh" "$folder/check")
+bundle=$(ls "$folder/check/haicc/packages/haiccing/base-package-haicc.bundle")
+(cd / && env -i PATH=/usr/bin:/bin "$folder/check/setup/bare" "$bundle" status)
+boot=$(sed -n 's/^echo "\([0-9a-f]\{64\}\) .*/\1/p' "$folder/out/haicc-setup.sh" | head -1)
+tag=setup-$(echo "$boot" | cut -c1-12)
+if [ $push = 1 ]; then
+  echo "== 4. publishing $tag to haiccing/base-package-boot"
+  if gh release view "$tag" -R haiccing/base-package-boot >/dev/null 2>&1; then echo "release $tag: there already"
+  else gh release create "$tag" "$folder/out/haicc-setup.sh" "$folder/out/source/manifest.json" -R haiccing/base-package-boot --title "Setup $tag" --notes "HAICC's setup: sh haicc-setup.sh <work folder>. Written from splectrum/dev-env-3-mycelium $commit." --latest && echo "release $tag: published"; fi
 else
-  echo "release $tag: built ($folder/haicc-setup.sh), not uploaded$([ $push = 1 ] && echo ' (no gh)')"
+  echo "== not published ($tag): --push to publish, with the human's word"
 fi

@@ -5,12 +5,16 @@
 // command line's input is validated here, once.
 //   import { commands, version } from 'haicc-base-cli'
 //   version            this module's name and version
+//   status             the level at a glance, read-only: its repository (name,
+//                      id, key), its layers, the pinned manifest's sequence,
+//                      each package installed (its id, its size, deployed or
+//                      not)
 //   read <uri>         what the level's repository holds at a URI (from a
-//                      branch: /main/…, /packages/default/…), read-only: a
-//                      file's size (and its text, when small text), a
-//                      folder's or a branch's entries; '*' steps select
+//                      branch: /main/…, /packages/…), read-only: a file's
+//                      size (and its text, when small text), a folder's or a
+//                      branch's entries; '*' steps select
 import { join } from 'bare-path'
-import { existsSync } from 'bare-fs'
+import { existsSync, statSync } from 'bare-fs'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo } from '../mycelium-git/index.js'
@@ -26,8 +30,33 @@ const text = bytes => {
   return /[\u0000-\u0008\u000e-\u001f]/.test(s) || s.includes('�') ? null : s
 }
 
+// The level's repository, opened read-only for one command (a short-lived
+// reader beside the level's writer: a snapshot).
+async function withLevel (work, fn) {
+  if (!work || !existsSync(join(work, 'store'))) return { code: 1, out: { error: `no level here: ${work} (not booted)` } }
+  const store = await openStore({ storage: join(work, 'store'), readOnly: true })
+  try { return await fn(await mrepos({ store }).open(LEVEL)) } finally { await store.close() }
+}
+
 export const commands = {
   version: async () => ({ code: 0, out: version }),
+
+  status: async (args, { work }) => withLevel(work, async level => {
+    const repo = openRepo(level.backend)
+    const layers = []
+    for (const pattern of ['/*', '/*/*', '/*/*/*']) {
+      for (const [p, node] of await repo.select(pattern)) if (node.type === 'tree' && !layers.some(l => p.startsWith(l + '/'))) layers.push(p)
+    }
+    const manifest = JSON.parse((await repo.read('/packages/manifest.json')).toString())
+    const installed = (await repo.select('/packages/*/*')).map(([p]) => p).filter(p => p.endsWith('.bundle')).map(p => p.slice('/packages/'.length, -'.bundle'.length))
+    const packages = installed.map(key => ({
+      package: key,
+      id: manifest.packages[key]?.id?.slice(0, 16) ?? null,
+      bytes: manifest.packages[key]?.bytes ?? null,
+      deployed: existsSync(join(work, 'haicc', 'packages', `${key}.bundle`))
+    }))
+    return { code: 0, out: { level: { repository: level.name, id: level.id, key: level.key, work }, layers: layers.sort(), manifest: { sequence: manifest.sequence, signed: Boolean(manifest.signature), runtime: manifest.runtime }, packages } }
+  }),
 
   async read ([uri], { work }) {
     let path

@@ -21,10 +21,11 @@ const RESERVED = [...LAYERS, 'execute', 'publish']
 const PERMANENT = ['main', 'pending/default']
 
 // A layer's name: its first segment is a layer's, with more segments after
-// it, except main, which is a layer on its own.
+// it, except main and packages, each a layer on its own.
+const SOLO = ['main', 'packages']
 function layerName (name) {
   const first = name.split('/')[0]
-  if (!LAYERS.includes(first) || (first === 'main' ? name !== 'main' : name === first)) {
+  if (!LAYERS.includes(first) || (SOLO.includes(first) ? name !== first : name === first)) {
     throw new Error(`not a layer: ${name}`)
   }
 }

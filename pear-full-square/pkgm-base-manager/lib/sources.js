@@ -1,13 +1,14 @@
 // Where packages come from: sources, asked in order. A source is a folder
 // (`{ kind: 'folder', path }`: the setup's own, one carried in, a mirror) or
 // the web (`{ kind: 'web', url }`: GitHub's release downloads, any server),
-// laid out flat: manifest.json, <repo>.bundle, addons/<sha256>
+// laid out alike: manifest.json, <org>/<package>.bundle, addons/<sha256>
 // (docs/design/structure.md). Downloads in the shell, with curl
 // (docs/rules.md 26: never from Bare). What a source delivers is checked:
 // the manifest by its publisher's signature and sequence, every bundle and
 // addon by its sha256 in that manifest. A source is transport, never trusted.
 //   const m = loadManifest({ sources, publicKey, scratch, atLeast })
-//   loadPackage({ sources, manifest: m, repo, to, scratch })   -> { bundle, addons }
+//   loadPackage({ sources, manifest: m, repo, to, scratch })   -> { bundle, fetched }
+//     repo: the manifest's key, [org]/[package]; written as <to>/<key>.bundle
 import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, renameSync, rmSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { spawnSync } from 'bare-subprocess'
@@ -68,6 +69,7 @@ export function loadPackage ({ sources, manifest, repo, to, scratch }) {
     throw new Error(`no source has ${path} as the manifest lists it (${hash.slice(0, 12)})`)
   }
   const bundle = join(to, `${repo}.bundle`)
+  mkdirSync(join(bundle, '..'), { recursive: true })
   if (!(existsSync(bundle) && sha256(readFileSync(bundle)) === entry.sha256)) get(`${repo}.bundle`, entry.sha256, bundle)
   for (const a of entry.addons || []) if (!existsSync(join(to, 'addons', a))) get(`addons/${a}`, a, join(to, 'addons', a))
   return { bundle, fetched }

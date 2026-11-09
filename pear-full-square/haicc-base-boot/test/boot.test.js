@@ -15,7 +15,7 @@ const put = (f, s) => { mkdirSync(join(f, '..'), { recursive: true }); writeFile
 // A setup: the boot's, HAICC's and a demo package (stand-in bundles), a shared addon, a signed manifest.
 function setup (dir, key, { publicKey = key.publicKey } = {}) {
   const pkgs = {}
-  for (const [repo, body] of [[BOOT, 'boot bundle'], [HAICC, 'haicc bundle'], ['base-package-demo', 'demo bundle']]) {
+  for (const [repo, body] of [[BOOT, 'boot bundle'], [HAICC, 'haicc bundle'], ['haiccing/base-package-demo', 'demo bundle']]) {
     put(join(dir, `${repo}.bundle`), body)
     pkgs[repo] = { sha256: sha256(body), addons: [sha256('addon')] }
   }
@@ -30,7 +30,7 @@ async function level (work, fn) {
   try { return await fn(openRepo((await mrepos({ store }).open(LEVEL)).backend)) } finally { await store.close() }
 }
 
-test('boot: init, the repository and its layers; packages/default as a source; its folder at its URI\'s path', async (t) => {
+test('boot: init, the repository and its layers; the packages layer as a source; its view under the mount point', async (t) => {
   const root = mkdtempSync(join(tmpdir(), 'boot-'))
   try {
     const k = keyPair()
@@ -43,25 +43,25 @@ test('boot: init, the repository and its layers; packages/default as a source; i
     t.ok(/^[0-9a-f]{64}$/.test(r.key), 'the repository\'s key')
     await level(work, async repo => {
       const branches = (await repo.select('/*')).map(([p]) => p).concat((await repo.select('/*/*')).map(([p]) => p), (await repo.select('/*/*/*')).map(([p]) => p))
-      for (const b of ['/main', '/packages/default', '/execute/main', '/request/pending/default', '/request/executing', '/request/done']) t.ok(branches.includes(b), b)
-      t.is(JSON.parse((await repo.read('/packages/default/manifest.json')).toString()).sequence, 10, 'the manifest pinned in the layer')
-      t.is((await repo.read(`/packages/default/${HAICC}.bundle`)).toString(), 'haicc bundle')
-      t.is((await repo.read(`/packages/default/${BOOT}.bundle`)).toString(), 'boot bundle', 'the boot kept too (for a restore)')
-      t.is((await repo.read(`/packages/default/addons/${sha256('addon')}`)).toString(), 'addon')
+      for (const b of ['/main', '/packages', '/execute/main', '/request/pending/default', '/request/executing', '/request/done']) t.ok(branches.includes(b), b)
+      t.is(JSON.parse((await repo.read('/packages/manifest.json')).toString()).sequence, 10, 'the manifest pinned in the layer')
+      t.is((await repo.read(`/packages/${HAICC}.bundle`)).toString(), 'haicc bundle')
+      t.is((await repo.read(`/packages/${BOOT}.bundle`)).toString(), 'boot bundle', 'the boot kept too (for a restore)')
+      t.is((await repo.read(`/packages/addons/${sha256('addon')}`)).toString(), 'addon')
       t.is((await repo.select('/main/*')).length, 0, 'main empty')
     })
-    t.is(readFileSync(join(work, 'packages', 'default', `${HAICC}.bundle`), 'utf8'), 'haicc bundle', 'deployed: the layer\'s folder, at its URI\'s path')
-    t.ok(existsSync(join(work, 'packages', 'default', 'addons', sha256('addon'))))
+    t.is(readFileSync(join(work, 'haicc', 'packages', `${HAICC}.bundle`), 'utf8'), 'haicc bundle', 'deployed: the layer\'s folder, at its URI\'s path')
+    t.ok(existsSync(join(work, 'haicc', 'packages', 'addons', sha256('addon'))))
     t.absent(existsSync(join(work, 'scratch')), 'no scratch left')
     t.is((await boot({ setup: join(root, 'setup'), work })).ok, false, 'booted already: not again')
     // Lazily, later: from the manifest pinned in the repository.
-    t.is((await fetch({ setup: join(root, 'setup'), work, repo: 'base-package-demo' })).ok, true)
+    t.is((await fetch({ setup: join(root, 'setup'), work, repo: 'haiccing/base-package-demo' })).ok, true)
     await level(work, async repo => {
-      t.is((await repo.read('/packages/default/base-package-demo.bundle')).toString(), 'demo bundle')
-      t.is(JSON.parse((await repo.read('/packages/default/manifest.json')).toString()).sequence, 10, 'the pin untouched')
+      t.is((await repo.read('/packages/haiccing/base-package-demo.bundle')).toString(), 'demo bundle')
+      t.is(JSON.parse((await repo.read('/packages/manifest.json')).toString()).sequence, 10, 'the pin untouched')
     })
-    t.ok(existsSync(join(work, 'packages', 'default', 'base-package-demo.bundle')))
-    t.is((await fetch({ setup: join(root, 'setup'), work, repo: 'base-package-none' })).ok, false)
+    t.ok(existsSync(join(work, 'haicc', 'packages', 'haiccing', 'base-package-demo.bundle')))
+    t.is((await fetch({ setup: join(root, 'setup'), work, repo: 'haiccing/base-package-none' })).ok, false)
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
 

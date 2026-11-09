@@ -1,6 +1,6 @@
 // The setup, from the package writer's signed source (<out>/source):
 //   tools/bare tools/setup/build.js --source=<folder> --out=<folder> --public-key=<file> [--sources=<file>]
-// <out>/setup/          the source (manifest.json, the bundles, addons/),
+// <out>/setup/          the source (manifest.json, <org>/<package>.bundle, addons/),
 //                       Bare (bare), boot.json (the publisher's public key,
 //                       the other sources: --sources, a JSON list)
 // <out>/haicc-setup.sh  the shell header (tools/setup/header.sh) and the
@@ -22,14 +22,19 @@ const out = resolve(flags.out)
 const publicKey = readFileSync(flags['public-key'], 'utf8').trim()
 const manifest = JSON.parse(readFileSync(join(source, 'manifest.json'), 'utf8'))
 if (!verify(manifest, publicKey)) { console.error('the manifest is not signed by that key'); process.exit(1) }
-const boot = manifest.packages['base-package-boot']
-if (!boot) { console.error('the manifest has no base-package-boot'); process.exit(1) }
+const BOOT = 'haiccing/base-package-boot'
+const boot = manifest.packages[BOOT]
+if (!boot) { console.error(`the manifest has no ${BOOT}`); process.exit(1) }
 
 const setup = join(out, 'setup')
 rmSync(setup, { recursive: true, force: true })
 mkdirSync(join(setup, 'addons'), { recursive: true })
 copyFileSync(join(source, 'manifest.json'), join(setup, 'manifest.json'))
-for (const n of readdirSync(source)) if (n.endsWith('.bundle')) copyFileSync(join(source, n), join(setup, n))
+for (const org of readdirSync(source)) {
+  if (org === 'addons' || !existsSync(join(source, org)) || org.includes('.')) continue
+  mkdirSync(join(setup, org), { recursive: true })
+  for (const n of readdirSync(join(source, org))) if (n.endsWith('.bundle')) copyFileSync(join(source, org, n), join(setup, org, n))
+}
 for (const a of readdirSync(join(source, 'addons'))) copyFileSync(join(source, 'addons', a), join(setup, 'addons', a))
 // Bare's runtime, as this repository has it, stripped of its symbols.
 const bare = realpathSync(join(dev, 'node_modules', 'bare-runtime-linux-x64', 'bin', 'bare'))
@@ -42,7 +47,7 @@ writeFileSync(join(setup, 'boot.json'), JSON.stringify({ publicKey, sources }, n
 const payload = join(out, 'payload.tar.gz')
 const tar = spawnSync('tar', ['-czf', payload, '-C', setup, '.'], { stdio: 'inherit' })
 if (tar.status !== 0) process.exit(1)
-const header = readFileSync(join(here, 'header.sh'), 'utf8').replace('@BOOTSHA@', boot.sha256)
+const header = readFileSync(join(here, 'header.sh'), 'utf8').replaceAll('@BOOTSHA@', boot.sha256).replaceAll('@BOOT@', `${BOOT}.bundle`)
 writeFileSync(join(out, 'haicc-setup.sh'), Buffer.concat([Buffer.from(header), readFileSync(payload)]))
 chmodSync(join(out, 'haicc-setup.sh'), 0o755)
 rmSync(payload)
