@@ -237,7 +237,7 @@ Where packages are used at a level today, and with bundles:
 | the package manager, imported by HAICC from beside it (the pair) | the package manager's code in HAICC's bundle; its own release a bundle of its own (bundles disjoint: below) |
 | the cold boot's shell (`boot.sh`, `shutdown.sh`, the setup) | stays shell (before Bare; scripts are glue) |
 | a swarm's config (`nodes.json`, `modules.json`, `splectral.json`) | stays data, in the level's repositories |
-| the tests (modules' `test/`, the package's named tests) | not bundles (the human, 2026-11-09): a test has the package structure (recursive), its entry point a local cold boot (`boot`, shell), as no level's cold boot is a bundle; the tests are files in the package's bundle, a booted test's folder extracted into its run (`mycelium-container-bundle`), exercising the package's own bundle, the one the level runs: what runs is what was tested. The detail at implementation |
+| the tests (modules' `test/`, the package's named tests) | not bundles (the human, 2026-11-09): a test has the package structure (recursive), its entry point a local cold boot (`boot`, shell), as no level's cold boot is a bundle; the tests are files in the package's bundle, read from it, nothing extracted: the executing code finds everything in the bundle (`mycelium-container-bundle`; a `boot` script given to `sh` on its standard input), the test's run holding only what it writes; exercising the package's own bundle, the one the level runs: what runs is what was tested. The detail at implementation |
 
 So a level holds bundles and runs them, with its addons, its data and the
 cold boot's shell; the package folder lives in the package repository, the
