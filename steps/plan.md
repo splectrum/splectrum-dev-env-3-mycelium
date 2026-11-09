@@ -68,33 +68,10 @@ them (`docs/design/modules.md`); the review's findings
 
 ### Step 2: the rebuild
 
-1. **The probe** (`docs/design/structure.md`): a real package's closure as
-   a bundle (`p2p-node`'s: it runs, its size, its addons, its module
-   types; `closure.js` against `bare-module-traverse`); native addons; a
-   long-lived read-only reader of a store. A point that shows the design
-   wrong discussed before building on it.
-2. **The code path**: the package writer making a bundle per entry point
-   (the tests files in it, run against it; a manifest of hashes); releases
-   built and published by local; the host level as a repository (its store
-   and single writer process; its config in `main`; its packages layer the
-   host's code store, filled from the releases, checked by hash); the cold
-   boot creating it and the host's HAICC running from its bundle; the pair
-   gone; `addons/` by hash.
-3. **Swarms and nodes as repositories**: a swarm's packages layer filled
-   from the host's, replicated; a node's store in its container, its
-   bundles copied from the swarm's packages layer, its config and state in
-   its repository (in place of `node.json` and the manager's shadow); the
-   node's HAICC in the container; Docker through `docker-manager`; folders
-   only where a host process needs files.
-4. **Logs as topics, centralised**: each level's log a topic; the swarm
-   composing its nodes' log topics by URI (the read-only reference, pinned
-   then resolved).
-5. **The demos on the rebuilt platform**: `base-demo-liveness`,
-   `base-demo-other-host` (its flaky cross-host request fixed), and a log
-   viewer in Splectral for the centralised logs; Splectral's assets read
-   from its bundle.
-6. **The terminal mode as far as the demos need it** (`--json`, `read
-   <uri>`); the rest when the work touches it.
+The code rebuilt on the new design (`docs/design/`): packages as bundles,
+mycelium repositories at every level, logs as topics centralised by the
+swarm, the demos on it with a log viewer. Collaborative: the work decided
+with the human as it moves along.
 
 ### Step 3: the documentation
 
