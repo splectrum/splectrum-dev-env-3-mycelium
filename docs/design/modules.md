@@ -27,6 +27,7 @@ rewritten, HAICC-wrapped.
 | `haicc-cli-parser` | HAICC's command lines: flags and arguments parsed once, values kept whole (for the transitional tools too, until HAICC replaces them) | eight parsers in three variants |
 | `p2p-observe` | the p2p series' instrumentation: the observer call and its helpers | the emitter and `hex` in eight p2p modules |
 | `mycelium-value`, `-value-json`, `-container-document`, `-container-lines` | values, an encoding, storage containers (`values.md`) | JSON in five places, JSON lines in three |
+| `mycelium-container-bundle` | a bundle as a read-only container of files (`values.md`); its product repository to be created by the human | (new: assets and data files read from bundles) |
 | `mycelium-request-submit` | a request from a source placed into the requests, once, one function per source type, each validated where it enters (a folder; a peer's bundle) | `mycelium-layer`'s intake and `p2p-node`'s copy (which takes a peer's names unchecked) |
 | `mycelium-request-execute` | executing requests and their response, one unit, recorded for an exact rerun | `mycelium-layer`'s `executeRequests` |
 
