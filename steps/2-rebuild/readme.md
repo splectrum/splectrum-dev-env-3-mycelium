@@ -9,7 +9,10 @@ dispatcher; (5) requests flowing, demo functionality, `haicc request add`.
 Then `main` populated and the warm boot (repository functionality); swarms,
 nodes, centralised logs, the demos.
 
-## 1. Boot creates the repository: in progress
+## 1. Boot creates the repository: done
+
+(the first release, `setup-a6d039296165`, published and checked by local:
+`local-run.md`)
 
 **The bundle release** (2026-11-09):
 
@@ -144,6 +147,24 @@ nodes, centralised logs, the demos.
 - npm is needed only to change the dependencies. `docs/rules.md` 27,
   `docs/design/packages.md`, `structure.md`, the guides, the handover and
   the prompt updated.
+
+## 2. The functional framework: done (2026-11-09)
+
+- A new module, `mycelium-repo-main` (`index.js` the library, `main.js`
+  the command line; `version` for now), packaged as
+  `haiccing/base-package-mycelium` (to be reset on GitHub before it is
+  published: the old code-only package is there still).
+- The boot installs the boot's, HAICC's and mycelium's packages into
+  `packages`, and deploys HAICC's and mycelium's into the view; the boot's
+  own is installed only. Tests 28 of 28.
+- `tools/publish.sh` writes the three. Run without `--push`: the setup
+  7.9 MB, Bare fetched at setup; `haicc status` three packages, two
+  deployed; the framework's bundle answering from its place
+  (`mycelium-repo-main 0.1.0`). The tag it would publish:
+  `setup-3a5c9a551c31`.
+
+Next: 3, `mycelium-repo-main` started by the boot as the level's main
+thread (the store held as its single writer).
 
 Not yet: the tests run from the bundle (their third-party code, brittle,
 is not reached from the entry); the other packages (`swarm-three-nodes`, the

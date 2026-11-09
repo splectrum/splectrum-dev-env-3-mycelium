@@ -14,8 +14,9 @@
 //                                  request/pending/default, request/executing,
 //                                  request/done; packages holding the pinned
 //                                  manifest, the bundles by [org]/[package],
-//                                  their addons (laid out as a source); HAICC's
-//                                  bundle deployed into the layer's view
+//                                  their addons (laid out as a source): the
+//                                  boot's, HAICC's and mycelium's; HAICC's and
+//                                  mycelium's bundles deployed into the layer's view
 //                                  (<work>/haicc/packages: the repository
 //                                  mounted at <work>/haicc), read back from the
 //                                  repository
@@ -34,6 +35,10 @@ import { loadManifest, loadPackage } from '../pkgm-base-manager/lib/sources.js'
 
 export const BOOT = 'haiccing/base-package-boot'
 export const HAICC = 'haiccing/base-package-haicc'
+export const MYCELIUM = 'haiccing/base-package-mycelium'
+// Installed at init, and deployed into the layer's view (what runs).
+export const INSTALL = [BOOT, HAICC, MYCELIUM]
+export const DEPLOY = [HAICC, MYCELIUM]
 export const LEVEL = 'level'
 export const LAYERS = ['main', 'packages', 'request/pending/default', 'request/executing', 'request/done']
 const PACKAGES = 'packages'
@@ -92,8 +97,8 @@ export async function boot ({ setup, work, say = () => {} }) {
     if (!manifest) return { ok: false, why: 'no source has a manifest signed by the publisher' }
     say({ step: 'manifest', sequence: manifest.sequence, packages: Object.keys(manifest.packages) })
     const staged = join(scratch, 'staged')
-    for (const repo of [BOOT, HAICC]) loadPackage({ sources, manifest, repo, to: staged, scratch: join(scratch, 'fetch') })
-    say({ step: 'loaded', packages: [BOOT, HAICC] })
+    for (const repo of INSTALL) loadPackage({ sources, manifest, repo, to: staged, scratch: join(scratch, 'fetch') })
+    say({ step: 'loaded', packages: INSTALL })
     // init: the store, the repository, its layers.
     const store = await openStore({ storage: join(work, 'store') })
     try {
@@ -102,10 +107,11 @@ export async function boot ({ setup, work, say = () => {} }) {
       for (const l of LAYERS) await w.createLayer(l, `Create ${l}`, { author })
       await w.createExecution('main')
       say({ step: 'init', repository: LEVEL, id: repo.id, key: repo.key, layers: [...LAYERS, 'execute/main'] })
-      const commit = await commitPackages(repo.backend, staged, [BOOT, HAICC], manifest, `Installed from the setup: manifest ${manifest.sequence}`, { pin: true })
-      say({ step: 'installed', layer: PACKAGES, commit, packages: [BOOT, HAICC] })
-      const bundle = await deploy(repo.backend, manifest, HAICC, join(work, MOUNT, PACKAGES))
-      say({ step: 'deployed', package: HAICC })
+      const commit = await commitPackages(repo.backend, staged, INSTALL, manifest, `Installed from the setup: manifest ${manifest.sequence}`, { pin: true })
+      say({ step: 'installed', layer: PACKAGES, commit, packages: INSTALL })
+      let bundle = null
+      for (const p of DEPLOY) { const b = await deploy(repo.backend, manifest, p, join(work, MOUNT, PACKAGES)); if (p === HAICC) bundle = b }
+      say({ step: 'deployed', packages: DEPLOY })
       return { ok: true, sequence: manifest.sequence, id: repo.id, key: repo.key, bundle }
     } finally { await store.close() }
   } finally { rmSync(scratch, { recursive: true, force: true }) }

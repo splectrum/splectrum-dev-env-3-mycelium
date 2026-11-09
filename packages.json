@@ -20,6 +20,16 @@
         "haicc": "pear-full-square/haicc-base-cli/haicc.js"
       }
     },
+    "mycelium": {
+      "repo": "base-package-mycelium",
+      "description": "Mycelium, the repository framework: a running repository's main thread, its requests submitted and executed. Installed by HAICC's boot into a level's packages, run from its bundle. On Bare.",
+      "modules": [
+        "pear-full-square/mycelium-repo-main"
+      ],
+      "entries": {
+        "main": "pear-full-square/mycelium-repo-main/main.js"
+      }
+    },
     "pkgm": {
       "repo": "base-package-pkgm",
       "description": "The package manager: a package checked intact, deployed with its validation tests, its tests run bottom up; a swarm's codebase assembled into its master's package repository. The platform's pair, with HAICC. On Bare.",

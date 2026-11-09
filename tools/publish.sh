@@ -3,7 +3,7 @@
 # access to github.com/haiccing and `gh`), with the human's word. From this
 # repository at the commit to publish, installed (sh tools/install.sh).
 #   sh tools/publish.sh <folder> --key-dir=<folder> [--push]
-# 1. The boot and HAICC's packages written as bundles, signed with the
+# 1. The boot's, HAICC's and mycelium's packages written as bundles, signed with the
 #    publisher's key (<key-dir>/publisher.secret; make one with
 #    tools/setup/keygen.js), as one source (<folder>/source).
 # 2. The setup built from it (<folder>/haicc-setup.sh): Bare, the source,
@@ -28,7 +28,7 @@ commit=$(git -C "$dev" rev-parse --short HEAD)
 rm -rf "$folder/out" "$folder/check"
 mkdir -p "$folder/out"
 echo "== 1. the packages, from $commit, signed"
-"$dev/tools/bare" "$dev/tools/package-writer/cli.js" --out="$folder/out" --only=boot,haicc --sign-key="$keys/publisher.secret" --quiet > "$folder/written.json" || { echo "a package's tests failed: nothing written (see $folder/written.json)"; exit 1; }
+"$dev/tools/bare" "$dev/tools/package-writer/cli.js" --out="$folder/out" --only=boot,haicc,mycelium --sign-key="$keys/publisher.secret" --quiet > "$folder/written.json" || { echo "a package's tests failed: nothing written (see $folder/written.json)"; exit 1; }
 echo "== 2. the setup"
 "$dev/tools/bare" "$dev/tools/setup/build.js" --source="$folder/out/source" --out="$folder/out" --public-key="$keys/publisher.public"
 echo "== 3. checked: a fresh folder, Node.js off the PATH"
