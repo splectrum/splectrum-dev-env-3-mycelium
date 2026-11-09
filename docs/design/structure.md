@@ -76,15 +76,15 @@ write. (`wait` queues a writer for the lock.)
 - **The single writer is the one open store** (tried 2026-11-09): a store
   opens writable once; a second open fails even in the same thread, and
   from a child thread (`bare-thread`) of the same process; a Bare thread
-  cannot share the main thread's store (each its own isolate, sharing only
+  cannot share another thread's store (each its own isolate, sharing only
   messages). The store's writer is the open store, held by
-  `mycelium-repo-main`'s main thread; the cores' writer is the same open
+  `mrepo-base-runtime` (the repository's runtime); the cores' writer is the same open
   store (every core of the repository, its layers' drive, its topics, its
   outbox, keyed from the store's primary key). Child threads and launched
   commands are its clients, never writers: a child thread sends what it
   wants written as a message; a launched command (a request's execution)
   writes into the execute layer itself, on disk (changed 2026-11-09:
-  `repositories.md`, "Layers by their writes"), the main thread, on
+  `repositories.md`, "Layers by their writes"), the runtime, on
   completion, committing, merging and recording.
 - **More writers, more stores** (agreed, the human, 2026-11-09): another
   store (its own folder, its own primary key) has its own single writer (a
@@ -95,8 +95,8 @@ write. (`wait` queues a writer for the lock.)
   sparsely). Writes never cross stores; what joins them is a reference and
   replication, as between machines. So a level may have several stores,
   each with one writer, composed by reference: the level's repository
-  (`mycelium-repo-main`), a log store written by a logging thread (heavy
-  appends kept off the main thread), a package's own store.
+  (`mrepo-base-runtime`), a log store written by a logging thread (heavy
+  appends kept off the runtime), a package's own store.
 - **A read-only reader sees a snapshot as of its opening** (tried
   2026-11-09: a reader kept open while the writer appended five times saw
   none of them, `update()` returning `false`; a reader opened afterwards saw
@@ -149,8 +149,8 @@ and the store's own failures).
   folders are set up is the install's own concern, not part of the
   platform's interface. What follows is how the install translates, free to
   change.
-- **Each repository a folder of its own, `<work>/mrepos/<name>/`** (agreed,
-  the human, 2026-11-09; replacing `<work>/haicc/`, built first, itself
+- **Each repository a folder of its own, `<work>/mrepos/<name>/`** (**built**,
+  agreed with the human, 2026-11-09; replacing `<work>/haicc/`, built first, itself
   replacing the level's folder as the repository's root): a repository is
   stored partly in the Corestore, partly on the filesystem, so every
   repository has its place in the folder structure; a flat list for now,
@@ -160,7 +160,7 @@ and the store's own failures).
   `host`: of type `haicc` (HAICC is the repository's API), it is the host,
   the node bridgehead. **One Corestore per host**, `<work>/store/`, holding
   every repository's atomic and replicated layers, its single writer the
-  host's main thread; beside it `<work>/setup/` (the source the boot came
+  host's runtime; beside it `<work>/setup/` (the source the boot came
   from) and `<work>/log/`. A command finds its level by walking up from its
   bundle to the folder holding `store/`.
 

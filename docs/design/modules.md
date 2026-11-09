@@ -18,19 +18,20 @@ rewritten, HAICC-wrapped.
 
 ## New modules
 
-**Agreed** (their product repositories created by the human), all in
-`pear-full-square`:
+**Agreed** (their product repositories created by the human; the `mrepo-`
+ones, named 2026-11-09, still to create), all in `pear-full-square`:
 
 | Module | Concern | Replaces |
 |---|---|---|
 | `docker-manager` | Docker for the platform: the call, networks (with a subnet; addresses), the node image, hardened containers (run, stop, remove, pause, inspect, logs as JSON lines) | four Docker wrappers (`haicc-base-boot`, `haicc-deployment`, `p2p-node-manager`, Splectral's p2p side), the hardening flags twice |
 | `haicc-cli-parser` | the terminal's boundary into HAICC: a command line parsed once (flags and arguments, values kept whole), for validation and launch as an internal `haicc` command (`structure.md`); for the transitional tools too, until HAICC replaces them | eight parsers in three variants |
 | `p2p-observe` | the p2p series' instrumentation: the observer call and its helpers | the emitter and `hex` in eight p2p modules |
-| `mycelium-value`, `-value-json`, `-container-document`, `-container-lines` | values, an encoding, storage containers (`values.md`) | JSON in five places, JSON lines in three |
+| `mycelium-value`, `-value-json`, `-container-document`, `-container-lines` | values, an encoding, storage containers (`values.md`; `-value-json` and `-container-document` **built**) | JSON in five places, JSON lines in three |
 | `mycelium-container-bundle` | a bundle as a read-only container of files (`values.md`); its product repository to be created by the human | (new: assets and data files read from bundles) |
-| `mycelium-request-submit` | a request from a source placed into the requests, once, one function per source type, each validated where it enters (a folder; a peer's bundle) | `mycelium-layer`'s intake and `p2p-node`'s copy (which takes a peer's names unchecked) |
-| `mycelium-repo-main` | a running repository's main thread, always on: it holds the store as its single writer, keeps the required watchers running (the request queue, the sources it follows, replication), serves the local connection (readers, submits), restarts what stops (`repositories.md`) | (new: the running repository) |
-| `mycelium-request-execute` | executing requests and their response, one unit, recorded for an exact rerun | `mycelium-layer`'s `executeRequests` |
+| `mrepo-base-runtime` (**built**; first `mycelium-repo-main`) | a running repository's runtime, always on: the framework running its protocols; it holds the store as its single writer, keeps the required watchers running, serves the local connection, restarts what stops (`repositories.md`) | (new: the running repository) |
+| `mrepo-base-request` (was `mycelium-request-submit`) | the request protocol: the inbox taken in, each message validated against the API where it enters, a request placed in `request/pending/<source>` | `mycelium-layer`'s intake and `p2p-node`'s copy (which takes a peer's names unchecked) |
+| `mrepo-base-execute` (was `mycelium-request-execute`) | the execute protocol: requests executed and answered, one unit, recorded for an exact rerun | `mycelium-layer`'s `executeRequests` |
+| `mrepo-base-log` | the log protocol | (new) |
 
 `mycelium-layer` keeps the branches (import, export, bundles, deploy,
 extract). The request queue (`plan` today) waits for the request manager:

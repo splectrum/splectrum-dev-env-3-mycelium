@@ -20,14 +20,14 @@
         "haicc": "pear-full-square/haicc-base-cli/haicc.js"
       }
     },
-    "mycelium": {
-      "repo": "base-package-mycelium",
-      "description": "Mycelium, the repository framework: a running repository's main thread, its requests submitted and executed. Installed by HAICC's boot into a level's packages, run from its bundle. On Bare.",
+    "mrepo": {
+      "repo": "base-package-mrepo",
+      "description": "mrepo, the repository framework: a running repository's runtime, running its protocols (request, execute, log). Installed by HAICC's boot into the host's packages, run from its bundle. On Bare.",
       "modules": [
-        "pear-full-square/mycelium-repo-main"
+        "pear-full-square/mrepo-base-runtime"
       ],
       "entries": {
-        "main": "pear-full-square/mycelium-repo-main/main.js"
+        "runtime": "pear-full-square/mrepo-base-runtime/runtime.js"
       }
     },
     "pkgm": {

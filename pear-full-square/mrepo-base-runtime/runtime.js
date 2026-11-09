@@ -1,9 +1,9 @@
-// mycelium: a running repository's main thread, from the command line (the
+// mrepo: a running repository's runtime, from the command line (the
 // package's entry, its bundle's main):
-//   bare base-package-mycelium.bundle start --work=<level folder>   the main
-//       thread, in the foreground (`start` in the library detaches it); its
-//       log in <work>/log/main.log
-//   bare base-package-mycelium.bundle version
+//   bare base-package-mrepo.bundle start --work=<host folder>   the runtime,
+//       in the foreground (`start` in the library detaches it); its log in
+//       <work>/log/runtime.log
+//   bare base-package-mrepo.bundle version
 // Exit 0 done; 1 not done (the store held by another, no repository); 2 a bad call.
 import process from 'bare-process'
 import { resolve } from 'bare-path'
@@ -22,11 +22,11 @@ if (command === 'version') {
     await run({ work, say: log })
     process.exit(0) // stopped: ended here (its signal handlers would hold the process open)
   } catch (err) {
-    log({ main: 'failed', error: err.message })
-    console.error(`mycelium: ${err.message}`)
+    log({ runtime: 'failed', error: err.message })
+    console.error(`mrepo: ${err.message}`)
     process.exit(1)
   }
 } else {
-  console.error(`mycelium: ${command ? `no command '${command}'` : 'a command is needed'} (start --work=<folder>, version)`)
+  console.error(`mrepo: ${command ? `no command '${command}'` : 'a command is needed'} (start --work=<folder>, version)`)
   process.exitCode = 2
 }

@@ -182,32 +182,37 @@ before replication completes; but the unit runs only on what is in the
 replica: what is recorded, and what a rerun uses, is always the replicated
 commit.
 
-## A running repository: mycelium's framework
+## A running repository: the mrepo framework
 
-**Agreed** (the human, 2026-11-09). A repository's own behaviour is
-mycelium's, not HAICC's: HAICC sets a level up (`init`) and starts it; the
-package manager puts bundles in its packages layer.
+**Agreed** (the human, 2026-11-09). A repository's own behaviour is the
+framework's, not HAICC's: HAICC is a repository's API (below); the package
+manager puts bundles in its packages layer. Execution is its own heading,
+`mrepo`, apart from `mycelium` (the data layer: values, URIs, containers).
 
-- **An always-on process per repository**, the repository's main thread:
-  `mycelium-repo-main` (the human; module and process names are one
-  namespace, git layers another): it holds the store as its single writer, keeps the required
-  watchers running (the local queue, the sources it follows, replication),
-  serves the local connection (short-lived and long-lived readers,
-  submits), and restarts what stops.
-- **Submit** (`mycelium-request-submit`): a request placed in the queue
-  (`request/pending/<source>`) by the repository's own code, from a message
-  taken in from its inbox and validated there (below); the queue inside the
-  boundary.
-- **Execute** (`mycelium-request-execute`): the queue watched; a request
-  taken (`request/executing`); the command it contains launched as a unit,
-  the repository's state pinned; the command writes the data it changes into
-  the execute layer (`execute/main`); on completion the framework commits,
-  merges into `main`, and moves the request with its record to
-  `request/done` (the command as launched, the states it ran on, its exit
-  code and output, the environment); then the next request. One at a time,
-  in queue order: each starts from the `main` the previous left.
-- **The first bundles**: `packages` starts with `haiccing/base-package-boot`
-  and `haiccing/base-package-haicc`, committed at `init`.
+- **The framework's API is a set of protocols** (the human, 2026-11-09):
+  each protocol owns a flow and its layer (its top URI part), and defines
+  what an implementation provides; the framework enforces the flow, an
+  implementation fills in the specific part. Logically one API documented
+  as protocols; physically **a module per protocol**. The base variant
+  (`mrepo-base-*`) a simple implementation; others, shaped by configuration
+  (logging levels, timeouts, ...), new variants of the same protocols.
+
+| Protocol | Layer | The flow it owns | What an implementation provides | Base module |
+|---|---|---|---|---|
+| request | `/request` | the inbox taken in, each message checked against the API (the root mapping), then a request in `request/pending/<source>`, or refused and answered | the API: its commands and their arguments (`haicc`) | `mrepo-base-request` |
+| execute | `/execute` | the queue watched; a request taken (`request/executing`), launched as a unit, the repository's state pinned, writing into `execute/main`; on completion committed, merged into `main`, recorded in `request/done` (the command as launched, the states it ran on, its exit code and output, the environment), answered; one at a time, in queue order | each command mapped to the functions that do it, run as configured | `mrepo-base-execute` |
+| log | `/log` | records appended, one writer, a topic held by reference | what is logged | `mrepo-base-log` |
+
+  More as required (the transport between roots, the verbs, once there is
+  more than one root).
+- **The runtime**, `mrepo-base-runtime` (named 2026-11-09; first built as
+  `mycelium-repo-main`, its "main" colliding with the `main` layer): the
+  always-on process of a repository, running its protocols; it holds the
+  store as its single writer, keeps the required watchers running (the
+  queue, the sources it follows, replication), serves the local connection,
+  and restarts what stops. Packaged as `haiccing/base-package-mrepo`.
+- **The first bundles**: `packages` starts with `haiccing/base-package-boot`,
+  `-haicc` and `-mrepo`, committed at `init`.
 
 ## Layers by their writes: atomic or not, visible or local
 
@@ -217,14 +222,14 @@ when it is made.
 
 | | atomic (one commit) | not atomic (records, each whole) |
 |---|---|---|
-| **visible** (replicated) | `main`, `packages`: in the store (Corestore), committed by the main thread only | `request/done`, logs: topics, each appended by its own writer, held by reference |
+| **visible** (replicated) | `main`, `packages`: in the store (Corestore), committed by the runtime only | `request/done`, logs: topics, each appended by its own writer, held by reference |
 | **local** | (none yet) | `execute/*`, `request/pending/*`, `request/executing`, the local inbox and outbox: on disk (native git, plain folders) |
 
 Stored, so, in three modes (`structure.md`): atomic (the Corestore),
 replicated (the Corestore, copied out as files where a process needs them:
 `packages`), non-atomic (the filesystem).
 
-- **Only atomic layers go through the main thread**; it moves a result in
+- **Only atomic layers go through the runtime**; it moves a result in
   (`transfer`: the same object ids, nothing copied twice) and merges it.
 - **The disk layers take parallel writers** (threads, processes), one per
   branch: objects content-addressed and renamed into place, a ref moved
@@ -293,8 +298,8 @@ functionality (the bundles in `packages/`) is not exposed.
   travel wrapped, as the body of a `POST` to an inbox. The host's root is the host's repository, so
   its inbox is `/inbox`; from outside a root, through its mapping, only
   `POST /inbox` is allowed (the gate); inside, code writes any layer under
-  the layer rules. Folders for now, no layer kind (**built** at
-  `<work>/haicc/inbox/` and `outbox/`, moving to `<work>/mrepos/host/`);
+  the layer rules. Folders for now, no layer kind (**built**:
+  `<work>/mrepos/host/inbox/` and `outbox/`);
   more advanced implementations later.
 - **HAICC is a repository's API** (the human, 2026-11-09): the host's
   repository is of type `haicc`, instance `host`; it is the host (the node
@@ -305,7 +310,7 @@ functionality (the bundles in `packages/`) is not exposed.
   `request/pending/default`, or refused and answered. The terminal checks
   more only where it is itself a repository's application. **No command
   stays outside**: each passes through the inbox and is recorded (starting
-  and stopping the host's main thread, the boot's own record).
+  and stopping the host's runtime, the boot's own record).
 - **An API package maps the API to internal functionality** (the human,
   2026-11-09): the `haicc` package declares the commands (their arguments,
   validated at the inbox) and maps each to the functions that do it; how a

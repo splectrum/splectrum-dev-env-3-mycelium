@@ -1,12 +1,12 @@
 // haicc: HAICC's command line, the package's entry (its bundle's main).
-//   bare base-package-haicc.bundle <command> [args] [--work=<level folder>]
+//   bare base-package-haicc.bundle <command> [args] [--work=<host folder>]
 //   version            this module's name and version
-//   status             the level at a glance
-//   start | stop       the level's main thread
-//   read <uri>         what the level's repository holds at a URI
-//   put <uri> <json>   a value PUT at a URI (from outside: PUT /inbox only)
-// The level's folder: --work, else the one this bundle runs in (the folder
-// holding store/, up from the bundle: <work>/haicc/packages/<org>/). Prints one
+//   status             the host at a glance
+//   start | stop       the host's runtime
+//   read <uri>         what the host's repository holds at a URI
+//   post <uri> <json>  a value POSTed to a URI (from outside: POST /inbox only)
+// The host's folder: --work, else the one this bundle runs in (the folder
+// holding store/, up from the bundle: <work>/mrepos/host/packages/<org>/). Prints one
 // JSON value. Exit 0 done; 1 not done; 2 a bad call.
 import process from 'bare-process'
 import { dirname, resolve, join } from 'bare-path'
