@@ -184,10 +184,10 @@ package manager puts bundles in its packages layer.
   watchers running (the local queue, the sources it follows, replication),
   serves the local connection (short-lived and long-lived readers,
   submits), and restarts what stops.
-- **Submit** (`mycelium-request-submit`): a request validated where it enters
-  (its command included) and placed in its queue
-  (`request/pending/<source>`); from the terminal, `haicc request add`
-  hands it to the repository's process, which commits it.
+- **Submit** (`mycelium-request-submit`): a request placed in the queue
+  (`request/pending/<source>`) by the repository's own code, from a message
+  taken in from its inbox and validated there (below); the queue inside the
+  boundary.
 - **Execute** (`mycelium-request-execute`): the queue watched; a request
   taken (`request/executing`); the command it contains launched as a unit,
   the repository's state pinned; the command writes the data it changes into
@@ -198,6 +198,37 @@ package manager puts bundles in its packages layer.
   in queue order: each starts from the `main` the previous left.
 - **The first bundle**: `packages/default` starts with `base-package-haicc`,
   committed at `init`.
+
+## How repositories communicate: inbox, outbox, dispatcher
+
+**Agreed** (the human, 2026-11-09; the details at implementation).
+Nothing in a repository is callable from outside by default: its
+functionality (the bundles in `packages/`) is not exposed.
+
+- **Each repository has an inbox and an outbox**, two topics outside the
+  repository's boundary (inside the swarm). One writer per core, without
+  exception: the outbox is written by its repository (what it sends), the
+  inbox by the dispatcher (what was sent to it).
+- **A dispatcher** reads the outboxes and appends each message to the inbox
+  of the repository it is addressed to: it routes, it does not process.
+- **Each repository watches its boxes**: from its inbox, each message is
+  validated where it crosses into the repository, then processed by the
+  repository's own code (which may place a request in its queue: the queue
+  is fed from inside only); on its outbox, it follows what it sent.
+- **Validation at both edges**: the dispatcher checks the envelope (sender,
+  addressee) as it routes; the repository checks the content as it takes a
+  message in.
+- **Everyone the same way**: the owner's terminal (`haicc request add`)
+  posts a message, through the dispatcher, to the repository's inbox, as
+  any sender does.
+- **An external API** (later, opt-in): mounted in a repository as data
+  (pinned, versioned), declaring which commands are accepted, with their
+  arguments, from whom (capability URIs mapped to commands: `rules.md`,
+  Layers, deferred to that level); a policy over the inbox.
+- At implementation: where the dispatcher runs (per swarm, per host); the
+  addressee by URI, resolved by the resource name service; a message as a
+  Kafka record (its value the message; headers: from, to, a correlation
+  id).
 
 ## Backup at the repository level
 
