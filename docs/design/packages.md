@@ -79,9 +79,16 @@ development, without pretending one is the other (the human).
   side: the package writer (`tools/package-writer`, in this repository,
   never shipped) writes haiccing's packages from this repository's modules
   (`packages.json`, and the hand-written parts in `haiccing/<repo>/`),
-  taking the third-party code from this repository's `node_modules` (the
-  one contact with npm). Every package is staged and tested before any is
-  written.
+  taking the third-party code from this repository's `node_modules`.
+  **Installed with Bare only** (2026-11-09, the human: no Node.js on the
+  development side): `sh tools/install.sh` replays `package-lock.json`
+  as `npm ci` would (Bare's runtime ensured first by the shell from its
+  pinned tarball; then every package fetched with `curl`, checked against
+  its sha512, unpacked; the git dependency at its commit; the workspaces
+  linked); checked to give the same packages, versions and links as npm.
+  npm is needed only to change the dependencies (resolve versions, write a
+  new `package-lock.json`): the one contact with npm. Every package is
+  staged and tested before any is written.
 - **The package manager works only from packages made** (`pkgm-base-
   manager`, part of the platform): it checks a package intact, runs its
   tests, and assembles a swarm's codebase into a master's repository. It

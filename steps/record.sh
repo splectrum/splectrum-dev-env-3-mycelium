@@ -28,7 +28,7 @@ for c in "$@"; do
   t1=$(date +%s%3N)
   [ -s "$rec/$name.stderr" ] || rm -f "$rec/$name.stderr"
   line=$(printf '%s\n' "$out" | tail -1)
-  printf '%s' "$line" | node -e 'JSON.parse(require("fs").readFileSync(0, "utf8"))' 2>/dev/null || line=null
+  "$root/tools/bare" "$root/tools/json-check.js" --text="$line" 2>/dev/null || line=null
   printf '{"case":"%s","command":"%s","exit":%s,"ms":%s,"result":%s}\n' \
     "$name" "$(printf '%s' "$cmd" | sed 's/\\/\\\\/g; s/"/\\"/g')" "$code" "$((t1 - t0))" "$line" >> "$results"
 done
@@ -38,8 +38,7 @@ cat > "$rec/unit.json" <<JSON
   "invocation": "steps/record.sh $step $part $(printf '%s ' "$@" | sed 's/\\/\\\\/g; s/"/\\"/g')",
   "state": { "dev": "$dev", "pendingDefault": "$(git rev-parse --short origin/pending/default)" },
   "environment": {
-    "node": "$(node --version)",
-    "bare": "$(bare --version)",
+    "bare": "$("$root/tools/bare" --version)",
     "git": "$(git --version)",
     "os": "$(uname -sr)",
     "docker": "$(docker info --format '{{.ServerVersion}}' 2>/dev/null | grep . || echo none)"
@@ -47,5 +46,5 @@ cat > "$rec/unit.json" <<JSON
   "nondeterministic": { "started": "$started", "finished": "$(date -u +%Y-%m-%dT%H:%M:%SZ)" }
 }
 JSON
-node -e 'JSON.parse(require("fs").readFileSync(process.argv[1]))' "$rec/unit.json"
+"$root/tools/bare" "$root/tools/json-check.js" --file="$rec/unit.json"
 echo "recorded $step/$part"

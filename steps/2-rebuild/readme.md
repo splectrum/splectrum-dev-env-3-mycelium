@@ -122,6 +122,29 @@ nodes, centralised logs, the demos.
 - For local: `handover-local.md` (the key, the build and check, publishing
   with the human's word, the check from GitHub, the record).
 
+**Bare only, no Node.js** (2026-11-09, the human):
+
+- `tools/install.sh`: the dependencies from `package-lock.json` without
+  Node.js or npm: Bare's runtime ensured by the shell from its pinned
+  tarball (`tools/ensure-bare.sh`: `curl`, `sha512sum`, `tar`); Bare,
+  with no addon (its core reads the lockfile, embedded in its script),
+  lists the packages; the shell fetches each with `curl`, checks its
+  sha512, unpacks it; the git dependency at its commit; the 29 workspaces
+  linked. From a fresh clone, no Node.js on the PATH: 228 fetched, 21 s;
+  the same 258 package paths, versions and links as npm's `node_modules`.
+- The recording scripts off Node.js: `steps/record.sh` (JSON checked by
+  `tools/json-check.js`, Bare's version in a unit's record),
+  `steps/0-setup/modules.sh` (each module's tests run on Bare directly),
+  `steps/0-setup/packages.sh`. From the fresh clone, no Node.js: the
+  modules' tests 26 passed (6 without tests), the package writer ok.
+- The setup without Bare's binary: its shell ensures Bare (the same
+  script, inlined), fetched from npm's registry and checked; an air-gapped
+  setup carries the tarball (`--with-bare`). Online 7.8 MB, air-gapped
+  35 MB; both boot from a fresh folder with no Node.js on the PATH.
+- npm is needed only to change the dependencies. `docs/rules.md` 27,
+  `docs/design/packages.md`, `structure.md`, the guides, the handover and
+  the prompt updated.
+
 Not yet: the tests run from the bundle (their third-party code, brittle,
 is not reached from the entry); the other packages (`swarm-three-nodes`, the
 demos) still defined on the old platform, written with `--only` meanwhile;

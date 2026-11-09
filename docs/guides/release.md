@@ -8,8 +8,8 @@ organisation and `gh`), with the human's OK for each release.
 From this repository at the commit to publish, its changes committed:
 
 ```bash
-npm install
-sh tools/publish.sh <folder for the haiccing clones> [--no-push]
+sh tools/install.sh
+sh tools/publish.sh <folder> --key-dir=<folder> [--push]
 ```
 
 It clones each published repository into the folder (if not there), writes

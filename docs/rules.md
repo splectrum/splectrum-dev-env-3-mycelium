@@ -86,7 +86,12 @@ work in this repository, branches, commits, URIs and data names: the root
 
 26. **Bare only on the host**: Bare's own modules, no Node.js, no Node.js
     equivalence layer. **Downloads in the shell** (`curl`), never from Bare.
-27. **The setup carries what HAICC runs on**; the boot downloads nothing.
+27. **The setup carries what HAICC runs on, Bare's runtime pinned**: the
+    platform's bundles, their addons and the signed manifest in the setup;
+    Bare's runtime pinned by its tarball's sha512, fetched by the setup's
+    shell from npm's registry and checked (an air-gapped setup carries the
+    tarball, checked the same way). After the setup, the boot downloads
+    nothing.
 28. **One platform per work folder**, the one it was set up from.
 29. **Nothing is force-pushed**; what is published stays in the history.
 30. **A shell script is glue**: it composes commands (HAICC's, the

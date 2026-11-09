@@ -1,8 +1,7 @@
 # For the local agent: the first release of the rebuilt platform
 
 Written 2026-11-09 by the cloud session, for the local agent (a Linux x86-64
-machine with Docker not needed yet, git, Node.js and npm for the development
-side, and `gh` authenticated with push access to github.com/haiccing). The
+machine with Docker not needed yet, git and curl (no Node.js needed), and `gh` authenticated with push access to github.com/haiccing). The
 human's word is needed before step 4 (publishing).
 
 What this release is: the first thin path of step 2 (`readme.md` here). From
@@ -20,7 +19,7 @@ Docker: those come later).
 ```sh
 git clone https://github.com/splectrum/splectrum-dev-env-3-mycelium.git && cd splectrum-dev-env-3-mycelium
 git checkout execute/main
-PUPPETEER_SKIP_DOWNLOAD=1 npm install
+sh tools/install.sh
 ```
 
 ## 2. The publisher's key (once)

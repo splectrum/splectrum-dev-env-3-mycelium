@@ -30,7 +30,7 @@ For a developer, in this repository (the development side of the airgap).
 ## Writing it
 
 ```bash
-npm install          # this repository's dependencies, Bare's runtime among them
+sh tools/install.sh  # this repository's dependencies, from the lockfile, Bare only
 tools/bare tools/package-writer/cli.js --out=<folder of package repositories> [--only=haicc] [--keep]
 ```
 
@@ -56,5 +56,6 @@ nothing needs it.
 
 - Its tests move with it (`brittle`, Bare's modules): see `tests.md`.
 - A new third-party dependency: add it to this repository's `package.json`,
-  `npm install`, commit `package-lock.json` as npm writes it.
+  run `npm install` (the one use of npm: it resolves the versions and writes
+  `package-lock.json`), commit `package-lock.json` as npm writes it.
 - Never edit a written package: change the source here, write it again.

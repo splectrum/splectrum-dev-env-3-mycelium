@@ -416,6 +416,16 @@ repository's history (as `haicc-setup.sh`, a release asset of
   absolute URL works but ties the bundle to a place.) A scope is then a
   folder with the bundle and its `addons/`, hard links from a store where
   they share a disk.
+- **Bare's runtime pinned, not carried** (agreed, the human, 2026-11-09):
+  the setup carries the bundles, their addons and the signed manifest;
+  Bare's runtime is pinned by the lockfile (`bare-runtime-linux-x64`, its
+  tarball's URL and sha512) and ensured by the setup's shell
+  (`tools/ensure-bare.sh`, inlined): fetched from npm's registry and
+  checked, or, for an air-gapped setup (`--with-bare`), carried as that
+  tarball and checked the same way; `<work>/setup/bare` links to it. Built:
+  the setup 7.8 MB (from 29 MB), the air-gapped one 35 MB; both boot from
+  a fresh folder with no Node.js on the PATH. The same script ensures Bare
+  on the development side, first step of `tools/install.sh`.
 - **The cold boot is in the bundle** (agreed, the human, 2026-11-09). Bare
   is the one program needed, but its binary has no filesystem of its own
   (`bare-fs`, `bare-os`, `bare-crypto` are addons, not linked in: tried), so
