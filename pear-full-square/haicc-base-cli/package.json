@@ -1,0 +1,11 @@
+{
+  "name": "haicc-base-cli",
+  "version": "0.1.0",
+  "description": "HAICC's commands: the terminal's way into the platform, reached by URI; run from base-package-haicc's bundle",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

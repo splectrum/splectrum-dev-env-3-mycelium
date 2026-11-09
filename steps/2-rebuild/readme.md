@@ -33,6 +33,40 @@ nodes, centralised logs, the demos.
   version` answers here and in the node image with only Bare and the release
   folder (read-only).
 
+**The cold boot release, manifest loading, bundle loading** (2026-11-09):
+
+- Two packages, two concerns: `boot` (`base-package-boot`: the cold boot,
+  module `haicc-base-boot`, its release the setup) and `haicc`
+  (`base-package-haicc`: HAICC's commands, a new module `haicc-base-cli`,
+  `version` for now), each one bundle; `base-package-haicc` travels inside
+  the setup, no release of its own yet.
+- Sources and signing in the package manager (`lib/sources.js`,
+  `lib/sign.js`): a source a folder or the web (`curl`), laid out flat
+  (`manifest.json`, `<repo>.bundle`, `addons/<sha256>`); the newest manifest
+  its publisher signed (ed25519, sodium; the canonical form), never older
+  than the one pinned; a package's bundle and missing addons, each checked
+  by hash, from the first source that matches. Tests 17 of the module's 64.
+- The writer: the bundle's `id` (`bare-bundle-id`) in its header; the
+  released packages written together as a source (`<out>/source/`), one
+  manifest (sequence, commit, runtime, per package its id, hash, bytes,
+  main, commit, addons), signed with the publisher's key (`--sign-key=<file>`,
+  never an argument, never printed). Rebuilt identically from the same
+  content (`09cc2053…` twice).
+- The cold boot (`haicc-base-boot`): `boot --work=<folder>`: the machine
+  checked, the manifest loaded from the sources (the setup's own folder
+  first, then `boot.json`'s), checked and pinned (`<work>/manifest.json`),
+  `base-package-haicc` loaded lazily into the scope and run once; `fetch
+  <package>` later, from the pinned manifest. Tests 12 of 12.
+- The setup (`tools/setup/`): the signed source, Bare (stripped) and
+  `boot.json` (the publisher's public key, the other sources), packed behind
+  a shell header that unpacks into `<work>/setup`, checks the boot bundle's
+  hash and hands over to the boot. 24 MB.
+- End to end, a fresh folder, only the system's tools on the PATH: `sh
+  haicc-setup.sh <work>`: machine, manifest (signature checked, pinned),
+  `base-package-haicc` and its 12 addons loaded, HAICC answering
+  (`haicc-base-cli 0.1.0`). The publisher's key for the test generated in
+  the scratch folder; local holds the real one, never in a repository.
+
 Not yet: the tests run from the bundle (their third-party code, brittle,
 is not reached from the entry); the other packages (`swarm-three-nodes`, the
 demos) still defined on the old platform, written with `--only` meanwhile;

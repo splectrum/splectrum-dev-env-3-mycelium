@@ -10,5 +10,8 @@
   "scripts": {
     "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "sodium-native": "5.2.0"
+  }
 }

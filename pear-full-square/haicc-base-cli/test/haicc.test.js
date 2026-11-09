@@ -10,7 +10,7 @@ test('version: the module and its version, as one JSON line', (t) => {
   const r = haicc('version')
   t.is(r.status, 0)
   const v = JSON.parse(String(r.stdout))
-  t.is(v.name, 'haicc-base-boot')
+  t.is(v.name, 'haicc-base-cli')
   t.ok(/^\d+\.\d+\.\d+$/.test(v.version))
 })
 

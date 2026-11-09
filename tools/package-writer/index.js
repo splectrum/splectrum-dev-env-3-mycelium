@@ -26,6 +26,7 @@ import { testPackage, packageHash } from '../../pear-full-square/pkgm-base-manag
 import process from 'bare-process'
 import { spawnSync } from 'bare-subprocess'
 import { writeRelease } from './bundle.js'
+import { sign } from '../../pear-full-square/pkgm-base-manager/lib/sign.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const ORG = 'haiccing'
@@ -157,7 +158,7 @@ function readme (repo, def, m) {
     'Self-contained: it carries what it runs on. Written from the development repository ([splectrum/dev-env-3-mycelium](https://github.com/splectrum/dev-env-3-mycelium)): not edited here.', ''].join('\n')
 }
 
-export async function writePackages ({ dev, out, only = null, keep = false, log = () => {} }) {
+export async function writePackages ({ dev, out, only = null, keep = false, sequence = null, secretKey = null, log = () => {} }) {
   dev = resolve(dev); out = resolve(out)
   const defs = readJson(join(dev, 'packages.json'))
   const ours = oursOf(dev, defs)
@@ -195,7 +196,29 @@ export async function writePackages ({ dev, out, only = null, keep = false, log 
         log({ kind: 'written', package: s.name, dir: to, hash: s.pkgm.hash.slice(0, 12) })
       }
     }
-    return { ok: true, written, results }
+    // The released packages as one source (docs/design/structure.md): flat,
+    // their bundles, their addons, one manifest listing each (its id, its
+    // hash, its commit, its addons), signed when the publisher's key is given.
+    const released = written.filter(w => w.release)
+    let source = null
+    if (released.length) {
+      const dir = join(out, 'source')
+      remove(dir)
+      mkdirSync(join(dir, 'addons'), { recursive: true })
+      const packages = {}
+      for (const w of released) {
+        const m = w.release
+        copy(join(w.dir, m.bundle.file), join(dir, m.bundle.file))
+        for (const a of m.addons) if (!existsSync(join(dir, 'addons', a))) copy(join(w.dir, 'addons', a), join(dir, 'addons', a))
+        packages[m.repo] = { id: m.bundle.id, sha256: m.bundle.sha256, bytes: m.bundle.bytes, main: m.bundle.main, commit, addons: m.addons }
+      }
+      let manifest = { sequence: sequence ?? Math.floor(Date.now() / 1000), commit, runtime: released[0].release.runtime, packages }
+      if (secretKey) manifest = sign(manifest, secretKey)
+      writeJson(join(dir, 'manifest.json'), manifest)
+      source = { dir, sequence: manifest.sequence, signed: Boolean(secretKey), packages: Object.keys(packages) }
+      log({ kind: 'source', dir, sequence: manifest.sequence, signed: source.signed, packages: source.packages })
+    }
+    return { ok: true, written, results, source }
   } finally {
     if (!keep) remove(scratch)
   }

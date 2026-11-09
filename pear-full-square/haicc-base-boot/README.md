@@ -1,10 +1,14 @@
 # haicc-base-boot
 
-HAICC's boot: the cold boot from a release into a level's mycelium
-repository, and HAICC's commands, reached through the terminal. Rebuilt in
-phase 3 on the design in `docs/design/` (`structure.md`) of the development
-repository; built step by step.
+HAICC's cold boot, the boot package's entry: from a setup (a source folder:
+the packages' bundles, their native addons by hash, the publisher's signed
+manifest; with Bare and `boot.json`) into a level. Built step by step
+(phase 3, step 2; `docs/design/structure.md` of the development repository).
 
-- `index.js`: the commands, as a library; `haicc.js`: the command line on
-  it, the package's entry. `version` for now.
-- `npm test`: its tests, on Bare.
+- `boot --work=<folder>`: the machine checked; the manifest loaded from the
+  sources (the setup's own folder first, then `boot.json`'s), its signature
+  and sequence checked, pinned; HAICC's package (`base-package-haicc`)
+  loaded into the scope and run once.
+- `fetch <package> --work=<folder>`: another package, lazily, as the pinned
+  manifest lists it.
+- `index.js`: the same, as a library; `boot.js`: the command line.

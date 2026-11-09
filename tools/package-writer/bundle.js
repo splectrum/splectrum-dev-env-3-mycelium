@@ -18,6 +18,7 @@ import { pathToFileURL, fileURLToPath } from 'bare-url'
 import crypto from 'bare-crypto'
 import pack from 'bare-pack'
 import traverse from 'bare-module-traverse'
+import bundleId from 'bare-bundle-id'
 
 const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
 
@@ -65,12 +66,14 @@ export async function writeRelease ({ staged, release, repo, entry, commit = nul
     const key = '/' + p
     if (!bundle.exists(key)) bundle.write(key, readFileSync(join(staged, p)))
   }
+  // Its identity, from its contents (Bare's: bare-bundle-id), in its header.
+  bundle.id = bundleId(bundle).toString('hex')
   const bytes = bundle.toBuffer()
   const file = `${repo}.bundle`
   writeFileSync(join(release, file), bytes)
   const manifest = {
     repo,
-    bundle: { file, sha256: sha256(bytes), bytes: bytes.length, main: bundle.main },
+    bundle: { file, id: bundle.id, sha256: sha256(bytes), bytes: bytes.length, main: bundle.main },
     addons: [...new Set(addons)].sort(),
     commit,
     runtime: { bare: runtime }

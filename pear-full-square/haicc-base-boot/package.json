@@ -1,7 +1,7 @@
 {
   "name": "haicc-base-boot",
   "version": "0.1.0",
-  "description": "HAICC's boot: the cold boot from a release into a level's mycelium repository, and HAICC's commands, reached through the terminal",
+  "description": "HAICC's cold boot: from a setup (a source of bundles, their addons by hash, a signed manifest) into a level: the manifest loaded, checked and pinned, packages loaded lazily",
   "type": "module",
   "main": "index.js",
   "scripts": {

@@ -1,13 +1,23 @@
 {
   "description": "haiccing's packages, as the package writer (tools/package-writer) writes them: each self-contained (no requires), in the package structure (notes/packages.md). Rebuilt one package a step: haicc first; the package manager next. modules: ours it starts from (and its swarms' modules.json); with: other definitions' modules, written in with it (the writer's convenience); together: packages always written with it (the platform's pair); the hand-written parts from haiccing/<repo>/.",
   "packages": {
-    "haicc": {
-      "description": "HAICC, the platform: its release is the setup (Bare, the package's bundle, native addons by hash); booted, it makes the host a mycelium repository and runs HAICC from it. On Bare.",
+    "boot": {
+      "repo": "base-package-boot",
+      "description": "HAICC's boot: its release is the setup (a source of the platform's bundles, their addons by hash, the publisher's signed manifest; Bare). Booted, it loads, checks and pins the manifest and loads the platform lazily from its sources. On Bare.",
       "modules": [
         "pear-full-square/haicc-base-boot"
       ],
       "entries": {
-        "haicc": "pear-full-square/haicc-base-boot/haicc.js"
+        "boot": "pear-full-square/haicc-base-boot/boot.js"
+      }
+    },
+    "haicc": {
+      "description": "HAICC, the platform's commands: the terminal's way in, by URI. Installed by the boot into a level's packages, run from its bundle. On Bare.",
+      "modules": [
+        "pear-full-square/haicc-base-cli"
+      ],
+      "entries": {
+        "haicc": "pear-full-square/haicc-base-cli/haicc.js"
       }
     },
     "pkgm": {
