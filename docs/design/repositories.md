@@ -315,6 +315,28 @@ functionality (the bundles in `packages/`) is not exposed.
   2026-11-09): the `haicc` package declares the commands (their arguments,
   validated at the inbox) and maps each to the functions that do it; how a
   command is executed follows the repository's configuration settings.
+- **A protocol is part of an API, internal or external, giving its actions
+  their meaning** (the human, 2026-11-09): the same word for the same
+  meaning in every context. The framework's API (internal) has its
+  protocols (request, execute, log, above); a repository's external API its
+  own, generic sets to start with, to see how far they get us:
+  - **`rest`**: `get`, `put` (at a URI the caller names: create or
+    replace), `post` (to a collection, which names the item), `delete`. No
+    update: a URI goes deep (into a JSON document, to a single value), so a
+    `put` at a deeper URI is the partial update. Extended if ever needed.
+  - **`lifecycle`**: `boot` (brought into existence from a source; inverse
+    `teardown`), `initialise` (configuration and state set up, ready to
+    run), `start` (its processes running; inverse `stop`), `stop` (halted,
+    everything kept), `shutdown` (**open**: its meaning), `teardown`
+    (removed entirely).
+- **A request is fully qualified**: `{ protocol, action, uri, body }`, as it
+  travels and as it is recorded (an action unique today may not stay so; a
+  recorded request keeps its meaning for an exact rerun). The URI names the
+  object, its type decides what an action means there; the mappings say
+  which protocols may be used where. At the terminal: `haicc <protocol>
+  <action> <uri> [body]`; an action unique among the protocols may be given
+  alone (`haicc post /inbox '{…}'`), the input expanding it where it enters,
+  refusing an ambiguous one.
 - **The boxes are a level's** (the human, 2026-11-09): the host (the first
   level) as any swarm or node; "node" above stands for any level. Each
   level has its own root; a URI is read in its level's URI space, its
