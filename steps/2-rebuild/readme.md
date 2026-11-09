@@ -195,19 +195,20 @@ crossing a mapping; a repository's URIs its own.
   encoding, a handler) and `mycelium-container-document` (one value per
   file, written under a temporary name then renamed; time-ordered names).
   Their product repositories to be created by the human.
-- `mycelium-repo-main`'s `lib/boxes.js`: `<work>/boxes/outbox/`,
-  `<work>/boxes/inbox/<repository>/`, and for now `boxes/received/`; the
-  dispatcher matches the addressee's prefix (`/level/…`, the host's space,
-  its root a placeholder), delivers under the same name with the URI the
-  repository's own (`/main/…`), holds any other; the repository takes its
-  inbox in (logged `received`; step 5 makes it a request). Run by the main
-  thread every 200 ms.
-- `haicc message <uri> <json>`: validated at the terminal, written into the
-  outbox, `from` none; `haicc status` shows the messages waiting.
-- Tests: value-json 1, container-document 1, main 5 (dispatch, take-in,
-  and the main thread delivering a message), HAICC 5. `tools/publish.sh`
+- `mycelium-repo-main`'s `lib/boxes.js` (reworked after a second
+  discussion: the host's root is the HAICC repository; posting is
+  `PUT /inbox`; folders for now): `/inbox` at `<work>/haicc/inbox/`,
+  `/outbox` at `<work>/haicc/outbox/` (`{ to, body }`); the dispatcher PUTs
+  a message to `/inbox`, holds any other; the repository takes its inbox in
+  (logged `received`; step 5 makes it a request). Run by the main thread
+  every 200 ms.
+- `haicc put <uri> <json>`: the mapping none -> host, validated at the
+  terminal, only `PUT /inbox` allowed; `haicc status` shows the messages
+  waiting.
+- Tests: value-json 1, container-document 1, main 6 (the boxes, dispatch,
+  take-in, the main thread taking a message in), HAICC 5. `tools/publish.sh`
   checks a message taken in; run without `--push`: passed, nothing left
-  running. The tag it would publish: `setup-721f28ea5888`.
+  running. The tag it would publish: `setup-fe821759a88c`.
 
 Next: 5, requests flowing (a message becoming a request, executed, its
 result committed and merged by the main thread, recorded in
