@@ -224,7 +224,10 @@ module per protocol, mapped to its layer.
 - `mycelium-repo-main` renamed `mrepo-base-runtime` (`runtime.js` its
   command line; `<work>/runtime.sock`, `<work>/log/runtime.log`); its
   package `haiccing/base-package-mrepo` (was `-mycelium`). Their product
-  and release repositories to be created by the human.
+  and release repositories renamed or created by the human
+  (`mycelium-repo-main`, `-request-submit`, `-request-execute` renamed to
+  `mrepo-base-runtime`, `-request`, `-execute`; `mrepo-base-log` created;
+  `base-package-mycelium` renamed to `base-package-mrepo`).
 - The host's repository `host` (was `level`); its folder
   `<work>/mrepos/host/` (was `<work>/haicc/`): `inbox/`, `outbox/`,
   `packages/`.

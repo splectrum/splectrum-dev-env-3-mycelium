@@ -19,7 +19,7 @@ rewritten, HAICC-wrapped.
 ## New modules
 
 **Agreed** (their product repositories created by the human; the `mrepo-`
-ones, named 2026-11-09, still to create), all in `pear-full-square`:
+ones named, renamed or created, 2026-11-09), all in `pear-full-square`:
 
 | Module | Concern | Replaces |
 |---|---|---|
