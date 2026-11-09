@@ -8,10 +8,14 @@
 #    tools/setup/keygen.js), as one source (<folder>/source).
 # 2. The setup built from it (<folder>/haicc-setup.sh): Bare, the source,
 #    boot.json (the publisher's public key).
-# 3. Checked as a user would: a fresh folder, Node.js off the PATH: the
-#    setup run, then `haicc status`.
+# 3. Checked as a user would: a fresh folder, Node.js off the PATH (a PATH
+#    of links to the system's tools, node, nodejs, npm, npx and corepack
+#    left out, wherever they are installed): the setup run, then `haicc
+#    status`.
 # 4. With --push only: the setup and the manifest published as a release of
-#    haiccing/base-package-boot (tag setup-<the boot bundle's hash, 12>).
+#    haiccing/base-package-boot. Its tag: setup-<12 hex of the packages'
+#    identities in the manifest (each package's id and addons)>: the same
+#    packages, the same tag (published once); any package changed, a new one.
 set -eu
 dev=$(cd "$(dirname "$0")/.." && pwd)
 [ $# -ge 2 ] || { echo "usage: sh tools/publish.sh <folder> --key-dir=<folder> [--push]"; exit 2; }
@@ -28,14 +32,30 @@ echo "== 1. the packages, from $commit, signed"
 echo "== 2. the setup"
 "$dev/tools/bare" "$dev/tools/setup/build.js" --source="$folder/out/source" --out="$folder/out" --public-key="$keys/publisher.public"
 echo "== 3. checked: a fresh folder, Node.js off the PATH"
-(cd / && env -i PATH=/usr/local/sbin:/usr/sbin:/sbin:/bin:/usr/bin HOME="$HOME" sh "$folder/out/haicc-setup.sh" "$folder/check")
+# The system's tools, as links, without Node.js wherever it is installed.
+nonode="$folder/no-node-bin"
+rm -rf "$nonode"; mkdir -p "$nonode"
+for d in /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin; do
+  [ -d "$d" ] || continue
+  for f in "$d"/*; do
+    n=$(basename "$f")
+    case $n in node|nodejs|npm|npx|corepack) continue ;; esac
+    [ -e "$nonode/$n" ] || ln -s "$f" "$nonode/$n"
+  done
+done
+(cd / && env -i PATH="$nonode" HOME="$HOME" sh -c 'command -v node >/dev/null && { echo "node still on the PATH"; exit 1; }; exit 0')
+(cd / && env -i PATH="$nonode" HOME="$HOME" sh "$folder/out/haicc-setup.sh" "$folder/check")
 bundle=$(ls "$folder/check/haicc/packages/haiccing/base-package-haicc.bundle")
-(cd / && env -i PATH=/usr/bin:/bin "$folder/check/setup/bare" "$bundle" status)
-boot=$(sed -n 's/^echo "\([0-9a-f]\{64\}\) .*/\1/p' "$folder/out/haicc-setup.sh" | head -1)
-tag=setup-$(echo "$boot" | cut -c1-12)
+(cd / && env -i PATH="$nonode" "$folder/check/setup/bare" "$bundle" status)
+rm -rf "$nonode"
+# The tag: the packages' identities (ids and addons), not the build's.
+tag=$("$dev/tools/bare" "$dev/tools/setup/tag.js" "$folder/out/source/manifest.json")
+[ -n "$tag" ] || { echo "no tag: the manifest could not be read"; exit 1; }
 if [ $push = 1 ]; then
   echo "== 4. publishing $tag to haiccing/base-package-boot"
-  if gh release view "$tag" -R haiccing/base-package-boot >/dev/null 2>&1; then echo "release $tag: there already"
+  # Is it there already? Not found goes on; any other failure stops.
+  if view=$(gh release view "$tag" -R haiccing/base-package-boot --json tagName 2>&1); then echo "release $tag: there already (these packages are published)"
+  elif ! printf '%s' "$view" | grep -qi 'not found'; then echo "could not check for release $tag: $view"; exit 1
   else gh release create "$tag" "$folder/out/haicc-setup.sh" "$folder/out/source/manifest.json" -R haiccing/base-package-boot --title "Setup $tag" --notes "HAICC's setup: sh haicc-setup.sh <work folder>. Written from splectrum/dev-env-3-mycelium $commit." --latest && echo "release $tag: published"; fi
 else
   echo "== not published ($tag): --push to publish, with the human's word"
