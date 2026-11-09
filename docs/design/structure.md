@@ -134,15 +134,15 @@ Where packages are used at a level today, and with bundles:
 | a node's HAICC (`haicc-deployment/haicc.js`) | a node-HAICC bundle (one, after the convergence) |
 | the node's program (the master's `packages/`, mounted; `p2p-node/cli.js`) | a node-program bundle |
 | Splectral's server (`splectral-server/cli.js`, its extensions) | a server bundle, its browser files as assets (**to probe**) |
-| the package manager, imported by HAICC from beside it (the pair) | **to probe**: HAICC's bundle loading the package manager's bundle beside it (the pair kept two releases), or the package manager in HAICC's bundle (the pair one release) |
+| the package manager, imported by HAICC from beside it (the pair) | the package manager's code in HAICC's bundle; its own release a bundle of its own (bundles disjoint: below) |
 | the cold boot's shell (`boot.sh`, `shutdown.sh`, the setup) | stays shell (before Bare; scripts are glue) |
 | a swarm's config (`nodes.json`, `modules.json`, `splectral.json`) | stays data, in the level's repositories |
 | the tests (modules' `test/`, the package's named tests) | **open**: tests running the bundles (what runs is what was tested); the module tests where the package is written; the warm boot's validation set against the bundle the level will run |
 
 So a level holds bundles and runs them, with its addons, its data and the
 cold boot's shell; the package folder lives in the package repository, the
-source and where tests run. Deciding whether it holds: the pair (one bundle
-loading another) and assets (served from inside a bundle).
+source and where tests run. Deciding whether it holds: assets (served from
+inside a bundle).
 
 ### Packages as bundles, published as releases
 
@@ -181,10 +181,49 @@ repository's history (as `haicc-setup.sh`, a release asset of
   record per release: version, commit, the bundles' hashes); a
   `packages/<purpose>` link names a release (repository key, release,
   bundle, hash). No deltas needed for bundles (the human).
-- **To settle in the probe first**: one bundle loading another (the pair:
-  HAICC and the package manager as two releases); assets served from inside
-  a bundle (Splectral's browser files); module types (a bundled `.js` taken
-  as a module); a real closure's size and addons.
+- **To settle in the probe first**: assets served from inside a bundle
+  (Splectral's browser files); module types (a bundled `.js` taken as a
+  module); a real closure's size and addons.
+
+### Bundles disjoint, installs as copies, the stores
+
+**Agreed** (the human, 2026-11-09).
+
+- **Bundles are disjoint**: no bundle imports another; each is closed and
+  self-contained. The package manager's code HAICC needs is copied into
+  HAICC's bundle by the package writer; the package manager's release has
+  its own bundle: the same module code in both, from one source. (Tried
+  2026-11-09: a bundle can load another bundle as a whole, by a dynamic
+  import of its file, its main module's exports coming back; not a file
+  inside it. Not used: bundles stay disjoint.)
+- **No exception to self-containment**: HAICC no longer uses the package
+  manager from beside it; `lib/pkgm.js` and the pair's lookup go; rule 12's
+  exception and "the platform is a pair" (`platform.md`, `packages.md`)
+  are changed when this is built.
+- **The cold-to-warm move is a switch of bundles**: the cold boot runs the
+  bundle the setup or the release brought (the bootstrap); it fetches the
+  current one, checks its hash, copies it into the scope; the warm boot runs
+  that one.
+- **An install is a plain copy of bundles into an execution scope**: a level
+  (host, swarm, node, a test's run) gets exactly the bundles it may run,
+  copied in (a hard link where on the same disk); nothing resolved or
+  assembled at install time: the bundle is the closure. Kept scoped, not
+  every bundle available to every level: a level runs only what it was
+  given (as a node validates what it was given today), and copying single
+  files is cheap.
+- **The stores**, from outside in:
+
+| Store | Holds | How bundles get there |
+|---|---|---|
+| external sources | the releases (GitHub's release downloads; a folder of release files, air-gapped) | published by local |
+| the host's global store | every bundle the host has fetched, by hash, once | fetched from the sources, checked against the release's manifest |
+| a swarm's store | the bundles the swarm uses, on our p2p layer | from the host's store into the swarm's packages repository, replicated to its nodes |
+| an execution scope | the bundles one level runs | a plain file copy from the store it sits under |
+
+- **What changes from what is built**: the package manager's `assemble` (a
+  swarm's codebase into the master's `packages/`) becomes copying bundles
+  into the swarm's store; the mount of the master's `packages/` into the
+  nodes goes; the warm boot's "intact" becomes a hash per bundle.
 
 **The probe**: (1) a custom protocol loading a small package from a commit's
 tree in a p2p-git repository, on Bare; (2) a real package's closure as a
