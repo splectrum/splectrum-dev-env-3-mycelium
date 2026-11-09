@@ -101,9 +101,10 @@ a translation of a layer, made only where a host process requires files.
 
 | Layer | Holds | Translated to a folder |
 |---|---|---|
-| `main` | the level's config and state | no (seen through Splectral) |
-| `packages/default`, `packages/test` | the bundles and their native addons, as objects | `bundles/`: the bundles this level runs, copied out (Bare runs a bundle from its file); `addons/`: the addons they name, by hash (`dlopen` needs files) |
-| `request/pending`, `-executing`, `-done` | the requests | no |
+| `main` | the level's data (config, state) | no (seen by URI) |
+| `packages/default` (`packages/test` when development deploys there) | the bundles and their native addons, as objects | the scope: the bundles this level runs, copied out (Bare runs a bundle from its file); the addons they name, by hash (`dlopen` needs files) |
+| `execute/main` | executions: only the visible change to `main` (from `main`, synced before each) | no |
+| `request/pending/default`, `request/executing`, `request/done` | the requests and their metadata (`repositories.md`) | no |
 | the log topic | the level's log | no (the minimal file log aside) |
 | child levels | each its own repository, named in this one's mappings by URI | a child's folder, where the child runs on this host |
 
@@ -133,6 +134,36 @@ and the store's own failures).
 - **A node in a container**: its repository's store is where its writer
   runs, inside the container; the host holds only the views the container
   needs (its bundles, its addons).
+
+### The cold boot: getting the level's repository
+
+**Agreed** (the human, 2026-11-09). The cold boot's job: get the level's
+repository, then start its single writer from it. Its source:
+
+| Source | Getting the repository | For |
+|---|---|---|
+| new (now) | created empty in a new store (`p2p-mrepo`'s `create`, a new internal id) and seeded from the release | a first install |
+| existing (later) | opened from a backup: a git bundle imported (`p2p-mrepo`'s `import`, the id kept), or replicated from a backup peer by key | a restore |
+
+After that, one path: the addons bound, HAICC's bundle copied into the
+scope, HAICC started as the writer, the warm boot refreshing from the
+sources (a restored repository's older bundles handled as the setup's
+bootstrap bundles are). Kept in mind for restore: a restore brings the old
+identity back, keys included (a backup that allows one holds secrets);
+nothing the level needs lives outside its repository (the scope and the
+addons rebuilt from it); nothing after "get the repository" assumes it new.
+
+**Seeding a new repository, `init`**: its initial layers `main`,
+`packages/default`, `execute/main` (from `main`), `request/pending/default`,
+`request/executing`, `request/done`. Two concerns, two owners, both
+committing through `mycelium-git`'s writer: HAICC creates the repository
+(`p2p-mrepo`) and its layers and seeds `main` (the level's name, what is
+provided: the level's shape, HAICC's concern, its own module,
+`haicc-base-level`, when a second repository paradigm needs a shape); the
+package manager installs the release's bundles and addons into
+`packages/default` (checked against the release's manifest) and deploys
+HAICC's bundle into the scope. The cold boot's shell runs the checks, then
+Bare runs HAICC's bundle with `init`, then starts HAICC as the writer.
 
 **How people and agents interact with the platform** (agreed, the human,
 2026-11-09): **the terminal is the primary way in, for a person and an agent

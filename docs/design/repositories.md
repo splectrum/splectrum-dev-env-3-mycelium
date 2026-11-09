@@ -87,12 +87,27 @@ composing the branches; nothing moves from one writer to another.
 
 ### The request branches
 
-**Agreed.** `pending/default` (today: the requests and their notes, the
-record of all requests) is restructured into `request/pending` (the passive
-side's, append-only: the requests as submitted), `request/executing` and
-`request/done` (the active side's). The reserved segment `pending` becomes
-`request`; the notes and metadata go to the side that writes them. `rules.md`
-is changed when it is built.
+**Agreed** (the human, 2026-11-08 and 09). `pending/default` (today: the
+requests and their notes, the record of all requests) is restructured, data
+and metadata kept apart:
+
+| Branch | Holds |
+|---|---|
+| `request/pending/default` | the local queue: requests waiting (one queue per source: `request/pending/<source>`, `default` the local one; no branch `request/pending` itself, a name never both a branch and a prefix) |
+| `request/executing` | the request being executed, with its metadata gathered as it runs: the unit's record (invocation, the states it ran on by commit, environment, nondeterministic inputs), its outcome, the `execute/main` commit it produced; cleared when it ends |
+| `request/done` | each completed request with its full record: the request as submitted, the unit's record (rerun exactly by it), its outcome (a failure included), the `execute/main` commit and its merge into `main` |
+| `execute/main` | only the visible change to `main`: the data the request produced; merged plainly into `main` |
+
+`main` and `execute/main` hold data only; the request branches hold the
+requests and the metadata around producing the visible state (`rules.md`:
+outcomes are data on `main`). Today's `executeRequests` writes the unit's
+record into `main` beside the response: changed when rebuilt. In one
+repository with one writer, taking a request is a commit moving it from the
+queue to `request/executing`, finishing one moving it with its record to
+`request/done`. The passive and active split of these branches comes with
+that design, later. The reserved segment `pending` becomes `request`;
+`rules.md` (its branches and commit references) is changed when it is
+built.
 
 ### The packages layer
 
