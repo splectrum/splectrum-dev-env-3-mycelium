@@ -8,7 +8,7 @@ folder structure to be fixed in this phase, step by step.
 ## Every level set up as a node is
 
 **Agreed.** The host, a swarm's master, a node: the same structure. Its code
-from the packages repository (a view, or a module protocol: below); its
+from its packages layer (bundles: below); its
 config, state and log in its own repositories, in a store of its own
 (`repositories.md`); its own HAICC. Then it does not matter where HAICC
 runs (a container, the host, another machine): one structure, one set of
@@ -84,41 +84,86 @@ write. (`wait` queues a writer for the lock.)
   so its folder is protected as a key is; opaque by design, views coming
   from the repositories.
 
-## A level's folder
+## A level: a mycelium repository first, folders where a process needs them
 
-**Open** (to probe and settle):
+**Agreed** (the human, 2026-11-09): a level is a mycelium repository with
+layers, first; a person sees it through a Splectral component; a folder is
+a translation of a layer, made only where a host process requires files.
 
-```
-<level>/
-  store/            the level's own store: its repositories, the packages repository among them
-  addons/           native addons, extracted by hash
-  apps/<package>/   a package's own data: its store, its repositories (made at deploy, removed at teardown)
-  log/              the minimal plain-file log
-  haicc             its launcher
-```
+| Layer | Holds | Translated to a folder |
+|---|---|---|
+| `main` | the level's config and state | no (seen through Splectral) |
+| `packages/default`, `packages/test` | the bundles and their native addons, as objects | `bundles/`: the bundles this level runs, copied out (Bare runs a bundle from its file); `addons/`: the addons they name, by hash (`dlopen` needs files) |
+| `request/pending`, `-executing`, `-done` | the requests | no |
+| the log topic | the level's log | no (the minimal file log aside) |
+| child levels | each its own repository, named in this one's mappings by URI | a child's folder, where the child runs on this host |
 
-No code folder (below); a view of code only where Docker or a person needs
-it. A minimal plain-file log stays (**open**: its scope), for the cold boot
-(before any store exists) and the store's own failures. How config is
-changed, once it is in a repository (a `haicc` command, or a view edited and
-committed): **open**.
+Always there, outside the layers: `haicc` (the cold boot's way in, shell),
+`store/` (the substrate: the repository itself, Corestore and RocksDB),
+`log/` (the minimal plain-file log, **open**: its scope, for the cold boot
+and the store's own failures).
+
+- **A layer becomes a folder only where a host process needs files**: Bare
+  (the bundles), `dlopen` (the addons), Docker (its mounts). A person never
+  needs one: the terminal reads the repository by URI, and Splectral shows
+  it.
+- **A folder is a view**: copied or extracted from the layer at a pinned
+  commit, never edited, replaced when the layer moves.
+- **Nesting follows composition**: a child level is its own repository,
+  named in the parent's mappings; on the host its folder sits inside the
+  parent's where it runs there; a child running elsewhere has only its name.
+- **A package's own data** is a repository of its own (one writer: the
+  package's process), composed into the level by URI, its `store/` under
+  the level's folder.
+- **A node in a container**: its repository's store is where its writer
+  runs, inside the container; the host holds only the views the container
+  needs (its bundles, its addons).
+
+**How people and agents interact with the platform** (agreed, the human,
+2026-11-09): **the terminal is the primary way in, for a person and an agent
+alike; Splectral is secondary.** The terminal access mode, as an agent wants
+it, and a person uses the same:
+
+- **Structured output**: `haicc <command> --json` returns the result as one
+  JSON value (stable field names, data names); human text the default; the
+  exit codes as today (0 done, 1 not done, 2 a bad call).
+- **Never a prompt that blocks**: every question has a flag (`--yes`); with
+  no terminal a question is answered no, and said (`docs/rules.md` 11).
+- **State read by URI**: `haicc read <uri>` (or a `select` with `*`)
+  through mycelium, at a pinned commit, instead of a command per question.
+- **Self-describing commands**: `haicc commands --json` lists every command,
+  its arguments and what it changes; the same description drives the
+  boundary's validation and Splectral's page.
+- **Changes as requests where it matters**: a significant change submitted
+  as a request into the level's repository: recorded, executed as a unit,
+  reproducible, its response on `main`, checked back later.
+- **A dry run**: `--plan` says what a command would change, without changing
+  it.
+
+HAICC runs inside the boundary, its input valid. Input enters at a boundary
+and becomes an internal `haicc` command:
+
+| From | The boundary | Then |
+|---|---|---|
+| the host's terminal (primary: a person or an agent) | the command line: parsed (`haicc-cli-parser`) and validated | launched as an internal `haicc` command |
+| the browser (secondary) | Splectral's server (initially a command line typed in the page), validated there | launched as an internal `haicc` command |
+
+Inside, a `haicc` command trusts its input (the happy path); a change is
+committed by the level's single writer.
 
 ## Code without a code folder
 
-**To probe.** Bare's module loader (`bare-module`) resolves and loads every
-module through a protocol (`resolve`, `exists`, `read`, `addon`, `asset`);
-custom protocols exist for loading from a Hyperdrive. Two constraints: `read`
-is synchronous, so the code must be local before it runs (replicated,
-prefetched, or one bundle file); native addons (`.bare`, by `dlopen`: RocksDB,
-sodium, UDX) must be real files. `bare-bundle` holds many modules in one file
-Bare runs directly.
+**Agreed** (the human, 2026-11-09). Code runs from bundles: Bare runs a
+bundle file directly, and the code finds everything it needs in it (its
+modules, its assets, its data files); native addons (`.bare`, by `dlopen`:
+RocksDB, sodium, UDX) are the one thing that must be real files (`addons/`,
+by hash). Everywhere else, URIs reach the contents as if everything were on
+the filesystem (`values.md`, "URIs name a logical structure").
 
-So a package runs through a mycelium protocol (its tree at the commit its
-`packages/<purpose>` link names; its closure fetched first, as the package
-manager's `closure.js` computes it), or from a `bare-bundle` built from that
-tree; native addons extracted by hash. Unlike Pear's drive of files, ours
-holds git objects: every version addressable by its commit and checked
-against its hash.
+Dropped (the human, 2026-11-09): a mycelium module protocol for Bare
+(`bare-module` loads through protocols, `resolve`, `read`, …; one reading
+code from a commit's tree), not needed with bundles: the code runs, and URIs
+browse as if all were on the filesystem.
 
 Today (**built**): the platform's nodes run from the master's `packages/`,
 assembled on the host, mounted read-only (a transitional shortcut for one
@@ -189,7 +234,7 @@ Where packages are used at a level today, and with bundles:
 | the package manager, imported by HAICC from beside it (the pair) | the package manager's code in HAICC's bundle; its own release a bundle of its own (bundles disjoint: below) |
 | the cold boot's shell (`boot.sh`, `shutdown.sh`, the setup) | stays shell (before Bare; scripts are glue) |
 | a swarm's config (`nodes.json`, `modules.json`, `splectral.json`) | stays data, in the level's repositories |
-| the tests (modules' `test/`, the package's named tests) | **open**: tests running the bundles (what runs is what was tested); the module tests where the package is written; the warm boot's validation set against the bundle the level will run |
+| the tests (modules' `test/`, the package's named tests) | not bundles (the human, 2026-11-09): a test has the package structure (recursive), its entry point a local cold boot (`boot`, shell), as no level's cold boot is a bundle; the tests are files in the package's bundle, read from it, nothing extracted: the executing code finds everything in the bundle (`mycelium-container-bundle`; a `boot` script given to `sh` on its standard input), the test's run holding only what it writes; exercising the package's own bundle, the one the level runs: what runs is what was tested. The detail at implementation |
 
 So a level holds bundles and runs them, with its addons, its data and the
 cold boot's shell; the package folder lives in the package repository, the
@@ -204,8 +249,7 @@ repository's history (as `haicc-setup.sh`, a release asset of
 `base-package-haicc`, already is).
 
 - **A release** (a version, one hash, immutable) carries a bundle per entry
-  point (the programs, and the tests: a test is a mini package triggered by
-  its `boot`, an entry point like any other), the native addons they name,
+  point (the programs), the native addons they name,
   and a manifest (each bundle's hash; the commit it was made from). Data
   files (a swarm's configuration, a default, a page) travel inside the
   bundles, read without unpacking (`bare-bundle`: the files listed, one
@@ -213,7 +257,7 @@ repository's history (as `haicc-setup.sh`, a release asset of
   person or a tool needs them.
 - **Made by the package writer**: `packages.json` declares a package's entry
   points; the writer bundles each entry point's closure (resolutions fixed),
-  runs the tests as bundles, records the hashes. Only the writer makes
+  runs the package's tests against the bundles, records the hashes. Only the writer makes
   bundles (rules 13, 17).
 - **Built and published by local** (the local agent, with the human's word,
   as the releases today): a release per package (`tools/publish.sh`
@@ -284,11 +328,10 @@ repository's history (as `haicc-setup.sh`, a release asset of
   into the swarm's store; the mount of the master's `packages/` into the
   nodes goes; the warm boot's "intact" becomes a hash per bundle.
 
-**The probe**: (1) a custom protocol loading a small package from a commit's
-tree in a p2p-git repository, on Bare; (2) a real package's closure as a
-bundle (`p2p-node`'s): does it run, its size, its addons, its module types;
-`closure.js` against `bare-module-traverse`; (3) native addons (Pear's way;
-extracted by hash).
+**The probe**: (1) a real package's closure as a bundle (`p2p-node`'s):
+does it run, its size, its addons, its module types; `closure.js` against
+`bare-module-traverse`; (2) native addons (Pear's way; extracted by hash);
+(3) a long-lived read-only reader of a store (above).
 
 ## Pear as a substrate execution layer below HAICC
 

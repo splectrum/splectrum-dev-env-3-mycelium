@@ -51,7 +51,9 @@ no p2p; the engine follows the storage, not the package.
 ## The branch model: one writer per branch
 
 **Agreed** (the starting point; crucial to make portable execution work).
-Hypercore has one writer per core, so a repository on a Hyperdrive has one
+**One writer per branch, full stop** (the human, 2026-11-09): no
+multi-writer layer (Autobase); a multi-writer of our own, tied in with git
+merge, may come later, not a concern now. Hypercore has one writer per core, so a repository on a Hyperdrive has one
 writer, and the branch model follows the writers: **each branch is written by
 exactly one party**, in a store of its own. What looks like one repository is
 a composition of layers from several writers (`rules.md`, Layers: disjoint,
@@ -131,8 +133,6 @@ branches to commits.)
 - The request manager (the human, 2026-11-09): it runs where the requests
   are generated, one manager (and queue) per source; settled with the
   repository implementation.
-- Whether any branch needs several writers (Autobase), or one writer per
-  branch is enough (proposed: one writer per branch to start).
 
 ## Portable execution, triggered by data
 
@@ -184,5 +184,7 @@ the node's first: the manager writes what it decides (container, image,
 address) there, the node reads its own data and knows no manager; the
 manager and Splectral subscribe by replication, knowing no event kinds (in
 place of today's shadow on stdin and the manager knowing the node's event
-kinds). Logs as topics (records appended) rather than a commit per line:
-**open**, with state as git objects.
+kinds). **Logs** (direction, the human, 2026-11-09; the design in detail
+when the implementation starts): individual topics (records appended, not a
+commit per line), which the swarm can centralise, and which are added to
+the local mycelium repository as well; state as git objects.

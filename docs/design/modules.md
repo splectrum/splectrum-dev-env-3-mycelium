@@ -24,7 +24,7 @@ rewritten, HAICC-wrapped.
 | Module | Concern | Replaces |
 |---|---|---|
 | `docker-manager` | Docker for the platform: the call, networks (with a subnet; addresses), the node image, hardened containers (run, stop, remove, pause, inspect, logs as JSON lines) | four Docker wrappers (`haicc-base-boot`, `haicc-deployment`, `p2p-node-manager`, Splectral's p2p side), the hardening flags twice |
-| `haicc-cli-parser` | HAICC's command lines: flags and arguments parsed once, values kept whole (for the transitional tools too, until HAICC replaces them) | eight parsers in three variants |
+| `haicc-cli-parser` | the terminal's boundary into HAICC: a command line parsed once (flags and arguments, values kept whole), for validation and launch as an internal `haicc` command (`structure.md`); for the transitional tools too, until HAICC replaces them | eight parsers in three variants |
 | `p2p-observe` | the p2p series' instrumentation: the observer call and its helpers | the emitter and `hex` in eight p2p modules |
 | `mycelium-value`, `-value-json`, `-container-document`, `-container-lines` | values, an encoding, storage containers (`values.md`) | JSON in five places, JSON lines in three |
 | `mycelium-container-bundle` | a bundle as a read-only container of files (`values.md`); its product repository to be created by the human | (new: assets and data files read from bundles) |
