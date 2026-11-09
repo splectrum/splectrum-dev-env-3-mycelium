@@ -76,15 +76,15 @@ write. (`wait` queues a writer for the lock.)
 - **The single writer is the one open store** (tried 2026-11-09): a store
   opens writable once; a second open fails even in the same thread, and
   from a child thread (`bare-thread`) of the same process; a Bare thread
-  cannot share the main thread's store (each its own isolate, sharing only
+  cannot share another thread's store (each its own isolate, sharing only
   messages). The store's writer is the open store, held by
-  `mycelium-repo-main`'s main thread; the cores' writer is the same open
+  `mrepo-base-runtime` (the repository's runtime); the cores' writer is the same open
   store (every core of the repository, its layers' drive, its topics, its
   outbox, keyed from the store's primary key). Child threads and launched
   commands are its clients, never writers: a child thread sends what it
   wants written as a message; a launched command (a request's execution)
   writes into the execute layer itself, on disk (changed 2026-11-09:
-  `repositories.md`, "Layers by their writes"), the main thread, on
+  `repositories.md`, "Layers by their writes"), the runtime, on
   completion, committing, merging and recording.
 - **More writers, more stores** (agreed, the human, 2026-11-09): another
   store (its own folder, its own primary key) has its own single writer (a
@@ -95,8 +95,8 @@ write. (`wait` queues a writer for the lock.)
   sparsely). Writes never cross stores; what joins them is a reference and
   replication, as between machines. So a level may have several stores,
   each with one writer, composed by reference: the level's repository
-  (`mycelium-repo-main`), a log store written by a logging thread (heavy
-  appends kept off the main thread), a package's own store.
+  (`mrepo-base-runtime`), a log store written by a logging thread (heavy
+  appends kept off the runtime), a package's own store.
 - **A read-only reader sees a snapshot as of its opening** (tried
   2026-11-09: a reader kept open while the writer appended five times saw
   none of them, `update()` returning `false`; a reader opened afterwards saw
@@ -117,16 +117,22 @@ write. (`wait` queues a writer for the lock.)
   so its folder is protected as a key is; opaque by design, views coming
   from the repositories.
 
-## A level: a mycelium repository first, folders where a process needs them
+## A level: a mycelium repository first, its layers stored by their writes
 
 **Agreed** (the human, 2026-11-09): a level is a mycelium repository with
-layers, first; a person sees it through a Splectral component; a folder is
-a translation of a layer, made only where a host process requires files.
+layers, first; a person sees it through a Splectral component. A layer is
+stored in one of **three modes**, by its writes (`repositories.md`, "Layers
+by their writes"): **atomic** (in the Corestore, committed by the main
+thread), **replicated** (in the Corestore, and copied out as files for a
+process that needs them: Bare runs a bundle from its file, `dlopen` loads an
+addon from one), **non-atomic** (on the filesystem only, written directly).
+(Changed 2026-11-09: a folder was first only a translation, where a host
+process needs files.)
 
-| Layer | Holds | Translated to a folder |
+| Layer | Holds | On the filesystem |
 |---|---|---|
 | `main` | the level's data (config, state) | no (seen by URI) |
-| `packages` (a layer of its own, like `main`) | the bundles and their native addons, as objects, laid out as a source (the pinned manifest, `<org>/<package>.bundle`, `addons/<sha256>`) | `<work>/haicc/packages/`: the bundles this level runs and the addons they name (Bare runs a bundle from its file; `dlopen` needs files) |
+| `packages` (a layer of its own, like `main`) | the bundles and their native addons, as objects, laid out as a source (the pinned manifest, `<org>/<package>.bundle`, `addons/<sha256>`) | replicated: `<work>/mrepos/host/packages/`, the bundles this level runs and the addons they name |
 | `execute/main` | executions: only the visible change to `main` (from `main`, synced before each) | no |
 | `request/pending/default`, `request/executing`, `request/done` | the requests and their metadata (`repositories.md`) | no |
 | the log topic | the level's log | no (the minimal file log aside) |
@@ -143,37 +149,43 @@ and the store's own failures).
   folders are set up is the install's own concern, not part of the
   platform's interface. What follows is how the install translates, free to
   change.
-- **The repository mounted on a folder of its own** (agreed, the human,
-  2026-11-09; replacing the level's folder as the repository's root, built
-  first, which reserved the layers' names at the work folder's root): the
-  repository's root, the git root of all its layers, is viewed at
-  `<work>/haicc/` (its mount point); a layer a host process needs as files
-  appears under it at the same path as its URI (`<work>/haicc/packages/` the
-  view of `/packages`); the substrate beside it (`<work>/store/` the
-  repository itself, `<work>/setup/` the source the boot came from, `log/`
-  later). No reserved names at the work folder's root. A view holds only
-  what its process needs, owned by the install, never edited. A command
-  finds its level by walking up from its bundle to the folder holding
-  `store/`.
+- **Each repository a folder of its own, `<work>/mrepos/<name>/`** (**built**,
+  agreed with the human, 2026-11-09; replacing `<work>/haicc/`, built first, itself
+  replacing the level's folder as the repository's root): a repository is
+  stored partly in the Corestore, partly on the filesystem, so every
+  repository has its place in the folder structure; a flat list for now,
+  each by its unique name (a URI segment; its id stays its identity, what
+  references pin). Under it, a layer's files at the same path as its URI
+  (`mrepos/host/inbox` is `/inbox` of `host`). The host's repository is
+  `host`: of type `haicc` (HAICC is the repository's API), it is the host,
+  the node bridgehead. **One Corestore per host**, `<work>/store/`, holding
+  every repository's atomic and replicated layers, its single writer the
+  host's runtime; beside it `<work>/setup/` (the source the boot came
+  from) and `<work>/log/`. A command finds its level by walking up from its
+  bundle to the folder holding `store/`.
 
 ```
 <work>/
-  haicc/                                     the repository's root, viewed (the mount point)
-    packages/                                the packages layer
-      haiccing/base-package-boot.bundle      bundles by [org]/[package]
-      haiccing/base-package-haicc.bundle
-      addons/<sha256>                        native addons, one store; bundles name them /../../addons/<sha256>
-      manifest.json                          the pinned manifest, packages keyed [org]/[package]
-  store/                                     the substrate: the repository itself
+  mrepos/
+    host/                                    the host's repository (type haicc)
+      inbox/                                 non-atomic: /inbox, a message a document
+      outbox/                                non-atomic: /outbox
+      packages/                              replicated: the packages layer's files
+        haiccing/base-package-boot.bundle    bundles by [org]/[package]
+        haiccing/base-package-haicc.bundle
+        addons/<sha256>                      native addons, one store; bundles name them /../../addons/<sha256>
+        manifest.json                        the pinned manifest, packages keyed [org]/[package]
+  store/                                     the Corestore: every repository's atomic and replicated layers
   setup/                                     the source the boot came from
+  log/                                       the minimal plain-file log
 ```
 
-- **A layer becomes a folder only where a host process needs files**: Bare
-  (the bundles), `dlopen` (the addons), Docker (its mounts). A person never
-  needs one: the terminal reads the repository by URI, and Splectral shows
-  it.
-- **A folder is a view**: copied or extracted from the layer at a pinned
-  commit, never edited, replaced when the layer moves.
+- **What is in the Corestore is never written as files except as a copy**:
+  replicated layers only, for the process that needs them (Bare, `dlopen`,
+  Docker's mounts); a person never needs one: the terminal reads by URI,
+  Splectral shows it.
+- **A replicated layer's files are a copy**: extracted from the layer at a
+  pinned commit, never edited, replaced when the layer moves.
 - **Nesting follows composition**: a child level is its own repository,
   named in the parent's mappings; on the host its folder sits inside the
   parent's where it runs there; a child running elsewhere has only its name.

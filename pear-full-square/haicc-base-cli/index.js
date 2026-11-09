@@ -1,38 +1,37 @@
 // haicc-base-cli: HAICC's commands, as a library (haicc.js is the command
-// line on it). A command takes its arguments and `{ work }` (the level's
+// line on it). A command takes its arguments and `{ work }` (the host's
 // folder) and returns { code, out }: its exit code (0 done; 1 not done; 2 a
 // bad call) and what it prints (JSON). The terminal is the boundary: the
 // command line's input is validated here, once.
 //   import { commands, version } from 'haicc-base-cli'
 //   version            this module's name and version
-//   status             the level at a glance, read-only: its repository (name,
-//                      id, key), its main thread (running: its pid, since
+//   status             the host at a glance, read-only: its repository (name,
+//                      id, key), its runtime (running: its pid, since
 //                      when; or not), its layers, the pinned manifest's
 //                      sequence, each package installed (its id, its size,
 //                      deployed or not), the messages waiting in its boxes
-//   start              the level's main thread started, if it is not running
-//   stop               the level's main thread stopped (the store released)
-//   read <uri>         what the level's repository holds at a URI (from a
+//   start              the host's runtime started, if it is not running
+//   stop               the host's runtime stopped (the store released)
+//   read <uri>         what the host's repository holds at a URI (from a
 //                      branch: /main/…, /packages/…), read-only: a file's
 //                      size (and its text, when small text), a folder's or a
 //                      branch's entries; '*' steps select
-//   put <uri> <json>   a value PUT at a URI of the host (its root the level's
-//                      repository): input from outside the root, through its
-//                      mapping (none -> host: validated here, the URI and the
-//                      JSON, never again; only PUT /inbox allowed): the
+//   post <uri> <json>  a value POSTed to a URI of the host (its root the
+//                      host's repository): input from outside the root,
+//                      through its mapping (none -> host: validated here, the
+//                      URI and the JSON; only POST /inbox allowed): the
 //                      message { from: null, body } a new document in
-//                      <work>/haicc/inbox, taken in by the main thread.
+//                      <work>/mrepos/host/inbox, taken in by the runtime.
 import { join } from 'bare-path'
 import { existsSync, statSync } from 'bare-fs'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo } from '../mycelium-git/index.js'
 import { validate, sameName } from '../mycelium-uri/index.js'
-import { ask, start as startMain, INBOX, inbox, outbox } from '../mycelium-repo-main/index.js'
+import { ask, start as startRuntime, HOST, INBOX, inbox, outbox, viewOf } from '../mrepo-base-runtime/index.js'
 import pkg from './package.json' with { type: 'json' }
 
 export const version = { name: pkg.name, version: pkg.version }
-const LEVEL = 'level'
 
 const text = bytes => {
   if (bytes.length > 4096) return null
@@ -40,19 +39,19 @@ const text = bytes => {
   return /[\u0000-\u0008\u000e-\u001f]/.test(s) || s.includes('�') ? null : s
 }
 
-// The level's repository, opened read-only for one command (a short-lived
-// reader beside the level's writer: a snapshot).
-async function withLevel (work, fn) {
-  if (!work || !existsSync(join(work, 'store'))) return { code: 1, out: { error: `no level here: ${work} (not booted)` } }
+// The host's repository, opened read-only for one command (a short-lived
+// reader beside the host's writer: a snapshot).
+async function withHost (work, fn) {
+  if (!work || !existsSync(join(work, 'store'))) return { code: 1, out: { error: `no host here: ${work} (not booted)` } }
   const store = await openStore({ storage: join(work, 'store'), readOnly: true })
-  try { return await fn(await mrepos({ store }).open(LEVEL)) } finally { await store.close() }
+  try { return await fn(await mrepos({ store }).open(HOST)) } finally { await store.close() }
 }
 
 export const commands = {
   version: async () => ({ code: 0, out: version }),
 
-  status: async (args, { work }) => withLevel(work, async level => {
-    const repo = openRepo(level.backend)
+  status: async (args, { work }) => withHost(work, async host => {
+    const repo = openRepo(host.backend)
     const layers = []
     for (const pattern of ['/*', '/*/*', '/*/*/*']) {
       for (const [p, node] of await repo.select(pattern)) if (node.type === 'tree' && !layers.some(l => p.startsWith(l + '/'))) layers.push(p)
@@ -63,31 +62,31 @@ export const commands = {
       package: key,
       id: manifest.packages[key]?.id?.slice(0, 16) ?? null,
       bytes: manifest.packages[key]?.bytes ?? null,
-      deployed: existsSync(join(work, 'haicc', 'packages', `${key}.bundle`))
+      deployed: existsSync(join(viewOf(work, HOST), 'packages', `${key}.bundle`))
     }))
     const m = await ask({ work, op: 'status' })
-    const main = m ? { running: true, pid: m.pid, started: m.started } : { running: false }
+    const runtime = m ? { running: true, pid: m.pid, started: m.started } : { running: false }
     const boxes = { inbox: inbox(work).list().length, outbox: outbox(work).list().length }
-    return { code: 0, out: { level: { repository: level.name, id: level.id, key: level.key, work }, main, layers: layers.sort(), manifest: { sequence: manifest.sequence, signed: Boolean(manifest.signature), runtime: manifest.runtime }, packages, boxes } }
+    return { code: 0, out: { host: { repository: host.name, id: host.id, key: host.key, work }, runtime, layers: layers.sort(), manifest: { sequence: manifest.sequence, signed: Boolean(manifest.signature), runtime: manifest.runtime }, packages, boxes } }
   }),
 
   async start (args, { work }) {
-    if (!work || !existsSync(join(work, 'store'))) return { code: 1, out: { error: `no level here: ${work} (not booted)` } }
-    const m = await startMain({ work })
-    return m ? { code: 0, out: { main: { running: true, pid: m.pid, started: m.started } } } : { code: 1, out: { error: 'the main thread did not start (see log/main.log)' } }
+    if (!work || !existsSync(join(work, 'store'))) return { code: 1, out: { error: `no host here: ${work} (not booted)` } }
+    const m = await startRuntime({ work })
+    return m ? { code: 0, out: { runtime: { running: true, pid: m.pid, started: m.started } } } : { code: 1, out: { error: 'the runtime did not start (see log/runtime.log)' } }
   },
 
   async stop (args, { work }) {
     const r = await ask({ work, op: 'stop' })
-    return r ? { code: 0, out: { main: { stopping: true } } } : { code: 1, out: { error: 'no main thread running here' } }
+    return r ? { code: 0, out: { runtime: { stopping: true } } } : { code: 1, out: { error: 'no runtime running here' } }
   },
 
-  async put ([uri, body], { work }) {
+  async post ([uri, body], { work }) {
     let to, value
     try { to = validate(uri ?? '') } catch (err) { return { code: 2, out: { error: err.message } } }
-    if (to !== INBOX) return { code: 2, out: { error: `not allowed: PUT ${to} (from outside, only PUT ${INBOX})` } }
+    if (to !== INBOX) return { code: 2, out: { error: `not allowed: POST ${to} (from outside, only POST ${INBOX})` } }
     try { value = JSON.parse(body ?? '') } catch { return { code: 2, out: { error: `not a JSON value: ${body ?? '(none)'}` } } }
-    if (!work || !existsSync(join(work, 'store'))) return { code: 1, out: { error: `no level here: ${work} (not booted)` } }
+    if (!work || !existsSync(join(work, 'store'))) return { code: 1, out: { error: `no host here: ${work} (not booted)` } }
     const name = inbox(work).add({ from: null, body: value })
     return { code: 0, out: { uri: `${INBOX}/${name}` } }
   },
@@ -95,11 +94,11 @@ export const commands = {
   async read ([uri], { work }) {
     let path
     try { path = validate(uri ?? '', { star: true }) } catch (err) { return { code: 2, out: { error: err.message } } }
-    if (!work || !existsSync(join(work, 'store'))) return { code: 1, out: { error: `no level here: ${work} (not booted)` } }
-    // A short-lived reader beside the level's writer: read-only, a snapshot.
+    if (!work || !existsSync(join(work, 'store'))) return { code: 1, out: { error: `no host here: ${work} (not booted)` } }
+    // A short-lived reader beside the host's writer: read-only, a snapshot.
     const store = await openStore({ storage: join(work, 'store'), readOnly: true })
     try {
-      const repo = openRepo((await mrepos({ store }).open(LEVEL)).backend)
+      const repo = openRepo((await mrepos({ store }).open(HOST)).backend)
       const found = await repo.select(path, sameName)
       if (!found.length) return { code: 1, out: { uri: path, error: 'nothing there' } }
       const out = []

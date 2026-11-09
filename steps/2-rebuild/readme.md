@@ -210,6 +210,30 @@ crossing a mapping; a repository's URIs its own.
   checks a message taken in; run without `--push`: passed, nothing left
   running. The tag it would publish: `setup-fe821759a88c`.
 
+## 4b. The runtime, the host, its folder: done (2026-11-09)
+
+Discussed first (recorded in `docs/design/`): the REST verbs, in their
+meaning, the transport between repositories (requests wrapped, `POST` to an
+inbox); HAICC a repository's API, the host's repository of type `haicc`,
+instance `host` (it is the host, the node bridgehead); every inbox a
+validation point, no command outside; three storage modes (atomic,
+replicated, non-atomic); `<work>/mrepos/<name>/`, one Corestore per host;
+the mrepo framework, its API a set of protocols (request, execute, log), a
+module per protocol, mapped to its layer.
+
+- `mycelium-repo-main` renamed `mrepo-base-runtime` (`runtime.js` its
+  command line; `<work>/runtime.sock`, `<work>/log/runtime.log`); its
+  package `haiccing/base-package-mrepo` (was `-mycelium`). Their product
+  and release repositories to be created by the human.
+- The host's repository `host` (was `level`); its folder
+  `<work>/mrepos/host/` (was `<work>/haicc/`): `inbox/`, `outbox/`,
+  `packages/`.
+- `haicc post /inbox <json>` (was `put`); `haicc status` shows `host` and
+  `runtime`.
+- Tests: runtime 6, HAICC 5, boot 2 files (all pass), package writer 3
+  files. `tools/publish.sh` without `--push`: passed, nothing left running.
+  The tag it would publish: `setup-405b3456017f`.
+
 Next: 5, requests flowing (a message becoming a request, executed, its
 result committed and merged by the main thread, recorded in
 `request/done`, answered).

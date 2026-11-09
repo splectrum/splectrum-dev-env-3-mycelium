@@ -3,16 +3,16 @@
 # access to github.com/haiccing and `gh`), with the human's word. From this
 # repository at the commit to publish, installed (sh tools/install.sh).
 #   sh tools/publish.sh <folder> --key-dir=<folder> [--push]
-# 1. The boot's, HAICC's and mycelium's packages written as bundles, signed with the
+# 1. The boot's, HAICC's and mrepo's packages written as bundles, signed with the
 #    publisher's key (<key-dir>/publisher.secret; make one with
 #    tools/setup/keygen.js), as one source (<folder>/source).
 # 2. The setup built from it (<folder>/haicc-setup.sh): Bare, the source,
 #    boot.json (the publisher's public key).
 # 3. Checked as a user would: a fresh folder, Node.js off the PATH (a PATH
 #    of links to the system's tools, node, nodejs, npm, npx and corepack
-#    left out, wherever they are installed): the setup run (the level's
-#    main thread started), then `haicc status`, a message PUT (`haicc
-#    put /inbox`) and seen taken in by the level's repository, then `haicc stop`.
+#    left out, wherever they are installed): the setup run (the host's
+#    runtime started), then `haicc status`, a message POSTed (`haicc
+#    post /inbox`) and seen taken in by the host's repository, then `haicc stop`.
 # 4. With --push only: the setup and the manifest published as a release of
 #    haiccing/base-package-boot. Its tag: setup-<12 hex of the packages'
 #    identities in the manifest (each package's id and addons)>: the same
@@ -29,7 +29,7 @@ commit=$(git -C "$dev" rev-parse --short HEAD)
 rm -rf "$folder/out" "$folder/check"
 mkdir -p "$folder/out"
 echo "== 1. the packages, from $commit, signed"
-"$dev/tools/bare" "$dev/tools/package-writer/cli.js" --out="$folder/out" --only=boot,haicc,mycelium --sign-key="$keys/publisher.secret" --quiet > "$folder/written.json" || { echo "a package's tests failed: nothing written (see $folder/written.json)"; exit 1; }
+"$dev/tools/bare" "$dev/tools/package-writer/cli.js" --out="$folder/out" --only=boot,haicc,mrepo --sign-key="$keys/publisher.secret" --quiet > "$folder/written.json" || { echo "a package's tests failed: nothing written (see $folder/written.json)"; exit 1; }
 echo "== 2. the setup"
 "$dev/tools/bare" "$dev/tools/setup/build.js" --source="$folder/out/source" --out="$folder/out" --public-key="$keys/publisher.public"
 echo "== 3. checked: a fresh folder, Node.js off the PATH"
@@ -46,14 +46,14 @@ for d in /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin; do
 done
 (cd / && env -i PATH="$nonode" HOME="$HOME" sh -c 'command -v node >/dev/null && { echo "node still on the PATH"; exit 1; }; exit 0')
 (cd / && env -i PATH="$nonode" HOME="$HOME" sh "$folder/out/haicc-setup.sh" "$folder/check")
-bundle=$(ls "$folder/check/haicc/packages/haiccing/base-package-haicc.bundle")
+bundle=$(ls "$folder/check/mrepos/host/packages/haiccing/base-package-haicc.bundle")
 (cd / && env -i PATH="$nonode" "$folder/check/setup/bare" "$bundle" status)
-# A message, from the terminal: PUT /inbox, taken in by the main thread
+# A message, from the terminal: POST /inbox, taken in by the runtime
 # (seen in its log).
-(cd / && env -i PATH="$nonode" "$folder/check/setup/bare" "$bundle" put /inbox '{"text":"hello"}')
-i=0; until grep -q '"main":"received"' "$folder/check/log/main.log" 2>/dev/null; do i=$((i+1)); [ $i -gt 50 ] && { echo "the message was not taken in"; "$folder/check/setup/bare" "$bundle" stop; exit 1; }; sleep 0.2; done
-echo "the message: taken in by the level's repository"
-# The level's main thread, started by the boot: stopped, the check leaves nothing running.
+(cd / && env -i PATH="$nonode" "$folder/check/setup/bare" "$bundle" post /inbox '{"text":"hello"}')
+i=0; until grep -q '"runtime":"received"' "$folder/check/log/runtime.log" 2>/dev/null; do i=$((i+1)); [ $i -gt 50 ] && { echo "the message was not taken in"; "$folder/check/setup/bare" "$bundle" stop; exit 1; }; sleep 0.2; done
+echo "the message: taken in by the host's repository"
+# The host's runtime, started by the boot: stopped, the check leaves nothing running.
 (cd / && env -i PATH="$nonode" "$folder/check/setup/bare" "$bundle" stop)
 rm -rf "$nonode"
 # The tag: the packages' identities (ids and addons), not the build's.
