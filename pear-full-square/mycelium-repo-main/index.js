@@ -25,10 +25,10 @@ import { existsSync, mkdirSync, rmSync, appendFileSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
-import { outbox, inbox, received, dispatch, takeIn } from './lib/boxes.js'
+import { INBOX, OUTBOX, inbox, outbox, dispatch, takeIn } from './lib/boxes.js'
 import pkg from './package.json' with { type: 'json' }
 
-export { outbox, inbox, received }
+export { INBOX, OUTBOX, inbox, outbox }
 
 export const version = { name: pkg.name, version: pkg.version }
 export const LEVEL = 'level'
@@ -76,13 +76,12 @@ export async function run ({ work, say = () => {}, every = 200 }) {
   })
   server.listen({ path: socketOf(work), ownerOnly: true })
   say({ main: 'running', ...status() })
-  // The boxes, watched: the level's outbox dispatched, the repository's
-  // inbox taken in.
+  // The boxes, watched: the outbox dispatched, the inbox taken in.
   const held = new Set()
   const boxes = setInterval(() => {
     if (stopping) return
-    dispatch({ from: outbox(work), to: { [LEVEL]: inbox(work, LEVEL) }, held, say })
-    takeIn({ from: inbox(work, LEVEL), to: received(work, LEVEL), say })
+    dispatch({ work, held, say })
+    takeIn({ work, say })
   }, every)
   process.on('SIGTERM', () => stop('SIGTERM'))
   process.on('SIGINT', () => stop('SIGINT'))

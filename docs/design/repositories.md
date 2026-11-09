@@ -279,6 +279,13 @@ functionality (the bundles in `packages/`) is not exposed.
   the outbox's key and length, the latest length standing for a burst; the
   receiver fetches those blocks sparsely and checks them; for occasional
   senders). Both land in the receiver's inbox topic.
+- **Posting is `PUT <inbox URI> {message}`** (the human, 2026-11-09). The
+  host's root is the HAICC repository (the level's), so its inbox is
+  `/inbox`; from outside a root, through its mapping, only `PUT /inbox` is
+  allowed (the gate); inside, code writes any layer under the layer rules.
+  **Built**, for now as folders in the view, no layer kind: `/inbox` at
+  `<work>/haicc/inbox/`, `/outbox` at `<work>/haicc/outbox/` (`{ to, body }`,
+  PUT by the dispatcher); more advanced implementations later.
 - **The boxes are a level's** (the human, 2026-11-09): the host (the first
   level) as any swarm or node; "node" above stands for any level. Each
   level has its own root; a URI is read in its level's URI space, its

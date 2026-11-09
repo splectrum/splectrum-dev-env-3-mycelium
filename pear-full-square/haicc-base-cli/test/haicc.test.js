@@ -1,6 +1,6 @@
 import test from 'brittle'
 import { spawnSync } from 'bare-subprocess'
-import { mkdtempSync, rmSync } from 'bare-fs'
+import { mkdtempSync, rmSync, existsSync } from 'bare-fs'
 import { join, dirname } from 'bare-path'
 import { tmpdir } from 'bare-os'
 import { fileURLToPath } from 'bare-url'
@@ -8,7 +8,7 @@ import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { writer } from '../../mycelium-git/index.js'
 import { commands } from '../index.js'
-import { outbox } from '../../mycelium-repo-main/index.js'
+import { inbox } from '../../mycelium-repo-main/index.js'
 
 const here = join(dirname(fileURLToPath(import.meta.url)), '..')
 const haicc = (...args) => spawnSync(Bare.argv[0], [join(here, 'haicc.js'), ...args], { stdio: ['ignore', 'pipe', 'pipe'] })
@@ -72,26 +72,30 @@ test('status: the level at a glance', async (t) => {
     t.alike(r.out.layers, ['/main', '/packages', '/request/pending/default'])
     t.is(r.out.manifest.sequence, 7)
     t.alike(r.out.packages, [{ package: 'haiccing/base-package-x', id: 'ab'.repeat(8), bytes: 12, deployed: false }])
-    t.alike(r.out.boxes, { outbox: 0, inbox: { level: 0 } }, 'no messages waiting')
+    t.alike(r.out.boxes, { inbox: 0, outbox: 0 }, 'no messages waiting')
     t.is((await commands.status([], { work: join(work, 'none') })).code, 1)
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
 
-test('message: validated at the terminal, into the level\'s outbox', async (t) => {
+test('put: from outside, PUT /inbox only, validated at the terminal', async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'cli-'))
   try {
-    t.is((await commands.message(['/level/main/x', '{}'], { work })).code, 1, 'no level: not done')
+    t.is((await commands.put(['/inbox', '{}'], { work })).code, 1, 'no level: not done')
     const store = await openStore({ storage: join(work, 'store') })
     await mrepos({ store }).create('level')
     await store.close()
-    const r = haicc('message', '/Level//main/hello/', '{"text":"hi"}', `--work=${work}`)
+    const r = haicc('put', '/Inbox/', '{"text":"hi"}', `--work=${work}`)
     t.is(r.status, 0, String(r.stderr))
-    const out = JSON.parse(String(r.stdout))
-    t.is(out.to, '/level/main/hello', 'the URI canonical')
-    t.alike(outbox(work).read(out.message), { to: '/level/main/hello', from: null, body: { text: 'hi' } }, 'from outside: from none')
-    t.is((await commands.message(['/a_b', '{}'], { work })).code, 2, 'a bad URI: a bad call')
-    t.is((await commands.message(['/level', '{nope'], { work })).code, 2, 'bad JSON: a bad call')
-    t.is((await commands.message(['/level'], { work })).code, 2, 'no body: a bad call')
-    t.is(outbox(work).list().length, 1, 'nothing bad written')
+    const { uri } = JSON.parse(String(r.stdout))
+    const name = uri.slice('/inbox/'.length)
+    t.ok(uri.startsWith('/inbox/'), 'a new document in /inbox')
+    t.alike(inbox(work).read(name), { from: null, body: { text: 'hi' } }, 'from outside: from none')
+    t.ok(existsSync(join(work, 'haicc', 'inbox', name + '.json')), 'at <work>/haicc/inbox')
+    t.is((await commands.put(['/main/x', '{}'], { work })).code, 2, 'anywhere else: not allowed')
+    t.is((await commands.put(['/outbox', '{}'], { work })).code, 2, 'the outbox neither')
+    t.is((await commands.put(['/a_b', '{}'], { work })).code, 2, 'a bad URI')
+    t.is((await commands.put(['/inbox', '{nope'], { work })).code, 2, 'bad JSON')
+    t.is((await commands.put(['/inbox'], { work })).code, 2, 'no body')
+    t.is(inbox(work).list().length, 1, 'nothing bad written')
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
