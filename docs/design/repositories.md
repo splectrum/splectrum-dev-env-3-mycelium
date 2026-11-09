@@ -87,32 +87,57 @@ composing the branches; nothing moves from one writer to another.
 
 ### The request branches
 
-**Agreed.** `pending/default` (today: the requests and their notes, the
-record of all requests) is restructured into `request/pending` (the passive
-side's, append-only: the requests as submitted), `request/executing` and
-`request/done` (the active side's). The reserved segment `pending` becomes
-`request`; the notes and metadata go to the side that writes them. `rules.md`
-is changed when it is built.
+**Agreed** (the human, 2026-11-08 and 09). `pending/default` (today: the
+requests and their notes, the record of all requests) is restructured, data
+and metadata kept apart:
+
+| Branch | Holds |
+|---|---|
+| `request/pending/default` | the local queue: requests waiting (one queue per source: `request/pending/<source>`, `default` the local one; no branch `request/pending` itself, a name never both a branch and a prefix) |
+| `request/executing` | the request being executed, with its metadata gathered as it runs: the unit's record (invocation, the states it ran on by commit, environment, nondeterministic inputs), its outcome, the `execute/main` commit it produced; cleared when it ends |
+| `request/done` | each completed request with its full record: the request as submitted, the unit's record (rerun exactly by it), its outcome (a failure included), the `execute/main` commit and its merge into `main` |
+| `execute/main` | only the visible change to `main`: the data the request produced; merged plainly into `main` |
+
+`main` and `execute/main` hold data only; the request branches hold the
+requests and the metadata around producing the visible state (`rules.md`:
+outcomes are data on `main`). Today's `executeRequests` writes the unit's
+record into `main` beside the response: changed when rebuilt. In one
+repository with one writer, taking a request is a commit moving it from the
+queue to `request/executing`, finishing one moving it with its record to
+`request/done`. The passive and active split of these branches comes with
+that design, later. The reserved segment `pending` becomes `request`;
+`rules.md` (its branches and commit references) is changed when it is
+built.
 
 ### The packages layer
 
-**Agreed** (the human, 2026-11-09; changed from a layer of links, decided
-2026-11-08, once packages became bundles: `structure.md`). `packages/<purpose>`,
-in place of `capability/<purpose>`, is the code store: it holds the bundles
-themselves as objects (`packages/<purpose>/<package>/<entry>.bundle`). A
-bundle is a blob, its id its content's hash: the same bundle in many
-repositories is one object, replication moves only what a peer lacks, and
-the check is the object id (with the hash in the release's manifest).
-`packages/default` operates the repository's own functionality,
-`packages/test` is where development deploys and tests; promotion (test to
-default) and rollback are commits. Mycelium browses a bundle's contents by
-URI, as if extracted (`values.md`, "URIs name a logical structure":
-`/packages/default/haicc/haicc.bundle/app/page.html`); an execution scope
-gets a bundle as a file, a plain copy out of the layer, since Bare runs a
-bundle from its file. Releases outside git history stay where the outside
-world meets us (GitHub's haiccing releases, built by local). The reserved
-segment `capability` becomes `packages`; `rules.md` is changed when it is
-built.
+**Agreed** (the human, 2026-11-09; changed twice: from a layer of links,
+decided 2026-11-08, once packages became bundles; then from
+`packages/<purpose>` to one layer). `packages`, a layer of its own like
+`main`, in place of `capability/<purpose>`, is the code store: it holds the
+bundles themselves as objects, by `[org]/[package]`
+(`/packages/haiccing/base-package-haicc.bundle`), their native addons by
+hash (`/packages/addons/<sha256>`) and the pinned manifest
+(`/packages/manifest.json`): laid out as a source, so a repository's
+packages layer is itself a source for others. A bundle is a blob, its id
+its content's hash: the same bundle in many repositories is one object,
+replication moves only what a peer lacks. Mycelium browses a bundle's
+contents by URI, as if extracted (`values.md`); a level runs a bundle from
+its view (`structure.md`). Releases outside git history stay where the
+outside world meets us (GitHub's haiccing releases, built by local).
+
+**No purposes in the layer, no test organisations**: a level's packages
+layer holds what that level runs. Testing is **a separate instance** (a
+test HAICC platform, its own repository), composing what it needs by
+reference (`rules.md`, Layers): its packages a mix of production and
+development builds, by **a custom manifest** listing them (production
+entries exactly as the publisher's, the same id and hash; development
+builds beside them), marked `mixed` (`packages.md`: validated and mixed),
+signed by a development key that only a level set up for testing accepts
+(its `boot.json`); its sources may include a production level's packages
+layer. Every bundle still checked by its hash: mixing changes who vouches
+for the list, not how bundles are checked. Promotion: a tested build
+published under its organisation, through the release path.
 
 ### Naming another writer's layer: pinned, then resolved by URI
 
@@ -156,6 +181,64 @@ notice. A small request may travel in the RPC message, so the work starts
 before replication completes; but the unit runs only on what is in the
 replica: what is recorded, and what a rerun uses, is always the replicated
 commit.
+
+## A running repository: mycelium's framework
+
+**Agreed** (the human, 2026-11-09). A repository's own behaviour is
+mycelium's, not HAICC's: HAICC sets a level up (`init`) and starts it; the
+package manager puts bundles in its packages layer.
+
+- **An always-on process per repository**, the repository's main thread:
+  `mycelium-repo-main` (the human; module and process names are one
+  namespace, git layers another): it holds the store as its single writer, keeps the required
+  watchers running (the local queue, the sources it follows, replication),
+  serves the local connection (short-lived and long-lived readers,
+  submits), and restarts what stops.
+- **Submit** (`mycelium-request-submit`): a request placed in the queue
+  (`request/pending/<source>`) by the repository's own code, from a message
+  taken in from its inbox and validated there (below); the queue inside the
+  boundary.
+- **Execute** (`mycelium-request-execute`): the queue watched; a request
+  taken (`request/executing`); the command it contains launched as a unit,
+  the repository's state pinned; the command writes the data it changes into
+  the execute layer (`execute/main`); on completion the framework commits,
+  merges into `main`, and moves the request with its record to
+  `request/done` (the command as launched, the states it ran on, its exit
+  code and output, the environment); then the next request. One at a time,
+  in queue order: each starts from the `main` the previous left.
+- **The first bundles**: `packages` starts with `haiccing/base-package-boot`
+  and `haiccing/base-package-haicc`, committed at `init`.
+
+## How repositories communicate: inbox, outbox, dispatcher
+
+**Agreed** (the human, 2026-11-09; the details at implementation).
+Nothing in a repository is callable from outside by default: its
+functionality (the bundles in `packages/`) is not exposed.
+
+- **Each repository has an inbox and an outbox**, two topics outside the
+  repository's boundary (inside the swarm). One writer per core, without
+  exception: the outbox is written by its repository (what it sends), the
+  inbox by the dispatcher (what was sent to it).
+- **A dispatcher** reads the outboxes and appends each message to the inbox
+  of the repository it is addressed to: it routes, it does not process.
+- **Each repository watches its boxes**: from its inbox, each message is
+  validated where it crosses into the repository, then processed by the
+  repository's own code (which may place a request in its queue: the queue
+  is fed from inside only); on its outbox, it follows what it sent.
+- **Validation at both edges**: the dispatcher checks the envelope (sender,
+  addressee) as it routes; the repository checks the content as it takes a
+  message in.
+- **Everyone the same way**: the owner's terminal (`haicc request add`)
+  posts a message, through the dispatcher, to the repository's inbox, as
+  any sender does.
+- **An external API** (later, opt-in): mounted in a repository as data
+  (pinned, versioned), declaring which commands are accepted, with their
+  arguments, from whom (capability URIs mapped to commands: `rules.md`,
+  Layers, deferred to that level); a policy over the inbox.
+- At implementation: where the dispatcher runs (per swarm, per host); the
+  addressee by URI, resolved by the resource name service; a message as a
+  Kafka record (its value the message; headers: from, to, a correlation
+  id).
 
 ## Backup at the repository level
 

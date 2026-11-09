@@ -73,9 +73,43 @@ write. (`wait` queues a writer for the lock.)
   partial (sparse replication: the blocks it downloaded) and cleared when
   no longer needed (retention per node), the producer's log untouched:
   redundancy and local reads, authority where it belongs.
-- **To probe**: whether a reader that stays open sees writes made after it
-  opened (RocksDB's read-only mode usually a snapshot as of opening: a
-  long-lived reader reopening, or following by replication).
+- **The single writer is the one open store** (tried 2026-11-09): a store
+  opens writable once; a second open fails even in the same thread, and
+  from a child thread (`bare-thread`) of the same process; a Bare thread
+  cannot share the main thread's store (each its own isolate, sharing only
+  messages). The store's writer is the open store, held by
+  `mycelium-repo-main`'s main thread; the cores' writer is the same open
+  store (every core of the repository, its layers' drive, its topics, its
+  outbox, keyed from the store's primary key). Child threads and launched
+  commands are its clients, never writers: a child thread sends what it
+  wants written as a message; a launched command (a request's execution)
+  writes into the execute layer through the main thread's local connection
+  (a value put at a path, one removed, a record appended), the main thread
+  applying each write and, on completion, committing, merging and
+  recording. Long writes need care not to block the watchers.
+- **More writers, more stores** (agreed, the human, 2026-11-09): another
+  store (its own folder, its own primary key) has its own single writer (a
+  child thread, another process, a package's process); the repository
+  attaches it by reference (its cores' keys in the repository's mappings,
+  pinned at its commits) and reads it by replication from that store's
+  writer (followed live and verified; replicated into its own store or read
+  sparsely). Writes never cross stores; what joins them is a reference and
+  replication, as between machines. So a level may have several stores,
+  each with one writer, composed by reference: the level's repository
+  (`mycelium-repo-main`), a log store written by a logging thread (heavy
+  appends kept off the main thread), a package's own store.
+- **A read-only reader sees a snapshot as of its opening** (tried
+  2026-11-09: a reader kept open while the writer appended five times saw
+  none of them, `update()` returning `false`; a reader opened afterwards saw
+  all). So read-only opening is for short-lived readers: a command that
+  opens, reads and closes (status, a list, `haicc read <uri>`) sees all
+  written before it opened. A long-lived reader (Splectral watching a
+  level, a log viewer, anything waiting for new data) follows the writer
+  instead (proposed): the level's writer process serves its cores to local
+  followers over a local connection, the same Hypercore replication as
+  between peers, appends arriving live and verified: one mechanism for the
+  next process and the next machine; reopening periodically only as a
+  stopgap.
 - **What else RocksDB means for us** (substrate, never used directly): a
   native addon (`rocksdb-native`, in `addons/`); backups are a closed store
   copied or replication to a backup peer, not a copy of an open store's
@@ -92,9 +126,10 @@ a translation of a layer, made only where a host process requires files.
 
 | Layer | Holds | Translated to a folder |
 |---|---|---|
-| `main` | the level's config and state | no (seen through Splectral) |
-| `packages/default`, `packages/test` | the bundles and their native addons, as objects | `bundles/`: the bundles this level runs, copied out (Bare runs a bundle from its file); `addons/`: the addons they name, by hash (`dlopen` needs files) |
-| `request/pending`, `-executing`, `-done` | the requests | no |
+| `main` | the level's data (config, state) | no (seen by URI) |
+| `packages` (a layer of its own, like `main`) | the bundles and their native addons, as objects, laid out as a source (the pinned manifest, `<org>/<package>.bundle`, `addons/<sha256>`) | `<work>/haicc/packages/`: the bundles this level runs and the addons they name (Bare runs a bundle from its file; `dlopen` needs files) |
+| `execute/main` | executions: only the visible change to `main` (from `main`, synced before each) | no |
+| `request/pending/default`, `request/executing`, `request/done` | the requests and their metadata (`repositories.md`) | no |
 | the log topic | the level's log | no (the minimal file log aside) |
 | child levels | each its own repository, named in this one's mappings by URI | a child's folder, where the child runs on this host |
 
@@ -102,6 +137,37 @@ Always there, outside the layers: `haicc` (the cold boot's way in, shell),
 `store/` (the substrate: the repository itself, Corestore and RocksDB),
 `log/` (the minimal plain-file log, **open**: its scope, for the cold boot
 and the store's own failures).
+
+- **The folders are an install-internal issue** (agreed, the human,
+  2026-11-09): people and agents interact through the command line or
+  Splectral's server, with our URIs; how the host's or a container's
+  folders are set up is the install's own concern, not part of the
+  platform's interface. What follows is how the install translates, free to
+  change.
+- **The repository mounted on a folder of its own** (agreed, the human,
+  2026-11-09; replacing the level's folder as the repository's root, built
+  first, which reserved the layers' names at the work folder's root): the
+  repository's root, the git root of all its layers, is viewed at
+  `<work>/haicc/` (its mount point); a layer a host process needs as files
+  appears under it at the same path as its URI (`<work>/haicc/packages/` the
+  view of `/packages`); the substrate beside it (`<work>/store/` the
+  repository itself, `<work>/setup/` the source the boot came from, `log/`
+  later). No reserved names at the work folder's root. A view holds only
+  what its process needs, owned by the install, never edited. A command
+  finds its level by walking up from its bundle to the folder holding
+  `store/`.
+
+```
+<work>/
+  haicc/                                     the repository's root, viewed (the mount point)
+    packages/                                the packages layer
+      haiccing/base-package-boot.bundle      bundles by [org]/[package]
+      haiccing/base-package-haicc.bundle
+      addons/<sha256>                        native addons, one store; bundles name them /../../addons/<sha256>
+      manifest.json                          the pinned manifest, packages keyed [org]/[package]
+  store/                                     the substrate: the repository itself
+  setup/                                     the source the boot came from
+```
 
 - **A layer becomes a folder only where a host process needs files**: Bare
   (the bundles), `dlopen` (the addons), Docker (its mounts). A person never
@@ -118,6 +184,36 @@ and the store's own failures).
 - **A node in a container**: its repository's store is where its writer
   runs, inside the container; the host holds only the views the container
   needs (its bundles, its addons).
+
+### The cold boot: getting the level's repository
+
+**Agreed** (the human, 2026-11-09). The cold boot's job: get the level's
+repository, then start its single writer from it. Its source:
+
+| Source | Getting the repository | For |
+|---|---|---|
+| new (now) | created empty in a new store (`p2p-mrepo`'s `create`, a new internal id) and seeded from the release | a first install |
+| existing (later) | opened from a backup: a git bundle imported (`p2p-mrepo`'s `import`, the id kept), or replicated from a backup peer by key | a restore |
+
+After that, one path: the addons bound, HAICC's bundle copied into the
+scope, HAICC started as the writer, the warm boot refreshing from the
+sources (a restored repository's older bundles handled as the setup's
+bootstrap bundles are). Kept in mind for restore: a restore brings the old
+identity back, keys included (a backup that allows one holds secrets);
+nothing the level needs lives outside its repository (the scope and the
+addons rebuilt from it); nothing after "get the repository" assumes it new.
+
+**Seeding a new repository, `init`**: its initial layers `main`,
+`packages`, `execute/main` (from `main`), `request/pending/default`,
+`request/executing`, `request/done`. Two concerns, two owners, both
+committing through `mycelium-git`'s writer: HAICC creates the repository
+(`p2p-mrepo`) and its layers and seeds `main` (the level's name, what is
+provided: the level's shape, HAICC's concern, its own module,
+`haicc-base-level`, when a second repository paradigm needs a shape); the
+package manager installs the release's bundles and addons into
+`packages` (checked against the release's manifest) and deploys HAICC's
+bundle into the layer's view. The cold boot's shell runs the checks, then
+Bare runs HAICC's bundle with `init`, then starts HAICC as the writer.
 
 **How people and agents interact with the platform** (agreed, the human,
 2026-11-09): **the terminal is the primary way in, for a person and an agent
@@ -203,9 +299,12 @@ resolved on disk; Bare itself runs its own JavaScript from a bundle
 If the probe holds: **a bundle is a package's runnable form, beside the
 package, not instead of it**. The package stays the self-contained folder
 (modules whole, README, tests, swarms, platform definitions: read by people,
-tested, viewed); a bundle is the closure of one entry point (the node's
-program, HAICC, Splectral's server: a bundle per entry point, not per
-package), made by the package writer when it writes the package (tested,
+tested, viewed); **one bundle per package, the full package** (changed
+2026-11-09 from a bundle per entry point, the human): the closure of all
+its entry points (resolutions fixed), its tests and its data (README,
+platform definitions, configuration) as files, its `main` the package's
+entry, the other entry points reached from it; native addons outside it
+(below); made by the package writer when it writes the package (tested,
 hashed and sealed with it; only the writer makes them, the package manager
 checks them), and the package's tests run the bundles too: what runs is
 what was tested.
@@ -213,7 +312,7 @@ what was tested.
 **A closed release, single files at the levels.** A bundle fixes the
 modules, how they resolve and the entry point, in one hashed file: nothing
 about running it changes without a new bundle, a new identity. A level then
-holds the bundles it runs (one file per entry point, the same hash
+holds the bundles it runs (one file per package, the same hash
 everywhere) and its native addons, instead of whole packages copied in
 (`modules/`, `node_modules/`: thousands of files each); distributing,
 checking, deduplicating and rolling back become operations on single files.
@@ -248,16 +347,17 @@ built artifact, not source: it is published as a release, not kept in the
 repository's history (as `haicc-setup.sh`, a release asset of
 `base-package-haicc`, already is).
 
-- **A release** (a version, one hash, immutable) carries a bundle per entry
-  point (the programs), the native addons they name,
-  and a manifest (each bundle's hash; the commit it was made from). Data
+- **A release** (a version, one hash, immutable) carries the package's
+  bundle (the full package: one package, one bundle, one hash), the native
+  addons it names, and a manifest (each bundle's hash; the commit it was made from). Data
   files (a swarm's configuration, a default, a page) travel inside the
   bundles, read without unpacking (`bare-bundle`: the files listed, one
   read by its offset and length; tried 2026-11-09) or extracted where a
   person or a tool needs them.
 - **Made by the package writer**: `packages.json` declares a package's entry
-  points; the writer bundles each entry point's closure (resolutions fixed),
-  runs the package's tests against the bundles, records the hashes. Only the writer makes
+  points; the writer bundles the package (the closure of its entry points,
+  paths canonicalised, its tests and data as files; addons offloaded by
+  hash), runs the package's tests from the bundle, records the hashes. Only the writer makes
   bundles (rules 13, 17).
 - **Built and published by local** (the local agent, with the human's word,
   as the releases today): a release per package (`tools/publish.sh`
@@ -285,8 +385,53 @@ repository's history (as `haicc-setup.sh`, a release asset of
   libraries that way. Nothing extracted; the release stays one file; what
   is served is what was hashed. (Not taken: extracting assets at install,
   a second form of the same bytes; a separate data bundle.)
-- **To settle in the probe first**: module types (a bundled `.js` taken as
-  a module); a real closure's size and addons.
+- **Probe 1, done** (2026-11-09, scratch only): `p2p-node`'s closure as a
+  bundle (`bare-module-traverse` and `bare-bundle`): 824 modules, 21 MB with
+  its native addons, 3.7 MB without, built in 3.4 s. In the node image, with
+  only Bare: native addons cannot be loaded from inside a bundle (`AddonError:
+  CANNOT_LOAD`), even declared; extracted (26 files, 17 MB) and named by the
+  bundle's resolutions, the bundle loads, and a swarm master runs from it
+  (store on RocksDB, DHT on UDX, repositories on p2p-git, genesis, live,
+  names registered, metrics, a graceful stop: as on the platform today).
+  Module types: none lost (the traversal takes each module's type from its
+  `package.json`). The traversal gives what runs (168 third-party packages);
+  `closure.js` what a package carries, tests included (213): both kept, for
+  bundles and for packages. A builder must canonicalise paths (`realpath`):
+  the workspace's symlinks would put a module in twice. An addon is named by
+  an absolute URL only (a relative one is refused, or resolves inside the
+  bundle).
+- **Native addons** (agreed, the human, 2026-11-09): always extracted files,
+  stored by content: `addons/<sha256>`, no name, no extension (tried: Bare
+  loads them so; a master ran with all 26), one namespace for every package,
+  version and platform, each stored once, checked by its hash, swept when no
+  installed bundle names it. **Beside the bundle** (changed 2026-11-09, from
+  a canonical base bound at install): a bundle names each addon as
+  `/../addons/<sha256>`, a sibling of the bundle file, `bare-pack`'s
+  convention for offloaded addons; tried: the same bundle, unchanged, runs
+  wherever it is placed with `addons/` beside it (a master live at two
+  different paths). No rewriting, no fixed path, no root. Why it works:
+  Bare mounts a bundle at its own file's URL and falls through to the
+  filesystem for anything not in it (`bare-module`); `/` starts at the
+  mount, `..` steps out of the bundle file. (A relative `../` is refused; an
+  absolute URL works but ties the bundle to a place.) A scope is then a
+  folder with the bundle and its `addons/`, hard links from a store where
+  they share a disk.
+- **The cold boot is in the bundle** (agreed, the human, 2026-11-09). Bare
+  is the one program needed, but its binary has no filesystem of its own
+  (`bare-fs`, `bare-os`, `bare-crypto` are addons, not linked in: tried), so
+  the addons must be files before anything in a bundle runs, and a bundle
+  cannot verify its own hash. So: a release in extracted form (the bundle,
+  `addons/`, the manifest, Bare) needs nothing before Bare; the setup is its
+  packed form, its shell only unpacking, checking the bundle's hash against
+  the manifest (`sha256sum`) and handing over (`bare
+  base-package-haicc.bundle boot`). Everything else of the cold boot (the
+  machine check, `init`, what follows) is the bundle's: tested, hashed and
+  released with the package; a restore boots from the repository's own
+  bundle.
+- **Linked addons** (known, not used): Bare supports addons statically
+  linked into a runtime binary (`linked:`; `bare-pack --linked`, built
+  with `bare-make`: CMake, Ninja, Clang), documented by Holepunch for mobile;
+  not needed with addons beside the bundle.
 
 ### Bundles disjoint, installs as copies, the stores
 
@@ -328,10 +473,9 @@ repository's history (as `haicc-setup.sh`, a release asset of
   into the swarm's store; the mount of the master's `packages/` into the
   nodes goes; the warm boot's "intact" becomes a hash per bundle.
 
-**The probe**: (1) a real package's closure as a bundle (`p2p-node`'s):
-does it run, its size, its addons, its module types; `closure.js` against
-`bare-module-traverse`; (2) native addons (Pear's way; extracted by hash);
-(3) a long-lived read-only reader of a store (above).
+**The probe**: done (2026-11-09): a real package's closure as a bundle,
+native addons (above, "Probe 1" and "Native addons"), a long-lived
+read-only reader (above, "One writer per store").
 
 ## Pear as a substrate execution layer below HAICC
 
@@ -362,6 +506,21 @@ constraints spilling into HAICC's design.
 
 ### Pear's model, our reference
 
+From Pear's documentation (docs.pears.com, read 2026-11-09; its repositories
+unreachable then), to verify when Pear comes in: Pear v3 installs apps
+(`pear install pear://<key>`) into its Corestore under its platform folder
+(`~/.config/pear` on Linux); `pear stage` writes a deployment folder (a
+`package.json`, `by-arch/…/app` trees) into the app's Hyperdrive; an app's
+`package.json` `upgrade` field names the link it follows, a running app is
+told (`updating`, `updated`) and `applyUpdate()` swaps its folder (desktop
+apps run from materialised folders, it seems); bundles and linked addons
+documented for mobile and embedded use; Pear installed by
+`install.pears.com`'s script (whether the first install needs the public DHT:
+not found). Not used now (the human, 2026-11-09): the release built as a
+folder (the bundle, `addons/` beside it, the manifest, Bare), the setup its
+packed form; a Pear release later delivers the same folder.
+
+
 As we know Pear's design (**to verify** with the probe):
 
 - **An app** is identified by its key (a stage or release channel its own
@@ -376,9 +535,9 @@ As we know Pear's design (**to verify** with the probe):
   now, or at its next start; nothing swapped under running code); someone
   seeds it (`pear seed`); Pear's platform updates itself the same way.
 
-Ours (**agreed**): a version is a commit of the package's repository; the
-link in `packages/default`, promoted from `packages/test`, is the release
-mark; pinned or following, per layer (`repositories.md`, open); replication
+Ours (**agreed**): a version is a bundle (its id and hash); the release
+mark is its entry in the publisher's signed manifest (a newer sequence),
+the level's `packages` layer holding what it installed; pinned or following, per layer (`repositories.md`, open); replication
 signalled by RPC is the notification; the level's HAICC decides, after
 validating the new version (intact, its validation set: the warm boot's
 check, which Pear lacks), restarting onto it or waiting; a rollback points

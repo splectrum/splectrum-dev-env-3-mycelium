@@ -31,6 +31,7 @@
     "pear-full-square/splectral-p2p-actions",
     "pear-full-square/haicc-deployment",
     "pear-full-square/pkgm-base-manager",
+    "pear-full-square/haicc-base-cli",
     "pear-full-square/haicc-base-boot"
   ],
   "dependencies": {
@@ -55,6 +56,7 @@
     "path": "npm:bare-node-path@1.0.1",
     "process": "npm:bare-node-process@1.0.1",
     "url": "npm:bare-node-url@1.0.1",
-    "util": "npm:bare-node-util@1.0.0"
+    "util": "npm:bare-node-util@1.0.0",
+    "bare-pack": "3.0.2"
   }
 }

@@ -39,6 +39,27 @@ of it; other object types (a JSON document's values, a topic's records)
 follow the same way. `rules.md` (URIs: "a leaf is an object") is changed
 when it is built.
 
+## A topic in git: a reference, or sealed records
+
+**Agreed** (the human, 2026-11-09). A topic (a Hypercore: append-only, its
+key, its length, its Merkle tree signed by its writer) is added to a
+repository as a git object **by reference**, not copied: `{ "type":
+"topic", "key", "length", "root" }` pins the topic at a length (it only
+grows, so "the topic at length N" never changes, verified by its root).
+A commit pins the topic as everything else (pin first, then resolve); a
+unit that read a topic reruns exactly; the object is tiny whatever the
+topic's size; `mycelium-xpath` browses it by URI as a type
+(`/main/logs/node-1.topic/1841` a record, the whole topic at its pinned
+length), the records fetched from Hypercore (replicated if remote) and
+checked against the root. It is the composition for centralised logs: the
+swarm's repository holds topic references to its nodes' log topics, a
+read-only reference into another repository's data, a new commit moving the
+pins. Where a copy is wanted (a backup by export, an archive), a topic's
+records up to a length are **sealed** into a git blob (JSON lines, through
+the lines container): another object type, added when needed. The topic's
+appends and the reference's commits are each done by their store's single
+writer (`structure.md`).
+
 ## Formats on Bare
 
 **Built** (what Bare and our tree offer, checked 2026-11-08, Bare v1.36.0):

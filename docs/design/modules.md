@@ -29,6 +29,7 @@ rewritten, HAICC-wrapped.
 | `mycelium-value`, `-value-json`, `-container-document`, `-container-lines` | values, an encoding, storage containers (`values.md`) | JSON in five places, JSON lines in three |
 | `mycelium-container-bundle` | a bundle as a read-only container of files (`values.md`); its product repository to be created by the human | (new: assets and data files read from bundles) |
 | `mycelium-request-submit` | a request from a source placed into the requests, once, one function per source type, each validated where it enters (a folder; a peer's bundle) | `mycelium-layer`'s intake and `p2p-node`'s copy (which takes a peer's names unchecked) |
+| `mycelium-repo-main` | a running repository's main thread, always on: it holds the store as its single writer, keeps the required watchers running (the request queue, the sources it follows, replication), serves the local connection (readers, submits), restarts what stops (`repositories.md`) | (new: the running repository) |
 | `mycelium-request-execute` | executing requests and their response, one unit, recorded for an exact rerun | `mycelium-layer`'s `executeRequests` |
 
 `mycelium-layer` keeps the branches (import, export, bundles, deploy,

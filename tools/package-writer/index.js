@@ -24,6 +24,9 @@ import { closure } from '../../pear-full-square/pkgm-base-manager/lib/closure.js
 import { copy, hashTree, remove } from '../../pear-full-square/pkgm-base-manager/lib/tree.js'
 import { testPackage, packageHash } from '../../pear-full-square/pkgm-base-manager/index.js'
 import process from 'bare-process'
+import { spawnSync } from 'bare-subprocess'
+import { writeRelease } from './bundle.js'
+import { sign } from '../../pear-full-square/pkgm-base-manager/lib/sign.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const ORG = 'haiccing'
@@ -89,7 +92,11 @@ function stage (dev, defs, name, ours, lock, dir, out) {
   const def = defs.packages[name]
   const repo = repoOf(name, def)
   // brittle too: the package's own tests run on it (test/modules-load, written here).
-  const set = closure({ ours, third: join(dev, 'node_modules'), start: startOf(dev, defs, name), also: ['brittle'] })
+  // And this repository's aliases for Node's built-ins (util -> bare-node-util,
+  // ...): third-party code imports them by those names, listed nowhere.
+  const root = existsSync(join(dev, 'package.json')) ? readJson(join(dev, 'package.json')) : {}
+  const aliases = Object.entries(root.dependencies || {}).filter(([, v]) => String(v).startsWith('npm:')).map(([k]) => k)
+  const set = closure({ ours, third: join(dev, 'node_modules'), start: startOf(dev, defs, name), also: ['brittle', ...aliases] })
   const byPath = new Map([...ours.values()].map(m => [m.path, m]))
   for (const p of set.ours) copy(byPath.get(p).dir, join(dir, 'modules', p), { skip: skipOurs })
   for (const t of set.third) copy(join(dev, 'node_modules', t), join(dir, 'modules', 'node_modules', t), { skip: skipThird })
@@ -155,7 +162,7 @@ function readme (repo, def, m) {
     'Self-contained: it carries what it runs on. Written from the development repository ([splectrum/dev-env-3-mycelium](https://github.com/splectrum/dev-env-3-mycelium)): not edited here.', ''].join('\n')
 }
 
-export function writePackages ({ dev, out, only = null, keep = false, log = () => {} }) {
+export async function writePackages ({ dev, out, only = null, keep = false, sequence = null, secretKey = null, log = () => {} }) {
   dev = resolve(dev); out = resolve(out)
   const defs = readJson(join(dev, 'packages.json'))
   const ours = oursOf(dev, defs)
@@ -175,15 +182,49 @@ export function writePackages ({ dev, out, only = null, keep = false, log = () =
     const results = staged.map(s => testPackage(s.dir, { log }))
     if (results.some(r => !r.ok)) return { ok: false, written: [], results, scratch: keep ? scratch : null }
     const written = []
+    const commit = String(spawnSync('git', ['-C', dev, 'rev-parse', 'HEAD'], { stdio: ['ignore', 'pipe', 'ignore'] }).stdout || '').trim() || null
     for (const s of staged) {
       const to = join(out, s.repo)
       mkdirSync(to, { recursive: true })
       for (const n of readdirSync(to)) if (n !== '.git') remove(join(to, n))
-      for (const n of readdirSync(s.dir)) copy(join(s.dir, n), join(to, n))
-      written.push({ package: s.name, dir: to, hash: s.pkgm.hash })
-      log({ kind: 'written', package: s.name, dir: to, hash: s.pkgm.hash.slice(0, 12) })
+      const entries = defs.packages[s.name].entries
+      if (entries) {
+        // Its release: the full package as one bundle, its addons beside it.
+        const [main] = Object.values(entries)
+        const m = await writeRelease({ staged: s.dir, release: to, org: defs.packages[s.name].org || ORG, repo: s.repo, entry: `modules/${main}`, commit })
+        written.push({ package: s.name, dir: to, hash: m.bundle.sha256, release: m })
+        log({ kind: 'released', package: s.name, dir: to, bundle: m.bundle.sha256.slice(0, 12), bytes: m.bundle.bytes, addons: m.addons.length })
+      } else {
+        for (const n of readdirSync(s.dir)) copy(join(s.dir, n), join(to, n))
+        written.push({ package: s.name, dir: to, hash: s.pkgm.hash })
+        log({ kind: 'written', package: s.name, dir: to, hash: s.pkgm.hash.slice(0, 12) })
+      }
     }
-    return { ok: true, written, results }
+    // The released packages as one source (docs/design/structure.md): their
+    // bundles by [org]/[package], their addons, one manifest listing each by
+    // that key (its id, its hash, its commit, its addons), signed when the
+    // publisher's key is given.
+    const released = written.filter(w => w.release)
+    let source = null
+    if (released.length) {
+      const dir = join(out, 'source')
+      remove(dir)
+      mkdirSync(join(dir, 'addons'), { recursive: true })
+      const packages = {}
+      for (const w of released) {
+        const m = w.release
+        mkdirSync(join(dir, m.org), { recursive: true })
+        copy(join(w.dir, m.bundle.file), join(dir, m.bundle.file))
+        for (const a of m.addons) if (!existsSync(join(dir, 'addons', a))) copy(join(w.dir, 'addons', a), join(dir, 'addons', a))
+        packages[m.key] = { id: m.bundle.id, sha256: m.bundle.sha256, bytes: m.bundle.bytes, main: m.bundle.main, commit, addons: m.addons }
+      }
+      let manifest = { sequence: sequence ?? Math.floor(Date.now() / 1000), commit, runtime: released[0].release.runtime, packages }
+      if (secretKey) manifest = sign(manifest, secretKey)
+      writeJson(join(dir, 'manifest.json'), manifest)
+      source = { dir, sequence: manifest.sequence, signed: Boolean(secretKey), packages: Object.keys(packages) }
+      log({ kind: 'source', dir, sequence: manifest.sequence, signed: source.signed, packages: source.packages })
+    }
+    return { ok: true, written, results, source }
   } finally {
     if (!keep) remove(scratch)
   }

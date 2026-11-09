@@ -1,6 +1,8 @@
 // p2p-store — local storage for the p2p layer: one Corestore and the
 // resources in it (Hyperdrives), with no peer needed.
-//   const store = await openStore({ storage, primaryKey, observer })
+//   const store = await openStore({ storage, primaryKey, observer, readOnly })
+//     readOnly: no lock taken, nothing written: a short-lived reader beside
+//     the store's one writer, seeing what was written before it opened
 //   store.own(name)          a drive of this store's own, its keypair derived
 //                            from the primary key and the name
 //   store.withKeyPair(kp)    a drive written with an explicit keypair (one
@@ -25,9 +27,9 @@ import Hyperdrive from 'hyperdrive'
 
 const MODULE = 'p2p-store'
 
-export async function openStore ({ storage, primaryKey = null, observer = null }) {
+export async function openStore ({ storage, primaryKey = null, observer = null, readOnly = false }) {
   const emit = (kind, facts) => observer && observer({ module: MODULE, kind, time: Date.now(), ...facts })
-  const corestore = new Corestore(storage, primaryKey ? { primaryKey, unsafe: true } : {})
+  const corestore = new Corestore(storage, { ...(primaryKey ? { primaryKey, unsafe: true } : {}), ...(readOnly ? { readOnly: true } : {}) })
   await corestore.ready()
   const drives = new Map() // hex key -> { drive, how, name }
   emit('store-opened', { primaryKeyGiven: !!primaryKey })

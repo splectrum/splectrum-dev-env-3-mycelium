@@ -12,17 +12,20 @@ const TREE = '040000'
 
 // First segments of layers, which start as orphans. execute and publish
 // branches are derived from another branch, not created as layers.
-const LAYERS = ['main', 'pending', 'overlay', 'data', 'capability']
+// request and packages: phase 3's (docs/design/repositories.md); pending
+// and capability go when the code using them is rebuilt.
+const LAYERS = ['main', 'request', 'packages', 'pending', 'overlay', 'data', 'capability']
 // Every reserved first segment: a branch name starts with one.
 const RESERVED = [...LAYERS, 'execute', 'publish']
 // Permanent: never deleted.
 const PERMANENT = ['main', 'pending/default']
 
 // A layer's name: its first segment is a layer's, with more segments after
-// it, except main, which is a layer on its own.
+// it, except main and packages, each a layer on its own.
+const SOLO = ['main', 'packages']
 function layerName (name) {
   const first = name.split('/')[0]
-  if (!LAYERS.includes(first) || (first === 'main' ? name !== 'main' : name === first)) {
+  if (!LAYERS.includes(first) || (SOLO.includes(first) ? name !== first : name === first)) {
     throw new Error(`not a layer: ${name}`)
   }
 }

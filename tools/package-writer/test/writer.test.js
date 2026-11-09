@@ -42,14 +42,14 @@ function devRepo () {
   return dev
 }
 
-test('written: self-contained, in the package structure, tested first', (t) => {
+test('written: self-contained, in the package structure, tested first', async (t) => {
   const dev = devRepo()
   const out = mkdtempSync(join(tmpdir(), 'writer-out-'))
   try {
     // A published repository's own LICENSE, there before writing (as a clone has it).
     mkdirSync(join(out, 'base-swarm-y'), { recursive: true })
     writeFileSync(join(out, 'base-swarm-y', 'LICENSE'), 'its own licence\n')
-    const r = writePackages({ dev, out })
+    const r = await writePackages({ dev, out })
     t.is(r.ok, true, JSON.stringify(r.results))
     // The LICENSE is part of the package: kept, hashed with it; the copy as written is intact.
     t.is(readFileSync(join(out, 'base-swarm-y', 'LICENSE'), 'utf8'), 'its own licence\n')
@@ -79,19 +79,45 @@ test('written: self-contained, in the package structure, tested first', (t) => {
     // A generated readme for one without its own.
     t.ok(/Self-contained/.test(readFileSync(join(out, 'base-package-code', 'README.md'), 'utf8')))
     // Written again: the same hash.
-    writePackages({ dev, out })
+    await writePackages({ dev, out })
     t.is(JSON.parse(readFileSync(join(y, 'package.json'), 'utf8')).pkgm.hash, m.pkgm.hash)
   } finally { for (const d of [dev, out]) rmSync(d, { recursive: true, force: true }) }
 })
 
-test('a test failing: nothing written', (t) => {
+test('a test failing: nothing written', async (t) => {
   const dev = devRepo()
   const out = mkdtempSync(join(tmpdir(), 'writer-out-'))
   try {
     put(join(dev, 'org/amod/test/a.sh'), 'echo "# tests 1"; echo "# pass 0"; exit 1\n')
-    const r = writePackages({ dev, out })
+    const r = await writePackages({ dev, out })
     t.is(r.ok, false)
     t.alike(r.written, [])
     t.ok(!existsSync(join(out, 'base-swarm-y')))
+  } finally { for (const d of [dev, out]) rmSync(d, { recursive: true, force: true }) }
+})
+
+test('a package with entries: written as its release (the bundle, its addons beside it, the manifest)', async (t) => {
+  const dev = devRepo()
+  const out = mkdtempSync(join(tmpdir(), 'writer-out-'))
+  try {
+    put(join(dev, 'org/amod/cli.js'), "import { a } from './index.js'\nconsole.log(a())\n")
+    const defs = JSON.parse(readFileSync(join(dev, 'packages.json'), 'utf8'))
+    defs.packages.code.entries = { cli: 'org/amod/cli.js' }
+    json(join(dev, 'packages.json'), defs)
+    const r = await writePackages({ dev, out, only: 'code' })
+    t.is(r.ok, true, JSON.stringify(r.results))
+    const rel = join(out, 'base-package-code')
+    const m = JSON.parse(readFileSync(join(rel, 'manifest.json'), 'utf8'))
+    t.is(m.bundle.file, 'haiccing/base-package-code.bundle')
+    t.is(m.key, 'haiccing/base-package-code')
+    t.is(m.bundle.main, '/modules/org/amod/cli.js')
+    t.is(m.bundle.bytes, statSync(join(rel, m.bundle.file)).size)
+    t.ok(/^[0-9a-f]{64}$/.test(m.bundle.sha256))
+    t.ok(!existsSync(join(rel, 'modules')), 'no folder: the release only')
+    t.ok(JSON.parse(readFileSync(join(out, 'source', 'manifest.json'), 'utf8')).packages['haiccing/base-package-code'], 'the source keyed by [org]/[package]')
+    // It runs as it is: the entry, its modules found through the bundle (bmod by name, dep-x).
+    const { spawnSync } = await import('bare-subprocess')
+    const run = spawnSync(Bare.argv[0], [join(rel, m.bundle.file)], { stdio: ['ignore', 'pipe', 'pipe'] })
+    t.is(String(run.stdout).trim(), '43', String(run.stderr))
   } finally { for (const d of [dev, out]) rmSync(d, { recursive: true, force: true }) }
 })
