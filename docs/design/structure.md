@@ -175,11 +175,10 @@ repository's history (as `haicc-setup.sh`, a release asset of
   release downloads), each checked against the manifest's hash; the
   package manager's verify and the warm boot's "intact" become the
   bundle's hash.
-- **On our p2p layer, the same split**: a release a blob outside the
-  repository's git history (a releases drive per package repository, a
-  record per release: version, commit, the bundles' hashes); a
-  `packages/<purpose>` link names a release (repository key, release,
-  bundle, hash). No deltas needed for bundles (the human).
+- **On our p2p layer, the bundles are objects in the packages layer**, the
+  code store (`repositories.md`; changed 2026-11-09 from a releases drive
+  linked from the layer): releases outside git history stay where the
+  outside world meets us. No deltas needed for bundles (the human).
 - **Assets are read from the bundle** (agreed, the human, 2026-11-09).
   Tried: Bare resolves an asset to a URL inside the bundle file
   (`import.meta.asset('./page.html')` gives
@@ -224,8 +223,8 @@ repository's history (as `haicc-setup.sh`, a release asset of
 | Store | Holds | How bundles get there |
 |---|---|---|
 | external sources | the releases (GitHub's release downloads; a folder of release files, air-gapped) | published by local |
-| the host's global store | every bundle the host has fetched, by hash, once | fetched from the sources, checked against the release's manifest |
-| a swarm's store | the bundles the swarm uses, on our p2p layer | from the host's store into the swarm's packages repository, replicated to its nodes |
+| the host's global store | every bundle the host has fetched, once: the packages layer of the host's repository | fetched from the sources, checked against the release's manifest, committed into the layer |
+| a swarm's store | the bundles the swarm uses: the packages layer of the swarm's repository, on our p2p layer | committed from the host's store, replicated to its nodes |
 | an execution scope | the bundles one level runs | a plain file copy from the store it sits under |
 
 - **What changes from what is built**: the package manager's `assemble` (a

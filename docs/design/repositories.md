@@ -92,16 +92,23 @@ is changed when it is built.
 
 ### The packages layer
 
-**Agreed.** Code runs from folders (or, later, through a module protocol:
-`structure.md`), so the layer that names it only references: `packages/<purpose>`
-in place of `capability/<purpose>`, holding links, not code: each package by
-its identity (its repository's key, the commit, the hash the package writer
-recorded), the identity the package manager checks, so what runs can always
-be checked against its link (`vision.md`: a package repository holds the
-bytes, everything else holds links). `packages/default` operates the
-repository's own functionality, `packages/test` is where development deploys
-and tests; promotion from test to default. The reserved segment `capability`
-becomes `packages`; `rules.md` is changed when it is built.
+**Agreed** (the human, 2026-11-09; changed from a layer of links, decided
+2026-11-08, once packages became bundles: `structure.md`). `packages/<purpose>`,
+in place of `capability/<purpose>`, is the code store: it holds the bundles
+themselves as objects (`packages/<purpose>/<package>/<entry>.bundle`). A
+bundle is a blob, its id its content's hash: the same bundle in many
+repositories is one object, replication moves only what a peer lacks, and
+the check is the object id (with the hash in the release's manifest).
+`packages/default` operates the repository's own functionality,
+`packages/test` is where development deploys and tests; promotion (test to
+default) and rollback are commits. Mycelium browses a bundle's contents by
+URI, as if extracted (`values.md`, "URIs name a logical structure":
+`/packages/default/haicc/haicc.bundle/app/page.html`); an execution scope
+gets a bundle as a file, a plain copy out of the layer, since Bare runs a
+bundle from its file. Releases outside git history stay where the outside
+world meets us (GitHub's haiccing releases, built by local). The reserved
+segment `capability` becomes `packages`; `rules.md` is changed when it is
+built.
 
 ### Open
 
