@@ -287,6 +287,19 @@ functionality (the bundles in `packages/`) is not exposed.
   mostly by repository referencing (the mappings). **Open**: each
   context's root (the host's differs from a swarm node's, `p2p-rns`'s
   `/<swarm>/<node>/…`).
+- **A crossing is a mapping** (the human, 2026-11-09): from a root (none,
+  for input from outside) to a root; the prefix translated; validation
+  required or not, and its type (full: the content; the envelope only;
+  none: a trusted translation); a policy per direction. Host input: none →
+  host, full. Where roots sit is then configuration, not design.
+- **A repository's URIs are its own** (the human, 2026-11-09): stored data
+  names by repository-scoped URIs (`/main/x/y`), never by a swarm's or a
+  host's; a mapping at the repository's boundary translates (inside a root,
+  validation none). The naming scope (the repository) and the trust root
+  (the validation boundary: host, swarm) are two things. *Why*: a
+  repository moves, is restored and replicated across roots unchanged, and a
+  recorded unit reruns exactly wherever it is; host- and swarm-scoped URIs
+  exist only for addressing (the dispatcher, the RNS).
 - At implementation: the addressee by URI, resolved by the resource name
   service; a message as a Kafka record (its value the message; headers:
   from, to, a correlation id).
