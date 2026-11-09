@@ -28,8 +28,7 @@ once), each marked built, agreed, open or to probe:
 - `docs/design/structure.md`: every level set up as a node is (HAICC a
   wrapper, converging into one; what is provided, not where; a capability
   from elsewhere, such as Docker by the host's proxy); a level's folder;
-  code without a code folder (a mycelium protocol for Bare, `bare-bundle`,
-  native addons); Pear as a substrate below HAICC, only triggering the cold
+  code without a code folder (bundles, native addons); Pear as a substrate below HAICC, only triggering the cold
   boot into a HAICC bridgehead; Pear's model and ours for upgrades.
 - `docs/design/values.md`: the data type, encodings and containers as
   modules; formats on Bare; compact-encoding the envelope, AVRO the
@@ -49,9 +48,9 @@ once), each marked built, agreed, open or to probe:
 - **Step 1, the implementation**: the new modules and the moves
   (`docs/design/modules.md`); the mechanical fixes (`1-review/findings.md`,
   sections 4 to 8); the full sets from a fresh release after each group.
-- **The probe** (`docs/design/structure.md`): a mycelium protocol loading a
-  package from a commit's tree on Bare; the same as a `bare-bundle`; native
-  addons. With it, Pear's model verified.
+- **The probe** (`docs/design/structure.md`): a real package's closure as a
+  bundle; native addons; a long-lived read-only reader. With it, Pear's
+  model verified.
 - **Step 3, mycelium repositories** (`docs/design/repositories.md`): the
   branch model's open points first (naming another writer's layer, pinned
   or following; where the request manager runs; one writer per branch);

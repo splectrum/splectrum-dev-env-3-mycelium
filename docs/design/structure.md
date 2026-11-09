@@ -8,7 +8,7 @@ folder structure to be fixed in this phase, step by step.
 ## Every level set up as a node is
 
 **Agreed.** The host, a swarm's master, a node: the same structure. Its code
-from the packages repository (a view, or a module protocol: below); its
+from its packages layer (bundles: below); its
 config, state and log in its own repositories, in a store of its own
 (`repositories.md`); its own HAICC. Then it does not matter where HAICC
 runs (a container, the host, another machine): one structure, one set of
@@ -153,20 +153,17 @@ committed by the level's single writer.
 
 ## Code without a code folder
 
-**To probe.** Bare's module loader (`bare-module`) resolves and loads every
-module through a protocol (`resolve`, `exists`, `read`, `addon`, `asset`);
-custom protocols exist for loading from a Hyperdrive. Two constraints: `read`
-is synchronous, so the code must be local before it runs (replicated,
-prefetched, or one bundle file); native addons (`.bare`, by `dlopen`: RocksDB,
-sodium, UDX) must be real files. `bare-bundle` holds many modules in one file
-Bare runs directly.
+**Agreed** (the human, 2026-11-09). Code runs from bundles: Bare runs a
+bundle file directly, and the code finds everything it needs in it (its
+modules, its assets, its data files); native addons (`.bare`, by `dlopen`:
+RocksDB, sodium, UDX) are the one thing that must be real files (`addons/`,
+by hash). Everywhere else, URIs reach the contents as if everything were on
+the filesystem (`values.md`, "URIs name a logical structure").
 
-So a package runs through a mycelium protocol (its tree at the commit its
-`packages/<purpose>` link names; its closure fetched first, as the package
-manager's `closure.js` computes it), or from a `bare-bundle` built from that
-tree; native addons extracted by hash. Unlike Pear's drive of files, ours
-holds git objects: every version addressable by its commit and checked
-against its hash.
+Dropped (the human, 2026-11-09): a mycelium module protocol for Bare
+(`bare-module` loads through protocols, `resolve`, `read`, …; one reading
+code from a commit's tree), not needed with bundles: the code runs, and URIs
+browse as if all were on the filesystem.
 
 Today (**built**): the platform's nodes run from the master's `packages/`,
 assembled on the host, mounted read-only (a transitional shortcut for one
@@ -331,11 +328,10 @@ repository's history (as `haicc-setup.sh`, a release asset of
   into the swarm's store; the mount of the master's `packages/` into the
   nodes goes; the warm boot's "intact" becomes a hash per bundle.
 
-**The probe**: (1) a custom protocol loading a small package from a commit's
-tree in a p2p-git repository, on Bare; (2) a real package's closure as a
-bundle (`p2p-node`'s): does it run, its size, its addons, its module types;
-`closure.js` against `bare-module-traverse`; (3) native addons (Pear's way;
-extracted by hash).
+**The probe**: (1) a real package's closure as a bundle (`p2p-node`'s):
+does it run, its size, its addons, its module types; `closure.js` against
+`bare-module-traverse`; (2) native addons (Pear's way; extracted by hash);
+(3) a long-lived read-only reader of a store (below).
 
 ## Pear as a substrate execution layer below HAICC
 
