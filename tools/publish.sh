@@ -11,7 +11,8 @@
 # 3. Checked as a user would: a fresh folder, Node.js off the PATH (a PATH
 #    of links to the system's tools, node, nodejs, npm, npx and corepack
 #    left out, wherever they are installed): the setup run (the level's
-#    main thread started), then `haicc status`, then `haicc stop`.
+#    main thread started), then `haicc status`, a message sent (`haicc
+#    message`) and seen taken in by the level's repository, then `haicc stop`.
 # 4. With --push only: the setup and the manifest published as a release of
 #    haiccing/base-package-boot. Its tag: setup-<12 hex of the packages'
 #    identities in the manifest (each package's id and addons)>: the same
@@ -47,6 +48,11 @@ done
 (cd / && env -i PATH="$nonode" HOME="$HOME" sh "$folder/out/haicc-setup.sh" "$folder/check")
 bundle=$(ls "$folder/check/haicc/packages/haiccing/base-package-haicc.bundle")
 (cd / && env -i PATH="$nonode" "$folder/check/setup/bare" "$bundle" status)
+# A message, from the terminal to the level's repository: dispatched by the
+# main thread, taken in (seen in its log).
+(cd / && env -i PATH="$nonode" "$folder/check/setup/bare" "$bundle" message /level/main/hello '{"text":"hello"}')
+i=0; until grep -q '"main":"received"' "$folder/check/log/main.log" 2>/dev/null; do i=$((i+1)); [ $i -gt 50 ] && { echo "the message was not taken in"; "$folder/check/setup/bare" "$bundle" stop; exit 1; }; sleep 0.2; done
+echo "the message: taken in by the level's repository"
 # The level's main thread, started by the boot: stopped, the check leaves nothing running.
 (cd / && env -i PATH="$nonode" "$folder/check/setup/bare" "$bundle" stop)
 rm -rf "$nonode"

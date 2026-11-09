@@ -5,6 +5,8 @@
   "description": "Every module as one dependency tree (npm workspaces): each module a folder (pear-full-square/<module>), their dependencies resolved together, once. The dependencies here are what the applications composing them need: Bare's runtime (for the third-party package, so the node image needs no global install) and its aliases for Node's built-ins. The host side on Bare too: Bare's own modules (bare-fs, bare-subprocess, ...) and brittle for the tests, carried into the packages by the package writer.",
   "workspaces": [
     "pear-full-square/mycelium-repo-main",
+    "pear-full-square/mycelium-container-document",
+    "pear-full-square/mycelium-value-json",
     "pear-full-square/mycelium-topic",
     "pear-full-square/mycelium-layer",
     "pear-full-square/mycelium-git",

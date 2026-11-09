@@ -8,6 +8,7 @@ import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { writer } from '../../mycelium-git/index.js'
 import { commands } from '../index.js'
+import { outbox } from '../../mycelium-repo-main/index.js'
 
 const here = join(dirname(fileURLToPath(import.meta.url)), '..')
 const haicc = (...args) => spawnSync(Bare.argv[0], [join(here, 'haicc.js'), ...args], { stdio: ['ignore', 'pipe', 'pipe'] })
@@ -71,6 +72,26 @@ test('status: the level at a glance', async (t) => {
     t.alike(r.out.layers, ['/main', '/packages', '/request/pending/default'])
     t.is(r.out.manifest.sequence, 7)
     t.alike(r.out.packages, [{ package: 'haiccing/base-package-x', id: 'ab'.repeat(8), bytes: 12, deployed: false }])
+    t.alike(r.out.boxes, { outbox: 0, inbox: { level: 0 } }, 'no messages waiting')
     t.is((await commands.status([], { work: join(work, 'none') })).code, 1)
+  } finally { rmSync(work, { recursive: true, force: true }) }
+})
+
+test('message: validated at the terminal, into the level\'s outbox', async (t) => {
+  const work = mkdtempSync(join(tmpdir(), 'cli-'))
+  try {
+    t.is((await commands.message(['/level/main/x', '{}'], { work })).code, 1, 'no level: not done')
+    const store = await openStore({ storage: join(work, 'store') })
+    await mrepos({ store }).create('level')
+    await store.close()
+    const r = haicc('message', '/Level//main/hello/', '{"text":"hi"}', `--work=${work}`)
+    t.is(r.status, 0, String(r.stderr))
+    const out = JSON.parse(String(r.stdout))
+    t.is(out.to, '/level/main/hello', 'the URI canonical')
+    t.alike(outbox(work).read(out.message), { to: '/level/main/hello', from: null, body: { text: 'hi' } }, 'from outside: from none')
+    t.is((await commands.message(['/a_b', '{}'], { work })).code, 2, 'a bad URI: a bad call')
+    t.is((await commands.message(['/level', '{nope'], { work })).code, 2, 'bad JSON: a bad call')
+    t.is((await commands.message(['/level'], { work })).code, 2, 'no body: a bad call')
+    t.is(outbox(work).list().length, 1, 'nothing bad written')
   } finally { rmSync(work, { recursive: true, force: true }) }
 })

@@ -7,7 +7,9 @@
 //                           repository (`level`) opened, the local connection
 //                           served (<work>/main.sock, owner only: one JSON
 //                           request a line, one JSON answer a line:
-//                           { op: 'status' }, { op: 'stop' }); stops on
+//                           { op: 'status' }, { op: 'stop' }); the level's
+//                           boxes run (lib/boxes.js: the local dispatcher,
+//                           the repository taking its inbox in); stops on
 //                           `stop`, SIGTERM or SIGINT, closing the store.
 //                           Resolves when it has stopped.
 //   start({ work, bare })   the main thread started as its own process,
@@ -23,7 +25,10 @@ import { existsSync, mkdirSync, rmSync, appendFileSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
+import { outbox, inbox, received, dispatch, takeIn } from './lib/boxes.js'
 import pkg from './package.json' with { type: 'json' }
+
+export { outbox, inbox, received }
 
 export const version = { name: pkg.name, version: pkg.version }
 export const LEVEL = 'level'
@@ -32,7 +37,7 @@ export const BUNDLE = join('haicc', 'packages', 'haiccing', 'base-package-myceli
 
 const socketOf = work => join(work, SOCKET)
 
-export async function run ({ work, say = () => {} }) {
+export async function run ({ work, say = () => {}, every = 200 }) {
   const store = await openStore({ storage: join(work, 'store') })
   const level = await mrepos({ store }).open(LEVEL)
   const started = new Date().toISOString()
@@ -45,6 +50,7 @@ export async function run ({ work, say = () => {} }) {
     // No new connections; open ones end with the process (not waited on:
     // the one that asked to stop may still be open).
     if (server) server.close()
+    clearInterval(boxes)
     await store.close()
     // The socket last (the store's lock itself is released as the process ends).
     rmSync(socketOf(work), { force: true })
@@ -70,6 +76,14 @@ export async function run ({ work, say = () => {} }) {
   })
   server.listen({ path: socketOf(work), ownerOnly: true })
   say({ main: 'running', ...status() })
+  // The boxes, watched: the level's outbox dispatched, the repository's
+  // inbox taken in.
+  const held = new Set()
+  const boxes = setInterval(() => {
+    if (stopping) return
+    dispatch({ from: outbox(work), to: { [LEVEL]: inbox(work, LEVEL) }, held, say })
+    takeIn({ from: inbox(work, LEVEL), to: received(work, LEVEL), say })
+  }, every)
   process.on('SIGTERM', () => stop('SIGTERM'))
   process.on('SIGINT', () => stop('SIGINT'))
   // Held open until it has stopped (the timer keeps the process alive).
