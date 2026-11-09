@@ -280,5 +280,5 @@ mark; pinned or following, per layer (`repositories.md`, open); replication
 signalled by RPC is the notification; the level's HAICC decides, after
 validating the new version (intact, its validation set: the warm boot's
 check, which Pear lacks), restarting onto it or waiting; a rollback points
-the link back to the previous commit; the platform's pair is refreshed by
-the same mechanism.
+the link back to the previous commit; the platform's bundles are refreshed
+by the same mechanism.

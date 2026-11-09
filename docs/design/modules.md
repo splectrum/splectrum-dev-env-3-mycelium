@@ -42,12 +42,15 @@ concern of its own, shared with the development pipeline (**open**).
 
 - **Fetching from the sources is the package manager's**: `fetch.sh`
   (fetch, list, refresh) moves from `haicc-base-boot` into
-  `pkgm-base-manager`, in shell (downloads stay in the shell). The setup's
-  package manager carries it, since the bootstrap's refresh goes through it.
-- **HAICC uses the package manager at its one fixed place**: the
-  `base-package-pkgm` beside `base-package-haicc`, which every cold boot
-  copies in (the pair); the development path in `lib/pkgm.js` goes, the
-  tests set the pair up as a work folder has it.
+  `pkgm-base-manager`, in shell (downloads stay in the shell); with
+  packages as bundles, it fetches releases into the host's store
+  (`structure.md`).
+- **HAICC carries the package manager's code it needs** (changed
+  2026-11-09, with packages as bundles: `structure.md`, "Bundles disjoint"):
+  copied into HAICC's bundle by the package writer, the package manager's
+  own release a bundle of its own; no lookup beside it, `lib/pkgm.js` goes.
+  (Decided first, 2026-11-08: HAICC using the `base-package-pkgm` beside
+  `base-package-haicc` at its one fixed place, the development path going.)
 - **The log writer** (`lib/log.js`, and the shell's): left until the logs are
   a mycelium repository.
 - **Names**: the boot cleans a new name (lowercase, every run of other
