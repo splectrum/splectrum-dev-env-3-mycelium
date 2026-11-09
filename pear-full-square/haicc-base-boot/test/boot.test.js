@@ -7,7 +7,7 @@ import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo } from '../../mycelium-git/index.js'
 import { keyPair, sign } from '../../pkgm-base-manager/lib/sign.js'
-import { boot, fetch, BOOT, HAICC, LEVEL } from '../index.js'
+import { boot, fetch, BOOT, HAICC, MYCELIUM, LEVEL } from '../index.js'
 
 const sha256 = b => crypto.createHash('sha256').update(b).digest('hex')
 const put = (f, s) => { mkdirSync(join(f, '..'), { recursive: true }); writeFileSync(f, s) }
@@ -15,7 +15,7 @@ const put = (f, s) => { mkdirSync(join(f, '..'), { recursive: true }); writeFile
 // A setup: the boot's, HAICC's and a demo package (stand-in bundles), a shared addon, a signed manifest.
 function setup (dir, key, { publicKey = key.publicKey } = {}) {
   const pkgs = {}
-  for (const [repo, body] of [[BOOT, 'boot bundle'], [HAICC, 'haicc bundle'], ['haiccing/base-package-demo', 'demo bundle']]) {
+  for (const [repo, body] of [[BOOT, 'boot bundle'], [HAICC, 'haicc bundle'], [MYCELIUM, 'mycelium bundle'], ['haiccing/base-package-demo', 'demo bundle']]) {
     put(join(dir, `${repo}.bundle`), body)
     pkgs[repo] = { sha256: sha256(body), addons: [sha256('addon')] }
   }
@@ -47,11 +47,14 @@ test('boot: init, the repository and its layers; the packages layer as a source;
       t.is(JSON.parse((await repo.read('/packages/manifest.json')).toString()).sequence, 10, 'the manifest pinned in the layer')
       t.is((await repo.read(`/packages/${HAICC}.bundle`)).toString(), 'haicc bundle')
       t.is((await repo.read(`/packages/${BOOT}.bundle`)).toString(), 'boot bundle', 'the boot kept too (for a restore)')
+      t.is((await repo.read(`/packages/${MYCELIUM}.bundle`)).toString(), 'mycelium bundle', 'the framework installed')
       t.is((await repo.read(`/packages/addons/${sha256('addon')}`)).toString(), 'addon')
       t.is((await repo.select('/main/*')).length, 0, 'main empty')
     })
     t.is(readFileSync(join(work, 'haicc', 'packages', `${HAICC}.bundle`), 'utf8'), 'haicc bundle', 'deployed: the layer\'s folder, at its URI\'s path')
     t.ok(existsSync(join(work, 'haicc', 'packages', 'addons', sha256('addon'))))
+    t.is(readFileSync(join(work, 'haicc', 'packages', `${MYCELIUM}.bundle`), 'utf8'), 'mycelium bundle', 'the framework deployed')
+    t.absent(existsSync(join(work, 'haicc', 'packages', `${BOOT}.bundle`)), 'the boot installed, not deployed')
     t.absent(existsSync(join(work, 'scratch')), 'no scratch left')
     t.is((await boot({ setup: join(root, 'setup'), work })).ok, false, 'booted already: not again')
     // Lazily, later: from the manifest pinned in the repository.
