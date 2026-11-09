@@ -6,9 +6,12 @@
 //   import { commands, version } from 'haicc-base-cli'
 //   version            this module's name and version
 //   status             the level at a glance, read-only: its repository (name,
-//                      id, key), its layers, the pinned manifest's sequence,
-//                      each package installed (its id, its size, deployed or
-//                      not)
+//                      id, key), its main thread (running: its pid, since
+//                      when; or not), its layers, the pinned manifest's
+//                      sequence, each package installed (its id, its size,
+//                      deployed or not)
+//   start              the level's main thread started, if it is not running
+//   stop               the level's main thread stopped (the store released)
 //   read <uri>         what the level's repository holds at a URI (from a
 //                      branch: /main/…, /packages/…), read-only: a file's
 //                      size (and its text, when small text), a folder's or a
@@ -19,6 +22,7 @@ import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo } from '../mycelium-git/index.js'
 import { validate, sameName } from '../mycelium-uri/index.js'
+import { ask, start as startMain } from '../mycelium-repo-main/index.js'
 import pkg from './package.json' with { type: 'json' }
 
 export const version = { name: pkg.name, version: pkg.version }
@@ -55,8 +59,21 @@ export const commands = {
       bytes: manifest.packages[key]?.bytes ?? null,
       deployed: existsSync(join(work, 'haicc', 'packages', `${key}.bundle`))
     }))
-    return { code: 0, out: { level: { repository: level.name, id: level.id, key: level.key, work }, layers: layers.sort(), manifest: { sequence: manifest.sequence, signed: Boolean(manifest.signature), runtime: manifest.runtime }, packages } }
+    const m = await ask({ work, op: 'status' })
+    const main = m ? { running: true, pid: m.pid, started: m.started } : { running: false }
+    return { code: 0, out: { level: { repository: level.name, id: level.id, key: level.key, work }, main, layers: layers.sort(), manifest: { sequence: manifest.sequence, signed: Boolean(manifest.signature), runtime: manifest.runtime }, packages } }
   }),
+
+  async start (args, { work }) {
+    if (!work || !existsSync(join(work, 'store'))) return { code: 1, out: { error: `no level here: ${work} (not booted)` } }
+    const m = await startMain({ work })
+    return m ? { code: 0, out: { main: { running: true, pid: m.pid, started: m.started } } } : { code: 1, out: { error: 'the main thread did not start (see log/main.log)' } }
+  },
+
+  async stop (args, { work }) {
+    const r = await ask({ work, op: 'stop' })
+    return r ? { code: 0, out: { main: { stopping: true } } } : { code: 1, out: { error: 'no main thread running here' } }
+  },
 
   async read ([uri], { work }) {
     let path

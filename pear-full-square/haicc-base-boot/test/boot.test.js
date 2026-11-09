@@ -37,7 +37,7 @@ test('boot: init, the repository and its layers; the packages layer as a source;
     setup(join(root, 'setup'), k)
     const work = join(root, 'work')
     const steps = []
-    const r = await boot({ setup: join(root, 'setup'), work, say: e => steps.push(e.step) })
+    const r = await boot({ setup: join(root, 'setup'), work, say: e => steps.push(e.step), main: false })
     t.is(r.ok, true, r.why)
     t.alike(steps, ['machine', 'manifest', 'loaded', 'init', 'installed', 'deployed'])
     t.ok(/^[0-9a-f]{64}$/.test(r.key), 'the repository\'s key')
@@ -56,7 +56,7 @@ test('boot: init, the repository and its layers; the packages layer as a source;
     t.is(readFileSync(join(work, 'haicc', 'packages', `${MYCELIUM}.bundle`), 'utf8'), 'mycelium bundle', 'the framework deployed')
     t.absent(existsSync(join(work, 'haicc', 'packages', `${BOOT}.bundle`)), 'the boot installed, not deployed')
     t.absent(existsSync(join(work, 'scratch')), 'no scratch left')
-    t.is((await boot({ setup: join(root, 'setup'), work })).ok, false, 'booted already: not again')
+    t.is((await boot({ setup: join(root, 'setup'), work, main: false })).ok, false, 'booted already: not again')
     // Lazily, later: from the manifest pinned in the repository.
     t.is((await fetch({ setup: join(root, 'setup'), work, repo: 'haiccing/base-package-demo' })).ok, true)
     await level(work, async repo => {
@@ -72,7 +72,7 @@ test('boot refuses another publisher\'s manifest, and creates nothing', async (t
   const root = mkdtempSync(join(tmpdir(), 'boot-'))
   try {
     setup(join(root, 'setup'), keyPair(), { publicKey: keyPair().publicKey })
-    const r = await boot({ setup: join(root, 'setup'), work: join(root, 'work') })
+    const r = await boot({ setup: join(root, 'setup'), work: join(root, 'work'), main: false })
     t.is(r.ok, false)
     t.absent(existsSync(join(root, 'work', 'store')), 'no store made')
   } finally { rmSync(root, { recursive: true, force: true }) }

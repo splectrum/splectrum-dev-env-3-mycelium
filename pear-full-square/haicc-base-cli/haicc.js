@@ -2,6 +2,7 @@
 //   bare base-package-haicc.bundle <command> [args] [--work=<level folder>]
 //   version            this module's name and version
 //   status             the level at a glance
+//   start | stop       the level's main thread
 //   read <uri>         what the level's repository holds at a URI
 // The level's folder: --work, else the one this bundle runs in (the folder
 // holding store/, up from the bundle: <work>/haicc/packages/<org>/). Prints one
