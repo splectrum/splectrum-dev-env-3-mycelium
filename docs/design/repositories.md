@@ -142,6 +142,22 @@ before replication completes; but the unit runs only on what is in the
 replica: what is recorded, and what a rerun uses, is always the replicated
 commit.
 
+## Backup at the repository level
+
+**Agreed** (the human, 2026-11-09). With every level's state in mycelium
+repositories, a backup is the repository's own, in its own terms, knowing
+nothing of the store beneath (Corestore, RocksDB):
+
+- **by replication**: a backup peer follows the repository's cores in full:
+  a live, verified copy; restored by replicating back;
+- **by export**: the repository as a git bundle (`mycelium-layer`'s export;
+  `vision.md`: bundles the transport between repositories outside
+  replication, self-contained, immutable, verifiable): a checkpoint at a
+  commit; restored by importing it. (A git bundle, not Bare's code bundle.)
+
+Each repository by its own policy; the roadmap's teardown with checkpointing
+and backup builds on it.
+
 ## The node's own repository
 
 **Agreed.** Every level's config, state and events in its own repository,
