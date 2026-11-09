@@ -103,6 +103,12 @@ Always there, outside the layers: `haicc` (the cold boot's way in, shell),
 `log/` (the minimal plain-file log, **open**: its scope, for the cold boot
 and the store's own failures).
 
+- **The folders are an install-internal issue** (agreed, the human,
+  2026-11-09): people and agents interact through the command line or
+  Splectral's server, with our URIs; how the host's or a container's
+  folders are set up is the install's own concern, not part of the
+  platform's interface. What follows is how the install translates, free to
+  change.
 - **A layer becomes a folder only where a host process needs files**: Bare
   (the bundles), `dlopen` (the addons), Docker (its mounts). A person never
   needs one: the terminal reads the repository by URI, and Splectral shows
@@ -285,8 +291,31 @@ repository's history (as `haicc-setup.sh`, a release asset of
   libraries that way. Nothing extracted; the release stays one file; what
   is served is what was hashed. (Not taken: extracting assets at install,
   a second form of the same bytes; a separate data bundle.)
-- **To settle in the probe first**: module types (a bundled `.js` taken as
-  a module); a real closure's size and addons.
+- **Probe 1, done** (2026-11-09, scratch only): `p2p-node`'s closure as a
+  bundle (`bare-module-traverse` and `bare-bundle`): 824 modules, 21 MB with
+  its native addons, 3.7 MB without, built in 3.4 s. In the node image, with
+  only Bare: native addons cannot be loaded from inside a bundle (`AddonError:
+  CANNOT_LOAD`), even declared; extracted (26 files, 17 MB) and named by the
+  bundle's resolutions, the bundle loads, and a swarm master runs from it
+  (store on RocksDB, DHT on UDX, repositories on p2p-git, genesis, live,
+  names registered, metrics, a graceful stop: as on the platform today).
+  Module types: none lost (the traversal takes each module's type from its
+  `package.json`). The traversal gives what runs (168 third-party packages);
+  `closure.js` what a package carries, tests included (213): both kept, for
+  bundles and for packages. A builder must canonicalise paths (`realpath`):
+  the workspace's symlinks would put a module in twice. An addon is named by
+  an absolute URL only (a relative one is refused, or resolves inside the
+  bundle).
+- **Native addons** (agreed, the human, 2026-11-09): always extracted files,
+  stored by content: `addons/<sha256>`, no name, no extension (tried: Bare
+  loads them so; a master ran with all 26), one namespace for every package,
+  version and platform, each stored once, checked by its hash, swept when no
+  installed bundle names it. Their location is a local concern of execution:
+  a release names its addons by hash under one canonical base
+  (`file:///addons/<sha256>`, a placeholder); the install makes it real for
+  the scope (in a container, the store mounted at `/addons`, the bundle as
+  released; on a host, the base rewritten at the copy into the scope, the
+  release's hash checked before and the installed bundle's recorded after).
 
 ### Bundles disjoint, installs as copies, the stores
 
