@@ -245,9 +245,17 @@ functionality (the bundles in `packages/`) is not exposed.
   validated where it crosses into the repository, then processed by the
   repository's own code (which may place a request in its queue: the queue
   is fed from inside only); on its outbox, it follows what it sent.
-- **Validation at both edges**: the dispatcher checks the envelope (sender,
-  addressee) as it routes; the repository checks the content as it takes a
-  message in.
+- **A root is set by a validation boundary** (the human, 2026-11-09;
+  replaces validation at both edges): where data is validated, a URI space
+  begins. All input on the host (the terminal, the web) is validated, so
+  the host is a root; all data entering a swarm is validated, so the swarm
+  is a root (a node inside it, `p2p-rns`'s `/<swarm>/<node>/…`). Input from
+  outside (no root of its own) enters the host's repository: validated
+  there once, and translated into the host's URIs. Inside a root, the
+  happy path: the dispatcher matches prefixes, a repository takes a
+  message unchecked. Between roots (host and swarm), traffic crosses a
+  boundary both ways: validated, translated, and where a security policy
+  goes, in each direction.
 - **Everyone the same way**: the owner's terminal (`haicc request add`)
   posts a message, through the dispatcher, to the repository's inbox, as
   any sender does.
