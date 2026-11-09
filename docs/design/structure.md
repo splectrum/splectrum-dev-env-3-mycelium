@@ -105,7 +105,8 @@ and the store's own failures).
 
 - **A layer becomes a folder only where a host process needs files**: Bare
   (the bundles), `dlopen` (the addons), Docker (its mounts). A person never
-  needs one: Splectral shows the repository.
+  needs one: the terminal reads the repository by URI, and Splectral shows
+  it.
 - **A folder is a view**: copied or extracted from the layer at a pinned
   commit, never edited, replaced when the layer moves.
 - **Nesting follows composition**: a child level is its own repository,
@@ -118,14 +119,34 @@ and the store's own failures).
   runs, inside the container; the host holds only the views the container
   needs (its bundles, its addons).
 
-**How a person changes something** (config included; agreed, the human,
-2026-11-09): HAICC runs inside the boundary, its input valid. A person's
-input enters at a boundary and becomes an internal `haicc` command:
+**How people and agents interact with the platform** (agreed, the human,
+2026-11-09): **the terminal is the primary way in, for a person and an agent
+alike; Splectral is secondary.** The terminal access mode, as an agent wants
+it, and a person uses the same:
+
+- **Structured output**: `haicc <command> --json` returns the result as one
+  JSON value (stable field names, data names); human text the default; the
+  exit codes as today (0 done, 1 not done, 2 a bad call).
+- **Never a prompt that blocks**: every question has a flag (`--yes`); with
+  no terminal a question is answered no, and said (`docs/rules.md` 11).
+- **State read by URI**: `haicc read <uri>` (or a `select` with `*`)
+  through mycelium, at a pinned commit, instead of a command per question.
+- **Self-describing commands**: `haicc commands --json` lists every command,
+  its arguments and what it changes; the same description drives the
+  boundary's validation and Splectral's page.
+- **Changes as requests where it matters**: a significant change submitted
+  as a request into the level's repository: recorded, executed as a unit,
+  reproducible, its response on `main`, checked back later.
+- **A dry run**: `--plan` says what a command would change, without changing
+  it.
+
+HAICC runs inside the boundary, its input valid. Input enters at a boundary
+and becomes an internal `haicc` command:
 
 | From | The boundary | Then |
 |---|---|---|
-| the browser | Splectral's server (initially a command line typed in the page), validated there | launched as an internal `haicc` command |
-| the host's terminal | the command line: parsed (`haicc-cli-parser`) and validated | launched as an internal `haicc` command |
+| the host's terminal (primary: a person or an agent) | the command line: parsed (`haicc-cli-parser`) and validated | launched as an internal `haicc` command |
+| the browser (secondary) | Splectral's server (initially a command line typed in the page), validated there | launched as an internal `haicc` command |
 
 Inside, a `haicc` command trusts its input (the happy path); a change is
 committed by the level's single writer.
