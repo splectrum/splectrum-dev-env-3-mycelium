@@ -113,6 +113,37 @@ hashed and sealed with it; only the writer makes them, the package manager
 checks them), and the package's tests run the bundles too: what runs is
 what was tested.
 
+**A closed release, single files at the levels.** A bundle fixes the
+modules, how they resolve and the entry point, in one hashed file: nothing
+about running it changes without a new bundle, a new identity. A level then
+holds the bundles it runs (one file per entry point, the same hash
+everywhere) and its native addons, instead of whole packages copied in
+(`modules/`, `node_modules/`: thousands of files each); distributing,
+checking, deduplicating and rolling back become operations on single files.
+Outside the bundle: native addons (`addons/`, by hash); the package itself,
+as the source (in its repository: read, tested, a bundle made again from
+it; no longer copied to every level); data and configuration (in the
+level's repositories). Stack traces point into the bundle
+(`…/app.bundle/app/index.mjs`), mapped back to the package repository.
+
+Where packages are used at a level today, and with bundles:
+
+| Today | With bundles |
+|---|---|
+| the root's and swarms' HAICC (`haicc-base-boot/haicc.js` in `packages/base-package-haicc/`) | a HAICC bundle |
+| a node's HAICC (`haicc-deployment/haicc.js`) | a node-HAICC bundle (one, after the convergence) |
+| the node's program (the master's `packages/`, mounted; `p2p-node/cli.js`) | a node-program bundle |
+| Splectral's server (`splectral-server/cli.js`, its extensions) | a server bundle, its browser files as assets (**to probe**) |
+| the package manager, imported by HAICC from beside it (the pair) | **to probe**: HAICC's bundle loading the package manager's bundle beside it (the pair kept two releases), or the package manager in HAICC's bundle (the pair one release) |
+| the cold boot's shell (`boot.sh`, `shutdown.sh`, the setup) | stays shell (before Bare; scripts are glue) |
+| a swarm's config (`nodes.json`, `modules.json`, `splectral.json`) | stays data, in the level's repositories |
+| the tests (modules' `test/`, the package's named tests) | **open**: tests running the bundles (what runs is what was tested); the module tests where the package is written; the warm boot's validation set against the bundle the level will run |
+
+So a level holds bundles and runs them, with its addons, its data and the
+cold boot's shell; the package folder lives in the package repository, the
+source and where tests run. Deciding whether it holds: the pair (one bundle
+loading another) and assets (served from inside a bundle).
+
 **The probe**: (1) a custom protocol loading a small package from a commit's
 tree in a p2p-git repository, on Bare; (2) a real package's closure as a
 bundle (`p2p-node`'s): does it run, its size, its addons, its module types;
