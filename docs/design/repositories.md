@@ -110,10 +110,22 @@ world meets us (GitHub's haiccing releases, built by local). The reserved
 segment `capability` becomes `packages`; `rules.md` is changed when it is
 built.
 
+### Naming another writer's layer: pinned, then resolved by URI
+
+**Agreed** (the human, 2026-11-09). Another writer's layer is named by URI
+(the most powerful form). Pinning comes first and stays fixed: the reading
+repository's commit is fixed before anything is resolved; a URI is then
+resolved through the mappings as they are at that commit (which repository,
+which layer, a URI points to: part of the repository's own state, the
+resource name service resolving names on the swarm). Mappings may change
+across commits, only by new commits; at a pinned commit every URI means one
+thing, so a pinned commit fully determines what its URIs refer to, and a
+read or a unit is reproducible from it. (`mycelium-xpath` already reads
+below a branch in one commit's tree; `pinned(backend, state)` fixes
+branches to commits.)
+
 ### Open
 
-- How a composed repository names another writer's layer (by key, by URI),
-  and whether a layer is pinned to a commit or follows the latest.
 - Where the request manager runs (proposed: in the active repository, over
   the request layers it subscribes to).
 - Whether any branch needs several writers (Autobase), or one writer per
