@@ -84,24 +84,42 @@ write. (`wait` queues a writer for the lock.)
   so its folder is protected as a key is; opaque by design, views coming
   from the repositories.
 
-## A level's folder
+## A level: a mycelium repository first, folders where a process needs them
 
-**Open** (to probe and settle):
+**Agreed** (the human, 2026-11-09): a level is a mycelium repository with
+layers, first; a person sees it through a Splectral component; a folder is
+a translation of a layer, made only where a host process requires files.
 
-```
-<level>/
-  store/            the level's own store: its repositories, the packages repository among them
-  addons/           native addons, extracted by hash
-  apps/<package>/   a package's own data: its store, its repositories (made at deploy, removed at teardown)
-  log/              the minimal plain-file log
-  haicc             its launcher
-```
+| Layer | Holds | Translated to a folder |
+|---|---|---|
+| `main` | the level's config and state | no (seen through Splectral) |
+| `packages/default`, `packages/test` | the bundles and their native addons, as objects | `bundles/`: the bundles this level runs, copied out (Bare runs a bundle from its file); `addons/`: the addons they name, by hash (`dlopen` needs files) |
+| `request/pending`, `-executing`, `-done` | the requests | no |
+| the log topic | the level's log | no (the minimal file log aside) |
+| child levels | each its own repository, named in this one's mappings by URI | a child's folder, where the child runs on this host |
 
-No code folder (below); a view of code only where Docker or a person needs
-it. A minimal plain-file log stays (**open**: its scope), for the cold boot
-(before any store exists) and the store's own failures. How config is
-changed, once it is in a repository (a `haicc` command, or a view edited and
-committed): **open**.
+Always there, outside the layers: `haicc` (the cold boot's way in, shell),
+`store/` (the substrate: the repository itself, Corestore and RocksDB),
+`log/` (the minimal plain-file log, **open**: its scope, for the cold boot
+and the store's own failures).
+
+- **A layer becomes a folder only where a host process needs files**: Bare
+  (the bundles), `dlopen` (the addons), Docker (its mounts). A person never
+  needs one: Splectral shows the repository.
+- **A folder is a view**: copied or extracted from the layer at a pinned
+  commit, never edited, replaced when the layer moves.
+- **Nesting follows composition**: a child level is its own repository,
+  named in the parent's mappings; on the host its folder sits inside the
+  parent's where it runs there; a child running elsewhere has only its name.
+- **A package's own data** is a repository of its own (one writer: the
+  package's process), composed into the level by URI, its `store/` under
+  the level's folder.
+- **A node in a container**: its repository's store is where its writer
+  runs, inside the container; the host holds only the views the container
+  needs (its bundles, its addons).
+
+How config is changed, once it is in a repository (a `haicc` command, a
+Splectral component, both): **open**.
 
 ## Code without a code folder
 
