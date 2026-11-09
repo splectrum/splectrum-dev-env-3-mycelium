@@ -83,10 +83,9 @@ write. (`wait` queues a writer for the lock.)
   outbox, keyed from the store's primary key). Child threads and launched
   commands are its clients, never writers: a child thread sends what it
   wants written as a message; a launched command (a request's execution)
-  writes into the execute layer through the main thread's local connection
-  (a value put at a path, one removed, a record appended), the main thread
-  applying each write and, on completion, committing, merging and
-  recording. Long writes need care not to block the watchers.
+  writes into the execute layer itself, on disk (changed 2026-11-09:
+  `repositories.md`, "Layers by their writes"), the main thread, on
+  completion, committing, merging and recording.
 - **More writers, more stores** (agreed, the human, 2026-11-09): another
   store (its own folder, its own primary key) has its own single writer (a
   child thread, another process, a package's process); the repository

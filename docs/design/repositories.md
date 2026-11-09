@@ -209,6 +209,26 @@ package manager puts bundles in its packages layer.
 - **The first bundles**: `packages` starts with `haiccing/base-package-boot`
   and `haiccing/base-package-haicc`, committed at `init`.
 
+## Layers by their writes: atomic or not, visible or local
+
+**Agreed** (the human, 2026-11-09). A layer's kind says how it is written,
+so its storage follows from its name; an extension layer declares both
+when it is made.
+
+| | atomic (one commit) | not atomic (records, each whole) |
+|---|---|---|
+| **visible** (replicated) | `main`, `packages`: in the store (Corestore), committed by the main thread only | `request/done`, logs: topics, each appended by its own writer, held by reference |
+| **local** | (none yet) | `execute/*`, `request/pending/*`, `request/executing`, the local inbox and outbox: on disk (native git, plain folders) |
+
+- **Only atomic layers go through the main thread**; it moves a result in
+  (`transfer`: the same object ids, nothing copied twice) and merges it.
+- **The disk layers take parallel writers** (threads, processes), one per
+  branch: objects content-addressed and renamed into place, a ref moved
+  under its own lock only from the commit expected, a message written under
+  a temporary name and renamed.
+- *Why*: git gives the consistency, our use needs no indexes; RocksDB (and
+  the single writer it brings) only where replication needs it.
+
 ## How repositories communicate: inbox, outbox, dispatcher
 
 **Agreed** (the human, 2026-11-09; the details at implementation).
