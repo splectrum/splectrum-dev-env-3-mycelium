@@ -11,14 +11,14 @@
 //                           `stop`, SIGTERM or SIGINT, closing the store.
 //                           Resolves when it has stopped.
 //   start({ work, bare })   the main thread started as its own process,
-//                           detached (it outlives the caller), from the
+//                           through the shell (it outlives the caller), from the
 //                           deployed bundle; resolves its first status, or
 //                           null if it did not answer.
 //   ask({ work, op })       one request over the local connection; its
 //                           answer, or null if nothing answers.
 import process from 'bare-process'
 import Pipe from 'bare-pipe'
-import { spawn } from 'bare-subprocess'
+import { spawnSync } from 'bare-subprocess'
 import { existsSync, mkdirSync, rmSync, appendFileSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { openStore } from 'p2p-store'
@@ -99,8 +99,12 @@ export async function start ({ work, bare = process.execPath, bundle = join(work
   const already = await ask({ work, op: 'status' })
   if (already) return already
   mkdirSync(join(work, 'log'), { recursive: true })
-  const child = spawn(bare, [bundle, 'start', `--work=${work}`], { detached: true, stdio: 'ignore' })
-  child.unref()
+  // Started by the shell, in the background (its own session where setsid is
+  // there), the shell ending at once: the main thread is not this process's
+  // child, so this process ending leaves it running (bare-subprocess sends
+  // SIGTERM to its own children still running when it exits).
+  const r = spawnSync('sh', ['-c', 'if command -v setsid >/dev/null 2>&1; then setsid "$@" </dev/null >/dev/null 2>&1 & else "$@" </dev/null >/dev/null 2>&1 & fi', 'sh', bare, bundle, 'start', `--work=${work}`], { stdio: 'ignore' })
+  if (r.status !== 0) return null
   for (const end = Date.now() + wait; Date.now() < end;) {
     await new Promise(resolve => setTimeout(resolve, 200))
     const s = await ask({ work, op: 'status', timeout: 1000 })
