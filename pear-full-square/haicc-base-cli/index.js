@@ -61,10 +61,12 @@ export function parse (args) {
   return request
 }
 
-export async function send ({ work, protocol, action, uri, body, wait = 30000, bundle }) {
+export async function send ({ work, protocol, action, uri, body, command, wait = 30000, bundle }) {
   if (!work || !isWork(work)) return { code: 1, out: { error: `no repository here: ${work} (not booted)` } }
   const { storage, name } = setting(work)
-  const value = { api: TYPE, protocol, action, uri, ...(body !== undefined ? { body } : {}) }
+  // The form: the request parsed, and the command as typed (when there is
+  // one), easier to read.
+  const value = { api: TYPE, ...(command ? { command } : {}), protocol, action, uri, ...(body !== undefined ? { body } : {}) }
   // The core: addressed back to this input, its key a GUID (the request's,
   // traced everywhere; its document's name); in an envelope to the inbox.
   const core = record(ME, value, guid())
@@ -75,7 +77,7 @@ export async function send ({ work, protocol, action, uri, body, wait = 30000, b
   if (storage === 'git') await post({ work, backend: disk, writer: writer(disk), repo: openRepo(disk) }, envelope, id)
   else inboxFolder(work).write(id, envelope)
   if (!await ask({ work, op: 'status' })) {
-    if (!await startRuntime({ work, ...(bundle ? { bundle } : {}) })) return { code: 1, out: { error: 'the runtime did not start (see log/runtime.log)', request: `${INBOX}/${id}` } }
+    if (!await startRuntime({ work, ...(bundle ? { bundle } : {}) })) return { code: 1, out: { error: 'the runtime did not start (see its log folder, mrepos/<name>/log/)', request: `${INBOX}/${id}` } }
   }
   const repo = openRepo(disk)
   for (const end = Date.now() + wait; Date.now() < end;) {

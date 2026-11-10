@@ -34,13 +34,13 @@
 import process from 'bare-process'
 import Pipe from 'bare-pipe'
 import { spawnSync } from 'bare-subprocess'
-import { existsSync, mkdirSync, rmSync, appendFileSync } from 'bare-fs'
+import { existsSync, rmSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
 import { nativeBackend } from 'mycelium-git'
-import { INBOX, OUTBOX, inboxFolder, post, logRecord, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
+import { INBOX, OUTBOX, inboxFolder, post, logRecord, logTo as logInto, commitLog, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
 import { execute } from 'mrepo-base-execute'
 import pkg from './package.json' with { type: 'json' }
 
@@ -65,10 +65,14 @@ export async function open (work) {
 
 const socketOf = work => join(work, SOCKET)
 
-export async function run ({ work, say = () => {}, every = 200 }) {
+export async function run ({ work, every = 200 }) {
   const repo = await open(work)
-  const ctx = { work, name: repo.name, backend: repo.backend, repo: openRepo(repo.backend), writer: writer(repo.backend), say, seen: {} }
   const started = new Date().toISOString()
+  // The log: each event a record, appended to the log folder (lib/logs.js of
+  // mrepo-base-request), committed into the `log` layer after each pass.
+  const append = logInto(work, started)
+  const say = e => append(logRecord(e))
+  const ctx = { work, name: repo.name, backend: repo.backend, repo: openRepo(repo.backend), writer: writer(repo.backend), say, seen: {} }
   const status = () => ({ ok: true, pid: process.pid, started, repository: { name: repo.name, storage: repo.storage, id: repo.id, key: repo.key }, version })
   let stopping = null
   let stopped = false
@@ -80,6 +84,7 @@ export async function run ({ work, say = () => {}, every = 200 }) {
     if (server) server.close()
     clearInterval(poller)
     while (busy) await new Promise(resolve => setTimeout(resolve, 20))
+    await commitLog(ctx)
     await repo.close()
     // The socket last (the store's lock itself is released as the process ends).
     rmSync(socketOf(work), { force: true })
@@ -115,6 +120,7 @@ export async function run ({ work, say = () => {}, every = 200 }) {
       await request(ctx)
       await execute(ctx)
       await request(ctx)
+      await commitLog(ctx)
       // Booted (shut down, or never initialised) and nothing waiting: the
       // runtime ends; a request posted later starts it again.
       const { service } = await runtimeData(ctx)
@@ -153,7 +159,6 @@ export function ask ({ work, op, timeout = 5000 }) {
 export async function start ({ work, bare = process.execPath, bundle = bundleOf(work), wait = 10000 }) {
   const already = await ask({ work, op: 'status' })
   if (already) return already
-  mkdirSync(join(work, 'log'), { recursive: true })
   // Started by the shell, in the background (its own session where setsid is
   // there), the shell ending at once: the runtime is not this process's
   // child, so this process ending leaves it running (bare-subprocess sends
@@ -168,10 +173,3 @@ export async function start ({ work, bare = process.execPath, bundle = bundleOf(
   return null
 }
 
-// One line to the runtime's log (<work>/log/runtime.log), a record
-// (logRecord: topic /log, value the event); where the log lives is the log's
-// own design, next.
-export const logTo = work => e => {
-  mkdirSync(join(work, 'log'), { recursive: true })
-  appendFileSync(join(work, 'log', 'runtime.log'), JSON.stringify(logRecord(e)) + '\n')
-}

@@ -379,8 +379,37 @@ until their use is planned.
   throughout. All suites pass. `tools/publish.sh` without `--push`:
   passed. The tag it would publish: `setup-eaa6a84f326e`.
 
-Next: the log's design (where it lives, the `log` layer, levels, topics),
-with the human.
+## 11. The log, the start: done (2026-11-10)
+
+Discussed first: a level's log a topic, in time segments, held by a
+repository by reference; on native git a `log` layer with the log folder as
+its working tree; to start, the easiest: a file a request.
+
+- `mycelium-git`: the `log` layer (non-atomic, on disk).
+- `mrepo-base-request`: `logTo` (a record appended to its file: a request's
+  `<key>.jsonl`, the runtime's `runtime-<start>.jsonl`), `commitLog` (the
+  folder's new lines committed into `log`; what the layer holds known again
+  after a restart).
+- `mrepo-base-runtime`: its events into the log folder, committed after
+  each pass in which something happened and at its stop; the plain file log
+  only for a runtime failing before its repository is open.
+- `haicc-base-boot`: the `log` layer created.
+- Tests: the log helper; the runtime's log a file a request and one for the
+  runtime; the journey's log file committed into the layer. All suites pass.
+
+Then, asked by the human: no log outside the repository (the boot and a
+runtime failing before its repository opens drop their records into its log
+folder, the next commit picking them up: `boot-<start>.jsonl`,
+`runtime-<start>.jsonl`; `<work>/log/` gone); the command as typed, in the
+form (`command`); the tests and the release check waiting for the runtime's
+process to end, not only for it to stop answering (it commits its last log
+lines and closes its store after; a test deleting its folder too early was
+caught by the package writer's run). `tools/publish.sh` without `--push`:
+passed, the boot's log file committed into the `log` layer. The tag it
+would publish: `setup-3d242717a6a3`.
+
+Next: the log's topics on p2p (time segments, the reference), levels, what
+each protocol logs; the terminal as a mini mrepo; the dispatcher.
 
 ## The product repositories: updated (2026-11-10)
 

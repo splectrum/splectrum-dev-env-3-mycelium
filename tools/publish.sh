@@ -14,7 +14,7 @@
 #    booted, its runtime started, the preloaded `service initialise /` run),
 #    then the cycle through HAICC's requests: `start /`, a `put` into main
 #    and its `get`, `get /`, `stop /`, `shutdown /` (the runtime ends); each
-#    printing its completed form, then the runtime's log: all records.
+#    printing its completed form, then the repository's log: all records.
 # 4. With --push only: the setup and the manifest published as a release of
 #    haiccing/base-package-boot. Its tag: setup-<12 hex of the packages'
 #    identities in the manifest (each package's id and addons)>: the same
@@ -59,10 +59,12 @@ h get /main/notes/hello.json
 h get /
 h stop /
 h shutdown /
-i=0; while [ -S "$folder/check/runtime.sock" ]; do i=$((i+1)); [ $i -gt 50 ] && { echo "the runtime did not end"; exit 1; }; sleep 0.2; done
+# Ended (its process gone from the process table), not only silent (it stops answering
+# first, then commits its last log lines and closes its store).
+i=0; while pgrep -f "$folder/check/mrepos/host/packages" >/dev/null; do i=$((i+1)); [ $i -gt 100 ] && { echo "the runtime did not end"; exit 1; }; sleep 0.2; done
 echo "the cycle: answered; shut down, the runtime ended"
-echo "== the runtime's log, as records (each transfer with the envelope it made)"
-cat "$folder/check/log/runtime.log"
+echo "== the repository's log, as records: a file a request (each transfer with the envelope it made), one for the runtime"
+for f in "$folder/check/mrepos/host/log/"*.jsonl; do echo "-- $(basename "$f")"; cat "$f"; done
 rm -rf "$nonode"
 # The tag: the packages' identities (ids and addons), not the build's.
 tag=$("$dev/tools/bare" "$dev/tools/setup/tag.js" "$folder/out/source/manifest.json")

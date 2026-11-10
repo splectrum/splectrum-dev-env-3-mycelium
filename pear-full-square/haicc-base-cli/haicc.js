@@ -24,7 +24,7 @@ if (args[0] === 'version' && args.length === 1) {
   } else {
     let work = typeof flags.work === 'string' ? resolve(flags.work) : dirname(process.argv[1])
     while (!isWork(work) && dirname(work) !== work) work = dirname(work)
-    const r = await send({ work, ...request })
+    const r = await send({ work, ...request, command: ['haicc', ...args].join(' ') })
     console.log(JSON.stringify(r.out, null, 2))
     process.exitCode = r.code
   }

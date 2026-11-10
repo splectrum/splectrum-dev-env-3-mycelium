@@ -31,7 +31,7 @@ written, in one of three modes:
 |---|---|---|---|
 | **atomic** | the Corestore (a Hyperdrive holding the git directory, p2p-git's) | one commit at a time, by the store's single writer (the runtime) | `main`, `runtime` |
 | **replicated** | the Corestore, and copied out as files for the process that needs them | as atomic | `packages` (its files at `<work>/mrepos/<name>/packages/`: Bare, `dlopen`) |
-| **non-atomic** | git on disk, `<work>/mrepos/<name>/.git` | by its own writers, in parallel, one per branch | `request/*`, `inbox`, `outbox`, `execute/*` |
+| **non-atomic** | git on disk, `<work>/mrepos/<name>/.git` | by its own writers, in parallel, one per branch | `request/*`, `inbox`, `outbox`, `log`, `execute/*` |
 
 - **One repository to everything above it**: `mycelium-git`'s
   `mixedBackend` wraps the two stores behind the backend contract (it
@@ -87,6 +87,7 @@ topic in git").
 | `request/done` | each finished request with its full record (below) | non-atomic (agreed: visible, as a topic) |
 | `inbox` | the records posted to the repository, as they came; nothing removed (housekeeping later) | non-atomic |
 | `outbox` | the answers and what the repository sends, its single writer the runtime | non-atomic |
+| `log` | the repository's log: a file a request (`<key>.jsonl`), one a runtime start; its working tree the log folder | non-atomic |
 | `execute/<target>` | an execution branch: made from its target, written by the execute protocol, merged back into its target (`execute/main`, `execute/runtime`, `execute/request/execute`) | non-atomic |
 
 - **Layers are disjoint, never merged into each other**; a layer's
@@ -152,7 +153,7 @@ protocols.
 - **The runtime** is always alive while the service is: it holds the store
   as its single writer, serves the local connection (`<work>/runtime.sock`,
   owner only: `status`, `stop`), runs one poller firing the protocols in
-  turn, logs to `<work>/log/runtime.log`, and may place requests itself
+  turn, logs into its `log` layer (below, "The log"), and may place requests itself
   (straight into `request/pending`: inside the root, nothing to validate).
   Once the service is shut down (booted, nothing waiting) it ends; an input
   posting a request starts it again (HAICC's does). Started through the
@@ -232,6 +233,8 @@ and `start` in; `start` makes the type's API available.
     (a test's run, a one-off execution). A thing without some of them
     offers only those it has, by its type.
 - **A request is fully qualified**: `{ api, protocol, action, uri, body }`,
+  and the command as typed, unparsed, beside it (`command`: the human,
+  2026-11-10, easier to read; **built** for HAICC's terminal),
   as it travels and as it is recorded (an action unique today may not stay
   so; a recorded request keeps its meaning for an exact rerun). The URI
   names the object, its type decides what an action means there.
@@ -363,11 +366,33 @@ writing into a repository's inbox and reading its outbox (built for now).
 - **Routing reads the onion**: the dispatcher routes a record by its
   envelope's topic, and a completed form back by its core's topic.
 - **What the terminal shows are records** (**built**): completed forms, and
-  log events (`logRecord`: topic `/log`, value the event; each transfer
-  logged with the envelope it made, so the log tells a request's journey;
-  for now in `<work>/log/runtime.log`, the log's own design next). The
-  tests and the release check show a request's journey: input, transfers,
-  output, log.
+  log events (`logRecord`: topic `/log`, its key the request's, value the
+  event; each transfer logged with the envelope it made, so the log tells a
+  request's journey). The tests and the release check show a request's
+  journey: input, transfers, output, log.
+
+## The log
+
+**Agreed** (the human, 2026-11-10): **a level's log is a topic** (on p2p),
+append-only, in time segments, and a repository holds it **by reference**
+(`{ type: 'topic', key, length, root }`, pinned with its executions). On
+native git, a `log` layer, its working tree the log folder, takes the
+topic's place, its commit the pin.
+
+**Built**, the start (2026-11-10), the same on both storages for now: the
+`log` layer (non-atomic, on disk), its working tree the log folder
+(`<work>/mrepos/<name>/log/`). Writers append records, one a line: a
+request's to `<key>.jsonl` (its key; written while it executes, then never
+again: each commit adds files, rewrites none), the rest to
+`runtime-<start>.jsonl` (one file a runtime start) and `boot-<start>.jsonl`
+(the boot's steps). The runtime commits the folder's new lines after each
+pass of its poller in which something happened (about one commit an
+execution), and at its stop. **No log outside the repository** (the human,
+2026-11-10): its name is known before it opens, or before it exists, so the
+boot and a runtime failing before its repository opens drop their records
+into its log folder all the same; the next commit picks them up. Later: the
+level's topic (time segments, the reference), levels, what each protocol
+logs.
 - Watching is the same everywhere: on git, a branch head moving; on p2p,
   Hypercore's notice of an append.
 - Nothing in a repository is callable from outside by default: its

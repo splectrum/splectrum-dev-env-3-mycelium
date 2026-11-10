@@ -28,8 +28,9 @@ import { post, ensure, inboxFolder, INBOX, OUTBOX } from './lib/boxes.js'
 import { record, wrap, guid, complete, isComplete, logRecord } from './lib/record.js'
 import { layer, AUTHOR } from './lib/layer.js'
 import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
+import { logFolder, logTo, commitLog } from './lib/logs.js'
 
-export { post, ensure, inboxFolder, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logRecord, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
+export { post, ensure, inboxFolder, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logRecord, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING, logFolder, logTo, commitLog }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'

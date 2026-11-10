@@ -124,8 +124,8 @@ atomic, replicated and non-atomic, one repository over the Corestore and
 git on disk (`repositories.md`, "One repository over two stores", and its
 layers there). Child levels (agreed): each its own repository, named in
 this one's mappings by URI, its folder here where the child runs on this
-host. The level's log: a topic (agreed), the minimal file log meanwhile
-(`<work>/log/`, **open**: its scope).
+host. The level's log: a topic (agreed); meanwhile each repository's `log`
+layer (`repositories.md`, "The log").
 
 - **The folders are an install-internal issue** (agreed, the human,
   2026-11-09): people and agents interact through the command line or
@@ -144,7 +144,7 @@ host. The level's log: a topic (agreed), the minimal file log meanwhile
   the node bridgehead. **One Corestore per host**, `<work>/store/`, holding
   every repository's atomic and replicated layers, its single writer the
   host's runtime; beside it `<work>/setup/` (the source the boot came
-  from, Bare linked there), `<work>/log/` and the runtime's local
+  from, Bare linked there) and the runtime's local
   connection, `<work>/runtime.sock`. A command finds its level by walking
   up from its bundle to the folder holding `store/`.
 
@@ -154,6 +154,7 @@ host. The level's log: a topic (agreed), the minimal file log meanwhile
     host/                                    the host's repository (type haicc)
       .git/                                  its non-atomic layers: request/*, inbox, outbox, execute/* (git on disk)
       inbox/                                 the inbox layer's working tree: inputs add records, the runtime commits
+      log/                                   the log layer's working tree: a file a request (<key>.jsonl), a runtime start, a boot
       packages/                              replicated: the packages layer's files
         haiccing/base-package-boot.bundle    bundles by [org]/[package]
         haiccing/base-package-haicc.bundle
@@ -162,7 +163,6 @@ host. The level's log: a topic (agreed), the minimal file log meanwhile
   store/                                     the Corestore: every repository's atomic and replicated layers
   setup/                                     the source the boot came from
   mrepo.json                                 (a standalone repository: its storage, git, and its name; none on the p2p host)
-  log/                                       the minimal plain-file log (runtime.log)
   runtime.sock                               the runtime's local connection, while it runs
 ```
 

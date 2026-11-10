@@ -47,10 +47,12 @@ for (const storage of ['p2p', 'git']) {
       t.is(started.code, 0)
       t.alike(started.out.value, { api: 'haicc', protocol: 'service', action: 'start', uri: '/', output: { service: 'started' } }, 'started, the preloaded initialise first: the form completed')
       t.is(started.out.topic, '/haicc/terminal', 'a record, addressed to this input')
-      t.ok(await ask({ work, op: 'status' }), 'the runtime running')
+      const running = await ask({ work, op: 'status' })
+      t.ok(running, 'the runtime running')
       const r = haicc('put', '/main/notes/hello.json', '{"text":"hi"}', `--work=${work}`)
       t.is(r.status, 0, String(r.stderr))
       t.alike(JSON.parse(String(r.stdout)).value.output, { put: '/main/notes/hello.json' }, 'printed: the record')
+      t.is(JSON.parse(String(r.stdout)).value.command, 'haicc put /main/notes/hello.json {"text":"hi"}', 'the command as typed, in the form')
       const g = haicc('rest', 'get', '/main/notes/hello.json', `--work=${join(work, 'mrepos')}`)
       t.alike(JSON.parse(String(g.stdout)).value.output, { text: 'hi' }, 'its work folder found walking up')
       const refused = haicc('put', '/packages/x.json', '1', `--work=${work}`)
@@ -58,8 +60,12 @@ for (const storage of ['p2p', 'git']) {
       t.is(JSON.parse(String(refused.stdout)).value.error, 'not offered: rest put at /packages/x.json')
       t.alike((await send({ work, protocol: 'service', action: 'stop', uri: '/' })).out.value.output, { service: 'initialised' })
       t.alike((await send({ work, protocol: 'service', action: 'shutdown', uri: '/' })).out.value.output, { service: 'booted' })
-      for (let i = 0; i < 50 && await ask({ work, op: 'status', timeout: 500 }); i++) await new Promise(resolve => setTimeout(resolve, 100))
-      t.is(await ask({ work, op: 'status' }), null, 'shut down: the runtime ended')
+      // Ended, not only silent: it stops answering first, then commits its
+      // last log lines and closes its store.
+      const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
+      for (let i = 0; i < 100 && alive(running.pid); i++) await new Promise(resolve => setTimeout(resolve, 100))
+      t.absent(alive(running.pid), 'shut down: the runtime ended')
+      t.is(await ask({ work, op: 'status' }), null)
     } finally { rmSync(work, { recursive: true, force: true }) }
   })
 }

@@ -10,7 +10,7 @@
 //                                  packages loaded, each checked by hash; init:
 //                                  the store (<work>/store) and the repository
 //                                  (`host`, of type haicc) created, its layers main,
-//                                  packages, runtime (booted, its type), inbox, outbox,
+//                                  packages, runtime (booted, its type), inbox, outbox, log,
 //                                  request/pending/default (preloaded with
 //                                  service initialise /), request/execute,
 //                                  request/done; packages holding the pinned
@@ -43,7 +43,7 @@ export const MREPO = 'haiccing/base-package-mrepo'
 export const INSTALL = [BOOT, HAICC, MREPO]
 export const DEPLOY = [HAICC, MREPO]
 export { HOST }
-export const LAYERS = ['main', 'packages', 'runtime', 'inbox', 'outbox', 'request/pending/default', 'request/execute', 'request/done']
+export const LAYERS = ['main', 'packages', 'runtime', 'inbox', 'outbox', 'log', 'request/pending/default', 'request/execute', 'request/done']
 // The host's repository's type: its package (docs/design/repositories.md,
 // "A repository's type is a package").
 export const TYPE = { type: 'haicc', package: HAICC }
@@ -138,7 +138,7 @@ export async function boot ({ setup, work, say = () => {}, runtime = true }) {
     if (runtime) {
       const r = await startRuntime({ work })
       say({ step: 'runtime', running: Boolean(r), pid: r?.pid ?? null })
-      if (!r) return { ...result, ok: false, why: 'the runtime did not start (see log/runtime.log)' }
+      if (!r) return { ...result, ok: false, why: 'the runtime did not start (see its log folder, mrepos/host/log/)' }
       result.runtime = { pid: r.pid }
     }
     return result

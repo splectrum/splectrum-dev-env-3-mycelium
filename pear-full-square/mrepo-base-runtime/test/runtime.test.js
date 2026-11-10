@@ -1,6 +1,6 @@
 import test from 'brittle'
 import { spawnSync } from 'bare-subprocess'
-import { mkdtempSync, rmSync, existsSync, readFileSync } from 'bare-fs'
+import { mkdtempSync, rmSync, existsSync, readFileSync, readdirSync } from 'bare-fs'
 import { join, dirname } from 'bare-path'
 import { tmpdir } from 'bare-os'
 import { fileURLToPath } from 'bare-url'
@@ -53,12 +53,20 @@ test('the runtime: started detached, the store held, asked over its connection, 
     const again = await openStore({ storage: join(work, 'store') })
     t.pass('the store free again: opened writable')
     await again.close()
-    const all = readFileSync(join(work, 'log', 'runtime.log'), 'utf8').trim().split('\n').map(l => JSON.parse(l))
-    t.ok(all.every(r => r.topic === '/log' && r.timestamp && r.value), 'every log line a record: topic /log, value the event')
-    const events = all.map(r => r.value)
-    t.alike(events.filter(e => e.runtime === 'failed').map(e => e.error), ['File descriptor could not be locked'], 'only the second runtime failed: refused, the store held')
-    const [k] = Object.keys(events[0])
-    t.is(k, 'runtime')
-    t.alike(events.filter(e => e.runtime !== 'failed').map(e => { const [key] = Object.keys(e); return `${key}:${e[key]}` }), ['runtime:running', 'request:execute', 'execute:done', 'request:done', 'request:received', 'request:pending', 'request:execute', 'execute:done', 'request:done', 'request:sent back', 'runtime:stopping', 'runtime:stopped'])
+    // The repository's log: a file a request (its key), one for the runtime.
+    const folder = join(work, 'mrepos', 'host', 'log')
+    const files = readdirSync(folder).sort()
+    const read = f => readFileSync(join(folder, f), 'utf8').trim().split('\n').map(l => JSON.parse(l))
+    const tag = r => { const [k] = Object.keys(r.value); return `${k}:${r.value[k]}` }
+    const rt = files.filter(f => f.startsWith('runtime-')).map(read)
+    t.is(rt.length, 2, 'a runtime file a start: the one that ran, the second that failed')
+    t.alike(rt.find(l => l.length === 1).map(r => r.value.error), ['File descriptor could not be locked'], 'the second runtime, failing before its repository opened: in the log folder all the same')
+    t.alike(rt.find(l => l.length > 1).map(tag), ['runtime:running', 'runtime:stopping', 'runtime:stopped'])
+    t.absent(existsSync(join(work, 'log')), 'no plain file log')
+    const requests = files.filter(f => !f.startsWith('runtime-'))
+    t.is(requests.length, 2, 'a file a request: the preloaded one, the posted one')
+    const journeys = requests.map(f => read(f).map(tag)).sort((a, b) => a.length - b.length)
+    t.alike(journeys, [['request:execute', 'execute:done', 'request:done'], ['request:received', 'request:pending', 'request:execute', 'execute:done', 'request:done', 'request:sent back']])
+    t.ok(requests.every(f => read(f).every(r => r.topic === '/log' && r.key === f.slice(0, -'.jsonl'.length))), 'every line a record, keyed by its request')
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
