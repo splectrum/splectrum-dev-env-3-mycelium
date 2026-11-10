@@ -237,9 +237,45 @@ module per protocol, mapped to its layer.
   files. `tools/publish.sh` without `--push`: passed, nothing left running.
   The tag it would publish: `setup-405b3456017f`.
 
-Next: 5, requests flowing (a message becoming a request, executed, its
-result committed and merged by the main thread, recorded in
-`request/done`, answered).
+## 5. Requests flowing: done (2026-11-10)
+
+Discussed first (recorded in `docs/design/repositories.md`): protocols (a
+protocol gives an API's actions their meaning); the external API's `rest`
+(get, put, post, delete; no update: a put at a deeper URI) and `service`
+(boot/teardown, initialise/shutdown, start/stop, pause/resume, run; the cold
+boot is `boot`, the warm boot `initialise`); a request fully qualified,
+`{ api, protocol, action, uri, body }`; every message a Kafka record (the
+base: topic, timestamp, headers, value); a repository's type a package, its
+API data, extracted by `initialise`; the runtime protocol and its atomic
+`runtime` layer; the service state gating the API; the request and execute
+protocols meeting in data (`request/pending` -> `request/execute` ->
+`request/done`; execution branches merged back into their own targets).
+
+- New modules: `mrepo-base-request` (the records, the boxes, the local
+  dispatcher, the request protocol) and `mrepo-base-execute` (the execute
+  protocol, the framework's generic actions); `mrepo-base-runtime` fires
+  them by one poller, and ends once the service is shut down.
+- `mycelium-git`: the `runtime` layer (on its own, like `main`).
+- `haiccing/base-package-haicc/api.json`: HAICC's API, the type `haicc`.
+- The boot: layers `main`, `packages`, `runtime`, `request/pending/default`,
+  `request/execute`, `request/done`; `/runtime/service.json` booted, of
+  type `haicc`; preloaded with `service initialise /`.
+- `haicc [protocol] <action> <uri> [body]`: every command a request posted
+  to the inbox, the runtime started when not running, the answer printed.
+- Found: the service state gates a request as it executes, not at the inbox
+  (a `start` queued behind the preloaded `initialise` was refused at
+  first); a module's tests run inside its packages too (a test fixture
+  reading the development tree failed there).
+- Tests: request 6, execute 1, runtime 4 (the whole cycle among them), HAICC
+  4, boot 2 files: all pass. `tools/publish.sh` without `--push`: the
+  cycle through the real bundles (start, put, get, get /, stop, shutdown,
+  the runtime ending), nothing left running. The tag it would publish:
+  `setup-9ab0fcc85e2c`.
+
+Next: populate `main` and the warm boot (`initialise`) for the
+repository's internal functionality; then swarms, nodes, centralised logs,
+the demos. Product repositories: the new and renamed modules' first
+updates still to do.
 
 Not yet: the tests run from the bundle (their third-party code, brittle,
 is not reached from the entry); the other packages (`swarm-three-nodes`, the

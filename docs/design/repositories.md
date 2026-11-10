@@ -227,6 +227,21 @@ manager puts bundles in its packages layer. Execution is its own heading,
   `pause`; paused: `resume`, `stop`. The runtime itself is always running
   (it takes `initialise` and `start` in); `start` makes the type's API
   available.
+- **Built, the base** (2026-11-10, phase 3 step 2, part 5): the runtime
+  (`mrepo-base-runtime`) firing the request (`mrepo-base-request`) and
+  execute (`mrepo-base-execute`) protocols by one poller; the `runtime`
+  layer; HAICC's API in its package (`haiccing/base-package-haicc/api.json`);
+  `boot` preloading `service initialise /`; the framework's generic actions
+  (`rest`: get, put, delete; `service`: initialise, start, stop, shutdown);
+  every message a record. Simplified for now: the request layers are git
+  branches in the Corestore (with the merges they need), not the
+  filesystem; the protocols, in the runtime's process, are handed its
+  writer; the runtime ends once shut down (booted, nothing waiting), HAICC's
+  input starting it again. Found: **the service state gates a request as it
+  executes, not at the inbox** (a queued request may change it first: a
+  `start` behind the preloaded `initialise`); the inbox checks what does
+  not change (not misdelivered, canonical, offered by the API once
+  extracted).
 - **Protocols meet in data, never by calls** (the human, 2026-11-10;
   `Portable execution, triggered by data`): each watches data states and
   writes the next; a restart picks up where the data stands.

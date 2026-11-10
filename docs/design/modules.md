@@ -29,8 +29,8 @@ ones named, renamed or created, 2026-11-09), all in `pear-full-square`:
 | `mycelium-value`, `-value-json`, `-container-document`, `-container-lines` | values, an encoding, storage containers (`values.md`; `-value-json` and `-container-document` **built**) | JSON in five places, JSON lines in three |
 | `mycelium-container-bundle` | a bundle as a read-only container of files (`values.md`); its product repository to be created by the human | (new: assets and data files read from bundles) |
 | `mrepo-base-runtime` (**built**; first `mycelium-repo-main`) | a running repository's runtime, always on: the framework running its protocols; it holds the store as its single writer, keeps the required watchers running, serves the local connection, restarts what stops (`repositories.md`) | (new: the running repository) |
-| `mrepo-base-request` (was `mycelium-request-submit`) | the request protocol: the inbox taken in, each message validated against the API where it enters, a request placed in `request/pending/<source>` | `mycelium-layer`'s intake and `p2p-node`'s copy (which takes a peer's names unchecked) |
-| `mrepo-base-execute` (was `mycelium-request-execute`) | the execute protocol: requests executed and answered, one unit, recorded for an exact rerun | `mycelium-layer`'s `executeRequests` |
+| `mrepo-base-request` (**built**, the base; was `mycelium-request-submit`) | the request protocol: the inbox taken in, each message validated against the API where it enters, a request placed in `request/pending/<source>` | `mycelium-layer`'s intake and `p2p-node`'s copy (which takes a peer's names unchecked) |
+| `mrepo-base-execute` (**built**, the base; was `mycelium-request-execute`) | the execute protocol: requests executed and answered, one unit, recorded for an exact rerun | `mycelium-layer`'s `executeRequests` |
 | `mrepo-base-log` | the log protocol | (new) |
 
 `mycelium-layer` keeps the branches (import, export, bundles, deploy,
