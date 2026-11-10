@@ -514,7 +514,10 @@ outside this repository: only Bare needed.
 
 The test folder (the human): a folder a test, each a structure unit as
 the package is, here only an entry: `test/boot/run.js` (and its
-`boot.test.js`). The entry named `run.js`, the package's too.
+`boot.test.js`). The entry named `run.js`, the package's too. The sets (the human): a
+JSON file each, `{ description, tests }`, `validate.json` (the deployment
+checked) and `full.json` (all); `test/run.js` runs one, `validate` by
+default, each test its own process (every unit's entry its `run.js`).
 
 Next: `service boot /host` (the boot's action: the host installed from
 the mrepo and haicc bundles and linked into `main`); then the boot's

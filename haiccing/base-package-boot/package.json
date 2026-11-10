@@ -9,6 +9,6 @@
     "pear-full-square/mrepo-base-runtime"
   ],
   "scripts": {
-    "test": "bare test/boot/run.js"
+    "test": "bare test/run.js"
   }
 }
