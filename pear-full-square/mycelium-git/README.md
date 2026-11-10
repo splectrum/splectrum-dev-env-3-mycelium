@@ -8,8 +8,8 @@ contract; an adapter maps the contract onto one engine.
 ## A repository as one tree
 
 Every path starts with a branch name, from the root: `/main/docs/a`,
-`/pending/default/pending/r1`. Above the branches the tree is made of
-their name segments (`/pending` holds `default`); a full branch name is
+`/request/pending/default/r1.json`. Above the branches the tree is made of
+their name segments (`/request` holds `pending`, `execute`, `done`); a full branch name is
 its commit's tree. A name is never both a branch and a prefix, so this is
 unambiguous. `mycelium-xpath` navigates it, `*` steps included:
 `/*/*/docs/a` finds `docs/a` in every two-segment branch.
@@ -47,8 +47,9 @@ stored names, valid when they come in.
   never for `main`.
 - `createLayer(name, message, { author, time })`: a new layer, an orphan
   branch whose first commit has an empty tree. Its first segment must be a
-  layer's: `main` (on its own), `pending`, `overlay`, `data` or
-  `capability`. `execute` and `publish` branches are derived, not layers.
+  layer's: `main`, `packages` and `runtime` (each on its own), `request`,
+  `pending`, `overlay`, `data` or `capability` (with more segments after
+  it). `execute` and `publish` branches are derived, not layers.
 - `advance(name, commit)`: a branch set to a commit whose objects are
   here, forward only. An existing branch moves only to a commit that holds
   its current one in its history; a new one must start with a reserved
@@ -70,6 +71,23 @@ stored names, valid when they come in.
 backend into another, whatever their engines, and resolves the number of
 objects copied. Objects are content-addressed, so each arrives under the
 same oid. One the target already has is skipped, with what it reaches.
+
+## One repository over two stores
+
+`mixedBackend({ atomic, local, isLocal })` is the backend contract over
+two backends: a repository's atomic layers in one (a Corestore's
+Hyperdrive), its non-atomic layers in the other (git on disk), routed by
+the branch's layer. `isLocal(name)`, the default routing: `request/*` and
+`execute/*` on disk, every other layer atomic. Branches live in their
+store and are listed together. Objects are written to the disk side; a
+commit or tree written there gets what it refers to first, so the disk
+side holds the whole history of what it has. When an atomic branch moves,
+its commit's objects are transferred into the atomic store first (the
+same ids, those there skipped), so the atomic store holds its layers whole
+on its own. Reads take an object from whichever side has it; history and
+merges are computed on the disk side. It passes the contract suite
+(`test/mixed.test.js`). The design: `docs/design/repositories.md` of the
+development repository, "One repository over two stores".
 
 ## Bundles
 
@@ -152,5 +170,5 @@ the same writes give the same oids on every engine (`test/engines.test.js`).
 
 ## Tests
 
-- `npm test`: the contract suite on each engine, and the cross-engine test,
-  on a fixture repository (bare)
+- `npm test`: the contract suite on each engine and on the mixed backend,
+  the cross-engine test, on a fixture repository (bare)

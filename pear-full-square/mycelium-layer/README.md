@@ -45,6 +45,10 @@ the tree: deployed again, it gives the same tree.
 
 ## layer/request: intake
 
+(Phase 2's request flow, on `pending/default`. A running repository's
+requests are the mrepo framework's now: `mrepo-base-request` and
+`mrepo-base-execute`, on `request/*` and `execute/*`.)
+
 `intake({ backend, folder, name, author, time })` takes a request into
 `pending/default`, as `pending/<name>/`, in one commit (`Add request:
 <name>`). The request is a folder on disk, and its files go in as they
