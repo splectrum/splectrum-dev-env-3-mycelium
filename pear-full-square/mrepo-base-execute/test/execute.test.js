@@ -20,9 +20,10 @@ async function withHost (work, fn) {
 const json = async (repo, p) => JSON.parse((await repo.read(p)).toString())
 const run = async (ctx, value) => {
   const name = `${Date.now()}-00000000`
-  await layer(ctx, EXECUTE).put(name, record(`/${EXECUTE}`, { api: 'haicc', ...value }, { mrepo: { from: null } }))
+  await layer(ctx, EXECUTE).put(name, record(`/${EXECUTE}`, record('/haicc/terminal', { api: 'haicc', ...value })))
   await execute(ctx)
-  return json(ctx.repo, `/${EXECUTE}/${name}.json`)
+  const core = (await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value
+  return 'output' in core.value ? { ok: true, value: core.value.output } : 'error' in core.value ? { ok: false, error: core.value.error } : null
 }
 
 test('execute: execution branches from their targets, the record completed, merged back into each target', async (t) => {
@@ -31,21 +32,20 @@ test('execute: execution branches from their targets, the record completed, merg
     await bootedHost(work, { preload: false })
     await withHost(work, async ctx => {
       let r = await run(ctx, { protocol: 'service', action: 'initialise', uri: '/' })
-      t.alike(r.headers.mrepo.execute.result, { ok: true, value: { service: 'initialised' } })
+      t.alike(r, { ok: true, value: { service: 'initialised' } })
       t.is((await json(ctx.repo, '/runtime/api.json')).api, 'haicc', 'the API extracted from the type\'s package into the runtime layer')
       t.is((await json(ctx.repo, '/runtime/service.json')).state, 'initialised', 'merged back into runtime')
       r = await run(ctx, { protocol: 'service', action: 'start', uri: '/' })
       r = await run(ctx, { protocol: 'rest', action: 'put', uri: '/main/a/b.json', body: { n: 1 } })
-      t.ok(r.headers.mrepo.execute.done, 'completed: its record merged into request/execute')
-      t.ok(r.headers.mrepo.execute.merged.main, 'main merged')
+      t.alike(r, { ok: true, value: { put: '/main/a/b.json' } }, 'completed: its form filled in, merged into request/execute')
       t.alike(await json(ctx.repo, '/main/a/b.json'), { n: 1 }, 'in main')
       t.alike(await json(ctx.repo, '/execute/main/a/b.json'), { n: 1 }, 'its execution branch beside it')
       const before = (Object.fromEntries(await ctx.backend.listBranches())).main
       r = await run(ctx, { protocol: 'rest', action: 'delete', uri: '/main/none.json' })
-      t.alike(r.headers.mrepo.execute.result, { ok: false, error: 'nothing at /main/none.json' }, 'failed: its result said')
+      t.alike(r, { ok: false, error: 'nothing at /main/none.json' }, 'failed: its result said')
       t.is((Object.fromEntries(await ctx.backend.listBranches())).main, before, 'and main untouched')
       r = await run(ctx, { protocol: 'service', action: 'start', uri: '/' })
-      t.alike(r.headers.mrepo.execute.result, { ok: false, error: 'not now: service start (the service is started)' }, 'checked again as it executes')
+      t.alike(r, { ok: false, error: 'not now: service start (the service is started)' }, 'checked again as it executes')
     })
   } finally { rmSync(work, { recursive: true, force: true }) }
 })

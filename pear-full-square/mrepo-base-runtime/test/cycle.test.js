@@ -6,7 +6,7 @@ import { tmpdir } from 'bare-os'
 import { fileURLToPath } from 'bare-url'
 import { openRepo, p2pgitBackend } from 'mycelium-git'
 import { start, ask, open } from '../index.js'
-import { bootedHost, send } from './fixture.js'
+import { bootedHost, send, sendForm } from './fixture.js'
 
 const here = join(dirname(fileURLToPath(import.meta.url)), '..')
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
@@ -33,6 +33,11 @@ for (const storage of ['p2p', 'git']) {
       t.alike(await send(work, req('rest', 'put', '/packages/x.json', 1)), { ok: false, error: 'not offered: rest put at /packages/x.json' }, 'the API: only what it offers')
       t.alike(await send(work, req('rest', 'get', '/main/none.json')), { ok: false, error: 'nothing at /main/none.json' }, 'failed in execution: answered')
       t.alike(await send(work, { ...req('rest', 'get', '/'), api: 'other' }), { ok: false, error: 'misdelivered: api other, this repository is of type haicc' })
+      t.alike(await send(work, req('rest', 'get', '/'), { to: '/elsewhere/inbox' }), { ok: false, error: 'misdelivered: for /elsewhere/inbox, this is /host/inbox' }, 'an envelope for another inbox: refused')
+      const form = await sendForm(work, req('rest', 'get', '/main/notes/hello.json'))
+      t.is(form.topic, '/haicc/terminal', 'back: the core, its topic the sender')
+      t.alike(form.headers, {}, 'no headers yet')
+      t.alike(form.value, { api: 'haicc', protocol: 'rest', action: 'get', uri: '/main/notes/hello.json', output: { text: 'hi' } }, 'the form completed: the request and its output')
       t.alike(await send(work, req('rest', 'delete', '/main/notes/hello.json')), { ok: true, value: { deleted: '/main/notes/hello.json' } })
       t.alike(await send(work, req('service', 'stop', '/')), { ok: true, value: { service: 'initialised' } })
       t.alike(await send(work, req('rest', 'get', '/')), { ok: false, error: 'not now: rest get (the service is initialised, not started)' }, 'stopped: the API not available')
@@ -45,15 +50,14 @@ for (const storage of ['p2p', 'git']) {
       try {
         const repo = openRepo(r.backend)
         const done = await repo.select('/request/done/*')
-        t.is(done.length, 12, 'every request taken in done, those refused as they executed too; those refused at the inbox not')
+        t.is(done.length, 16, 'every request done, the refused ones too')
         const recs = await Promise.all(done.map(async ([p]) => JSON.parse((await repo.read(p)).toString())))
-        t.ok(recs.every(x => x.topic === '/request/done' && x.headers.mrepo.execute.done), 'each a record at its topic, executed')
-        const put = recs.find(x => x.value.action === 'put')
-        t.ok(put.headers.mrepo.execute.states.main && put.headers.mrepo.execute.merged.main, 'the states it ran on, the merge it made')
+        t.ok(recs.every(x => x.topic === '/request/done' && ('output' in x.value.value || 'error' in x.value.value)), 'each in its envelope at its topic, its form completed')
+        t.ok(recs.filter(x => x.value.topic === null).length === 1, 'the preloaded one: no sender')
         t.alike(await repo.select('/request/execute/*'), [], 'nothing left executing')
         t.alike(await repo.select('/main/*'), [], 'main: the note deleted again')
-        t.is((await repo.select('/inbox/*')).length, 13, 'the inbox: every request posted, kept (housekeeping later)')
-        t.is((await repo.select('/outbox/*')).length, 13, 'the outbox: every answer')
+        t.is((await repo.select('/inbox/*')).length, 15, 'the inbox: every envelope posted, kept (housekeeping later)')
+        t.is((await repo.select('/outbox/*')).length, 15, 'the outbox: every completed form sent back')
         t.is(JSON.parse((await repo.read('/runtime/service.json')).toString()).state, 'booted')
       } finally { await r.close() }
       const log = readFileSync(join(work, 'log', 'runtime.log'), 'utf8').trim().split('\n').map(l => JSON.parse(l))

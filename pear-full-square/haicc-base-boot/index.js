@@ -123,7 +123,8 @@ export async function boot ({ setup, work, say = () => {}, runtime = true }) {
       await r.commit('Booted', { author })
       const name = newName()
       const p = await w.change(PENDING)
-      await p.put(`/${name}.json`, Buffer.from(JSON.stringify(record(`/${PENDING}`, { api: TYPE.type, protocol: 'service', action: 'initialise', uri: '/' }, { mrepo: { origin: 'boot' } })) + '\n'))
+      // The core: no topic (nobody waits for it), the form its value.
+      await p.put(`/${name}.json`, Buffer.from(JSON.stringify(record(`/${PENDING}`, record(null, { api: TYPE.type, protocol: 'service', action: 'initialise', uri: '/' }))) + '\n'))
       await p.commit(`Request ${name}: service initialise /`, { author })
       say({ step: 'booted', type: TYPE.type, preloaded: `/${PENDING}/${name}` })
       let bundle = null

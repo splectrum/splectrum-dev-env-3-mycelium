@@ -4,20 +4,25 @@
 //   haicc <protocol> <action> <uri> [body]     (haicc rest put /main/x.json '{…}')
 //   haicc <action> <uri> [body]                an action unique among the
 //                                              protocols, expanded here
-// posted as a record to the repository's inbox (the root mapping none ->
-// the repository): on native git committed into its inbox layer (no
+// sent as a pre-filled form in a pre-addressed envelope: the core record, its
+// topic this input (/haicc/terminal: where the completed form is to arrive),
+// its value the request; wrapped in an envelope addressed to the
+// repository's inbox (/<name>/inbox), posted (the root mapping none -> the
+// repository): on native git committed into its inbox layer (no
 // working tree), on the p2p host a file in the inbox folder (the inbox
 // layer's working tree, committed by the runtime); the repository validates
-// it, queues it, executes it, records it and answers into its outbox layer,
-// where this input reads the answer (by the request's name) and prints it.
+// it, queues it, executes it (completing the form: its output), records it
+// and sends the completed form back into its outbox layer, where this input
+// reads it (by the request's name) and prints it: a record.
 // The runtime is started when it is not running (no command stays outside:
 // starting the runtime is the substrate's, the request goes in).
 // Checked here only as far as reading it: the URI canonical, the body JSON,
 // the protocol and action known.
 //   import { send, parse, version } from 'haicc-base-cli'
 //   parse(args)                  { protocol, action, uri, body } or { error }
-//   send({ work, ...request })   { code, out }: 0 answered ok; 1 refused or
-//                                failed (or no host, no answer); the answer
+//   send({ work, ...request })   { code, out }: 0 completed with its output; 1
+//                                refused or failed (or no repository, no
+//                                answer); out the completed form, a record
 import fs from 'bare-fs'
 import { validate } from '../mycelium-uri/index.js'
 import { nativeBackend, p2pgitBackend, openRepo, writer } from '../mycelium-git/index.js'
@@ -28,6 +33,7 @@ import pkg from './package.json' with { type: 'json' }
 
 export const version = { name: pkg.name, version: pkg.version }
 export const TYPE = 'haicc'
+export const ME = '/haicc/terminal'
 // The protocols' actions as this input knows them (docs/design/repositories.md).
 export const PROTOCOLS = {
   rest: ['get', 'put', 'post', 'delete'],
@@ -60,14 +66,14 @@ export async function send ({ work, protocol, action, uri, body, wait = 30000, b
   if (!work || !isWork(work)) return { code: 1, out: { error: `no repository here: ${work} (not booted)` } }
   const { storage, name } = setting(work)
   const value = { api: TYPE, protocol, action, uri, ...(body !== undefined ? { body } : {}) }
-  const rec = record(INBOX, value, { mrepo: { from: null } })
+  const envelope = record(`/${name}${INBOX}`, record(ME, value))
   // The repository's disk side: where its inbox and outbox layers are.
   const disk = storage === 'git' ? nativeBackend(gitdirOf(work, name)) : p2pgitBackend(gitdirOf(work, name), { fs })
   let id
   if (storage === 'git') {
     id = newName()
-    await post({ work, backend: disk, writer: writer(disk), repo: openRepo(disk) }, rec, id)
-  } else id = inboxFolder(work).add(rec)
+    await post({ work, backend: disk, writer: writer(disk), repo: openRepo(disk) }, envelope, id)
+  } else id = inboxFolder(work).add(envelope)
   if (!await ask({ work, op: 'status' })) {
     if (!await startRuntime({ work, ...(bundle ? { bundle } : {}) })) return { code: 1, out: { error: 'the runtime did not start (see log/runtime.log)', request: `${INBOX}/${id}` } }
   }
@@ -76,8 +82,8 @@ export async function send ({ work, protocol, action, uri, body, wait = 30000, b
     // Read from another process while the runtime writes: on the p2p host's
     // disk side (p2p-git) a ref is written in place, not atomically, so a
     // read may find one missing for a moment: not yet, looked at again.
-    const answer = await repo.read(`/outbox/${id}.json`).then(b => JSON.parse(b.toString()), () => null)
-    if (answer) return { code: answer.value?.ok ? 0 : 1, out: answer.value }
+    const envelope = await repo.read(`/outbox/${id}.json`).then(b => JSON.parse(b.toString()), () => null)
+    if (envelope) return { code: 'output' in envelope.value.value ? 0 : 1, out: envelope.value }
     await new Promise(resolve => setTimeout(resolve, 100))
   }
   return { code: 1, out: { error: 'no answer yet', request: `${INBOX}/${id}` } }

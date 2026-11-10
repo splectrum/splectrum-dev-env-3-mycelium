@@ -41,7 +41,8 @@ It writes the three packages from the commit checked out (signed, each
 package's tests run first), builds `~/haicc-release/out/haicc-setup.sh`, then
 checks it as a user would: a fresh folder (`~/haicc-release/check`),
 Node.js off the PATH, the setup run (the boot; the runtime started), then
-the cycle, each answered `"ok": true`: `start /` (`"service": "started"`),
+the cycle, each printing its completed form (a record: the request with
+its `output`): `start /` (`"service": "started"`),
 `put /main/notes/hello.json`, `get /main/notes/hello.json` (`"text":
 "hello"`), `get /` (the repository `host`, `"service": "started"`, its eight
 layers, three packages), `stop /`, `shutdown /`; then "the cycle: answered;
