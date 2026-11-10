@@ -2,12 +2,14 @@
 // package's entry, its bundle's main):
 //   bare base-package-mrepo.bundle start --work=<host folder>   the runtime,
 //       in the foreground (`start` in the library detaches it); its log in
-//       <work>/log/runtime.log
+//       its repository's log folder (<work>/mrepos/<name>/log/), committed
+//       into its `log` layer
 //   bare base-package-mrepo.bundle version
 // Exit 0 done; 1 not done (the store held by another, no repository); 2 a bad call.
 import process from 'bare-process'
 import { resolve } from 'bare-path'
-import { version, run, logTo } from './index.js'
+import { version, run } from './index.js'
+import { logTo, logRecord } from 'mrepo-base-request'
 
 const argv = process.argv.slice(2)
 const flags = Object.fromEntries(argv.filter(a => a.startsWith('--')).map(a => { const i = a.indexOf('='); return i < 0 ? [a.slice(2), true] : [a.slice(2, i), a.slice(i + 1)] }))
@@ -17,12 +19,13 @@ if (command === 'version') {
   console.log(JSON.stringify(version))
 } else if (command === 'start' && typeof flags.work === 'string') {
   const work = resolve(flags.work)
-  const log = logTo(work)
   try {
     await run({ work })
     process.exit(0) // stopped: ended here (its signal handlers would hold the process open)
   } catch (err) {
-    log({ runtime: 'failed', error: err.message })
+    // Into the repository's log folder (its name known before it opens):
+    // the next runtime's first commit picks it up.
+    logTo(work, new Date().toISOString())(logRecord({ runtime: 'failed', error: err.message }))
     console.error(`mrepo: ${err.message}`)
     process.exit(1)
   }

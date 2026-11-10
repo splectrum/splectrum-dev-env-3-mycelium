@@ -59,7 +59,9 @@ h get /main/notes/hello.json
 h get /
 h stop /
 h shutdown /
-i=0; while [ -S "$folder/check/runtime.sock" ]; do i=$((i+1)); [ $i -gt 50 ] && { echo "the runtime did not end"; exit 1; }; sleep 0.2; done
+# Ended (its process gone from the process table), not only silent (it stops answering
+# first, then commits its last log lines and closes its store).
+i=0; while pgrep -f "$folder/check/mrepos/host/packages" >/dev/null; do i=$((i+1)); [ $i -gt 100 ] && { echo "the runtime did not end"; exit 1; }; sleep 0.2; done
 echo "the cycle: answered; shut down, the runtime ended"
 echo "== the repository's log, as records: a file a request (each transfer with the envelope it made), one for the runtime"
 for f in "$folder/check/mrepos/host/log/"*.jsonl; do echo "-- $(basename "$f")"; cat "$f"; done

@@ -8,13 +8,16 @@ import { spawnSync } from 'bare-subprocess'
 import { dirname, join, resolve } from 'bare-path'
 import { existsSync } from 'bare-fs'
 import { boot, fetch, HAICC } from './index.js'
-import { logRecord } from '../mrepo-base-request/index.js'
+import { logRecord, logTo } from '../mrepo-base-request/index.js'
 
 const args = process.argv.slice(2)
 const flags = Object.fromEntries(args.filter(a => a.startsWith('--')).map(a => { const i = a.indexOf('='); return i < 0 ? [a.slice(2), true] : [a.slice(2, i), a.slice(i + 1)] }))
 const [command, name] = args.filter(a => !a.startsWith('--'))
-// Each step a record (logRecord: topic /log, value the step).
-const say = e => console.log(JSON.stringify(logRecord(e)))
+// Each step a record (logRecord: topic /log, value the step), printed, and
+// dropped into the repository's log folder (its name known before it exists:
+// boot-<start>.jsonl), picked up by its runtime's first commit.
+let append = () => {}
+const say = e => { const r = logRecord(e); console.log(JSON.stringify(r)); append(r) }
 
 if (!['boot', 'fetch'].includes(command) || typeof flags.work !== 'string' || (command === 'fetch' && !name)) {
   console.error('usage: boot --work=<folder> [--setup=<folder>] | fetch <package> --work=<folder> [--setup=<folder>]')
@@ -25,6 +28,7 @@ if (!['boot', 'fetch'].includes(command) || typeof flags.work !== 'string' || (c
   let setup = resolve(typeof flags.setup === 'string' ? flags.setup : dirname(process.argv[1]))
   if (typeof flags.setup !== 'string') while (!existsSync(join(setup, 'boot.json')) && dirname(setup) !== setup) setup = dirname(setup)
   const work = resolve(flags.work)
+  append = logTo(work, new Date().toISOString(), 'boot')
   let r
   try {
     r = command === 'boot' ? await boot({ setup, work, say }) : await fetch({ setup, work, repo: name, say })

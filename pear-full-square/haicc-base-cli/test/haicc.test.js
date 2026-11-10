@@ -52,6 +52,7 @@ for (const storage of ['p2p', 'git']) {
       const r = haicc('put', '/main/notes/hello.json', '{"text":"hi"}', `--work=${work}`)
       t.is(r.status, 0, String(r.stderr))
       t.alike(JSON.parse(String(r.stdout)).value.output, { put: '/main/notes/hello.json' }, 'printed: the record')
+      t.is(JSON.parse(String(r.stdout)).value.command, 'haicc put /main/notes/hello.json {"text":"hi"}', 'the command as typed, in the form')
       const g = haicc('rest', 'get', '/main/notes/hello.json', `--work=${join(work, 'mrepos')}`)
       t.alike(JSON.parse(String(g.stdout)).value.output, { text: 'hi' }, 'its work folder found walking up')
       const refused = haicc('put', '/packages/x.json', '1', `--work=${work}`)

@@ -2,11 +2,15 @@
 // (non-atomic, on disk), its working tree the log folder,
 // <work>/mrepos/<name>/log/. Writers append records, one a line: a request's
 // to <key>.jsonl (its key; written while it executes, then never again), the
-// rest to runtime-<start>.jsonl (one file a runtime start). The runtime
+// rest to <prefix>-<start>.jsonl (one file a runtime start, a boot). The runtime
 // commits the folder's new lines into the layer after each pass in which
 // something happened: the log pinned by its commit. (On p2p, topics later.)
 //   logFolder(work)              the folder
-//   logTo(work, start)           a writer: record -> appended to its file
+//   logTo(work, start, prefix)   a writer: record -> appended to its file (a
+//                                request's <key>.jsonl; else <prefix>-<start>:
+//                                runtime, boot); usable before the repository
+//                                is open or exists (its name is known), the
+//                                next commit picking it up
 //   commitLog(ctx)               the folder's new lines committed; the files
 //                                committed, or [] when nothing was new
 import { join } from 'bare-path'
@@ -17,9 +21,9 @@ import { ensure } from './boxes.js'
 
 export const logFolder = work => join(viewOf(work, setting(work).name), 'log')
 
-export function logTo (work, start) {
+export function logTo (work, start, prefix = 'runtime') {
   const folder = logFolder(work)
-  const runtimeFile = `runtime-${start.replace(/[:.]/g, '-')}`
+  const runtimeFile = `${prefix}-${start.replace(/[:.]/g, '-')}`
   return rec => {
     mkdirSync(folder, { recursive: true })
     appendFileSync(join(folder, `${rec.key ?? runtimeFile}.jsonl`), JSON.stringify(rec) + '\n')

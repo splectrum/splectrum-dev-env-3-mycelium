@@ -233,6 +233,8 @@ and `start` in; `start` makes the type's API available.
     (a test's run, a one-off execution). A thing without some of them
     offers only those it has, by its type.
 - **A request is fully qualified**: `{ api, protocol, action, uri, body }`,
+  and the command as typed, unparsed, beside it (`command`: the human,
+  2026-11-10, easier to read; **built** for HAICC's terminal),
   as it travels and as it is recorded (an action unique today may not stay
   so; a recorded request keeps its meaning for an exact rerun). The URI
   names the object, its type decides what an action means there.
@@ -382,11 +384,13 @@ topic's place, its commit the pin.
 (`<work>/mrepos/<name>/log/`). Writers append records, one a line: a
 request's to `<key>.jsonl` (its key; written while it executes, then never
 again: each commit adds files, rewrites none), the rest to
-`runtime-<start>.jsonl` (one file a runtime start). The runtime commits the
-folder's new lines after each pass of its poller in which something
-happened (about one commit an execution), and at its stop. The plain file
-log (`<work>/log/runtime.log`) only for what happens outside the
-repository (a runtime failing before its repository is open). Later: the
+`runtime-<start>.jsonl` (one file a runtime start) and `boot-<start>.jsonl`
+(the boot's steps). The runtime commits the folder's new lines after each
+pass of its poller in which something happened (about one commit an
+execution), and at its stop. **No log outside the repository** (the human,
+2026-11-10): its name is known before it opens, or before it exists, so the
+boot and a runtime failing before its repository opens drop their records
+into its log folder all the same; the next commit picks them up. Later: the
 level's topic (time segments, the reference), levels, what each protocol
 logs.
 - Watching is the same everywhere: on git, a branch head moving; on p2p,

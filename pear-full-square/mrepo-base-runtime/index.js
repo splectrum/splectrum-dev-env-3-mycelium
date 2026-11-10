@@ -34,7 +34,7 @@
 import process from 'bare-process'
 import Pipe from 'bare-pipe'
 import { spawnSync } from 'bare-subprocess'
-import { existsSync, mkdirSync, rmSync, appendFileSync } from 'bare-fs'
+import { existsSync, rmSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
@@ -159,7 +159,6 @@ export function ask ({ work, op, timeout = 5000 }) {
 export async function start ({ work, bare = process.execPath, bundle = bundleOf(work), wait = 10000 }) {
   const already = await ask({ work, op: 'status' })
   if (already) return already
-  mkdirSync(join(work, 'log'), { recursive: true })
   // Started by the shell, in the background (its own session where setsid is
   // there), the shell ending at once: the runtime is not this process's
   // child, so this process ending leaves it running (bare-subprocess sends
@@ -174,10 +173,3 @@ export async function start ({ work, bare = process.execPath, bundle = bundleOf(
   return null
 }
 
-// One line to the plain file log (<work>/log/runtime.log), a record: what
-// happens outside the repository (a runtime failing before its repository
-// is open). The repository's own log: its `log` layer (run, above).
-export const logTo = work => e => {
-  mkdirSync(join(work, 'log'), { recursive: true })
-  appendFileSync(join(work, 'log', 'runtime.log'), JSON.stringify(logRecord(e)) + '\n')
-}

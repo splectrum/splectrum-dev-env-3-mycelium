@@ -138,7 +138,7 @@ export async function boot ({ setup, work, say = () => {}, runtime = true }) {
     if (runtime) {
       const r = await startRuntime({ work })
       say({ step: 'runtime', running: Boolean(r), pid: r?.pid ?? null })
-      if (!r) return { ...result, ok: false, why: 'the runtime did not start (see log/runtime.log)' }
+      if (!r) return { ...result, ok: false, why: 'the runtime did not start (see its log folder, mrepos/host/log/)' }
       result.runtime = { pid: r.pid }
     }
     return result
