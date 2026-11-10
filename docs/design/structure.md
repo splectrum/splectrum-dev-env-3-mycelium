@@ -339,6 +339,11 @@ source and where tests run.
 
 ### Packages as bundles, published as releases
 
+> **Being redesigned** (2026-11-10): `packages.md`, "What a package is" on.
+> Wrong here: the package repository holds the package whole (its
+> `modules/` included), so the bundle is built from it alone; the boot's
+> release becomes its bundle.
+
 **Built** for the boot, HAICC and mrepo (the others as they are rebuilt).
 Our haiccing and splectral packages are bundles; a bundle is a
 built artifact, not source: it is published as a release, not kept in the

@@ -50,7 +50,74 @@ The release check (no publishing): `sh tools/publish.sh <folder>
 tools/setup/keygen.js <folder>` (the container is temporary: make one). The
 real publisher's key is on the local machine only.
 
-## Open, in the order discussed
+## Next session: packages from scratch, the boot first
+
+Part 13 (`readme.md`), the design agreed with the human on 2026-11-10, after
+finding the packages a mess: the package repositories in `haiccing` no
+longer written, the boot's shell outside its package (`tools/setup/`), the
+terminal's code as `base-package-haicc`'s only module, the docs saying
+otherwise. The design: `docs/design/packages.md` ("What a package is",
+"Installing an mrepo from its structure", "The boot mrepo: the root").
+
+**In one page**:
+
+- A package depends only on packages. `base-package-mrepo`: what every
+  base mrepo has in common (the runtime, the protocols, the fixed layers,
+  the install routine). A type's package (`base-package-haicc`) customises
+  it: its external API, the structure of `main` (where child mrepos are
+  linked in), the packages it requires.
+- A recursive structure unit: `mrepo/` (the mrepo's definition, laid out by
+  layers as the repository holds them, a `layer.json` at each leaf: its
+  mode; committed), `test/`, further units by URI part name (dispatch,
+  terminal, nodes); `modules/` once at the package's top (the code, copied
+  whole).
+- Installing an mrepo: the common `mrepo/` copied, the type's on top (whole
+  files replace), renamed to `<work>/mrepos/<name>/`; built there (the
+  `packages` leaf's list sourced and checked; each layer folder committed
+  into its store); then cleaned up (left: `.git/`, `inbox/`, `packages/`).
+  No deploy script, no `scratch`.
+- The boot is an mrepo, the root (`<work>/mrepos/boot/`, on disk, git only),
+  never torn down. Its `main` installs the host and links it in. `boot` and
+  `teardown` are executed by the parent (`service boot /host` sent to the
+  boot mrepo); an mrepo itself executes initialise/shutdown, start/stop,
+  pause/resume.
+- The boot's release is its bundle: `base-package-boot.bundle` carries the
+  boot mrepo prebuilt (its git directory as files; or a git bundle inside,
+  `mycelium-git`'s `writeBundle`/`readBundle`, if files prove awkward) and
+  the code to unpack and start it. Run with Bare: `bare
+  base-package-boot.bundle …` (the arguments are ours: `--work=`, a plain
+  argument, or the current folder: to choose). Outside it only Bare ensured
+  and the bundle's hash checked: a few lines of shell, the same for every
+  release.
+
+**The plan** (the human: with the existing tools, create a boot repo we can
+bundle, so we can create the boot bare bundle, and then the other ones):
+
+1. The structure here: `haiccing/base-package-mrepo/mrepo/` (the fixed
+   layers, a `layer.json` each), `haiccing/base-package-boot/mrepo/` (the
+   boot mrepo: its `main` with the host's definition and the request to
+   boot it), `haiccing/base-package-haicc/mrepo/` (`main`, the packages it
+   requires; `api.json` moved in). Docs follow, not before.
+2. The install routine (overlay, build, clean up) as a module of the
+   framework, from what exists: `haicc-base-boot`'s loading, checking and
+   committing; `mycelium-git`'s writer; `p2pgitBackend` on disk.
+3. The boot repo built on the development side with it, all on disk, and
+   carried in `base-package-boot.bundle` (the package writer, `bare-pack`).
+   Run: it unpacks into `<work>/mrepos/boot/`, starts, and its preloaded
+   request boots the host from the mrepo and haicc bundles.
+4. Then the other bundles, and the package repositories written again (each
+   package whole, as `docs/design/packages.md` says).
+
+**To settle on the way**: where a package's build instructions live (today
+`packages.json`); the package's manifest; the boot mrepo's type and API;
+the boot's argument form; whether the terminal input gets its own package
+(the terminal a mini mrepo later); recording `requires` (haicc requires
+mrepo). Known stale meanwhile: `structure.md` ("Packages as bundles": the
+repository no longer holding `modules/`, wrong), `releases.md` and
+`docs/guides/release.md` (the publishing), `packages.json`'s descriptions
+(mrepo's "log", haicc's "level").
+
+## Then, in the order discussed
 
 1. **The terminal as a mini mrepo** (its boxes, its requests done).
 2. **The dispatcher application** (like HAICC: its own API; requests to it

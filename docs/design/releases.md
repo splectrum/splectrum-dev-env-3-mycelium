@@ -1,5 +1,9 @@
 # Releases
 
+> **Not what is built now**, and being redesigned (2026-11-10:
+> `packages.md`, "The boot mrepo: the root"): `tools/publish.sh` writes no
+> package repository today; the setup is released on `base-package-boot`.
+
 > **Phase 2's platform.** This describes what phase 2 built; phase 3's
 > rebuild replaces it part by part (`steps/2-rebuild/readme.md`) and it is
 > rewritten in step 3 (the documentation). What holds now:
