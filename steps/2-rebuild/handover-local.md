@@ -10,8 +10,8 @@ From one downloaded file, `haicc-setup.sh` (Bare fetched and checked by the
 setup; three bundles: the boot, HAICC, the mrepo framework; their native
 addons by hash; the publisher's signed manifest), a work folder is booted
 into the host's repository, `host`, of type `haicc`: its layers (`main`,
-`packages`, `runtime` in the Corestore; `request/*` and the execution
-branches in git on disk, `mrepos/host/.git`), its packages installed, the
+`packages`, `runtime` in the Corestore; `inbox`, `outbox`, `request/*` and
+the execution branches in git on disk, `mrepos/host/.git`), its packages installed, the
 runtime started, which runs the preloaded `service initialise /`. Then every
 `haicc` command is a request: posted to `/inbox`, queued, executed, merged,
 recorded in `request/done`, answered.
@@ -43,7 +43,7 @@ checks it as a user would: a fresh folder (`~/haicc-release/check`),
 Node.js off the PATH, the setup run (the boot; the runtime started), then
 the cycle, each answered `"ok": true`: `start /` (`"service": "started"`),
 `put /main/notes/hello.json`, `get /main/notes/hello.json` (`"text":
-"hello"`), `get /` (the repository `host`, `"service": "started"`, its six
+"hello"`), `get /` (the repository `host`, `"service": "started"`, its eight
 layers, three packages), `stop /`, `shutdown /`; then "the cycle: answered;
 shut down, the runtime ended" and `not published (setup-<12 hex>)`.
 

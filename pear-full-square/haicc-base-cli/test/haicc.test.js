@@ -36,26 +36,28 @@ test('a bad call: exit 2, said on stderr', (t) => {
   t.ok(String(r.stderr).includes('not an action: fly'))
 })
 
-test('send: the runtime started when it is not running; the request answered', async (t) => {
-  const work = mkdtempSync(join(tmpdir(), 'cli-'))
-  try {
-    t.is((await send({ work, protocol: 'rest', action: 'get', uri: '/' })).code, 1, 'no host: not done')
-    await bootedHost(work)
-    t.is(await ask({ work, op: 'status' }), null, 'no runtime yet')
-    const started = await send({ work, protocol: 'service', action: 'start', uri: '/', bundle: runtimeBundle })
-    t.alike(started, { code: 0, out: { ok: true, value: { service: 'started' } } }, 'started, the preloaded initialise first')
-    t.ok(await ask({ work, op: 'status' }), 'the runtime running')
-    const r = haicc('put', '/main/notes/hello.json', '{"text":"hi"}', `--work=${work}`)
-    t.is(r.status, 0, String(r.stderr))
-    t.alike(JSON.parse(String(r.stdout)), { ok: true, value: { put: '/main/notes/hello.json' } })
-    const g = haicc('rest', 'get', '/main/notes/hello.json', `--work=${work}`)
-    t.alike(JSON.parse(String(g.stdout)), { ok: true, value: { text: 'hi' } })
-    const refused = haicc('put', '/packages/x.json', '1', `--work=${work}`)
-    t.is(refused.status, 1, 'refused: exit 1')
-    t.alike(JSON.parse(String(refused.stdout)), { ok: false, error: 'not offered: rest put at /packages/x.json' })
-    t.alike((await send({ work, protocol: 'service', action: 'stop', uri: '/' })).out, { ok: true, value: { service: 'initialised' } })
-    t.alike((await send({ work, protocol: 'service', action: 'shutdown', uri: '/' })).out, { ok: true, value: { service: 'booted' } })
-    for (let i = 0; i < 50 && await ask({ work, op: 'status', timeout: 500 }); i++) await new Promise(resolve => setTimeout(resolve, 100))
-    t.is(await ask({ work, op: 'status' }), null, 'shut down: the runtime ended')
-  } finally { rmSync(work, { recursive: true, force: true }) }
-})
+for (const storage of ['p2p', 'git']) {
+  test(`send on ${storage}: the runtime started when it is not running; the request answered`, async (t) => {
+    const work = mkdtempSync(join(tmpdir(), `cli-${storage}-`))
+    try {
+      t.is((await send({ work, protocol: 'rest', action: 'get', uri: '/' })).code, 1, 'no repository: not done')
+      await bootedHost(work, { storage })
+      t.is(await ask({ work, op: 'status' }), null, 'no runtime yet')
+      const started = await send({ work, protocol: 'service', action: 'start', uri: '/', bundle: runtimeBundle })
+      t.alike(started, { code: 0, out: { ok: true, value: { service: 'started' } } }, 'started, the preloaded initialise first')
+      t.ok(await ask({ work, op: 'status' }), 'the runtime running')
+      const r = haicc('put', '/main/notes/hello.json', '{"text":"hi"}', `--work=${work}`)
+      t.is(r.status, 0, String(r.stderr))
+      t.alike(JSON.parse(String(r.stdout)), { ok: true, value: { put: '/main/notes/hello.json' } })
+      const g = haicc('rest', 'get', '/main/notes/hello.json', `--work=${join(work, 'mrepos')}`)
+      t.alike(JSON.parse(String(g.stdout)), { ok: true, value: { text: 'hi' } }, 'its work folder found walking up')
+      const refused = haicc('put', '/packages/x.json', '1', `--work=${work}`)
+      t.is(refused.status, 1, 'refused: exit 1')
+      t.alike(JSON.parse(String(refused.stdout)), { ok: false, error: 'not offered: rest put at /packages/x.json' })
+      t.alike((await send({ work, protocol: 'service', action: 'stop', uri: '/' })).out, { ok: true, value: { service: 'initialised' } })
+      t.alike((await send({ work, protocol: 'service', action: 'shutdown', uri: '/' })).out, { ok: true, value: { service: 'booted' } })
+      for (let i = 0; i < 50 && await ask({ work, op: 'status', timeout: 500 }); i++) await new Promise(resolve => setTimeout(resolve, 100))
+      t.is(await ask({ work, op: 'status' }), null, 'shut down: the runtime ended')
+    } finally { rmSync(work, { recursive: true, force: true }) }
+  })
+}

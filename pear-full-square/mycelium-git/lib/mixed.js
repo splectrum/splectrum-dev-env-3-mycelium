@@ -12,9 +12,9 @@
 // - History and merges: computed on the disk store, the commits brought in.
 import { transfer } from './transfer.js'
 
-// The layers stored on disk, not atomic (request/*, and execute/*: the
-// execution branches).
-export const isLocal = name => ['request', 'execute'].includes(name.split('/')[0])
+// The layers stored on disk, not atomic: request/*, the boxes (inbox,
+// outbox), and execute/* (the execution branches).
+export const isLocal = name => ['request', 'inbox', 'outbox', 'execute'].includes(name.split('/')[0])
 
 export function mixedBackend ({ atomic, local, isLocal: routed = isLocal }) {
   const has = (b, oid) => b.hasObject(oid)

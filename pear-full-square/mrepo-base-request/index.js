@@ -1,28 +1,33 @@
 // mrepo-base-request: the request protocol, base variant
 // (docs/design/repositories.md, "A running repository": the protocols meet in
 // data, never by calls). One pass over its data states, given the runtime's
-// context ({ work, repo, writer, say }: read access to the repository, the
-// store's writer held by the runtime):
-//   a record in /inbox            validated (the inbox is the root's
-//                                 validation point): its api this repository's
-//                                 type (not misdelivered), its URI canonical,
-//                                 its protocol and action offered there; then
-//                                 a request in request/pending/default, else
+// context ({ work, name, backend, repo, writer, say, seen }: read access to
+// the repository, the writer held by the runtime):
+//   new records in the inbox      (its head moved since it last looked: the
+//   layer                         records in it not yet taken in, i.e. in no
+//                                 request layer and not answered) validated
+//                                 (the inbox is the root's validation point):
+//                                 its api this repository's type (not
+//                                 misdelivered), its URI canonical, its
+//                                 protocol and action offered there; then a
+//                                 request in request/pending/default, else
 //                                 refused and answered (the service state,
 //                                 gating the API, checked as it executes)
 //   request/execute empty         the next pending request moved in
 //   a completed request in        copied into request/done, then cleared from
-//   request/execute (its record   request/execute; answered (on the outbox,
-//   merged in by execute)         to the input that asked)
+//   request/execute (its record   request/execute; answered (into the outbox
+//   merged in by execute)         layer, to the input that asked)
 // A record keeps its name through its moves; a restart finishes a move half
-// done (in both: the old place cleared).
+// done (in both: the old place cleared). The boxes (lib/boxes.js) are layers:
+// posting is a commit into the inbox, an answer a commit into the outbox,
+// nothing removed.
 import { validate as canonical } from 'mycelium-uri'
-import { inbox, outbox, dispatch, INBOX, OUTBOX } from './lib/boxes.js'
+import { post, dispatch, ensure, inboxFolder, INBOX, OUTBOX } from './lib/boxes.js'
 import { record, moved, withHeader } from './lib/record.js'
 import { layer, AUTHOR } from './lib/layer.js'
-import { viewOf } from './lib/view.js'
+import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
 
-export { inbox, outbox, dispatch, INBOX, OUTBOX, record, moved, withHeader, layer, AUTHOR, viewOf }
+export { post, dispatch, ensure, inboxFolder, INBOX, OUTBOX, record, moved, withHeader, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'
@@ -69,32 +74,48 @@ export function check (value, { service, api }, { state = true } = {}) {
   return null
 }
 
-// An answer, on the outbox, to the input that asked: only when the request
-// came from one (headers.mrepo.from present).
-function answer (work, name, rec, value) {
-  if (!('from' in (rec.headers?.mrepo ?? {}))) return
-  outbox(work).write(name, record(OUTBOX, value, { mrepo: { to: rec.headers.mrepo.from, re: rec.topic === INBOX ? `${INBOX}/${name}` : name } }))
+// An answer, into the outbox layer: to the input that asked (its `from`;
+// none: nobody to answer, kept as the request's record of being refused).
+async function answer (ctx, name, rec, value) {
+  await ensure(ctx, 'outbox')
+  const re = rec.topic === INBOX ? `${INBOX}/${name}` : name
+  await layer(ctx, 'outbox').put(name, record(OUTBOX, value, { mrepo: { to: rec.headers?.mrepo?.from ?? null, re } }), `Answer ${name}`)
+}
+
+const branches = async ctx => Object.fromEntries(await ctx.backend.listBranches())
+
+// The inbox's records not yet taken in: in no request layer, not answered.
+export async function untaken (ctx) {
+  const b = await branches(ctx)
+  if (!b.inbox) return []
+  const taken = new Set()
+  for (const l of [PENDING, EXECUTE, DONE, 'outbox']) if (b[l]) for (const n of await layer(ctx, l).list()) taken.add(n)
+  return (await layer(ctx, 'inbox').list()).filter(n => !taken.has(n))
 }
 
 export async function request (ctx) {
-  const { work, say = () => {} } = ctx
+  const { say = () => {} } = ctx
+  ctx.seen ??= {}
   const pending = layer(ctx, PENDING)
   const execute = layer(ctx, EXECUTE)
   const done = layer(ctx, DONE)
 
-  // The inbox taken in.
-  const box = inbox(work)
-  for (const name of box.list()) {
-    const rec = box.read(name)
-    const why = check(rec.value, await runtimeData(ctx), { state: false })
-    if (why) {
-      answer(work, name, rec, { ok: false, error: why })
-      say({ request: 'refused', record: name, why })
-    } else {
-      await pending.put(name, moved(rec, `/${PENDING}`), `Request ${name}: ${rec.value.protocol} ${rec.value.action} ${rec.value.uri}`)
-      say({ request: 'pending', record: name, protocol: rec.value.protocol, action: rec.value.action, uri: rec.value.uri })
+  // The inbox taken in, when its head has moved.
+  const head = (await branches(ctx)).inbox
+  if (head && head !== ctx.seen.inbox) {
+    const box = layer(ctx, 'inbox')
+    for (const name of await untaken(ctx)) {
+      const rec = await box.read(name)
+      const why = check(rec.value, await runtimeData(ctx), { state: false })
+      if (why) {
+        await answer(ctx, name, rec, { ok: false, error: why })
+        say({ request: 'refused', record: name, why })
+      } else {
+        await pending.put(name, moved(rec, `/${PENDING}`), `Request ${name}: ${rec.value.protocol} ${rec.value.action} ${rec.value.uri}`)
+        say({ request: 'pending', record: name, protocol: rec.value.protocol, action: rec.value.action, uri: rec.value.uri })
+      }
     }
-    box.remove(name)
+    ctx.seen.inbox = head
   }
 
   // A completed request: to done, then out of execute; answered.
@@ -103,7 +124,7 @@ export async function request (ctx) {
     if (!rec.headers?.mrepo?.execute?.done) continue
     await done.put(name, moved(rec, `/${DONE}`), `Done ${name}`)
     await execute.remove(name, `Done ${name}: out of execute`)
-    answer(work, name, rec, rec.headers.mrepo.execute.result)
+    if ('from' in (rec.headers?.mrepo ?? {})) await answer(ctx, name, rec, rec.headers.mrepo.execute.result)
     say({ request: 'done', record: name, ok: rec.headers.mrepo.execute.result.ok })
   }
 

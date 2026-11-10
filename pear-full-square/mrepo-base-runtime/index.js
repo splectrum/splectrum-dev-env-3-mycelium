@@ -2,17 +2,24 @@
 // framework: the process that runs its protocols, docs/design/repositories.md,
 // "A running repository"; structure.md, "One writer per store"), as a library
 // (runtime.js is its command line, base-package-mrepo's entry).
-//   run({ work, say })      the runtime, in this process: the store
-//                           (<work>/store) held as its single writer, the
-//                           host's repository (`host`) opened, the local
+//   run({ work, say })      the runtime, in this process: its repository
+//                           opened by the setting beside it (<work>/mrepo.json,
+//                           mrepo-base-request's `setting`): on native git
+//                           (`git`: <work>/mrepos/<name>/.git, mycelium-git's
+//                           native backend), or on the p2p layer (`p2p`, the
+//                           default: the store, <work>/store, held as its
+//                           single writer, the host's repository `host` over
+//                           it and its disk side); the local
 //                           connection served (<work>/runtime.sock, owner
 //                           only: one JSON request a line, one JSON answer a
 //                           line: { op: 'status' }, { op: 'stop' }); one
 //                           poller firing the protocols in turn, over their
-//                           data states: the outbox dispatched, the request
+//                           data states: on the p2p host the inbox folder's
+//                           new files committed (the folder the inbox layer's
+//                           working tree), the outbox dispatched, the request
 //                           protocol (mrepo-base-request), the execute
 //                           protocol (mrepo-base-execute), each given the
-//                           context (read access, the store's writer); stops
+//                           context (read access, the writer); stops
 //                           on `stop`, SIGTERM or SIGINT, closing the store,
 //                           and by itself once the service is shut down
 //                           (booted, nothing waiting). Resolves when it has
@@ -32,25 +39,37 @@ import { join } from 'bare-path'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
-import { INBOX, OUTBOX, inbox, outbox, dispatch, viewOf, request, runtimeData, layer, PENDING, EXECUTE } from 'mrepo-base-request'
+import { nativeBackend } from 'mycelium-git'
+import { INBOX, OUTBOX, inboxFolder, post, dispatch, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
 import { execute } from 'mrepo-base-execute'
 import pkg from './package.json' with { type: 'json' }
 
-export { INBOX, OUTBOX, inbox, outbox, viewOf }
+export { INBOX, OUTBOX, inboxFolder, viewOf, gitdirOf, setting }
 
 export const version = { name: pkg.name, version: pkg.version }
 export const HOST = 'host'
 export const SOCKET = 'runtime.sock'
-export const BUNDLE = join(viewOf('', HOST), 'packages', 'haiccing', 'base-package-mrepo.bundle')
+export const bundleOf = work => join(viewOf(work, setting(work).name), 'packages', 'haiccing', 'base-package-mrepo.bundle')
+
+// The repository, opened by its setting: { name, id, key, backend, close }.
+export async function open (work) {
+  const { storage, name } = setting(work)
+  if (storage === 'git') {
+    const backend = nativeBackend(gitdirOf(work, name))
+    return { name, id: null, key: null, storage, backend, close: async () => {} }
+  }
+  const store = await openStore({ storage: join(work, 'store') })
+  const repo = await mrepos({ store, local: join(work, 'mrepos') }).open(name)
+  return { name: repo.name, id: repo.id, key: repo.key, storage, backend: repo.backend, close: () => store.close() }
+}
 
 const socketOf = work => join(work, SOCKET)
 
 export async function run ({ work, say = () => {}, every = 200 }) {
-  const store = await openStore({ storage: join(work, 'store') })
-  const host = await mrepos({ store, local: join(work, 'mrepos') }).open(HOST)
-  const ctx = { work, name: host.name, backend: host.backend, repo: openRepo(host.backend), writer: writer(host.backend), say }
+  const repo = await open(work)
+  const ctx = { work, name: repo.name, backend: repo.backend, repo: openRepo(repo.backend), writer: writer(repo.backend), say, seen: {} }
   const started = new Date().toISOString()
-  const status = () => ({ ok: true, pid: process.pid, started, repository: { name: host.name, id: host.id, key: host.key }, version })
+  const status = () => ({ ok: true, pid: process.pid, started, repository: { name: repo.name, storage: repo.storage, id: repo.id, key: repo.key }, version })
   let stopping = null
   let stopped = false
   let server = null
@@ -61,7 +80,7 @@ export async function run ({ work, say = () => {}, every = 200 }) {
     if (server) server.close()
     clearInterval(poller)
     while (busy) await new Promise(resolve => setTimeout(resolve, 20))
-    await store.close()
+    await repo.close()
     // The socket last (the store's lock itself is released as the process ends).
     rmSync(socketOf(work), { force: true })
     say({ runtime: 'stopped' })
@@ -93,14 +112,16 @@ export async function run ({ work, say = () => {}, every = 200 }) {
     if (stopping || busy) return
     busy = true
     try {
-      dispatch({ work, held, say })
+      if (repo.storage === 'p2p') await post(ctx)
+      await dispatch(ctx, held)
       await request(ctx)
       await execute(ctx)
       await request(ctx)
       // Booted (shut down, or never initialised) and nothing waiting: the
       // runtime ends; a request posted later starts it again.
       const { service } = await runtimeData(ctx)
-      const waiting = inbox(work).list().length + (await layer(ctx, PENDING).list()).length + (await layer(ctx, EXECUTE).list()).length
+      // (the inbox folder's new files were committed above: untaken counts them)
+      const waiting = (await untaken(ctx)).length + (await layer(ctx, PENDING).list()).length + (await layer(ctx, EXECUTE).list()).length
       if (service?.state === 'booted' && !waiting) setTimeout(() => stop('shut down'), 0)
     } catch (err) {
       say({ runtime: 'failed', error: err.message })
@@ -131,7 +152,7 @@ export function ask ({ work, op, timeout = 5000 }) {
   })
 }
 
-export async function start ({ work, bare = process.execPath, bundle = join(work, BUNDLE), wait = 10000 }) {
+export async function start ({ work, bare = process.execPath, bundle = bundleOf(work), wait = 10000 }) {
   const already = await ask({ work, op: 'status' })
   if (already) return already
   mkdirSync(join(work, 'log'), { recursive: true })

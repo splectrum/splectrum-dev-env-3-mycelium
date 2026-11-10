@@ -31,12 +31,12 @@ written, in one of three modes:
 |---|---|---|---|
 | **atomic** | the Corestore (a Hyperdrive holding the git directory, p2p-git's) | one commit at a time, by the store's single writer (the runtime) | `main`, `runtime` |
 | **replicated** | the Corestore, and copied out as files for the process that needs them | as atomic | `packages` (its files at `<work>/mrepos/<name>/packages/`: Bare, `dlopen`) |
-| **non-atomic** | git on disk, `<work>/mrepos/<name>/.git` | by its own writers, in parallel, one per branch | `request/*`, `execute/*` |
+| **non-atomic** | git on disk, `<work>/mrepos/<name>/.git` | by its own writers, in parallel, one per branch | `request/*`, `inbox`, `outbox`, `execute/*` |
 
 - **One repository to everything above it**: `mycelium-git`'s
   `mixedBackend` wraps the two stores behind the backend contract (it
   passes the contract's tests), routed by the branch's layer (`isLocal`:
-  `request/*` and `execute/*` on disk); the branches of both are listed
+  `request/*`, `inbox`, `outbox` and `execute/*` on disk); the branches of both are listed
   together. `p2p-mrepo` opens a repository with its disk side when given a
   folder for it (`local`).
 - **Objects**: written to the disk side; a commit or a tree written there
@@ -59,8 +59,16 @@ written, in one of three modes:
 - *Why*: git gives the consistency and our use needs no indexes, so RocksDB
   (and the single writer it brings) only where replication needs it.
 
-**Agreed**, not built: a layer kind for the boxes (`/inbox`, `/outbox`,
-folders today, below); an extension layer declaring its mode when it is
+**Built** too (2026-11-10): **a repository on native git**, standalone,
+every layer on the filesystem (`native.md` in the seed
+`roadmap-1/seeds/dev-env-3-mrepo-native/`): the runtime opens its
+repository by the setting beside it, `<work>/mrepo.json`
+(`{ "storage": "git" | "p2p", "name" }`; without it, the p2p host): `git`,
+`mycelium-git`'s native backend on `<work>/mrepos/<name>/.git` (a bare
+repository); `p2p`, the hybrid. The same runtime, protocols and inputs on
+both (the cycle tested on both).
+
+**Agreed**, not built: an extension layer declaring its mode when it is
 made; `request/done` and logs as visible, non-atomic topics (each appended
 by its own writer, held in the repository by reference: `values.md`, "A
 topic in git").
@@ -77,6 +85,8 @@ topic in git").
 | `request/pending/default` | the local queue: requests waiting, one record each (one queue per source, `request/pending/<source>`, later) | non-atomic |
 | `request/execute` | the request being executed, its record completed by the execute protocol | non-atomic |
 | `request/done` | each finished request with its full record (below) | non-atomic (agreed: visible, as a topic) |
+| `inbox` | the records posted to the repository, as they came; nothing removed (housekeeping later) | non-atomic |
+| `outbox` | the answers and what the repository sends, its single writer the runtime | non-atomic |
 | `execute/<target>` | an execution branch: made from its target, written by the execute protocol, merged back into its target (`execute/main`, `execute/runtime`, `execute/request/execute`) | non-atomic |
 
 - **Layers are disjoint, never merged into each other**; a layer's
@@ -153,10 +163,10 @@ protocols.
 
 | Data state | Who reacts | What it does |
 |---|---|---|
-| a record in `/inbox` | request | checked (below); a request in `request/pending/default`, or refused and answered |
+| new records in the `inbox` layer (its head moved; records in no request layer, not answered) | request | checked (below); a request in `request/pending/default`, or refused and answered |
 | pending not empty, `request/execute` empty | request | the next request moved into `request/execute` |
 | a request in `request/execute`, not completed | execute | its execution branches made from their targets or brought up to them; checked again against the state now; its action run, reading a target overlaid by its execution branch, writing only execution branches; its record written into `execute/request/execute` (the states it ran on, its result, the merges it made); each branch merged back into its own target, `main` and `runtime` first, `request/execute` last (completing it) |
-| a completed request in `request/execute` | request | copied into `request/done`, then cleared from `request/execute` (a restart in between finishes the clearing); answered on the outbox; the next cycle |
+| a completed request in `request/execute` | request | copied into `request/done`, then cleared from `request/execute` (a restart in between finishes the clearing); answered into the `outbox` layer; the next cycle |
 
 - **Checked twice, for what each moment can know**: at the inbox what does
   not change (not misdelivered: its `api` this repository's type; its URI
@@ -268,24 +278,37 @@ and `start` in; `start` makes the type's API available.
 
 ## The boxes and the dispatcher
 
-**Built** for the host, as folders (2026-11-10): `/inbox` at
-`<work>/mrepos/host/inbox/`, `/outbox` at `<work>/mrepos/host/outbox/`, a
-record a document (`mycelium-container-document`, JSON), written under a
-temporary name then renamed (any writer, in parallel). The local dispatcher
-(in `mrepo-base-request`, run by the runtime) delivers an outbox record
-addressed to `/inbox` there, leaves one addressed to the outside (`to`
-null) for its input to take, and holds any other.
+**Built** as layers (2026-11-10), the same on the p2p host and on native
+git: `inbox` and `outbox`, non-atomic, a record a document (`<name>.json`),
+nothing removed (housekeeping later).
+
+- **Posting is a commit into `inbox`**: `post(message?)`
+  (`mrepo-base-request`). Given a message, it adds it and commits (native
+  git, no working tree: HAICC's input commits it itself; a commit lost to
+  another writer, compare-and-swap, made again on the new head). Without
+  one, it commits the inbox folder's new files: on the p2p host the folder
+  `<work>/mrepos/<name>/inbox/` is the `inbox` layer's working tree, many
+  inputs add files to it, the runtime commits them (the folder watched by
+  its poller).
+- **Taken in by commit**: the request protocol reacts to the `inbox` head
+  moving, taking the records not yet in a request layer nor answered.
+- **Answers are commits into `outbox`**, by the runtime (its single
+  writer); an input reads its answer there by the request's name.
+- **The local dispatcher** posts an `outbox` record addressed to `/inbox`
+  into the inbox (once, under the same name), leaves one addressed to the
+  outside (`to` null) for its input, and holds any other.
+- Found: on the p2p host's disk side (p2p-git), a ref is written in place,
+  not atomically, so a reader in another process (an input reading its
+  answer while the runtime writes) may find a ref missing for a moment: it
+  reads again. The runtime's own reads and writes are sequential.
 
 **Agreed**, for levels beyond the host (a level is the host, a swarm or a
 node, each with its own root):
 
-- A repository has a file inbox only. A level has a file outbox (written
-  directly by its repositories), copied by the level into its **outbox
-  topic**, and an **inbox topic** (written by the level with what it takes
+- A level has an **outbox topic**, fed from its repositories' outboxes, and an **inbox topic** (written by the level with what it takes
   from other levels' outbox topics); its local dispatcher delivers from its
-  inbox topic into the addressed repository's file inbox. One core per
-  level crosses the network; a repository never handles a topic. A
-  message to a repository on the same level goes file to file.
+  inbox topic into the addressed repository's inbox layer (posting). One
+  core per level crosses the network; a repository never handles a topic.
 - **Two modes between levels**, chosen by the receiver: **followed** (the
   sender's outbox topic kept open and replicated live: Hypercore's own
   notice of an append is the signal; for regular partners) and **announced**
