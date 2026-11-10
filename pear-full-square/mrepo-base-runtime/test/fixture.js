@@ -42,7 +42,7 @@ async function layers (backend, { preload }) {
   await r.commit('Booted', { author })
   if (preload) {
     const q = await w.change(PENDING)
-    await q.put('/0000000000001-00000000.json', Buffer.from(JSON.stringify(record(`/${PENDING}`, { api: 'haicc', protocol: 'service', action: 'initialise', uri: '/' }, { mrepo: { origin: 'boot' } }))))
+    await q.put('/0000000000001-00000000.json', Buffer.from(JSON.stringify(record(`/${PENDING}`, record(null, { api: 'haicc', protocol: 'service', action: 'initialise', uri: '/' })))))
     await q.commit('Preloaded', { author })
   }
 }
@@ -63,20 +63,26 @@ export async function bootedHost (work, { preload = true, storage = 'p2p' } = {}
   } finally { await store.close() }
 }
 
-// A request, as HAICC's input sends it (native git: committed into the
-// inbox; p2p: a file in the inbox folder), its answer read from the outbox
-// layer; null when none came.
-export async function send (work, value, { wait = 10000 } = {}) {
+// A request, as HAICC's input sends it (the form in an envelope addressed to
+// the repository's inbox; native git: committed; p2p: a file in the inbox
+// folder), the completed form read from the outbox layer: { ok, value } (its
+// output) or { ok: false, error }; null when none came. formOf: the record.
+export async function sendForm (work, form, { wait = 10000, to } = {}) {
   const { storage, name } = setting(work)
   const disk = storage === 'git' ? nativeBackend(gitdirOf(work, name)) : p2pgitBackend(gitdirOf(work, name), { fs })
-  const rec = record('/inbox', { api: 'haicc', ...value }, { mrepo: { from: null } })
+  const envelope = record(to ?? `/${name}/inbox`, record('/haicc/terminal', { api: 'haicc', ...form }))
   let id
-  if (storage === 'git') { id = newName(); await post({ work, backend: disk, writer: writer(disk), repo: openRepo(disk) }, rec, id) } else id = inboxFolder(work).add(rec)
+  if (storage === 'git') { id = newName(); await post({ work, backend: disk, writer: writer(disk), repo: openRepo(disk) }, envelope, id) } else id = inboxFolder(work).add(envelope)
   const repo = openRepo(disk)
   for (const end = Date.now() + wait; Date.now() < end;) {
-    const answer = await repo.read(`/outbox/${id}.json`).then(b => JSON.parse(b.toString()), () => null)
-    if (answer) return answer.value
+    const back = await repo.read(`/outbox/${id}.json`).then(b => JSON.parse(b.toString()), () => null)
+    if (back) return back.value
     await new Promise(resolve => setTimeout(resolve, 100))
   }
   return null
+}
+export async function send (work, form, opts) {
+  const core = await sendForm(work, form, opts)
+  if (!core) return null
+  return 'output' in core.value ? { ok: true, value: core.value.output } : { ok: false, error: core.value.error }
 }

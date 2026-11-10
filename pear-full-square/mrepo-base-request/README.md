@@ -9,6 +9,11 @@ over data states, run by the repository's runtime (`mrepo-base-runtime`).
 Also the records, the boxes and the local dispatcher, and the repository's
 setting.
 
+- **Records are an onion**: the core (the pre-filled form: its topic where
+  it is to arrive back, its value the request) in an envelope (its topic
+  the destination); each hand-over replaces the envelope; execution
+  completes the form (`output` or `error`); the completed form is sent back
+  into the outbox, in an envelope. Headers empty for now.
 - **The boxes are layers**, `inbox` and `outbox` (non-atomic): posting is a
   commit, `post(ctx, record, name)` (an input adding its commit: native git)
   or `post(ctx)` (the inbox folder's new files, the layer's working tree:

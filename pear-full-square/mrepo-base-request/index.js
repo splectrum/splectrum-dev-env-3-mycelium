@@ -2,32 +2,34 @@
 // (docs/design/repositories.md, "A running repository": the protocols meet in
 // data, never by calls). One pass over its data states, given the runtime's
 // context ({ work, name, backend, repo, writer, say, seen }: read access to
-// the repository, the writer held by the runtime):
-//   new records in the inbox      (its head moved since it last looked: the
-//   layer                         records in it not yet taken in, i.e. in no
-//                                 request layer and not answered) validated
-//                                 (the inbox is the root's validation point):
-//                                 its api this repository's type (not
-//                                 misdelivered), its URI canonical, its
-//                                 protocol and action offered there; then a
-//                                 request in request/pending/default, else
-//                                 refused and answered (the service state,
-//                                 gating the API, checked as it executes)
+// the repository, the writer held by the runtime). Records are an onion
+// (lib/record.js): an envelope around the core, the pre-filled form; each
+// hand-over replaces the envelope, the core never changes on the way.
+//   new envelopes in the inbox    (its head moved since it last looked: the
+//   layer                         records in it in no request layer yet)
+//                                 checked (the inbox is the root's validation
+//                                 point): addressed to this repository's
+//                                 inbox; the form's api this repository's
+//                                 type, its URI canonical, its protocol and
+//                                 action offered there; then the core, in a
+//                                 new envelope, in request/pending/default;
+//                                 else refused: the form completed with its
+//                                 error, in request/done, and sent back
 //   request/execute empty         the next pending request moved in
-//   a completed request in        copied into request/done, then cleared from
-//   request/execute (its record   request/execute; answered (into the outbox
-//   merged in by execute)         layer, to the input that asked)
+//   a completed form in           (execute filled it in) its core, in a new
+//   request/execute               envelope, in request/done, then cleared
+//                                 from request/execute; the completed form
+//                                 sent back: in the outbox, in an envelope,
+//                                 when its core names where it is to arrive
 // A record keeps its name through its moves; a restart finishes a move half
-// done (in both: the old place cleared). The boxes (lib/boxes.js) are layers:
-// posting is a commit into the inbox, an answer a commit into the outbox,
-// nothing removed.
+// done (in both: the old place cleared). The boxes (lib/boxes.js) are layers.
 import { validate as canonical } from 'mycelium-uri'
-import { post, dispatch, ensure, inboxFolder, INBOX, OUTBOX } from './lib/boxes.js'
-import { record, moved, withHeader } from './lib/record.js'
+import { post, ensure, inboxFolder, INBOX, OUTBOX } from './lib/boxes.js'
+import { record, complete, isComplete } from './lib/record.js'
 import { layer, AUTHOR } from './lib/layer.js'
 import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
 
-export { post, dispatch, ensure, inboxFolder, INBOX, OUTBOX, record, moved, withHeader, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
+export { post, ensure, inboxFolder, INBOX, OUTBOX, record, complete, isComplete, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'
@@ -74,22 +76,23 @@ export function check (value, { service, api }, { state = true } = {}) {
   return null
 }
 
-// An answer, into the outbox layer: to the input that asked (its `from`;
-// none: nobody to answer, kept as the request's record of being refused).
-async function answer (ctx, name, rec, value) {
+// The completed form sent back: in the outbox, in its envelope, when its core
+// names where it is to arrive.
+async function sendBack (ctx, name, core) {
+  if (!core.topic) return
   await ensure(ctx, 'outbox')
-  const re = rec.topic === INBOX ? `${INBOX}/${name}` : name
-  await layer(ctx, 'outbox').put(name, record(OUTBOX, value, { mrepo: { to: rec.headers?.mrepo?.from ?? null, re } }), `Answer ${name}`)
+  await layer(ctx, 'outbox').put(name, record(OUTBOX, core), `Output ${name}`)
 }
 
 const branches = async ctx => Object.fromEntries(await ctx.backend.listBranches())
 
-// The inbox's records not yet taken in: in no request layer, not answered.
+// The inbox's records not yet taken in: in no request layer (every one taken
+// in ends in request/done, a refused one too).
 export async function untaken (ctx) {
   const b = await branches(ctx)
   if (!b.inbox) return []
   const taken = new Set()
-  for (const l of [PENDING, EXECUTE, DONE, 'outbox']) if (b[l]) for (const n of await layer(ctx, l).list()) taken.add(n)
+  for (const l of [PENDING, EXECUTE, DONE]) if (b[l]) for (const n of await layer(ctx, l).list()) taken.add(n)
   return (await layer(ctx, 'inbox').list()).filter(n => !taken.has(n))
 }
 
@@ -104,28 +107,32 @@ export async function request (ctx) {
   const head = (await branches(ctx)).inbox
   if (head && head !== ctx.seen.inbox) {
     const box = layer(ctx, 'inbox')
+    const here = `/${ctx.name}${INBOX}`
     for (const name of await untaken(ctx)) {
-      const rec = await box.read(name)
-      const why = check(rec.value, await runtimeData(ctx), { state: false })
+      const envelope = await box.read(name)
+      const core = envelope.value
+      const why = envelope.topic !== here ? `misdelivered: for ${envelope.topic}, this is ${here}` : check(core?.value, await runtimeData(ctx), { state: false })
       if (why) {
-        await answer(ctx, name, rec, { ok: false, error: why })
+        const refused = complete(core ?? record(null, null), { ok: false, error: why })
+        await done.put(name, record(`/${DONE}`, refused), `Refused ${name}`)
+        await sendBack(ctx, name, refused)
         say({ request: 'refused', record: name, why })
       } else {
-        await pending.put(name, moved(rec, `/${PENDING}`), `Request ${name}: ${rec.value.protocol} ${rec.value.action} ${rec.value.uri}`)
-        say({ request: 'pending', record: name, protocol: rec.value.protocol, action: rec.value.action, uri: rec.value.uri })
+        await pending.put(name, record(`/${PENDING}`, core), `Request ${name}: ${core.value.protocol} ${core.value.action} ${core.value.uri}`)
+        say({ request: 'pending', record: name, protocol: core.value.protocol, action: core.value.action, uri: core.value.uri })
       }
     }
     ctx.seen.inbox = head
   }
 
-  // A completed request: to done, then out of execute; answered.
+  // A completed form: to done, then out of execute; sent back.
   for (const name of await execute.list()) {
-    const rec = await execute.read(name)
-    if (!rec.headers?.mrepo?.execute?.done) continue
-    await done.put(name, moved(rec, `/${DONE}`), `Done ${name}`)
+    const core = (await execute.read(name)).value
+    if (!isComplete(core)) continue
+    await done.put(name, record(`/${DONE}`, core), `Done ${name}`)
     await execute.remove(name, `Done ${name}: out of execute`)
-    if ('from' in (rec.headers?.mrepo ?? {})) await answer(ctx, name, rec, rec.headers.mrepo.execute.result)
-    say({ request: 'done', record: name, ok: rec.headers.mrepo.execute.result.ok })
+    await sendBack(ctx, name, core)
+    say({ request: 'done', record: name, ok: 'output' in core.value })
   }
 
   // The next pending request into execute (a move half done finished first).
@@ -134,8 +141,8 @@ export async function request (ctx) {
   for (const name of queued.filter(n => executing.includes(n))) await pending.remove(name, `${name}: in execute`)
   const next = queued.find(n => !executing.includes(n))
   if (!executing.length && next) {
-    const rec = await pending.read(next)
-    await execute.put(next, moved(rec, `/${EXECUTE}`), `Execute ${next}`)
+    const core = (await pending.read(next)).value
+    await execute.put(next, record(`/${EXECUTE}`, core), `Execute ${next}`)
     await pending.remove(next, `${next}: in execute`)
     say({ request: 'execute', record: next })
   }

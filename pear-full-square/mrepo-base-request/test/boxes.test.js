@@ -3,7 +3,7 @@ import fs, { mkdtempSync, rmSync, writeFileSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { tmpdir } from 'bare-os'
 import { p2pgitBackend, nativeBackend, openRepo, writer } from 'mycelium-git'
-import { post, dispatch, inboxFolder, layer, record, setting, gitdirOf, isWork, untaken } from '../index.js'
+import { post, inboxFolder, layer, record, setting, gitdirOf, isWork, untaken } from '../index.js'
 
 async function ctxOn (work, backend) {
   await backend.init()
@@ -44,24 +44,3 @@ for (const engine of ['p2p-git', 'native']) {
   })
 }
 
-test('the dispatcher: an outbox record to /inbox posted there, once; to the outside left; any other held', async (t) => {
-  const work = mkdtempSync(join(tmpdir(), 'dispatch-'))
-  try {
-    const ctx = await ctxOn(work, p2pgitBackend(join(work, 'mrepos', 'host', '.git'), { fs }))
-    const said = []
-    ctx.say = e => said.push(e)
-    await ctx.writer.createLayer('outbox', 'Create outbox', { author: { name: 't', email: 't@localhost' } })
-    const out = layer(ctx, 'outbox')
-    await out.put('a', record('/outbox', { text: 'hi' }, { mrepo: { to: '/inbox' } }))
-    await out.put('b', record('/outbox', 'answer', { mrepo: { to: null, re: 'x' } }))
-    await out.put('c', record('/outbox', 2, { mrepo: { to: '/elsewhere/inbox' } }))
-    const held = new Set()
-    await dispatch(ctx, held)
-    t.alike(await layer(ctx, 'inbox').list(), ['a'], 'delivered under the same name')
-    const rec = await layer(ctx, 'inbox').read('a')
-    t.is(rec.topic, '/inbox', 'its topic where it lives now')
-    t.alike(rec.headers.mrepo, { from: '/outbox' })
-    await dispatch(ctx, held)
-    t.alike(said.map(e => e.runtime), ['dispatched', 'held'], 'delivered once, held said once')
-  } finally { rmSync(work, { recursive: true, force: true }) }
-})

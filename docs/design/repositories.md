@@ -163,13 +163,14 @@ protocols.
 
 | Data state | Who reacts | What it does |
 |---|---|---|
-| new records in the `inbox` layer (its head moved; records in no request layer, not answered) | request | checked (below); a request in `request/pending/default`, or refused and answered |
-| pending not empty, `request/execute` empty | request | the next request moved into `request/execute` |
-| a request in `request/execute`, not completed | execute | its execution branches made from their targets or brought up to them; checked again against the state now; its action run, reading a target overlaid by its execution branch, writing only execution branches; its record written into `execute/request/execute` (the states it ran on, its result, the merges it made); each branch merged back into its own target, `main` and `runtime` first, `request/execute` last (completing it) |
-| a completed request in `request/execute` | request | copied into `request/done`, then cleared from `request/execute` (a restart in between finishes the clearing); answered into the `outbox` layer; the next cycle |
+| new envelopes in the `inbox` layer (its head moved; records in no request layer) | request | checked (below); the core, in a new envelope, in `request/pending/default`; or refused: the form completed with its error, in `request/done`, sent back |
+| pending not empty, `request/execute` empty | request | the next core moved into `request/execute`, in a new envelope |
+| a form in `request/execute`, not completed | execute | its execution branches made from their targets or brought up to them; checked again against the state now; its action run, reading a target overlaid by its execution branch, writing only execution branches (the visible state); each branch merged back into its own target, `main` and `runtime` first; the form completed with its output (or the error that stopped it), merged into `request/execute` last |
+| a completed form in `request/execute` | request | its core, in a new envelope, in `request/done`, then cleared from `request/execute` (a restart in between finishes the clearing); sent back: in the `outbox`, in an envelope, when the core names where it is to arrive; the next cycle |
 
 - **Checked twice, for what each moment can know**: at the inbox what does
-  not change (not misdelivered: its `api` this repository's type; its URI
+  not change (not misdelivered: the envelope addressed to this repository's
+  inbox, the form's `api` its type; its URI
   canonical; its protocol and action offered there, once the API is
   extracted); as it executes, the service state then (a request queued may
   change it first: a `start` queued behind the preloaded `initialise` is
@@ -240,15 +241,24 @@ and `start` in; `start` makes the type's API available.
   reads it (the URI canonical, the body JSON), posts it, starts the runtime
   if it is not running, and prints the answer (exit 0 answered ok, 1
   refused or failed, 2 a bad call).
-- **Every message is a Kafka record**: the record is the dispatch wrapper.
-  `topic` the URI where it lives, rewritten as it moves (`/inbox`,
-  `/request/pending/default`, `/request/execute`, `/request/done`): a
-  record is fully qualified in its context; `value` the message or request,
-  unchanged as it travels; `headers` JSON, namespaced (`mrepo` the
-  framework's: `from`, `to`, `execute`), reachable by URI, for any metadata
-  (`vision.md`; their schemas with AVRO); `timestamp`. A record keeps its
-  name through its moves; an answer names it. Agreed, not in the base:
-  `key`, a URI (where it first entered, `/inbox/<name>`).
+- **Every message is a Kafka record, and records are an onion** (**built**,
+  2026-11-10): a pre-filled form in a pre-addressed envelope. The **core**
+  record's `topic` is where the completed form is to arrive (the sender
+  itself, `/haicc/terminal` for the terminal; none: nobody waits for it),
+  its `value` the form: the request. The sender wraps it in an **envelope**
+  whose `topic` is the destination (`/host/inbox`). Each hand-over replaces
+  the envelope (its topic the new place: `/request/pending/default`,
+  `/request/execute`, `/request/done`, `/outbox`); the core is never
+  rewrapped or changed on the way. **Processing completes the form**: its
+  value the request with its `output` (or the `error` that stopped it); the
+  completed form goes back in an envelope, its core's topic saying where.
+  What a terminal shows is the completed form, a record. A record keeps its
+  name (its document's) through its moves.
+- **Headers left empty for now** (the human, 2026-11-10: their use to be
+  planned carefully): JSON, namespaced, reachable by URI, for metadata
+  (`vision.md`; their schemas with AVRO). So for now no record carries the
+  execution's metadata (the states it ran on, the merges it made: in the
+  commits). Agreed, not in the base: `key`, a URI (where it first entered).
 
 ## Roots, boundaries, mappings
 
@@ -291,31 +301,62 @@ nothing removed (housekeeping later).
   inputs add files to it, the runtime commits them (the folder watched by
   its poller).
 - **Taken in by commit**: the request protocol reacts to the `inbox` head
-  moving, taking the records not yet in a request layer nor answered.
-- **Answers are commits into `outbox`**, by the runtime (its single
-  writer); an input reads its answer there by the request's name.
-- **The local dispatcher** posts an `outbox` record addressed to `/inbox`
-  into the inbox (once, under the same name), leaves one addressed to the
-  outside (`to` null) for its input, and holds any other.
+  moving, taking the records not yet in a request layer (every one taken in
+  ends in `request/done`, a refused one too).
+- **The completed forms are commits into `outbox`**, by the runtime (its
+  single writer); until the dispatcher application (below), an input reads
+  its own there by the request's name.
 - Found: on the p2p host's disk side (p2p-git), a ref is written in place,
   not atomically, so a reader in another process (an input reading its
   answer while the runtime writes) may find a ref missing for a moment: it
   reads again. The runtime's own reads and writes are sequential.
 
-**Agreed**, for levels beyond the host (a level is the host, a swarm or a
-node, each with its own root):
+**Agreed** (the human, 2026-11-10): **routing by subscription, through a
+dispatcher.** Replaces the dispatcher inside the request protocol, the input
+writing into a repository's inbox and reading its outbox (built for now).
 
-- A level has an **outbox topic**, fed from its repositories' outboxes, and an **inbox topic** (written by the level with what it takes
-  from other levels' outbox topics); its local dispatcher delivers from its
-  inbox topic into the addressed repository's inbox layer (posting). One
-  core per level crosses the network; a repository never handles a topic.
-- **Two modes between levels**, chosen by the receiver: **followed** (the
-  sender's outbox topic kept open and replicated live: Hypercore's own
-  notice of an append is the signal; for regular partners) and **announced**
-  (the sender signals the addressee only, by `p2p-request`, the outbox's key
-  and length, the latest length standing for a burst; the receiver fetches
-  those blocks sparsely and checks them; for occasional senders). Both land
-  in the receiver's inbox topic.
+- **Every party has an inbox and an outbox**: a repository, the terminal
+  (a mini mrepo of its own: its boxes, its local log), the dispatcher. A
+  party writes only its own boxes.
+- **Every connection is one subscription**: an inbox subscribing to one
+  outbox, pulled by its owner (the new records copied in, its position kept:
+  the commit it last took, as a Kafka consumer's offset). Every inbox has
+  one writer, its owner.
+- **The dispatcher is an application, like HAICC** (the human,
+  2026-11-10): a repository type of its own (its package, its API declared
+  as data) on the same framework, a level's. Its one inbox (on the
+  filesystem) subscribes to every party's outbox; its outboxes are one per
+  destination (each repository, the terminal, each peer's dispatcher). A
+  record addressed to the dispatcher is a request to its API, processed by
+  it (as HAICC processes its own); any other is routed: moved from its inbox
+  to the outbox for the record's `to`. The one place where traffic is
+  monitored and managed (a priority field ordering it, counts, holding
+  back).
+- **A stray record goes back to the dispatcher**: an application receiving
+  a record addressed to another destination returns it to the dispatcher,
+  as misdelivered, through the dispatcher's API (not answered as refused).
+- **Each inbox subscribes to its outbox at the dispatcher**: a repository's
+  to the dispatcher's outbox for it, the terminal's (its postbox) to the
+  dispatcher's outbox for the terminal. **A local subscription is a file
+  operation**: the boxes' folders are their layers' working trees, so the
+  new files of the outbox followed are copied into one's inbox folder, then
+  committed by its owner. **A remote subscription is another node**: a
+  peer's dispatcher following ours for it, in one of two modes chosen by the
+  receiver: **followed** (kept open and replicated live: Hypercore's notice
+  of an append the signal; for regular partners) or **announced** (the
+  sender signals the addressee only, by `p2p-request`, the outbox's key and
+  length, the latest standing for a burst; the receiver fetches those blocks
+  sparsely and checks them; for occasional senders).
+- **A request's round trip**: the terminal's outbox, the dispatcher's
+  inbox, the dispatcher's outbox for the repository, the repository's inbox;
+  executed; its output record into the repository's outbox, the dispatcher's
+  inbox, the dispatcher's outbox for the terminal, the terminal's inbox.
+- **Routing reads the onion**: the dispatcher routes a record by its
+  envelope's topic, and a completed form back by its core's topic.
+- **What the terminal shows are records**: completed forms (**built**) and
+  log events (agreed).
+- Watching is the same everywhere: on git, a branch head moving; on p2p,
+  Hypercore's notice of an append.
 - Nothing in a repository is callable from outside by default: its
   functionality (its packages) is exposed only through its API.
 

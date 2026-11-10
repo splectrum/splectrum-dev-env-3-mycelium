@@ -16,7 +16,7 @@
 //                           poller firing the protocols in turn, over their
 //                           data states: on the p2p host the inbox folder's
 //                           new files committed (the folder the inbox layer's
-//                           working tree), the outbox dispatched, the request
+//                           working tree), the request
 //                           protocol (mrepo-base-request), the execute
 //                           protocol (mrepo-base-execute), each given the
 //                           context (read access, the writer); stops
@@ -40,7 +40,7 @@ import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
 import { nativeBackend } from 'mycelium-git'
-import { INBOX, OUTBOX, inboxFolder, post, dispatch, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
+import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
 import { execute } from 'mrepo-base-execute'
 import pkg from './package.json' with { type: 'json' }
 
@@ -106,14 +106,12 @@ export async function run ({ work, say = () => {}, every = 200 }) {
   server.listen({ path: socketOf(work), ownerOnly: true })
   say({ runtime: 'running', ...status() })
   // The poller: the protocols fired in turn, one pass each, never two at once.
-  const held = new Set()
   let busy = false
   const poller = setInterval(async () => {
     if (stopping || busy) return
     busy = true
     try {
       if (repo.storage === 'p2p') await post(ctx)
-      await dispatch(ctx, held)
       await request(ctx)
       await execute(ctx)
       await request(ctx)

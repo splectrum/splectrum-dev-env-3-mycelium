@@ -1,5 +1,5 @@
 import test from 'brittle'
-import { check, record, moved, withHeader } from '../index.js'
+import { check, record, complete, isComplete } from '../index.js'
 
 const api = {
   api: 'haicc',
@@ -43,10 +43,17 @@ test('check at the inbox: not the state (the queue may change it first)', (t) =>
   t.is(check(req('service', 'fly', '/'), at('booted'), inbox), 'not offered: service fly')
 })
 
-test('a record: topic, timestamp, headers, value; moved, a header added', (t) => {
-  const r = record('/inbox', { a: 1 }, { mrepo: { from: null } })
-  t.alike(Object.keys(r), ['topic', 'timestamp', 'headers', 'value'])
-  t.is(moved(r, '/request/done').topic, '/request/done')
-  t.alike(moved(r, '/request/done').value, { a: 1 }, 'its value unchanged')
-  t.alike(withHeader(r, 'mrepo', { to: '/x' }).headers, { mrepo: { from: null, to: '/x' } }, 'namespaced, merged')
+test('a record: topic, timestamp, headers (empty), value; the onion; a form completed', (t) => {
+  const core = record('/haicc/terminal', { api: 'haicc', protocol: 'rest', action: 'get', uri: '/' })
+  const envelope = record('/host/inbox', core)
+  t.alike(Object.keys(envelope), ['topic', 'timestamp', 'headers', 'value'])
+  t.alike(envelope.headers, {})
+  t.is(envelope.value, core, 'the core inside')
+  t.absent(isComplete(core))
+  const done = complete(core, { ok: true, value: { a: 1 } })
+  t.ok(isComplete(done))
+  t.alike(done.value, { ...core.value, output: { a: 1 } }, 'the request and its output')
+  t.is(done.topic, '/haicc/terminal', 'still addressed to its sender')
+  t.alike(core.value.output, undefined, 'the core itself not changed')
+  t.alike(complete(core, { ok: false, error: 'x' }).value.error, 'x')
 })

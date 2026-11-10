@@ -320,6 +320,32 @@ committing); taken in by commit; nothing removed.
   runtime 6, HAICC 5, boot 2 files: all pass. `tools/publish.sh` without
   `--push`: passed. The tag it would publish: `setup-45ee667cf93c`.
 
+## 8. Records as an onion: done (2026-11-10)
+
+Discussed first (recorded in `docs/design/repositories.md`): routing by
+subscription through a dispatcher, an application of its own with its API
+(every party an inbox and an outbox; the terminal a mini mrepo; stray
+records returned to the dispatcher); the response not metadata; then the
+onion: a pre-filled form in a pre-addressed envelope. Headers left empty
+until their use is planned.
+
+- `mrepo-base-request`: `record`, `complete`, `isComplete`; the envelope
+  checked at the inbox (addressed to this repository's inbox); each
+  hand-over a new envelope around the unchanged core; a refused form
+  completed with its error, in `request/done`, sent back; a completed form
+  sent back into the outbox when its core names where. The local
+  dispatcher removed (the dispatcher application replaces it).
+- `mrepo-base-execute`: the form completed with its output (or error); the
+  execution's metadata no longer on the record (in the commits).
+- `haicc-base-cli`: the core addressed to `/haicc/terminal`, in an envelope
+  to `/<name>/inbox`; the completed form printed, a record; exit by output
+  or error.
+- `haicc-base-boot`: the preloaded `initialise` a core with no topic.
+- Tests: request 7, execute 1, runtime 6 (the cycle on both storages, the
+  completed form's shape, an envelope for another inbox refused), HAICC 5,
+  boot 2 files: all pass. `tools/publish.sh` without `--push`: passed. The
+  tag it would publish: `setup-5b8cfbb3e9c8`.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
