@@ -8,12 +8,16 @@ For a developer, in this repository (the development side of the airgap).
 
   ```json
   "haicc": {
-    "repo": "base-package-haicc",
     "description": "...",
-    "modules": ["pear-full-square/haicc-base-boot", "pear-full-square/pkgm-base-manager"],
+    "modules": ["pear-full-square/haicc-base-cli"],
+    "entries": { "haicc": "pear-full-square/haicc-base-cli/haicc.js" },
     "readme": ["lines of its readme, when it has no README.md of its own"]
   }
   ```
+
+  `repo`: its repository's name, `base-package-<name>` when not given;
+  `entries`: its entry points (the first its bundle's main), for a package
+  written as a bundle.
 
   `modules`: ours it starts from (`<org>/<module>`, or `{ "path": ...,
   "from": ... }` for one kept elsewhere); `with`: other definitions' modules,
@@ -21,7 +25,9 @@ For a developer, in this repository (the development side of the airgap).
   time).
 - **Its hand-written parts**, in `haiccing/<repo>/`, copied as they are: a
   `README.md`, `swarms/<swarm>/` (agreed), `test/` (its sets and named
-  tests), `platform/` (the platform's package only).
+  tests), `platform/` (the platform's package only); a repository type's
+  API declaration, `api.json` (`haiccing/base-package-haicc/api.json`: read
+  from the bundle by `service initialise`).
 - **The rest is worked out**: the modules of ours its modules use, and the
   third-party code they use, all the way down, plus `brittle`; from this
   repository's `node_modules`, recorded in `modules/third-party.json`.
@@ -31,26 +37,30 @@ For a developer, in this repository (the development side of the airgap).
 
 ```bash
 sh tools/install.sh  # this repository's dependencies, from the lockfile, Bare only
-tools/bare tools/package-writer/cli.js --out=<folder of package repositories> [--only=haicc] [--keep]
+tools/bare tools/package-writer/cli.js --out=<folder> [--only=boot,haicc,mrepo] [--keep] \
+   [--sequence=<n>] [--sign-key=<file>]
 ```
 
 Every package is staged, then tested in place (its modules' tests, its
-in-place named tests); only when all pass is any written, each into its
-repository's folder in `--out` (`.git` kept). The result as JSON; exit 1 when
-a test fails (`--keep` leaves the staged packages to look at).
+in-place named tests); only when all pass is any written. A package with
+`entries` is written as a bundle (`bare-pack`: the closure of its entry
+points, every other file of the package as files, native addons offloaded
+by hash), together as one source, `<out>/source/` (the bundles by
+`[org]/[package]`, `addons/<sha256>`, one manifest, signed with
+`--sign-key`). The result as JSON; exit 1 when a test fails (`--keep` leaves
+the staged packages to look at).
 
 ## Trying it on the platform
 
 ```bash
-sh pear-full-square/haicc-base-boot/release.sh <out>/base-package-haicc <scratch>/haicc-setup.sh \
-   node_modules/bare-runtime-linux-x64/bin/bare
-sh <scratch>/haicc-setup.sh <scratch>/work --sources=folder:<out>
-<scratch>/work/boot --yes && <scratch>/work/haicc boot base-package-haicc/test
+tools/bare tools/setup/keygen.js <scratch>/keys    # a key of your own, once
+sh tools/publish.sh <scratch>/release --key-dir=<scratch>/keys
 ```
 
-`--sources=folder:<out>`: the work folder takes packages from what you just
-wrote, not from GitHub. Take Node.js off the PATH for the run, to be sure
-nothing needs it.
+Without `--push` it only builds and checks: the packages written and
+signed, the setup built, booted in a fresh folder with Node.js off the PATH
+and taken through a cycle of requests (`release.md`). The checked folder
+stays at `<scratch>/release/check` to look at.
 
 ## Changing a module
 
