@@ -1,0 +1,4 @@
+#!/bin/sh
+# The package's tests, on Bare, with brittle as the package carries it.
+cd "$(dirname "$0")" || exit 1
+exec bare ../modules/node_modules/brittle/cmd.js boot.test.js

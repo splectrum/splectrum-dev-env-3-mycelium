@@ -1,0 +1,77 @@
+// Compatibility: the same writes give the same objects on every engine, so
+// a repository written by one is the same repository for the other.
+
+import test from 'brittle'
+import { fixture } from './contract.js'
+import { isogitBackend, nativeBackend, p2pgitBackend, transfer, writer, openRepo } from '../index.js'
+
+const author = { name: 'a', email: 'a@b' }
+const time = '2026-01-02T00:00:00Z'
+
+// A run of writes; returns the oids and the errors, in order.
+async function scenario (make) {
+  const b = make(fixture())
+  const w = writer(b)
+  const out = []
+  const head = async n => Object.fromEntries(await b.listBranches())[n]
+  const put = async (branch, path, text) => {
+    const c = await w.change(branch)
+    await c.put(path, text)
+    return c.commit(`Put ${path}`, { author, time })
+  }
+  const error = async f => { try { await f() } catch (err) { return err.message } }
+
+  out.push(await put('execute/main', '/responses/r1.md', 'done'))
+  out.push(await put('main', '/other.md', 'o'))
+  out.push(await w.merge('execute/main', 'main', 'Merge', { author, time }))
+  out.push(await w.merge('main', 'execute/main', 'Sync', { author, time, fastForward: true }))
+
+  await b.updateBranch('side', await head('main'), null)
+  await put('main', '/readme', 'main says')
+  await put('side', '/readme', 'side says')
+  out.push(await error(() => w.merge('side', 'main', 'm', { author, time })))
+  out.push(await error(() => w.merge('overlay/config', 'main', 'm', { author, time })))
+
+  out.push(await w.createLayer('data/sets', 'Create data/sets', { author, time }))
+  out.push(await w.createExecution('data/sets'))
+  await put('execute/data/sets', '/a.md', 'a')
+  out.push(await w.merge('execute/data/sets', 'data/sets', 'Merge', { author, time }))
+  await w.deleteBranch('execute/data/sets', 'data/sets')
+  out.push(JSON.stringify(await b.listBranches()))
+
+  const stale = await w.change('main')
+  await stale.put('/b', 'b')
+  await put('main', '/a', 'a')
+  out.push((await error(() => stale.commit('b', { author, time }))).split(':')[0])
+  return out
+}
+
+test('native, isomorphic-git and p2p-git: same writes, same oids and outcomes', async (t) => {
+  const native = await scenario(nativeBackend)
+  t.is(native.length, 11)
+  t.alike(await scenario(isogitBackend), native)
+  t.alike(await scenario(p2pgitBackend), native)
+})
+
+// A layer copied between every pair of engines arrives whole and the same,
+// and can be imported and read on the other side.
+test('transfer and importLayer between every pair of engines', async (t) => {
+  const engines = { native: nativeBackend, isogit: isogitBackend, p2pgit: p2pgitBackend }
+  for (const [fromName, makeFrom] of Object.entries(engines)) {
+    for (const [toName, makeTo] of Object.entries(engines)) {
+      const from = makeFrom(fixture())
+      const to = makeTo(fixture())
+      const w = writer(from)
+      await w.createLayer('data/sets', 'Create', { author, time })
+      const c = await w.change('data/sets')
+      await c.put('/one.md', 'one')
+      await c.put('/deep/two.md', 'two')
+      const head = await c.commit('Put', { author, time })
+      const pair = `${fromName} → ${toName}`
+      t.is(await transfer(from, to, head), 6, pair)
+      t.is(await transfer(from, to, head), 0, pair)
+      await writer(to).importLayer('data/sets', head)
+      t.is((await openRepo(to).read('/data/sets/deep/two.md')).toString(), 'two', pair)
+    }
+  }
+})
