@@ -11,5 +11,5 @@ modules/
 ```
 
 Code in the package reaches it by relative path:
-`./modules/pear-full-square/mrepo-base-runtime/index.js`. Our modules find
+`./modules/<org>/<module>/index.js`. Our modules find
 each other by name, through `modules/node_modules/`.

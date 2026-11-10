@@ -18,10 +18,9 @@ a package; its README says what goes there.
 |---|---|
 | [mrepo/](mrepo/) | an mrepo's definition, by layers |
 | [test/](test/) | tests, a folder each, and the sets |
-| [unit/](unit/) | a further unit, the same structure again |
+| [name/](name/) | a further unit, the same structure again |
+| [example/](example/) | a whole package, as an example |
 | [modules/](modules/) | the code the package carries |
-
-The example: [haiccing/base-package-boot](https://github.com/haiccing/base-package-boot).
 
 ## The rules
 
@@ -38,13 +37,13 @@ The example: [haiccing/base-package-boot](https://github.com/haiccing/base-packa
 
 ```json
 {
-  "name": "base-package-boot",
-  "description": "HAICC's boot.",
+  "name": "base-package-example",
+  "description": "An example package.",
   "private": true,
   "license": "MIT",
   "type": "module",
   "main": "run.js",
-  "modules": ["pear-full-square/mrepo-base-runtime"],
+  "modules": ["<org>/<module>"],
   "scripts": { "test": "bare test/run.js" }
 }
 ```

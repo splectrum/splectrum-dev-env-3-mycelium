@@ -524,7 +524,7 @@ The package structure documented outside this repository (the human):
 short: "The haiccing package structure, documented."), written from
 `haiccing/package-docs-template/` here: a README at each level (`mrepo/`,
 `test/`, `test/<name>/`, a further unit, `modules/`), example files
-(`layer.json`, the sets), the rules, `base-package-boot` the example.
+(`layer.json`, the sets), the rules; no other package named: `example/`, a whole package in the same structure (the human).
 Only what is agreed. In a real package no README inside a layer (it would
 be committed into it): `layer.json` says what the layer is for.
 

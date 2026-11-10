@@ -1,4 +1,4 @@
 {
   "description": "The package as deployed.",
-  "tests": ["example"]
+  "tests": ["name"]
 }
