@@ -6,7 +6,9 @@ import { tmpdir } from 'bare-os'
 import { fileURLToPath } from 'bare-url'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
-import { openRepo } from 'mycelium-git'
+import fs from 'bare-fs'
+import { openRepo, p2pgitBackend } from 'mycelium-git'
+import { createFs } from 'p2p-git/hyperdrive-fs'
 import { start, ask, inbox, outbox } from '../index.js'
 import { record } from 'mrepo-base-request'
 import { bootedHost } from './fixture.js'
@@ -54,7 +56,7 @@ test('the cycle: initialise (preloaded), start, put, get, delete, refused, stop,
     // The record: every request in request/done, main's history the puts.
     const store = await openStore({ storage: join(work, 'store'), readOnly: true })
     try {
-      const host = await mrepos({ store }).open('host')
+      const host = await mrepos({ store, local: join(work, 'mrepos') }).open('host')
       const repo = openRepo(host.backend)
       const done = await repo.select('/request/done/*')
       t.is(done.length, 12, 'every request taken in done, those refused as they executed too (the second initialise, the get once stopped); those refused at the inbox not')
@@ -65,6 +67,12 @@ test('the cycle: initialise (preloaded), start, put, get, delete, refused, stop,
       t.alike(await repo.select('/request/execute/*'), [], 'nothing left executing')
       t.alike(await repo.select('/main/*'), [], 'main: the note deleted again')
       t.alike(JSON.parse((await repo.read('/runtime/service.json')).toString()).state, 'booted')
+      // Where each layer lives: the atomic ones in the store, the request and
+      // execution branches on disk, in the repository's folder.
+      const inStore = (await p2pgitBackend('/', { fs: createFs(host.drive) }).listBranches()).map(([n]) => n)
+      const onDisk = (await p2pgitBackend(join(work, 'mrepos', 'host', '.git'), { fs }).listBranches()).map(([n]) => n)
+      t.alike(inStore, ['main', 'packages', 'runtime'], 'in the store: the atomic layers only')
+      t.alike(onDisk, ['execute/main', 'execute/request/execute', 'execute/runtime', 'request/done', 'request/execute', 'request/pending/default'], 'on disk: the request layers and the execution branches')
     } finally { await store.close() }
     const log = readFileSync(join(work, 'log', 'runtime.log'), 'utf8').trim().split('\n').map(l => JSON.parse(l))
     t.absent(log.some(e => e.runtime === 'failed'), 'nothing failed')

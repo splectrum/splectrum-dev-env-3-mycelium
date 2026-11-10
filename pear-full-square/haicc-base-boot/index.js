@@ -110,7 +110,7 @@ export async function boot ({ setup, work, say = () => {}, runtime = true }) {
     let result
     const store = await openStore({ storage: join(work, 'store') })
     try {
-      const repo = await mrepos({ store }).create(HOST)
+      const repo = await mrepos({ store, local: join(work, 'mrepos') }).create(HOST)
       const w = writer(repo.backend)
       for (const l of LAYERS) await w.createLayer(l, `Create ${l}`, { author })
       say({ step: 'init', repository: HOST, id: repo.id, key: repo.key, layers: LAYERS })
@@ -148,7 +148,7 @@ export async function fetch ({ setup, work, repo: name, say = () => {} }) {
   const scratch = join(work, 'scratch')
   const store = await openStore({ storage: join(work, 'store') })
   try {
-    const repo = await mrepos({ store }).open(HOST)
+    const repo = await mrepos({ store, local: join(work, 'mrepos') }).open(HOST)
     const manifest = JSON.parse((await openRepo(repo.backend).read(`/${PACKAGES}/manifest.json`)).toString())
     if (!manifest.packages[name]) return { ok: false, why: `not in the pinned manifest: ${name}` }
     const { sources } = sourcesOf(setup)

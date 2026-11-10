@@ -2,7 +2,12 @@
 // p2p-store with p2p-git on it, given to its users as a mycelium backend
 // (mycelium-git's backend contract): mycelium works with it and knows
 // nothing of p2p.
-//   const repos = mrepos({ store, observer })     store: p2p-store's
+//   const repos = mrepos({ store, observer, local })  store: p2p-store's;
+//                                                 local: a folder for the
+//                                                 repositories' disk sides
+//                                                 (<local>/<name>/.git: their
+//                                                 non-atomic layers, mycelium-git's
+//                                                 mixedBackend), else all in the store
 //   await repos.create(name, { id })              a new repository, the store's own
 //                                                 (id: its internal id, if it has one
 //                                                 already, e.g. rebuilt; else a new GUID)
@@ -23,7 +28,9 @@
 
 import crypto from 'hypercore-crypto'
 import { createFs } from 'p2p-git/hyperdrive-fs'
-import { p2pgitBackend, nativeBackend, transfer, readBundle } from '../mycelium-git/index.js'
+import { join } from 'bare-path'
+import fs from 'bare-fs'
+import { p2pgitBackend, nativeBackend, mixedBackend, transfer, readBundle } from '../mycelium-git/index.js'
 
 const MODULE = 'p2p-mrepo'
 const hex = b => b.toString('hex')
@@ -32,22 +39,31 @@ const guid = (bytes = crypto.randomBytes(16)) => {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-${'89ab'[parseInt(h[16], 16) % 4]}${h.slice(17, 20)}-${h.slice(20, 32)}`
 }
 
-export function mrepos ({ store, observer = null }) {
+export function mrepos ({ store, observer = null, local = null }) {
   const emit = (kind, facts) => observer && observer({ module: MODULE, kind, time: Date.now(), ...facts })
   let registry = null
   const reg = async () => (registry ??= await store.own('mrepo-registry'))
   // Open repositories, by name: a drive's db core is an exclusive session,
   // so a repository open in this store is given again, not opened twice.
   const opened = new Map()
-  const backendOf = drive => p2pgitBackend('/', { fs: createFs(drive) })
+  const driveBackend = drive => p2pgitBackend('/', { fs: createFs(drive) })
+  // A repository's backend: its drive, and its disk side when there is a
+  // folder for it (made the first time).
+  async function backendOf (drive, name) {
+    if (!local || !name) return driveBackend(drive)
+    const gitdir = join(local, name, '.git')
+    const disk = p2pgitBackend(gitdir, { fs })
+    if (!fs.existsSync(join(gitdir, 'HEAD'))) { fs.mkdirSync(gitdir, { recursive: true }); await disk.init() }
+    return mixedBackend({ atomic: driveBackend(drive), local: disk })
+  }
   const readInfo = async drive => JSON.parse((await drive.get('/mrepo.json')).toString())
 
   async function create (name, { origin = null, id = null } = {}) {
     const r = await reg()
     if (await r.entry(`/repos/${name}.json`)) throw new Error(`exists: ${name}`)
     const drive = await store.own(`mrepo/${name}`)
-    const backend = backendOf(drive)
-    await backend.init()
+    await driveBackend(drive).init()
+    const backend = await backendOf(drive, name)
     const info = { name, id: id || guid(), key: hex(drive.key), origin }
     await drive.put('/mrepo.json', Buffer.from(JSON.stringify(info, null, 2) + '\n'))
     await r.put(`/repos/${name}.json`, Buffer.from(JSON.stringify(info) + '\n'))
@@ -104,7 +120,7 @@ export function mrepos ({ store, observer = null }) {
       const drive = await store.own(`mrepo/${name}`)
       const info = await readInfo(drive)
       emit('repo-opened', { name, id: info.id, resource: info.key })
-      const repo = { ...info, drive, backend: backendOf(drive) }
+      const repo = { ...info, drive, backend: await backendOf(drive, name) }
       opened.set(name, repo)
       return repo
     },
@@ -114,7 +130,7 @@ export function mrepos ({ store, observer = null }) {
     async replica (key) {
       const drive = await store.replica(key)
       emit('replica-opened', { resource: hex(drive.key) })
-      return { key: hex(drive.key), drive, backend: backendOf(drive), info: () => readInfo(drive) }
+      return { key: hex(drive.key), drive, backend: driveBackend(drive), info: () => readInfo(drive) }
     },
 
     async list () {
