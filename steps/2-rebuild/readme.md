@@ -292,6 +292,34 @@ their writes.
   real bundles, `mrepos/host/.git` beside the boxes and packages, nothing
   left running. The tag it would publish: `setup-c06d0725ddde`.
 
+## 7. The boxes as layers; a repository on native git: done (2026-11-10)
+
+Discussed first: the mrepo framework run standalone on an ordinary git
+repository (the seed `roadmap-1/seeds/dev-env-3-mrepo-native/`); what it
+needs put in place here first, so the modules need no change there. The
+boxes as layers, not folders: posting is a commit (`post(message?)`: given a
+message it adds it and commits; without one it commits the inbox folder,
+the layer's working tree on the p2p host, many adding files, one
+committing); taken in by commit; nothing removed.
+
+- `mycelium-git`: the `inbox` and `outbox` layers (non-atomic, on disk).
+- `mrepo-base-request`: `post`, the boxes as layers, taking in when the
+  `inbox` head moves (records in no request layer, not answered), answers
+  committed into `outbox`; `setting(work)` (`<work>/mrepo.json`).
+- `mrepo-base-runtime`: its repository opened by the setting (`git`: the
+  native backend on `<work>/mrepos/<name>/.git`; `p2p`: as before).
+- `haicc-base-cli`: posting by commit on native git, by file on the p2p
+  host; the answer read from `outbox`; its work folder found walking up.
+- `haicc-base-boot`: the `inbox` and `outbox` layers created.
+- Found: on the p2p host's disk side a ref is written in place, so an input
+  reading its answer while the runtime writes may find a ref missing for a
+  moment (it reads again); the runtime's own "nothing waiting" counted the
+  inbox folder's files, which now stay (fixed: the untaken records).
+- Tests: the cycle on both storages (p2p and native git), the posting on
+  both engines; mycelium-git 114, p2p-mrepo 28, request 8, execute 1,
+  runtime 6, HAICC 5, boot 2 files: all pass. `tools/publish.sh` without
+  `--push`: passed. The tag it would publish: `setup-45ee667cf93c`.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
