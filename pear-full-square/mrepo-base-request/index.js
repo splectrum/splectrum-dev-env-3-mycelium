@@ -1,7 +1,7 @@
 // mrepo-base-request: the request protocol, base variant
 // (docs/design/repositories.md, "A running repository": the protocols meet in
 // data, never by calls). One pass over its data states, given the runtime's
-// context ({ work, name, backend, repo, writer, say, seen }: read access to
+// context ({ work, name, backend, repo, writer, seen }: read access to
 // the repository, the writer held by the runtime). Records are an onion
 // (lib/record.js): an envelope around the core, the pre-filled form; each
 // hand-over replaces the envelope, the core never changes on the way.
@@ -25,12 +25,11 @@
 // done (in both: the old place cleared). The boxes (lib/boxes.js) are layers.
 import { validate as canonical } from 'mycelium-uri'
 import { post, ensure, inboxFolder, INBOX, OUTBOX } from './lib/boxes.js'
-import { record, wrap, guid, complete, isComplete, logRecord } from './lib/record.js'
+import { record, wrap, guid, complete, isComplete } from './lib/record.js'
 import { layer, AUTHOR } from './lib/layer.js'
 import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
-import { logFolder, logTo, commitLog } from './lib/logs.js'
 
-export { post, ensure, inboxFolder, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logRecord, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING, logFolder, logTo, commitLog }
+export { post, ensure, inboxFolder, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'
@@ -84,7 +83,6 @@ async function sendBack (ctx, name, core) {
   await ensure(ctx, 'outbox')
   const envelope = wrap(OUTBOX, core)
   await layer(ctx, 'outbox').put(name, envelope, `Output ${name}`)
-  ctx.say?.({ request: 'sent back', name, record: envelope })
 }
 
 const branches = async ctx => Object.fromEntries(await ctx.backend.listBranches())
@@ -101,7 +99,6 @@ export async function untaken (ctx) {
 }
 
 export async function request (ctx) {
-  const { say = () => {} } = ctx
   ctx.seen ??= {}
   const pending = layer(ctx, PENDING)
   const execute = layer(ctx, EXECUTE)
@@ -114,19 +111,16 @@ export async function request (ctx) {
     const here = `/${ctx.name}${INBOX}`
     for (const name of await untaken(ctx)) {
       const envelope = await box.read(name)
-      say({ request: 'received', name, record: envelope })
       const core = envelope.value
       const why = envelope.topic !== here ? `misdelivered: for ${envelope.topic}, this is ${here}` : check(core?.value, await runtimeData(ctx), { state: false })
       if (why) {
         const refused = complete(core ?? record(null, null, envelope.key), { ok: false, error: why })
         const into = wrap(`/${DONE}`, refused)
         await done.put(name, into, `Refused ${name}`)
-        say({ request: 'refused', name, why, record: into })
         await sendBack(ctx, name, refused)
       } else {
         const into = wrap(`/${PENDING}`, core)
         await pending.put(name, into, `Request ${name}: ${core.value.protocol} ${core.value.action} ${core.value.uri}`)
-        say({ request: 'pending', name, record: into })
       }
     }
     ctx.seen.inbox = head
@@ -139,7 +133,6 @@ export async function request (ctx) {
     const into = wrap(`/${DONE}`, core)
     await done.put(name, into, `Done ${name}`)
     await execute.remove(name, `Done ${name}: out of execute`)
-    say({ request: 'done', name, record: into })
     await sendBack(ctx, name, core)
   }
 
@@ -154,6 +147,5 @@ export async function request (ctx) {
     const into = wrap(`/${EXECUTE}`, core)
     await execute.put(next, into, `Execute ${next}`)
     await pending.remove(next, `${next}: in execute`)
-    say({ request: 'execute', name: next, record: into })
   }
 }

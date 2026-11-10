@@ -13,8 +13,8 @@
 import { transfer } from './transfer.js'
 
 // The layers stored on disk, not atomic: request/*, the boxes (inbox,
-// outbox), the log, and execute/* (the execution branches).
-export const isLocal = name => ['request', 'inbox', 'outbox', 'log', 'execute'].includes(name.split('/')[0])
+// outbox) and execute/* (the execution branches).
+export const isLocal = name => ['request', 'inbox', 'outbox', 'execute'].includes(name.split('/')[0])
 
 export function mixedBackend ({ atomic, local, isLocal: routed = isLocal }) {
   const has = (b, oid) => b.hasObject(oid)
