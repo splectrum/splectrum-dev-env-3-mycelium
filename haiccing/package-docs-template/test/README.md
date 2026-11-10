@@ -15,7 +15,7 @@ test/
 ```json
 {
   "description": "The package as deployed.",
-  "tests": ["boot"]
+  "tests": ["start"]
 }
 ```
 
