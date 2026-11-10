@@ -8,11 +8,13 @@ import { spawnSync } from 'bare-subprocess'
 import { dirname, join, resolve } from 'bare-path'
 import { existsSync } from 'bare-fs'
 import { boot, fetch, HAICC } from './index.js'
+import { logRecord } from '../mrepo-base-request/index.js'
 
 const args = process.argv.slice(2)
 const flags = Object.fromEntries(args.filter(a => a.startsWith('--')).map(a => { const i = a.indexOf('='); return i < 0 ? [a.slice(2), true] : [a.slice(2, i), a.slice(i + 1)] }))
 const [command, name] = args.filter(a => !a.startsWith('--'))
-const say = e => console.log(JSON.stringify(e))
+// Each step a record (logRecord: topic /log, value the step).
+const say = e => console.log(JSON.stringify(logRecord(e)))
 
 if (!['boot', 'fetch'].includes(command) || typeof flags.work !== 'string' || (command === 'fetch' && !name)) {
   console.error('usage: boot --work=<folder> [--setup=<folder>] | fetch <package> --work=<folder> [--setup=<folder>]')

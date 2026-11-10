@@ -78,10 +78,11 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       merged[b] = await w.merge(`execute/${b}`, b, `Merge ${name}: ${protocol} ${action} ${form.uri}`, { author: AUTHOR })
     }
     // The form completed, in its envelope, through its own execution branch.
+    const completed = record(`/${EXECUTE}`, complete(core, result))
     const c = await w.change(`execute/${EXECUTE}`)
-    await c.put(`/${name}.json`, Buffer.from(JSON.stringify(record(`/${EXECUTE}`, complete(core, result))) + '\n'))
+    await c.put(`/${name}.json`, Buffer.from(JSON.stringify(completed) + '\n'))
     await c.commit(`${name}: executed`, { author: AUTHOR })
     await w.merge(`execute/${EXECUTE}`, EXECUTE, `Merge ${name}: executed`, { author: AUTHOR })
-    say({ execute: 'done', record: name, protocol, action, uri: form.uri, ok: result.ok, merged, ...(result.ok ? {} : { error: result.error }) })
+    say({ execute: 'done', name, merged, record: completed })
   }
 }

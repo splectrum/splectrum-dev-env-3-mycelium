@@ -10,3 +10,8 @@
 export const record = (topic, value) => ({ topic, timestamp: new Date().toISOString(), headers: {}, value })
 export const complete = (core, result) => ({ ...core, value: { ...core.value, ...(result.ok ? { output: result.value } : { error: result.error }) } })
 export const isComplete = core => Boolean(core?.value) && ('output' in core.value || 'error' in core.value)
+
+// A log event as a record (the wrapper helper; the log's own design next):
+// its topic /log, its value the event. An event about a record carries it
+// (a transfer: the envelope it made), so the log tells a request's journey.
+export const logRecord = event => record('/log', event)
