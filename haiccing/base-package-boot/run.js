@@ -3,7 +3,7 @@
 // <work>/mrepos/boot/ the first time, then run: the runtime, in this
 // process, on the filesystem storage (p2p-git, every layer on the
 // filesystem, no Corestore). Its preloaded request starts it.
-//   bare boot.js [--work=<folder>]     the work folder: the current one by default
+//   bare run.js [--work=<folder>]     the work folder: the current one by default
 // Our modules from the package's own modules/ (no node_modules above them here).
 import process from './modules/node_modules/bare-process/index.js'
 import { existsSync, mkdirSync } from './modules/node_modules/bare-fs/index.js'

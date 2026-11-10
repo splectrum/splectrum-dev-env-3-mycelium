@@ -1,4 +1,4 @@
-// The boot, as the package runs it: bare boot.js --work=<folder>. Built the
+// The boot, as the package runs it: bare run.js --work=<folder>. Built the
 // first time, started by its preloaded request, a request posted to its
 // inbox answered in its outbox, stopped; run again, opened as it was left.
 // Everything from the package's own modules/.
@@ -18,7 +18,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
 
 function boot (work) {
-  const child = spawn(os.execPath(), [join(pkg, 'boot.js'), `--work=${work}`], { stdio: 'ignore' })
+  const child = spawn(os.execPath(), [join(pkg, 'run.js'), `--work=${work}`], { stdio: 'ignore' })
   return child
 }
 async function up (work) {

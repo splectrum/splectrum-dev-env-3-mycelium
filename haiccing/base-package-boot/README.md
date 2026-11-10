@@ -5,7 +5,7 @@ HAICC's boot: the boot mrepo, the root, and the code to start it
 its bundle, `base-package-boot.bundle`, run with Bare.
 
 ```sh
-bare boot.js --work=<folder>
+bare run.js --work=<folder>
 ```
 
 The first time, the boot mrepo is built from its structure (`mrepo/`) into
@@ -23,7 +23,7 @@ or by SIGTERM / SIGINT; run again, it opens what it left.
   `runtime` (type `boot`, already initialised, its API), `inbox`, `outbox`,
   `request/pending/default` (the preloaded request), `request/execute`,
   `request/done`.
-- `boot.js`: the entry.
+- `run.js`: the entry.
 - `modules/`: the code, copied whole: ours (`modules/pear-full-square/`,
   from `mrepo-base-runtime`, all the way down) and the third-party code
   (`modules/node_modules/`, recorded in `modules/third-party.json`).
