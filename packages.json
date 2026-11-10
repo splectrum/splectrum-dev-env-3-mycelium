@@ -24,7 +24,9 @@
       "repo": "base-package-mrepo",
       "description": "mrepo, the repository framework: a running repository's runtime, running its protocols (request, execute, log). Installed by HAICC's boot into the host's packages, run from its bundle. On Bare.",
       "modules": [
-        "pear-full-square/mrepo-base-runtime"
+        "pear-full-square/mrepo-base-runtime",
+        "pear-full-square/mrepo-base-request",
+        "pear-full-square/mrepo-base-execute"
       ],
       "entries": {
         "runtime": "pear-full-square/mrepo-base-runtime/runtime.js"

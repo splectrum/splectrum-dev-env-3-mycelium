@@ -10,8 +10,9 @@
 //                                  packages loaded, each checked by hash; init:
 //                                  the store (<work>/store) and the repository
 //                                  (`host`, of type haicc) created, its layers main,
-//                                  packages, execute/main,
-//                                  request/pending/default, request/executing,
+//                                  packages, runtime (booted, its type),
+//                                  request/pending/default (preloaded with
+//                                  service initialise /), request/execute,
 //                                  request/done; packages holding the pinned
 //                                  manifest, the bundles by [org]/[package],
 //                                  their addons (laid out as a source): the
@@ -33,6 +34,8 @@ import { mrepos } from 'p2p-mrepo'
 import { writer, openRepo } from '../mycelium-git/index.js'
 import { loadManifest, loadPackage } from '../pkgm-base-manager/lib/sources.js'
 import { start as startRuntime, HOST, viewOf } from '../mrepo-base-runtime/index.js'
+import { record, PENDING } from '../mrepo-base-request/index.js'
+import { newName } from '../mycelium-container-document/index.js'
 
 export const BOOT = 'haiccing/base-package-boot'
 export const HAICC = 'haiccing/base-package-haicc'
@@ -41,7 +44,10 @@ export const MREPO = 'haiccing/base-package-mrepo'
 export const INSTALL = [BOOT, HAICC, MREPO]
 export const DEPLOY = [HAICC, MREPO]
 export { HOST }
-export const LAYERS = ['main', 'packages', 'request/pending/default', 'request/executing', 'request/done']
+export const LAYERS = ['main', 'packages', 'runtime', 'request/pending/default', 'request/execute', 'request/done']
+// The host's repository's type: its package (docs/design/repositories.md,
+// "A repository's type is a package").
+export const TYPE = { type: 'haicc', package: HAICC }
 const PACKAGES = 'packages'
 // The repository's root, viewed: <work>/haicc (its mount point).
 export const VIEW = viewOf('', HOST)
@@ -107,10 +113,19 @@ export async function boot ({ setup, work, say = () => {}, runtime = true }) {
       const repo = await mrepos({ store }).create(HOST)
       const w = writer(repo.backend)
       for (const l of LAYERS) await w.createLayer(l, `Create ${l}`, { author })
-      await w.createExecution('main')
-      say({ step: 'init', repository: HOST, id: repo.id, key: repo.key, layers: [...LAYERS, 'execute/main'] })
+      say({ step: 'init', repository: HOST, id: repo.id, key: repo.key, layers: LAYERS })
       const commit = await commitPackages(repo.backend, staged, INSTALL, manifest, `Installed from the setup: manifest ${manifest.sequence}`, { pin: true })
       say({ step: 'installed', layer: PACKAGES, commit, packages: INSTALL })
+      // The runtime's data: booted, its type; and the repository preloaded
+      // with its first request, service initialise / (no input to answer).
+      const r = await w.change('runtime')
+      await r.put('/service.json', Buffer.from(JSON.stringify({ state: 'booted', ...TYPE }) + '\n'))
+      await r.commit('Booted', { author })
+      const name = newName()
+      const p = await w.change(PENDING)
+      await p.put(`/${name}.json`, Buffer.from(JSON.stringify(record(`/${PENDING}`, { api: TYPE.type, protocol: 'service', action: 'initialise', uri: '/' }, { mrepo: { origin: 'boot' } })) + '\n'))
+      await p.commit(`Request ${name}: service initialise /`, { author })
+      say({ step: 'booted', type: TYPE.type, preloaded: `/${PENDING}/${name}` })
       let bundle = null
       for (const p of DEPLOY) { const b = await deploy(repo.backend, manifest, p, join(work, VIEW, PACKAGES)); if (p === HAICC) bundle = b }
       say({ step: 'deployed', packages: DEPLOY })

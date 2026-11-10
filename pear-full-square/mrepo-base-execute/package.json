@@ -1,0 +1,11 @@
+{
+  "name": "mrepo-base-execute",
+  "version": "0.1.0",
+  "description": "The mrepo execute protocol (base variant): a repository's request executed in execution branches made from their targets, its record written, each branch merged back into its own target",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

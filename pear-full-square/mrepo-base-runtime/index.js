@@ -7,11 +7,16 @@
 //                           host's repository (`host`) opened, the local
 //                           connection served (<work>/runtime.sock, owner
 //                           only: one JSON request a line, one JSON answer a
-//                           line: { op: 'status' }, { op: 'stop' }); the
-//                           boxes run (lib/boxes.js: the local dispatcher,
-//                           the repository taking its inbox in); stops on
-//                           `stop`, SIGTERM or SIGINT, closing the store.
-//                           Resolves when it has stopped.
+//                           line: { op: 'status' }, { op: 'stop' }); one
+//                           poller firing the protocols in turn, over their
+//                           data states: the outbox dispatched, the request
+//                           protocol (mrepo-base-request), the execute
+//                           protocol (mrepo-base-execute), each given the
+//                           context (read access, the store's writer); stops
+//                           on `stop`, SIGTERM or SIGINT, closing the store,
+//                           and by itself once the service is shut down
+//                           (booted, nothing waiting). Resolves when it has
+//                           stopped.
 //   start({ work, bare })   the runtime started as its own process, through
 //                           the shell (it outlives the caller), from the
 //                           deployed bundle; resolves its first status, or
@@ -26,8 +31,9 @@ import { existsSync, mkdirSync, rmSync, appendFileSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
-import { INBOX, OUTBOX, inbox, outbox, dispatch, takeIn } from './lib/boxes.js'
-import { viewOf } from './lib/view.js'
+import { openRepo, writer } from 'mycelium-git'
+import { INBOX, OUTBOX, inbox, outbox, dispatch, viewOf, request, runtimeData, layer, PENDING, EXECUTE } from 'mrepo-base-request'
+import { execute } from 'mrepo-base-execute'
 import pkg from './package.json' with { type: 'json' }
 
 export { INBOX, OUTBOX, inbox, outbox, viewOf }
@@ -42,6 +48,7 @@ const socketOf = work => join(work, SOCKET)
 export async function run ({ work, say = () => {}, every = 200 }) {
   const store = await openStore({ storage: join(work, 'store') })
   const host = await mrepos({ store }).open(HOST)
+  const ctx = { work, name: host.name, backend: host.backend, repo: openRepo(host.backend), writer: writer(host.backend), say }
   const started = new Date().toISOString()
   const status = () => ({ ok: true, pid: process.pid, started, repository: { name: host.name, id: host.id, key: host.key }, version })
   let stopping = null
@@ -52,7 +59,8 @@ export async function run ({ work, say = () => {}, every = 200 }) {
     // No new connections; open ones end with the process (not waited on:
     // the one that asked to stop may still be open).
     if (server) server.close()
-    clearInterval(boxes)
+    clearInterval(poller)
+    while (busy) await new Promise(resolve => setTimeout(resolve, 20))
     await store.close()
     // The socket last (the store's lock itself is released as the process ends).
     rmSync(socketOf(work), { force: true })
@@ -78,12 +86,25 @@ export async function run ({ work, say = () => {}, every = 200 }) {
   })
   server.listen({ path: socketOf(work), ownerOnly: true })
   say({ runtime: 'running', ...status() })
-  // The boxes, watched: the outbox dispatched, the inbox taken in.
+  // The poller: the protocols fired in turn, one pass each, never two at once.
   const held = new Set()
-  const boxes = setInterval(() => {
-    if (stopping) return
-    dispatch({ work, held, say })
-    takeIn({ work, say })
+  let busy = false
+  const poller = setInterval(async () => {
+    if (stopping || busy) return
+    busy = true
+    try {
+      dispatch({ work, held, say })
+      await request(ctx)
+      await execute(ctx)
+      await request(ctx)
+      // Booted (shut down, or never initialised) and nothing waiting: the
+      // runtime ends; a request posted later starts it again.
+      const { service } = await runtimeData(ctx)
+      const waiting = inbox(work).list().length + (await layer(ctx, PENDING).list()).length + (await layer(ctx, EXECUTE).list()).length
+      if (service?.state === 'booted' && !waiting) setTimeout(() => stop('shut down'), 0)
+    } catch (err) {
+      say({ runtime: 'failed', error: err.message })
+    } finally { busy = false }
   }, every)
   process.on('SIGTERM', () => stop('SIGTERM'))
   process.on('SIGINT', () => stop('SIGINT'))
