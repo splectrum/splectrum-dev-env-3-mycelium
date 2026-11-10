@@ -27,7 +27,7 @@ function setup (dir, key, { publicKey = key.publicKey } = {}) {
 // The host's repository, read after the boot (its store closed).
 async function hostRepo (work, fn) {
   const store = await openStore({ storage: join(work, 'store'), readOnly: true })
-  try { return await fn(openRepo((await mrepos({ store }).open(HOST)).backend)) } finally { await store.close() }
+  try { return await fn(openRepo((await mrepos({ store, local: join(work, 'mrepos') }).open(HOST)).backend)) } finally { await store.close() }
 }
 
 test('boot: init, the repository and its layers; the packages layer as a source; its view under the mount point', async (t) => {

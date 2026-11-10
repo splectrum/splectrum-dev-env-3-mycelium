@@ -233,9 +233,7 @@ manager puts bundles in its packages layer. Execution is its own heading,
   layer; HAICC's API in its package (`haiccing/base-package-haicc/api.json`);
   `boot` preloading `service initialise /`; the framework's generic actions
   (`rest`: get, put, delete; `service`: initialise, start, stop, shutdown);
-  every message a record. Simplified for now: the request layers are git
-  branches in the Corestore (with the merges they need), not the
-  filesystem; the protocols, in the runtime's process, are handed its
+  every message a record. Simplified for now: the protocols, in the runtime's process, are handed its
   writer; the runtime ends once shut down (booted, nothing waiting), HAICC's
   input starting it again. Found: **the service state gates a request as it
   executes, not at the inbox** (a queued request may change it first: a
@@ -275,6 +273,15 @@ Stored, so, in three modes (`structure.md`): atomic (the Corestore),
 replicated (the Corestore, copied out as files where a process needs them:
 `packages`), non-atomic (the filesystem).
 
+- **One repository over two stores** (**built**, 2026-11-10:
+  `mycelium-git`'s `mixedBackend`, `p2p-mrepo`'s `local`): the atomic and
+  replicated layers in the Corestore, `request/*` and `execute/*` in git on
+  disk, `<work>/mrepos/<name>/.git` (the same engine, p2p-git, on the
+  filesystem: no `git` binary); routed by the branch's layer, listed
+  together. Objects are written to disk, a commit or tree there getting what
+  it refers to first; an atomic branch moved has its commit's objects
+  transferred into the store (the same ids) before its ref; history and
+  merges are computed on the disk side. It passes the backend contract.
 - **Only atomic layers go through the runtime**; it moves a result in
   (`transfer`: the same object ids, nothing copied twice) and merges it.
 - **The disk layers take parallel writers** (threads, processes), one per

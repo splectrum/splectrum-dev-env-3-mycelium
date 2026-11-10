@@ -47,7 +47,7 @@ const socketOf = work => join(work, SOCKET)
 
 export async function run ({ work, say = () => {}, every = 200 }) {
   const store = await openStore({ storage: join(work, 'store') })
-  const host = await mrepos({ store }).open(HOST)
+  const host = await mrepos({ store, local: join(work, 'mrepos') }).open(HOST)
   const ctx = { work, name: host.name, backend: host.backend, repo: openRepo(host.backend), writer: writer(host.backend), say }
   const started = new Date().toISOString()
   const status = () => ({ ok: true, pid: process.pid, started, repository: { name: host.name, id: host.id, key: host.key }, version })

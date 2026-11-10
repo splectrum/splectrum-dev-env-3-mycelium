@@ -13,7 +13,7 @@ import { execute } from '../index.js'
 async function withHost (work, fn) {
   const store = await openStore({ storage: join(work, 'store') })
   try {
-    const host = await mrepos({ store }).open('host')
+    const host = await mrepos({ store, local: join(work, 'mrepos') }).open('host')
     return await fn({ work, name: host.name, backend: host.backend, repo: openRepo(host.backend), writer: writer(host.backend) })
   } finally { await store.close() }
 }

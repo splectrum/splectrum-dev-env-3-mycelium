@@ -26,7 +26,7 @@ export const API = {
 export async function bootedHost (work, { preload = true } = {}) {
   const store = await openStore({ storage: join(work, 'store') })
   try {
-    const host = await mrepos({ store }).create('host')
+    const host = await mrepos({ store, local: join(work, 'mrepos') }).create('host')
     const w = writer(host.backend)
     for (const l of ['main', 'packages', 'runtime', 'request/pending/default', 'request/execute', 'request/done']) await w.createLayer(l, `Create ${l}`, { author })
     const bundle = new Bundle()

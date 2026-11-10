@@ -272,6 +272,26 @@ protocols meeting in data (`request/pending` -> `request/execute` ->
   the runtime ending), nothing left running. The tag it would publish:
   `setup-9ab0fcc85e2c`.
 
+## 6. One repository over two stores: done (2026-11-10)
+
+The keystone the design had agreed but not built (found asking why the
+request layers were in the Corestore): a repository's layers stored by
+their writes.
+
+- `mycelium-git`: `mixedBackend` (the backend contract over two backends,
+  routed by layer: `isLocal`, `request/*` and `execute/*` on disk) and its
+  tests (its own, and the whole backend contract on it: 23 tests).
+- `p2p-mrepo`: `local`, a folder for the repositories' disk sides
+  (`<local>/<name>/.git`, the same engine on the filesystem); the boot, the
+  runtime and the tests open `host` with `<work>/mrepos`.
+- The cycle test checks where each layer lives: in the store `main`,
+  `packages`, `runtime`; on disk the request layers and the execution
+  branches.
+- Tests: mycelium-git 114, p2p-mrepo 28, the mrepo modules, HAICC and the
+  boot: all pass. `tools/publish.sh` without `--push`: the cycle through the
+  real bundles, `mrepos/host/.git` beside the boxes and packages, nothing
+  left running. The tag it would publish: `setup-c06d0725ddde`.
+
 Next: populate `main` and the warm boot (`initialise`) for the
 repository's internal functionality; then swarms, nodes, centralised logs,
 the demos. Product repositories: the new and renamed modules' first
