@@ -90,8 +90,15 @@ copies); only native addons are shared, once by hash
   starts it. No separate setup to build: outside, only Bare ensured and the
   bundle's hash checked (the same few lines of shell for every release).
 
+**Built** (2026-11-10, the first piece): the boot mrepo's structure,
+`haiccing/base-package-boot/mrepo/` (type `boot`, initialised already, its
+API in `runtime/`; preloaded `service start /`), built into a standalone
+repository by `mrepo-base-runtime`'s `lib/build.js` and run on the `disk`
+storage (p2p-git, every layer on disk). Not yet: `service boot /host`, the
+overlay on `base-package-mrepo`'s structure, the clean-up, the bundle.
+
 **Open**: the build instructions in the package (today `packages.json`'s
-entry); the package's manifest; the boot mrepo's type and API.
+entry); the package's manifest; the boot mrepo's API beyond the generic.
 
 ## Built: phase 2's structure (to be replaced)
 

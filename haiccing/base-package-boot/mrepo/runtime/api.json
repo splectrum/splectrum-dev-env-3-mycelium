@@ -1,0 +1,9 @@
+{
+  "api": "boot",
+  "types": [
+    { "uri": "/", "protocols": { "service": ["start", "stop", "shutdown"], "rest": ["get"] } },
+    { "uri": "/main", "deep": true, "protocols": { "rest": ["get"] } },
+    { "uri": "/runtime", "deep": true, "protocols": { "rest": ["get"] } },
+    { "uri": "/request", "deep": true, "protocols": { "rest": ["get"] } }
+  ]
+}

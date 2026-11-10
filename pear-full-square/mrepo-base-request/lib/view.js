@@ -3,7 +3,9 @@
 // (/inbox at <work>/mrepos/<name>/inbox).
 //
 // Which repository, on which storage (docs/design/native.md): the setting
-// beside it, <work>/mrepo.json, { "storage": "git" | "p2p", "name" }; without
+// beside it, <work>/mrepo.json, { "storage": "git" | "disk" | "p2p", "name" }
+// (git: native git; disk: the p2p-git hybrid with every layer on disk, no
+// Corestore, as the boot mrepo runs); without
 // it, the p2p host (the host's repository, `host`, in the Corestore at
 // <work>/store with its disk side). The runtime needs it before it can read
 // any layer, so it is not in the repository.

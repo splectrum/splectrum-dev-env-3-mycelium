@@ -477,6 +477,33 @@ Next (the plan in `handover-next.md`): with the existing tools, a boot repo
 built that can be bundled; the boot's bundle; then the other bundles, and
 the package repositories written again.
 
+## 14. The boot mrepo, operational (2026-11-10)
+
+The human: create an operational boot mini mrepo in the boot package,
+developed as a folder, made into a standalone git that runs on our p2p-git
+hybrid with all layers on disk.
+
+- `haiccing/base-package-boot/mrepo/`: the boot mrepo's structure, by
+  layers, a `layer.json` at each leaf (`{ mode, description }`): `main`,
+  `runtime` (`service.json`: type `boot`, already initialised, its API
+  `api.json` there: no packages layer, the boot's code is its bundle),
+  `inbox`, `outbox`, `request/pending/default` (preloaded: `service start
+  /`), `request/execute`, `request/done`.
+- `mrepo-base-runtime`'s `lib/build.js`: the folder written as a standalone
+  repository (p2p-git on `bare-fs`, one orphan branch a leaf, a fixed time:
+  the same commits every build); the setting `disk` (`<work>/mrepo.json`).
+- The runtime's `disk` storage: p2p-git on disk, every layer there, no
+  Corestore; the inbox folder posted as on the p2p host.
+- `layer.json` committed with its layer, never one of its records
+  (`mrepo-base-request`: `layer().list`, the arrivals, the inbox folder).
+- Tested (`mrepo-base-runtime/test/build.test.js`): built twice, the same
+  commits; run, the preloaded start done, requests answered, its API held,
+  stopped. Every affected module's tests pass.
+
+Next: `service boot /host` (the boot's action: the host installed from
+the mrepo and haicc bundles and linked into `main`); then the boot's
+bundle.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
