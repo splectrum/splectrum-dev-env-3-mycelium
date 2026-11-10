@@ -346,6 +346,24 @@ until their use is planned.
   boot 2 files: all pass. `tools/publish.sh` without `--push`: passed. The
   tag it would publish: `setup-5b8cfbb3e9c8`.
 
+## 9. Log events as records; the journey shown: done (2026-11-10)
+
+- `logRecord(event)` (`mrepo-base-request`), the wrapper helper: a log
+  event a record (topic `/log`, value the event). The runtime's log and the
+  boot's steps are records; each transfer is logged with the envelope it
+  made (received, pending, execute, execute done, done, sent back,
+  refused).
+- The cycle test prints one request's journey on both storages (the input
+  from `inbox`, its log records, the output from `outbox`) and checks it:
+  each transfer a new envelope at its new topic, the core's address
+  unchanged, the output the last envelope as stored. The release check
+  prints the runtime's log.
+- Tests: runtime 6, the other suites unchanged: all pass. `tools/publish.sh`
+  without `--push`: passed. The tag it would publish: `setup-6c2209bd463e`.
+
+Next: the log's design (where it lives, the `log` layer, levels, topics),
+with the human.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

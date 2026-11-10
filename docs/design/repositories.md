@@ -353,8 +353,12 @@ writing into a repository's inbox and reading its outbox (built for now).
   inbox, the dispatcher's outbox for the terminal, the terminal's inbox.
 - **Routing reads the onion**: the dispatcher routes a record by its
   envelope's topic, and a completed form back by its core's topic.
-- **What the terminal shows are records**: completed forms (**built**) and
-  log events (agreed).
+- **What the terminal shows are records** (**built**): completed forms, and
+  log events (`logRecord`: topic `/log`, value the event; each transfer
+  logged with the envelope it made, so the log tells a request's journey;
+  for now in `<work>/log/runtime.log`, the log's own design next). The
+  tests and the release check show a request's journey: input, transfers,
+  output, log.
 - Watching is the same everywhere: on git, a branch head moving; on p2p,
   Hypercore's notice of an append.
 - Nothing in a repository is callable from outside by default: its
