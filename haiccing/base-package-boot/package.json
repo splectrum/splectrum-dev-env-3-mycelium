@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "main": "boot.js",
+  "main": "run.js",
   "modules": [
     "pear-full-square/mrepo-base-runtime"
   ],

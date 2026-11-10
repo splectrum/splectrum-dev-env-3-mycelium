@@ -502,8 +502,8 @@ hybrid with all layers on disk.
 
 Then the package whole (the human: modules, test, package.json, to be
 bundled with the boot mrepo inside; what is on GitHub replaced):
-`haiccing/base-package-boot/` holds `mrepo/`, `boot.js` (the entry: `bare
-boot.js --work=<folder>`, built the first time with a fixed time, then
+`haiccing/base-package-boot/` holds `mrepo/`, `run.js` (the entry: `bare
+run.js --work=<folder>`, built the first time with a fixed time, then
 run in its process), `package.json` (its `modules`: what it starts from),
 `test/` (the boot run as a process: built, answering, stopped, run again),
 `README.md`, `LICENSE`, and `modules/`, assembled by
