@@ -65,8 +65,33 @@ bundles (one a package, `packages/<org>/<package>.bundle`, carrying its own
 copies); only native addons are shared, once by hash
 (`packages/addons/<sha256>`).
 
-**Open**: `boot.js` per unit; the build instructions in the package (today
-`packages.json`'s entry); the package's manifest.
+## The boot mrepo: the root
+
+**Agreed** (the human, 2026-11-10).
+
+- **The boot is an mrepo, the first**, its root: `boot`. Its `main` holds
+  what installs the host mrepo (its definition, a request preloaded to boot
+  it); executing it builds the host into `<work>/mrepos/host/` and links it
+  into the boot mrepo's `main`. The host then boots its own children
+  (nodes, the dispatcher, the terminal) the same way.
+- **`boot` and `teardown` are executed by the parent**, outside the mrepo
+  they create or remove (`service boot /host`, sent to the boot mrepo); an
+  mrepo itself executes `initialise`/`shutdown`, `start`/`stop`,
+  `pause`/`resume`. **The boot mrepo is never torn down** (only the work
+  folder removed by hand removes it).
+- **Building is the framework's**: the install routine (overlay, build,
+  clean up) a module of `base-package-mrepo`, the code a parent's `service
+  boot` runs; no `boot.js` per unit.
+- **The boot's release is its bundle**: `base-package-boot.bundle` carries
+  the boot mrepo, prebuilt (its git directory as files, or a git bundle
+  inside it if that proves awkward), and the code to unpack it; run with
+  Bare (`bare base-package-boot.bundle --work=<work>`), it extracts its
+  mrepo into `<work>/mrepos/boot/` (on disk, git only: no Corestore) and
+  starts it. No separate setup to build: outside, only Bare ensured and the
+  bundle's hash checked (the same few lines of shell for every release).
+
+**Open**: the build instructions in the package (today `packages.json`'s
+entry); the package's manifest; the boot mrepo's type and API.
 
 ## Built: phase 2's structure (to be replaced)
 

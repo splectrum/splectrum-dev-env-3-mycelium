@@ -53,8 +53,9 @@ real publisher's key is on the local machine only.
 ## Open, in the order discussed
 
 0. **Packages from scratch** (part 13, in progress): the design agreed so
-   far in `docs/design/packages.md`; next `boot.js` per unit, the build
-   instructions, the manifest; then built (the boot package the first,
+   far in `docs/design/packages.md` (the structure unit, the overlay install,
+   the boot mrepo as the root); next the build instructions, the manifest,
+   the boot mrepo's type and API; then built (the boot package the first,
    `haiccing/base-package-boot/` here; the package repositories written
    again).
 

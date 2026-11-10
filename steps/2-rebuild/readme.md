@@ -468,7 +468,13 @@ layers, a `layer.json` at each leaf, committed; the install an overlay
 (common, then the type's) into `<work>/mrepos/<name>/`, built in place,
 then cleaned up.
 
-Next: `boot.js` per unit, the build instructions, the manifest; then built.
+Then (`packages.md`, "The boot mrepo: the root"): the boot an mrepo, the
+root, never torn down; `boot` and `teardown` executed by the parent; the
+install routine the framework's (no `boot.js` per unit); the boot's release
+its bundle, carrying the boot mrepo prebuilt, run with Bare.
+
+Next: the build instructions, the manifest, the boot mrepo's type and API;
+then built.
 
 ## The product repositories: updated (2026-11-10)
 
