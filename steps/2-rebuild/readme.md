@@ -512,6 +512,10 @@ whole, committed here; the third-party code in `modules/node_modules/`,
 ignored here, recorded in `modules/third-party.json`). Tested from a copy
 outside this repository: only Bare needed.
 
+The test folder (the human): a folder a test, each a structure unit as
+the package is, here only an entry: `test/boot/run.js` (and its
+`boot.test.js`). The entry named `run.js`, the package's too.
+
 Next: `service boot /host` (the boot's action: the host installed from
 the mrepo and haicc bundles and linked into `main`); then the boot's
 bundle.

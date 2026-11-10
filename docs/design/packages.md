@@ -21,7 +21,8 @@ models a structure of mrepos and how it is built and installed.
 ```
 <unit>/
   mrepo/             its mrepo's definition, by layers (below)
-  test/              its test resources
+  test/<name>/       its tests, a folder each, each a structure unit (as needed:
+                     an entry, run.js, executed: bare test/<name>/run.js)
   <name>/            a further unit: another mrepo (dispatch, terminal, a node), by its URI part name
 modules/             once, at the package's top, shared by its units: its code, ours
                      copied whole (<org>/<module>/), the third-party code (node_modules/)
