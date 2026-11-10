@@ -2,7 +2,7 @@
 // framework: the process that runs its protocols, docs/design/repositories.md,
 // "A running repository"; structure.md, "One writer per store"), as a library
 // (runtime.js is its command line, base-package-mrepo's entry).
-//   run({ work, say })      the runtime, in this process: its repository
+//   run({ work })           the runtime, in this process: its repository
 //                           opened by the setting beside it (<work>/mrepo.json,
 //                           mrepo-base-request's `setting`): on native git
 //                           (`git`: <work>/mrepos/<name>/.git, mycelium-git's
@@ -19,7 +19,9 @@
 //                           working tree), the request
 //                           protocol (mrepo-base-request), the execute
 //                           protocol (mrepo-base-execute), each given the
-//                           context (read access, the writer); stops
+//                           context (read access, the writer); a pass that
+//                           fails: its error in the request executing
+//                           (stderr when none is, or that fails too); stops
 //                           on `stop`, SIGTERM or SIGINT, closing the store,
 //                           and by itself once the service is shut down
 //                           (booted, nothing waiting). Resolves when it has
@@ -40,8 +42,8 @@ import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
 import { nativeBackend } from 'mycelium-git'
-import { INBOX, OUTBOX, inboxFolder, post, logRecord, logTo as logInto, commitLog, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
-import { execute } from 'mrepo-base-execute'
+import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
+import { execute, failed } from 'mrepo-base-execute'
 import pkg from './package.json' with { type: 'json' }
 
 export { INBOX, OUTBOX, inboxFolder, viewOf, gitdirOf, setting }
@@ -68,27 +70,22 @@ const socketOf = work => join(work, SOCKET)
 export async function run ({ work, every = 200 }) {
   const repo = await open(work)
   const started = new Date().toISOString()
-  // The log: each event a record, appended to the log folder (lib/logs.js of
-  // mrepo-base-request), committed into the `log` layer after each pass.
-  const append = logInto(work, started)
-  const say = e => append(logRecord(e))
-  const ctx = { work, name: repo.name, backend: repo.backend, repo: openRepo(repo.backend), writer: writer(repo.backend), say, seen: {} }
+  // No log of its own: what happens to a request is in its document and the
+  // commits that moved it (docs/design/repositories.md, "No log").
+  const ctx = { work, name: repo.name, backend: repo.backend, repo: openRepo(repo.backend), writer: writer(repo.backend), seen: {} }
   const status = () => ({ ok: true, pid: process.pid, started, repository: { name: repo.name, storage: repo.storage, id: repo.id, key: repo.key }, version })
   let stopping = null
   let stopped = false
   let server = null
   const stop = why => (stopping ??= (async () => {
-    say({ runtime: 'stopping', why })
     // No new connections; open ones end with the process (not waited on:
     // the one that asked to stop may still be open).
     if (server) server.close()
     clearInterval(poller)
     while (busy) await new Promise(resolve => setTimeout(resolve, 20))
-    await commitLog(ctx)
     await repo.close()
     // The socket last (the store's lock itself is released as the process ends).
     rmSync(socketOf(work), { force: true })
-    say({ runtime: 'stopped' })
     stopped = true
   })())
   rmSync(socketOf(work), { force: true }) // a socket left by a runtime that ended without stopping: the store's lock says none runs now
@@ -109,7 +106,6 @@ export async function run ({ work, every = 200 }) {
     pipe.on('error', () => {})
   })
   server.listen({ path: socketOf(work), ownerOnly: true })
-  say({ runtime: 'running', ...status() })
   // The poller: the protocols fired in turn, one pass each, never two at once.
   let busy = false
   const poller = setInterval(async () => {
@@ -120,15 +116,16 @@ export async function run ({ work, every = 200 }) {
       await request(ctx)
       await execute(ctx)
       await request(ctx)
-      await commitLog(ctx)
-      // Booted (shut down, or never initialised) and nothing waiting: the
+        // Booted (shut down, or never initialised) and nothing waiting: the
       // runtime ends; a request posted later starts it again.
       const { service } = await runtimeData(ctx)
       // (the inbox folder's new files were committed above: untaken counts them)
       const waiting = (await untaken(ctx)).length + (await layer(ctx, PENDING).list()).length + (await layer(ctx, EXECUTE).list()).length
       if (service?.state === 'booted' && !waiting) setTimeout(() => stop('shut down'), 0)
     } catch (err) {
-      say({ runtime: 'failed', error: err.message })
+      // The error in the request executing; none, or that failing too: stderr.
+      const why = `runtime: ${err.message}`
+      try { if (!(await failed(ctx, why)).length) console.error(`mrepo: ${why}`) } catch (e) { console.error(`mrepo: ${why}; not recorded: ${e.message}`) }
     } finally { busy = false }
   }, every)
   process.on('SIGTERM', () => stop('SIGTERM'))

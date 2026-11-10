@@ -9,8 +9,8 @@
 // request with its output (or the error that stopped it).
 //
 // The key: a GUID set by the sender on the core when the request is made,
-// carried by every envelope around it and every log record about it, and the
-// name of its document in every layer: a request traced everywhere by it.
+// carried by every envelope around it, and the name of its document in every
+// layer: a request traced everywhere by it.
 import crypto from 'bare-crypto'
 
 export const guid = () => {
@@ -25,8 +25,3 @@ export const record = (topic, value, key = null) => ({ topic, key, timestamp: ne
 export const wrap = (topic, inner) => record(topic, inner, inner?.key ?? null)
 export const complete = (core, result) => ({ ...core, value: { ...core.value, ...(result.ok ? { output: result.value } : { error: result.error }) } })
 export const isComplete = core => Boolean(core?.value) && ('output' in core.value || 'error' in core.value)
-
-// A log event as a record (the wrapper helper; the log's own design next):
-// its topic /log, its value the event. An event about a record carries it
-// (a transfer: the envelope it made), so the log tells a request's journey.
-export const logRecord = event => record('/log', event, event?.record?.key ?? null)

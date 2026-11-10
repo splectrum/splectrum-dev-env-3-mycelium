@@ -32,13 +32,14 @@ ones named, renamed or created, 2026-11-09), all in `pear-full-square`:
 | `mrepo-base-runtime` (**built**; first `mycelium-repo-main`) | a running repository's runtime: the framework running its protocols by one poller; the store held as its single writer; the local connection; started detached, ended once shut down (`repositories.md`, "A running repository") | (new: the running repository) |
 | `mrepo-base-request` (**built**; was `mycelium-request-submit`) | the request protocol: the inbox taken in and checked, the queue, the moves between request layers, the answers; and the records, the boxes, the local dispatcher | `mycelium-layer`'s intake and `p2p-node`'s copy (which takes a peer's names unchecked) |
 | `mrepo-base-execute` (**built**; was `mycelium-request-execute`) | the execute protocol: a request run in execution branches made from their targets, its record, the merges back; the framework's generic actions (`rest`, `service`) | `mycelium-layer`'s `executeRequests` |
-| `mrepo-base-log` | the log protocol | (new) |
 
 Built in existing modules this phase: `mycelium-git`'s `mixedBackend` (one
 repository over two stores) and the `runtime` layer; `p2p-mrepo`'s `local`
 (a repository's disk side); `haicc-base-boot` rebuilt (the boot of the host's
 repository); `haicc-base-cli` (HAICC's terminal input: every command a
-request).
+request). Dropped: `mrepo-base-log` (the log protocol, never built: a request is its
+own record, `repositories.md`, "No log"); its product repository, created
+empty, to be archived by the human.
 
 `mycelium-layer` keeps the branches (import, export, bundles, deploy,
 extract). The request queue (`plan` today) waits for the request manager:

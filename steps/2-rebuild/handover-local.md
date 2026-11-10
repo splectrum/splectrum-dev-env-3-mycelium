@@ -10,7 +10,7 @@ From one downloaded file, `haicc-setup.sh` (Bare fetched and checked by the
 setup; three bundles: the boot, HAICC, the mrepo framework; their native
 addons by hash; the publisher's signed manifest), a work folder is booted
 into the host's repository, `host`, of type `haicc`: its layers (`main`,
-`packages`, `runtime` in the Corestore; `inbox`, `outbox`, `log`,
+`packages`, `runtime` in the Corestore; `inbox`, `outbox`,
 `request/*` and the execution branches in git on disk, `mrepos/host/.git`), its packages installed, the
 runtime started, which runs the preloaded `service initialise /`. Then every
 `haicc` command is a request: posted to `/inbox`, queued, executed, merged,
@@ -44,9 +44,9 @@ Node.js off the PATH, the setup run (the boot; the runtime started), then
 the cycle, each printing its completed form (a record: the request with
 its `output`): `start /` (`"service": "started"`),
 `put /main/notes/hello.json`, `get /main/notes/hello.json` (`"text":
-"hello"`), `get /` (the repository `host`, `"service": "started"`, its nine
+"hello"`), `get /` (the repository `host`, `"service": "started"`, its eight
 layers, three packages), `stop /`, `shutdown /`; then "the cycle: answered;
-shut down, the runtime ended" and `not published (setup-<12 hex>)`.
+shut down, the runtime ended"; the requests done, in order (the boot, `initialise`, the cycle), each a record; and `not published (setup-<12 hex>)`.
 
 By hand, in the checked folder (the runtime started again by the first
 request, ended by `shutdown /`):
@@ -62,7 +62,6 @@ B=~/haicc-release/check/mrepos/host/packages/haiccing/base-package-haicc.bundle
 ~/haicc-release/check/setup/bare $B put /packages/x.json 1      # refused: not offered
 ~/haicc-release/check/setup/bare $B stop /
 ~/haicc-release/check/setup/bare $B shutdown /
-cat ~/haicc-release/check/log/runtime.log
 ```
 
 ## 4. Publish, with the human's word

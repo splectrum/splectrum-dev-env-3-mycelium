@@ -10,7 +10,7 @@
 //                                  packages loaded, each checked by hash; init:
 //                                  the store (<work>/store) and the repository
 //                                  (`host`, of type haicc) created, its layers main,
-//                                  packages, runtime (booted, its type), inbox, outbox, log,
+//                                  packages, runtime (booted, its type), inbox, outbox,
 //                                  request/pending/default (preloaded with
 //                                  service initialise /), request/execute,
 //                                  request/done; packages holding the pinned
@@ -20,12 +20,21 @@
 //                                  mrepo's bundles copied out (the replicated
 //                                  layer's files: <work>/mrepos/host/packages),
 //                                  read back from the repository; then the
-//                                  host's runtime started (mrepo-base-runtime)
+//                                  host's runtime started (mrepo-base-runtime).
+//                                  The boot is a request itself (service boot /,
+//                                  the command as typed): its form completed
+//                                  with the result (or the error that stopped
+//                                  it), handed over into request/execute as the
+//                                  execute protocol hands one (executed), once
+//                                  the repository exists, before the runtime
+//                                  starts: the request protocol's first pass
+//                                  moves it to request/done, then starts the
+//                                  preloaded initialise
 //   fetch({ setup, work, repo })   another package, lazily, as the pinned
 //                                  manifest lists it ([org]/[package]): into
 //                                  the packages layer and its files
-// Each returns its result; `say` gets each step as it happens. A host
-// already booted is not booted again (a restore comes later).
+// Each returns its result (the boot's: with `record`, its completed request).
+// A host already booted is not booted again (a restore comes later).
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync } from 'bare-fs'
 import { join } from 'bare-path'
 import os from 'bare-os'
@@ -34,7 +43,8 @@ import { mrepos } from 'p2p-mrepo'
 import { writer, openRepo } from '../mycelium-git/index.js'
 import { loadManifest, loadPackage } from '../pkgm-base-manager/lib/sources.js'
 import { start as startRuntime, HOST, viewOf } from '../mrepo-base-runtime/index.js'
-import { record, wrap, guid, PENDING } from '../mrepo-base-request/index.js'
+import { record, wrap, guid, complete, PENDING, EXECUTE } from '../mrepo-base-request/index.js'
+import { executed } from '../mrepo-base-execute/index.js'
 
 export const BOOT = 'haiccing/base-package-boot'
 export const HAICC = 'haiccing/base-package-haicc'
@@ -43,7 +53,7 @@ export const MREPO = 'haiccing/base-package-mrepo'
 export const INSTALL = [BOOT, HAICC, MREPO]
 export const DEPLOY = [HAICC, MREPO]
 export { HOST }
-export const LAYERS = ['main', 'packages', 'runtime', 'inbox', 'outbox', 'log', 'request/pending/default', 'request/execute', 'request/done']
+export const LAYERS = ['main', 'packages', 'runtime', 'inbox', 'outbox', 'request/pending/default', 'request/execute', 'request/done']
 // The host's repository's type: its package (docs/design/repositories.md,
 // "A repository's type is a package").
 export const TYPE = { type: 'haicc', package: HAICC }
@@ -90,62 +100,72 @@ async function deploy (backend, manifest, repo, folder) {
   return join(folder, `${repo}.bundle`)
 }
 
-export async function boot ({ setup, work, say = () => {}, runtime = true }) {
+export async function boot ({ setup, work, command = null, runtime = true }) {
+  // The boot's own request: the form, its key a GUID; no sender waiting.
+  const core = record(null, { api: TYPE.type, protocol: 'service', action: 'boot', uri: '/', ...(command ? { command } : {}) }, guid())
+  const r = await booting({ setup, work })
+  const done = complete(core, r.ok ? { ok: true, value: r.value } : { ok: false, error: r.why })
+  // Handed over into the repository (once it exists), its store then closed.
+  if (r.repo) {
+    try { await executed({ backend: r.repo.backend, writer: writer(r.repo.backend) }, core.key, wrap(`/${EXECUTE}`, done)) } finally { await r.store.close() }
+  }
+  if (!r.ok) return { ok: false, why: r.why, record: done }
+  const result = { ok: true, ...r.value, record: done }
+  // The host's runtime (mrepo-base-runtime): started detached, the store's
+  // single writer from now on (the boot's hold closed above).
+  if (runtime) {
+    const s = await startRuntime({ work })
+    if (!s) return { ...result, ok: false, why: 'the runtime did not start' }
+    result.runtime = { pid: s.pid }
+  }
+  return result
+}
+
+// The boot's work: { ok, value } or { ok: false, why }; with the store and
+// the repository held open once created (the boot's request handed over
+// into it, then closed).
+async function booting ({ setup, work }) {
   const m = machine()
-  say({ step: 'machine', ...m })
   if (!m.ok) return { ok: false, why: `not supported: ${m.platform} (linux-x64 only, for now)` }
   if (existsSync(join(work, 'store'))) return { ok: false, why: `booted already: ${work} (a restore comes later)` }
   mkdirSync(work, { recursive: true })
   const scratch = join(work, 'scratch')
+  let store = null
+  let repo = null
   try {
     const { conf, sources } = sourcesOf(setup)
     const manifest = loadManifest({ sources, publicKey: conf.publicKey, scratch })
     if (!manifest) return { ok: false, why: 'no source has a manifest signed by the publisher' }
-    say({ step: 'manifest', sequence: manifest.sequence, packages: Object.keys(manifest.packages) })
     const staged = join(scratch, 'staged')
-    for (const repo of INSTALL) loadPackage({ sources, manifest, repo, to: staged, scratch: join(scratch, 'fetch') })
-    say({ step: 'loaded', packages: INSTALL })
+    for (const p of INSTALL) loadPackage({ sources, manifest, repo: p, to: staged, scratch: join(scratch, 'fetch') })
     // init: the store, the repository, its layers.
-    let result
-    const store = await openStore({ storage: join(work, 'store') })
-    try {
-      const repo = await mrepos({ store, local: join(work, 'mrepos') }).create(HOST)
-      const w = writer(repo.backend)
-      for (const l of LAYERS) await w.createLayer(l, `Create ${l}`, { author })
-      say({ step: 'init', repository: HOST, id: repo.id, key: repo.key, layers: LAYERS })
-      const commit = await commitPackages(repo.backend, staged, INSTALL, manifest, `Installed from the setup: manifest ${manifest.sequence}`, { pin: true })
-      say({ step: 'installed', layer: PACKAGES, commit, packages: INSTALL })
-      // The runtime's data: booted, its type; and the repository preloaded
-      // with its first request, service initialise / (no input to answer).
-      const r = await w.change('runtime')
-      await r.put('/service.json', Buffer.from(JSON.stringify({ state: 'booted', ...TYPE }) + '\n'))
-      await r.commit('Booted', { author })
-      const core = record(null, { api: TYPE.type, protocol: 'service', action: 'initialise', uri: '/' }, guid())
-      const name = core.key
-      const p = await w.change(PENDING)
-      // The core: no topic (nobody waits for it), the form its value; its key
-      // a GUID, its document's name.
-      await p.put(`/${name}.json`, Buffer.from(JSON.stringify(wrap(`/${PENDING}`, core)) + '\n'))
-      await p.commit(`Request ${name}: service initialise /`, { author })
-      say({ step: 'booted', type: TYPE.type, preloaded: `/${PENDING}/${name}` })
-      let bundle = null
-      for (const p of DEPLOY) { const b = await deploy(repo.backend, manifest, p, join(work, VIEW, PACKAGES)); if (p === HAICC) bundle = b }
-      say({ step: 'deployed', packages: DEPLOY })
-      result = { ok: true, sequence: manifest.sequence, id: repo.id, key: repo.key, bundle }
-    } finally { await store.close() }
-    // The host's runtime (mrepo-base-runtime): started detached, the
-    // store's single writer from now on (the boot's hold closed above).
-    if (runtime) {
-      const r = await startRuntime({ work })
-      say({ step: 'runtime', running: Boolean(r), pid: r?.pid ?? null })
-      if (!r) return { ...result, ok: false, why: 'the runtime did not start (see its log folder, mrepos/host/log/)' }
-      result.runtime = { pid: r.pid }
-    }
-    return result
+    store = await openStore({ storage: join(work, 'store') })
+    repo = await mrepos({ store, local: join(work, 'mrepos') }).create(HOST)
+    const w = writer(repo.backend)
+    for (const l of LAYERS) await w.createLayer(l, `Create ${l}`, { author })
+    const commit = await commitPackages(repo.backend, staged, INSTALL, manifest, `Installed from the setup: manifest ${manifest.sequence}`, { pin: true })
+    // The runtime's data: booted, its type; and the repository preloaded
+    // with its first request, service initialise / (no input to answer).
+    const rt = await w.change('runtime')
+    await rt.put('/service.json', Buffer.from(JSON.stringify({ state: 'booted', ...TYPE }) + '\n'))
+    await rt.commit('Booted', { author })
+    const init = record(null, { api: TYPE.type, protocol: 'service', action: 'initialise', uri: '/' }, guid())
+    const p = await w.change(PENDING)
+    // The core: no topic (nobody waits for it), the form its value; its key
+    // a GUID, its document's name.
+    await p.put(`/${init.key}.json`, Buffer.from(JSON.stringify(wrap(`/${PENDING}`, init)) + '\n'))
+    await p.commit(`Request ${init.key}: service initialise /`, { author })
+    let bundle = null
+    for (const d of DEPLOY) { const b = await deploy(repo.backend, manifest, d, join(work, VIEW, PACKAGES)); if (d === HAICC) bundle = b }
+    return { ok: true, store, repo, value: { repository: HOST, id: repo.id, key: repo.key, sequence: manifest.sequence, layers: LAYERS, installed: { commit, packages: INSTALL }, deployed: DEPLOY, preloaded: `/${PENDING}/${init.key}`, bundle } }
+  } catch (err) {
+    if (repo) return { ok: false, store, repo, why: err.message }
+    if (store) await store.close()
+    return { ok: false, why: err.message }
   } finally { rmSync(scratch, { recursive: true, force: true }) }
 }
 
-export async function fetch ({ setup, work, repo: name, say = () => {} }) {
+export async function fetch ({ setup, work, repo: name }) {
   if (!existsSync(join(work, 'store'))) return { ok: false, why: 'not booted: no repository' }
   const scratch = join(work, 'scratch')
   const store = await openStore({ storage: join(work, 'store') })
@@ -156,11 +176,9 @@ export async function fetch ({ setup, work, repo: name, say = () => {} }) {
     const { sources } = sourcesOf(setup)
     const staged = join(scratch, 'staged')
     const r = loadPackage({ sources, manifest, repo: name, to: staged, scratch: join(scratch, 'fetch') })
-    say({ step: 'loaded', package: name, fetched: r.fetched.length })
     const commit = await commitPackages(repo.backend, staged, [name], manifest, `Installed ${name}: manifest ${manifest.sequence}`)
-    say({ step: 'installed', layer: PACKAGES, commit, package: name })
     const bundle = await deploy(repo.backend, manifest, name, join(work, VIEW, PACKAGES))
-    return { ok: true, bundle }
+    return { ok: true, package: name, fetched: r.fetched.length, commit, bundle }
   } finally {
     await store.close()
     rmSync(scratch, { recursive: true, force: true })

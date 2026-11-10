@@ -14,7 +14,10 @@
 #    booted, its runtime started, the preloaded `service initialise /` run),
 #    then the cycle through HAICC's requests: `start /`, a `put` into main
 #    and its `get`, `get /`, `stop /`, `shutdown /` (the runtime ends); each
-#    printing its completed form, then the repository's log: all records.
+#    printing its completed form; then the requests done, in the order
+#    they were done (request/done's commit chain): the boot's own first, then
+#    the preloaded initialise, then the cycle's; all records (with git, when
+#    there).
 # 4. With --push only: the setup and the manifest published as a release of
 #    haiccing/base-package-boot. Its tag: setup-<12 hex of the packages'
 #    identities in the manifest (each package's id and addons)>: the same
@@ -60,11 +63,16 @@ h get /
 h stop /
 h shutdown /
 # Ended (its process gone from the process table), not only silent (it stops answering
-# first, then commits its last log lines and closes its store).
+# first, then closes its store).
 i=0; while pgrep -f "$folder/check/mrepos/host/packages" >/dev/null; do i=$((i+1)); [ $i -gt 100 ] && { echo "the runtime did not end"; exit 1; }; sleep 0.2; done
 echo "the cycle: answered; shut down, the runtime ended"
-echo "== the repository's log, as records: a file a request (each transfer with the envelope it made), one for the runtime"
-for f in "$folder/check/mrepos/host/log/"*.jsonl; do echo "-- $(basename "$f")"; cat "$f"; done
+if command -v git >/dev/null; then
+  echo "== the requests done, in order: each as request/done holds it"
+  gd="$folder/check/mrepos/host/.git"
+  for c in $(git --git-dir="$gd" rev-list --reverse --first-parent request/done); do
+    for f in $(git --git-dir="$gd" diff-tree --no-commit-id --name-only --diff-filter=A -r "$c"); do git --git-dir="$gd" show "$c:$f"; done
+  done
+fi
 rm -rf "$nonode"
 # The tag: the packages' identities (ids and addons), not the build's.
 tag=$("$dev/tools/bare" "$dev/tools/setup/tag.js" "$folder/out/source/manifest.json")

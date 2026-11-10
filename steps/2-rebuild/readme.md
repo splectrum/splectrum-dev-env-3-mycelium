@@ -411,6 +411,48 @@ would publish: `setup-3d242717a6a3`.
 Next: the log's topics on p2p (time segments, the reference), levels, what
 each protocol logs; the terminal as a mini mrepo; the dispatcher.
 
+## 12. No log: a request is its own record (2026-11-10)
+
+Discussed first, after a context reset: logs are a standard part of every
+mrepo (not of a level). Then the human: too complicated; log in the request
+document and keep the requests done as a topic, then we have all the
+information; scrap the log. The cold boot a request too, its completed form
+handed into `execute/request/execute`, picked up by the normal flow
+(completed: to done; then the next pending, `initialise`). The action run
+wrapped in the execution context (read-only to it), which reaches the
+runtime's context (for config, not used in the base). For now the end of
+execution shown in the terminal, no step by step logging. Runtime errors
+into the request they happened to.
+
+- Removed: the `log` layer (`mycelium-git`: no longer a layer, not on
+  disk), the log folder, `logTo`, `commitLog`, `logRecord`, `say` (the
+  runtime's, the protocols', the boot's); `mrepo-base-log` dropped (never
+  built; its product repository to be archived by the human).
+- `mrepo-base-execute`: the action runs inside the execution context,
+  frozen, `exec.runtime` the runtime's context read-only (its name, its
+  branches, reads; no writer); actions take `(exec, form)`. `executed(ctx,
+  name, record)`: a form completed elsewhere handed over as execute hands
+  one. `failed(ctx, why)`: a runtime's error completing the request
+  executing.
+- `mrepo-base-request`: a record failing to be taken in, refused with the
+  error (`runtime: <message>`).
+- `mrepo-base-runtime`: a pass failing, its error in the request executing;
+  stderr only when none is executing, the error cannot be recorded, or the
+  runtime cannot start.
+- `haicc-base-boot`: the boot is a request, `service boot /` with the
+  command as typed; its form completed with what it did (or the error) and
+  handed over before the runtime starts; prints that one record. `fetch`
+  prints its completed form too (made there, not a request in the
+  repository).
+- Tests: the execution context, `executed`, `failed`; the boot's request
+  handed over; the journey shown as input, done, output. All suites pass
+  (mycelium-git, p2p-mrepo, request, execute 4, runtime 6, HAICC 5, boot
+  2). `tools/publish.sh` without `--push`: passed, the requests done printed
+  in order (boot, initialise, the cycle). The tag it would publish:
+  `setup-a4afcd4cfbea`.
+
+Next: the terminal as a mini mrepo; the dispatcher.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

@@ -1,7 +1,8 @@
 // The framework's generic actions, the base's (docs/design/repositories.md:
 // the rest and service protocols). Each takes the execution's context (exec:
-// reads overlaid, writes to the execution branches), the request's value and
-// the runtime's context, and returns its value (or throws: refused).
+// reads overlaid, writes to the execution branches, the runtime's context
+// read through exec.runtime) and the request's value, and returns its value
+// (or throws: refused).
 import Bundle from 'bare-bundle'
 import * as json from 'mycelium-value-json'
 
@@ -21,11 +22,11 @@ export const ACTIONS = {
   rest: {
     // A URI's value: / the repository at a glance; a JSON document its value;
     // another file its text (or its size); a folder or a branch its entries.
-    async get (exec, { uri }, ctx) {
+    async get (exec, { uri }) {
       if (uri === '/') {
-        const branches = (await ctx.backend.listBranches()).map(([b]) => b).filter(b => !b.startsWith('execute/')).sort()
+        const branches = (await exec.runtime.branches()).filter(b => !b.startsWith('execute/')).sort()
         const manifest = JSON.parse((await exec.read('/packages/manifest.json')).toString())
-        return { repository: ctx.name, service: (await service(exec)).state, layers: branches, packages: Object.keys(manifest.packages).sort() }
+        return { repository: exec.runtime.name, service: (await service(exec)).state, layers: branches, packages: Object.keys(manifest.packages).sort() }
       }
       const found = await exec.select(uri)
       if (!found.length) throw new Error(`nothing at ${uri}`)
