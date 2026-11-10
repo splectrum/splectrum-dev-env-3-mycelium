@@ -366,7 +366,18 @@ functionality (the bundles in `packages/`) is not exposed.
     from there). And `run`: the whole cycle, from boot to teardown (a
     test's run, a one-off execution). A thing without some of them (a
     plain process: no boot) offers only those it has, by its type.
-- **A request is fully qualified**: `{ protocol, action, uri, body }`, as it
+- **Every message is a Kafka record** (the human, 2026-11-10): the record is
+  the dispatch wrapper. Its `topic` is the URI where it lives (`/inbox`,
+  `/request/pending/default`, `/request/execute`, `/request/done`): a move
+  rewrites it, so a record is fully qualified within its context. Its
+  `value` is the message or request, unchanged as it travels. Its
+  `headers` are JSON, namespaced data structures accessible by URI (a
+  header a path inside the record), for any metadata (`vision.md`; their
+  schemas with AVRO). Its `key` names it through all its moves (the answer
+  carries it). The base uses the minimum: `topic`, `key`, `timestamp`,
+  `headers`, `value`.
+- **A request is fully qualified**: `{ api, protocol, action, uri, body }`
+  (`api` the repository type: the first check that it is not misdelivered), as it
   travels and as it is recorded (an action unique today may not stay so; a
   recorded request keeps its meaning for an exact rerun). The URI names the
   object, its type decides what an action means there; the mappings say
