@@ -7,23 +7,33 @@ export const AUTHOR = { name: 'mrepo', email: 'mrepo@localhost' }
 
 // The names a layer's commits added, in the order of its commit chain (first
 // parent, from its first commit to its head); within one commit, by name.
+// Remembered per backend and layer: when the head moves, only the new commits
+// are walked (back to the head walked last); the whole chain once, after a
+// start.
+const remembered = new WeakMap()
 async function arrivals (backend, branch) {
   const head = Object.fromEntries(await backend.listBranches())[branch]
   if (!head) return []
-  const chain = []
+  const memo = remembered.get(backend) ?? remembered.set(backend, new Map()).get(backend)
+  const known = memo.get(branch)
+  if (known?.head === head) return known.order
+  const fresh = []
+  let base = null
   for (let c = head; c;) {
+    if (known && c === known.head) { base = known; break }
     const commit = await backend.readCommit(c)
-    chain.push(commit)
+    fresh.push(commit)
     c = commit.parents[0]
   }
   const namesOf = async tree => new Set((await backend.readTree(tree)).filter(e => e.type === 'blob' && e.name.endsWith('.json')).map(e => e.name.slice(0, -'.json'.length)))
-  const order = []
-  let before = new Set()
-  for (const commit of chain.reverse()) {
+  const order = base ? [...base.order] : []
+  let before = base ? base.names : new Set()
+  for (const commit of fresh.reverse()) {
     const now = await namesOf(commit.tree)
     order.push(...[...now].filter(n => !before.has(n)).sort())
     before = now
   }
+  memo.set(branch, { head, order, names: before })
   return order
 }
 

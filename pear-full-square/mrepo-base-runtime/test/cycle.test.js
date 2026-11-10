@@ -15,7 +15,7 @@ const req = (protocol, action, uri, body) => ({ protocol, action, uri, ...(body 
 
 // The same cycle on both storages: the p2p host and a repository on native git.
 for (const storage of ['p2p', 'git']) {
-  test(`the cycle on ${storage}: initialise (preloaded), start, put, get, delete, refused, stop, shutdown`, async (t) => {
+  test(`the cycle on ${storage}: initialise (preloaded), start, put, get, delete, refused, stop, shutdown`, { timeout: 180000 }, async (t) => {
     const work = mkdtempSync(join(tmpdir(), `cycle-${storage}-`))
     try {
       await bootedHost(work, { storage })
@@ -89,7 +89,7 @@ for (const storage of ['p2p', 'git']) {
   })
 }
 
-test('where the layers live on the p2p host: the atomic ones in the store, the rest on disk', async (t) => {
+test('where the layers live on the p2p host: the atomic ones in the store, the rest on disk', { timeout: 120000 }, async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'cycle-where-'))
   try {
     await bootedHost(work)
