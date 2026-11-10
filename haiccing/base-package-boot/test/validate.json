@@ -1,0 +1,4 @@
+{
+  "description": "The package as deployed: it checks it works where it is placed.",
+  "tests": ["boot"]
+}

@@ -1,0 +1,4 @@
+{
+  "description": "Every test of the package.",
+  "tests": ["boot"]
+}

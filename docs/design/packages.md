@@ -23,6 +23,10 @@ models a structure of mrepos and how it is built and installed.
   mrepo/             its mrepo's definition, by layers (below)
   test/<name>/       its tests, a folder each, each a structure unit (as needed:
                      an entry, run.js, executed: bare test/<name>/run.js)
+  test/<set>.json    the tests for a purpose, { description, tests }: validate
+                     (the deployment checked), full (all), ...
+  test/run.js        a set run, each test its own process: bare test/run.js
+                     [<set>], validate by default
   <name>/            a further unit: another mrepo (dispatch, terminal, a node), by its URI part name
 modules/             once, at the package's top, shared by its units: its code, ours
                      copied whole (<org>/<module>/), the third-party code (node_modules/)
