@@ -473,8 +473,9 @@ root, never torn down; `boot` and `teardown` executed by the parent; the
 install routine the framework's (no `boot.js` per unit); the boot's release
 its bundle, carrying the boot mrepo prebuilt, run with Bare.
 
-Next: the build instructions, the manifest, the boot mrepo's type and API;
-then built.
+Next (the plan in `handover-next.md`): with the existing tools, a boot repo
+built that can be bundled; the boot's bundle; then the other bundles, and
+the package repositories written again.
 
 ## The product repositories: updated (2026-11-10)
 

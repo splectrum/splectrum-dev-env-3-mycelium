@@ -15,11 +15,11 @@ models a structure of mrepos and how it is built and installed.
   structure of `main`, including where child mrepos are linked in. Its
   manifest lists the packages its mrepos require.
 - **A structure unit, the same at every level** (recursive: a package, an
-  mrepo inside it, a test), each part optional:
+  mrepo inside it, a test), each part optional; no install code of its own
+  (below, "The boot mrepo"):
 
 ```
 <unit>/
-  boot.js            kickstarts its install
   mrepo/             its mrepo's definition, by layers (below)
   test/              its test resources
   <name>/            a further unit: another mrepo (dispatch, terminal, a node), by its URI part name
