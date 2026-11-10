@@ -4,6 +4,9 @@
 import * as json from 'mycelium-value-json'
 
 export const AUTHOR = { name: 'mrepo', email: 'mrepo@localhost' }
+// A layer's config (its mode, what it is for), committed with it when it is
+// built from its structure (docs/design/packages.md): not one of its records.
+export const CONFIG = 'layer'
 
 // The names a layer's commits added, in the order of its commit chain (first
 // parent, from its first commit to its head); within one commit, by name.
@@ -25,7 +28,7 @@ async function arrivals (backend, branch) {
     fresh.push(commit)
     c = commit.parents[0]
   }
-  const namesOf = async tree => new Set((await backend.readTree(tree)).filter(e => e.type === 'blob' && e.name.endsWith('.json')).map(e => e.name.slice(0, -'.json'.length)))
+  const namesOf = async tree => new Set((await backend.readTree(tree)).filter(e => e.type === 'blob' && e.name.endsWith('.json') && e.name !== `${CONFIG}.json`).map(e => e.name.slice(0, -'.json'.length)))
   const order = base ? [...base.order] : []
   let before = base ? base.names : new Set()
   for (const commit of fresh.reverse()) {
@@ -47,7 +50,7 @@ export function layer ({ repo, writer, backend }, branch) {
     },
     list: async () => (await repo.select(`/${branch}/*`))
       .filter(([p, n]) => n.type === 'blob' && p.endsWith('.json'))
-      .map(([p]) => p.slice(p.lastIndexOf('/') + 1, -'.json'.length)).sort(),
+      .map(([p]) => p.slice(p.lastIndexOf('/') + 1, -'.json'.length)).filter(n => n !== CONFIG).sort(),
     read: async name => json.decode(await repo.read(`/${branch}/${name}.json`)),
     async put (name, value, message = `${name}`) {
       const c = await writer.change(branch)

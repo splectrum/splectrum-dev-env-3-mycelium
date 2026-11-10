@@ -17,7 +17,7 @@ import { documents } from 'mycelium-container-document'
 import { guid } from './record.js'
 import * as json from 'mycelium-value-json'
 import { viewOf, setting } from './view.js'
-import { layer, AUTHOR } from './layer.js'
+import { layer, AUTHOR, CONFIG } from './layer.js'
 
 export const INBOX = '/inbox'
 export const OUTBOX = '/outbox'
@@ -34,7 +34,7 @@ export async function post (ctx, rec = null, name = rec?.key ?? guid()) {
   const have = new Set(await box.list())
   const fresh = rec ? (have.has(name) ? [] : [[name, rec]]) : (() => {
     const folder = inboxFolder(ctx.work)
-    return folder.list().filter(n => !have.has(n)).map(n => [n, folder.read(n)])
+    return folder.list().filter(n => n !== CONFIG && !have.has(n)).map(n => [n, folder.read(n)])
   })()
   // A commit lost to another writer of the inbox (compare-and-swap) is made
   // again on the new head.

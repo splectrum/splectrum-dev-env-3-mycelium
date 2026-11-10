@@ -6,7 +6,9 @@
 //                           opened by the setting beside it (<work>/mrepo.json,
 //                           mrepo-base-request's `setting`): on native git
 //                           (`git`: <work>/mrepos/<name>/.git, mycelium-git's
-//                           native backend), or on the p2p layer (`p2p`, the
+//                           native backend), on p2p-git with every layer on
+//                           disk (`disk`: the same folder, no Corestore; the
+//                           boot mrepo), or on the p2p layer (`p2p`, the
 //                           default: the store, <work>/store, held as its
 //                           single writer, the host's repository `host` over
 //                           it and its disk side); the local
@@ -36,12 +38,12 @@
 import process from 'bare-process'
 import Pipe from 'bare-pipe'
 import { spawnSync } from 'bare-subprocess'
-import { existsSync, rmSync } from 'bare-fs'
+import fs, { existsSync, rmSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
-import { nativeBackend } from 'mycelium-git'
+import { nativeBackend, p2pgitBackend } from 'mycelium-git'
 import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
 import { execute, failed } from 'mrepo-base-execute'
 import pkg from './package.json' with { type: 'json' }
@@ -58,6 +60,10 @@ export async function open (work) {
   const { storage, name } = setting(work)
   if (storage === 'git') {
     const backend = nativeBackend(gitdirOf(work, name))
+    return { name, id: null, key: null, storage, backend, close: async () => {} }
+  }
+  if (storage === 'disk') {
+    const backend = p2pgitBackend(gitdirOf(work, name), { fs })
     return { name, id: null, key: null, storage, backend, close: async () => {} }
   }
   const store = await openStore({ storage: join(work, 'store') })
@@ -112,7 +118,7 @@ export async function run ({ work, every = 200 }) {
     if (stopping || busy) return
     busy = true
     try {
-      if (repo.storage === 'p2p') await post(ctx)
+      if (repo.storage !== 'git') await post(ctx)
       await request(ctx)
       await execute(ctx)
       await request(ctx)

@@ -1,0 +1,4 @@
+{
+  "mode": "atomic",
+  "description": "The runtime's data: the service state, the type, its API."
+}

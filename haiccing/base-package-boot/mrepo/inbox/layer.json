@@ -1,0 +1,4 @@
+{
+  "mode": "non-atomic",
+  "description": "The inbox: requests arriving, as posted (its working tree the inbox folder)."
+}
