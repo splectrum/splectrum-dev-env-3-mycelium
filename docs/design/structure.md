@@ -152,9 +152,8 @@ host. The level's log: a topic (agreed), the minimal file log meanwhile
 <work>/
   mrepos/
     host/                                    the host's repository (type haicc)
-      .git/                                  its non-atomic layers: request/*, execute/* (git on disk)
-      inbox/                                 non-atomic: /inbox, a message a document
-      outbox/                                non-atomic: /outbox
+      .git/                                  its non-atomic layers: request/*, inbox, outbox, execute/* (git on disk)
+      inbox/                                 the inbox layer's working tree: inputs add records, the runtime commits
       packages/                              replicated: the packages layer's files
         haiccing/base-package-boot.bundle    bundles by [org]/[package]
         haiccing/base-package-haicc.bundle
@@ -162,6 +161,7 @@ host. The level's log: a topic (agreed), the minimal file log meanwhile
         manifest.json                        the pinned manifest, packages keyed [org]/[package]
   store/                                     the Corestore: every repository's atomic and replicated layers
   setup/                                     the source the boot came from
+  mrepo.json                                 (a standalone repository: its storage, git, and its name; none on the p2p host)
   log/                                       the minimal plain-file log (runtime.log)
   runtime.sock                               the runtime's local connection, while it runs
 ```

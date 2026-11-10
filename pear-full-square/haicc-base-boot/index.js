@@ -10,7 +10,7 @@
 //                                  packages loaded, each checked by hash; init:
 //                                  the store (<work>/store) and the repository
 //                                  (`host`, of type haicc) created, its layers main,
-//                                  packages, runtime (booted, its type),
+//                                  packages, runtime (booted, its type), inbox, outbox,
 //                                  request/pending/default (preloaded with
 //                                  service initialise /), request/execute,
 //                                  request/done; packages holding the pinned
@@ -44,7 +44,7 @@ export const MREPO = 'haiccing/base-package-mrepo'
 export const INSTALL = [BOOT, HAICC, MREPO]
 export const DEPLOY = [HAICC, MREPO]
 export { HOST }
-export const LAYERS = ['main', 'packages', 'runtime', 'request/pending/default', 'request/execute', 'request/done']
+export const LAYERS = ['main', 'packages', 'runtime', 'inbox', 'outbox', 'request/pending/default', 'request/execute', 'request/done']
 // The host's repository's type: its package (docs/design/repositories.md,
 // "A repository's type is a package").
 export const TYPE = { type: 'haicc', package: HAICC }

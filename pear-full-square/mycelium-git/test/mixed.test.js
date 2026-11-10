@@ -12,8 +12,8 @@ async function store (dir) {
   return b
 }
 
-test('isLocal: request and execute layers on disk, the rest atomic', (t) => {
-  for (const n of ['request/pending/default', 'request/execute', 'request/done', 'execute/main', 'execute/request/execute']) t.ok(isLocal(n), n)
+test('isLocal: the request layers, the boxes and the execution branches on disk, the rest atomic', (t) => {
+  for (const n of ['request/pending/default', 'request/execute', 'request/done', 'inbox', 'outbox', 'execute/main', 'execute/request/execute']) t.ok(isLocal(n), n)
   for (const n of ['main', 'packages', 'runtime', 'data/x']) t.absent(isLocal(n), n)
 })
 

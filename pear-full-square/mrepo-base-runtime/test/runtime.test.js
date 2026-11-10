@@ -6,9 +6,8 @@ import { tmpdir } from 'bare-os'
 import { fileURLToPath } from 'bare-url'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
-import { start, ask, HOST, inbox, outbox } from '../index.js'
-import { record } from 'mrepo-base-request'
-import { bootedHost } from './fixture.js'
+import { start, ask, HOST } from '../index.js'
+import { bootedHost, send } from './fixture.js'
 
 const here = join(dirname(fileURLToPath(import.meta.url)), '..')
 const runtime = (...args) => spawnSync(Bare.argv[0], [join(here, 'runtime.js'), ...args], { stdio: ['ignore', 'pipe', 'pipe'] })
@@ -42,12 +41,9 @@ test('the runtime: started detached, the store held, asked over its connection, 
     const ro = await openStore({ storage: join(work, 'store'), readOnly: true })
     t.is((await mrepos({ store: ro }).open(HOST)).id, host.id, 'a reader meanwhile, read-only')
     await ro.close()
-    // A record posted to /inbox: taken in, refused as it executes (initialised,
-    // not started), answered.
-    const m = inbox(work).add(record('/inbox', { api: 'haicc', protocol: 'rest', action: 'get', uri: '/' }, { mrepo: { from: null } }))
-    for (let i = 0; i < 50 && !outbox(work).list().includes(m); i++) await new Promise(resolve => setTimeout(resolve, 100))
-    t.alike(outbox(work).read(m).value, { ok: false, error: 'not now: rest get (the service is initialised, not started)' }, 'taken in and answered: the preloaded initialise ran first')
-    t.alike(inbox(work).list(), [], 'the inbox taken in')
+    // A request posted to /inbox: taken in, refused as it executes
+    // (initialised, not started), answered.
+    t.alike(await send(work, { protocol: 'rest', action: 'get', uri: '/' }), { ok: false, error: 'not now: rest get (the service is initialised, not started)' }, 'taken in and answered: the preloaded initialise ran first')
     t.alike(await ask({ work, op: 'nothing' }), { ok: false, error: 'not a request (status, stop)' })
     t.ok((await ask({ work, op: 'stop' }))?.stopping)
     const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
