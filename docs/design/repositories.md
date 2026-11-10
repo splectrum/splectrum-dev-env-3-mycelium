@@ -373,9 +373,10 @@ functionality (the bundles in `packages/`) is not exposed.
   `value` is the message or request, unchanged as it travels. Its
   `headers` are JSON, namespaced data structures accessible by URI (a
   header a path inside the record), for any metadata (`vision.md`; their
-  schemas with AVRO). Its `key` names it through all its moves (the answer
-  carries it). The base uses the minimum: `topic`, `key`, `timestamp`,
-  `headers`, `value`.
+  schemas with AVRO). Its `key`, later, a URI: where it first entered
+  (`/inbox/<name>`), kept through its moves. The base uses the minimum:
+  `topic`, `timestamp`, `headers`, `value`; a record keeps its name through
+  its moves (the answer names it).
 - **A request is fully qualified**: `{ api, protocol, action, uri, body }`
   (`api` the repository type: the first check that it is not misdelivered), as it
   travels and as it is recorded (an action unique today may not stay so; a
