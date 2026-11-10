@@ -8,7 +8,7 @@ knows nothing of p2p. Part of the p2p series.
 ```js
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
-const repos = mrepos({ store: await openStore({ storage, primaryKey }), observer })
+const repos = mrepos({ store: await openStore({ storage, primaryKey }), observer, local })
 const repo = await repos.create('notes')                   // { name, id, key, drive, backend }
 await repos.import('dev', { native: '/path/repo.git' })    // or { bundle: bytes }
 await repos.clone(repo, 'notes-copy')                      // a new key and id, its origin recorded
@@ -25,6 +25,11 @@ openRepo(repo.backend).read('/main/readme.md')             // mycelium, unchange
   store's own, `mrepo-registry`), so they are opened again on start. A
   repository already open is given again: a drive's db core is an
   exclusive session.
+- **A disk side, with `local`** (a folder): each repository opened over two
+  stores (mycelium-git's `mixedBackend`): its atomic layers in its drive,
+  its non-atomic layers (`request/*`, `execute/*`) in git on disk at
+  `<local>/<name>/.git` (p2p-git on `bare-fs`, made the first time).
+  Without `local`, everything in the drive. A replica is the drive's only.
 - **Names** are URI segments: lowercase `a-z`, `0-9`, `-`.
 - **mycelium-git** is a sibling folder (`../mycelium-git`), as the mycelium
   modules are to each other; p2p-git comes from `pear-full-square/p2p-git`.
@@ -37,4 +42,5 @@ ids, keys and counts, never a secret.
 
 - `npm test`: create, reopen, import (native and bundle), clone, a replica
   read lazily, events without secrets; and mycelium-git's contract suite
-  on a p2p-mrepo repository (23 tests).
+  on a p2p-mrepo repository (23 tests); a repository with its disk side
+  (`test/local.test.js`).

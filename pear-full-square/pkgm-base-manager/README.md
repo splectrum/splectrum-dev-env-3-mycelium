@@ -12,8 +12,21 @@ pkgm test     <package folder | repository>                 # its tests, bottom 
 pkgm contents <repository>                                  # what is there, and where it came from
 ```
 
-(`pkgm` is `node <...>/modules/pear-full-square/pkgm-base-manager/cli.js`.)
-The platform's package (`base-package-haicc`) carries it.
+(`pkgm` is `bare <...>/modules/pear-full-square/pkgm-base-manager/cli.js`.)
+
+## Sources and signed manifests
+
+The library HAICC's boot loads releases with (phase 3):
+
+- `lib/sign.js`: `keyPair()`, `sign(manifest, secretKey)`,
+  `verify(manifest, publicKey)`: a release's manifest signed (ed25519,
+  `sodium-native`) over its canonical JSON (`canonical`).
+- `lib/sources.js`: `loadManifest({ sources, publicKey, scratch, atLeast })`:
+  the first source's manifest signed by the publisher, its sequence never
+  going back; `loadPackage({ sources, manifest, repo, to, scratch })`: a
+  package's bundle and the addons it names, each checked by its hash;
+  `fetchFile(source, path, dest)`: from a folder (a copy) or the web
+  (`curl`).
 
 ## A package
 
