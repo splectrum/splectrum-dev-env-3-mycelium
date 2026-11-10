@@ -134,7 +134,7 @@ process needs files.)
 | `main` | the level's data (config, state) | no (seen by URI) |
 | `packages` (a layer of its own, like `main`) | the bundles and their native addons, as objects, laid out as a source (the pinned manifest, `<org>/<package>.bundle`, `addons/<sha256>`) | replicated: `<work>/mrepos/host/packages/`, the bundles this level runs and the addons they name |
 | `execute/main` | executions: only the visible change to `main` (from `main`, synced before each) | no |
-| `request/pending/default`, `request/executing`, `request/done` | the requests and their metadata (`repositories.md`) | no |
+| `request/pending/default`, `request/execute`, `request/done` | the requests and their metadata (`repositories.md`) | no |
 | the log topic | the level's log | no (the minimal file log aside) |
 | child levels | each its own repository, named in this one's mappings by URI | a child's folder, where the child runs on this host |
 
@@ -216,7 +216,7 @@ addons rebuilt from it); nothing after "get the repository" assumes it new.
 
 **Seeding a new repository, `init`**: its initial layers `main`,
 `packages`, `execute/main` (from `main`), `request/pending/default`,
-`request/executing`, `request/done`. Two concerns, two owners, both
+`request/execute`, `request/done`. Two concerns, two owners, both
 committing through `mycelium-git`'s writer: HAICC creates the repository
 (`p2p-mrepo`) and its layers and seeds `main` (the level's name, what is
 provided: the level's shape, HAICC's concern, its own module,

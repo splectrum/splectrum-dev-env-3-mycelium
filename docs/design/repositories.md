@@ -68,11 +68,11 @@ The sketch, kept as the starting point for that design:
 
 | | the passive repository (requester) | the active repository (executor) |
 |---|---|---|
-| writes | `request/pending` only | `request/executing`, `request/done`, `execute/main`, `main` |
-| reads, by replication, as read-only layers | the active one's `main`, `request/executing`, `request/done` | the passive one's `request/pending` |
+| writes | `request/pending` only | `request/execute`, `request/done`, `execute/main`, `main` |
+| reads, by replication, as read-only layers | the active one's `main`, `request/execute`, `request/done` | the passive one's `request/pending` |
 
 The flow: a request committed to `request/pending`; replicated, an imported
-layer on the active side; taken (recorded on `request/executing`: its name,
+layer on the active side; taken (recorded on `request/execute`: its name,
 the pending commit it was taken at); executed as a unit on `execute/main`,
 the request layer's commit among the unit's fixed states (so it reruns
 exactly); merged into `main`; closed on `request/done` (its outcome, the
@@ -94,7 +94,7 @@ and metadata kept apart:
 | Branch | Holds |
 |---|---|
 | `request/pending/default` | the local queue: requests waiting (one queue per source: `request/pending/<source>`, `default` the local one; no branch `request/pending` itself, a name never both a branch and a prefix) |
-| `request/executing` | the request being executed, with its metadata gathered as it runs: the unit's record (invocation, the states it ran on by commit, environment, nondeterministic inputs), its outcome, the `execute/main` commit it produced; cleared when it ends |
+| `request/execute` | the request being executed, with its metadata gathered as it runs: the unit's record (invocation, the states it ran on by commit, environment, nondeterministic inputs), its outcome, the `execute/main` commit it produced; cleared when it ends |
 | `request/done` | each completed request with its full record: the request as submitted, the unit's record (rerun exactly by it), its outcome (a failure included), the `execute/main` commit and its merge into `main` |
 | `execute/main` | only the visible change to `main`: the data the request produced; merged plainly into `main` |
 
@@ -103,7 +103,7 @@ requests and the metadata around producing the visible state (`rules.md`:
 outcomes are data on `main`). Today's `executeRequests` writes the unit's
 record into `main` beside the response: changed when rebuilt. In one
 repository with one writer, taking a request is a commit moving it from the
-queue to `request/executing`, finishing one moving it with its record to
+queue to `request/execute`, finishing one moving it with its record to
 `request/done`. The passive and active split of these branches comes with
 that design, later. The reserved segment `pending` becomes `request`;
 `rules.md` (its branches and commit references) is changed when it is
@@ -200,7 +200,7 @@ manager puts bundles in its packages layer. Execution is its own heading,
 | Protocol | Layer | The flow it owns | What an implementation provides | Base module |
 |---|---|---|---|---|
 | request | `/request` | the inbox taken in, each message checked against the API (the root mapping), then a request in `request/pending/<source>`, or refused and answered | the API: its commands and their arguments (`haicc`) | `mrepo-base-request` |
-| execute | `/execute` | the queue watched; a request taken (`request/executing`), launched as a unit, the repository's state pinned, writing into `execute/main`; on completion committed, merged into `main`, recorded in `request/done` (the command as launched, the states it ran on, its exit code and output, the environment), answered; one at a time, in queue order | each command mapped to the functions that do it, run as configured | `mrepo-base-execute` |
+| execute | `/execute` | the queue watched; a request taken (`request/execute`), launched as a unit, the repository's state pinned, writing into `execute/main`; on completion committed, merged into `main`, recorded in `request/done` (the command as launched, the states it ran on, its exit code and output, the environment), answered; one at a time, in queue order | each command mapped to the functions that do it, run as configured | `mrepo-base-execute` |
 | log | `/log` | records appended, one writer, a topic held by reference | what is logged | `mrepo-base-log` |
 
   More as required (the transport between roots, the verbs, once there is
@@ -234,17 +234,16 @@ manager puts bundles in its packages layer. Execution is its own heading,
 | Data state | Who reacts | What it does |
 |---|---|---|
 | a message in `/inbox` | request | validated against the API; a request in `request/pending/default`, or refused and answered |
-| pending not empty, executing empty | request | the next request moved into `request/executing` (ready to execute) |
-| a request in `request/executing`, no result | execute | run as a unit, writing into `execute/main`; its result written beside it (execution done) |
-| a request in `request/executing` with its result | request | committed, merged into `main`, both moved to `request/done`, answered on the outbox; the next cycle |
-- **The runtime**, `mrepo-base-runtime` (named 2026-11-09; first built as
-  `mycelium-repo-main`, its "main" colliding with the `main` layer): the
-  always-on process of a repository, running its protocols; it holds the
-  store as its single writer, keeps the required watchers running (the
-  queue, the sources it follows, replication), serves the local connection,
-  and restarts what stops. Packaged as `haiccing/base-package-mrepo`.
-- **The first bundles**: `packages` starts with `haiccing/base-package-boot`,
-  `-haicc` and `-mrepo`, committed at `init`.
+| pending not empty, `request/execute` empty | request | the next request moved into `request/execute` |
+| a request in `request/execute`, not completed | execute | its execution branches made from their targets (`execute/main` from `main`, `execute/request/execute` from `request/execute`); the action instantiated in the execute and runtime contexts, reading `main` overlaid by `execute/main`, writing `execute/main`; the request's metadata written into `execute/request/execute` (the states it ran on, its result); on completion each branch merged back into its own target, `main` first |
+| a completed request in `request/execute` (its record merged in) | request | copied into `request/done`, then `request/execute` cleared (a restart in between finishes the clearing); answered on the outbox; the next cycle |
+
+- **Writes inside a protocol's own branches; merges back to the layer a
+  branch came from** (the human, 2026-11-10): the execute protocol writes
+  only its execution branches and merges each into its own target; a move
+  between layers (`request/execute` to `request/done`) is the owning
+  protocol's, by writes. The layer rule stands (layers disjoint, never
+  merged into each other).
 
 ## Layers by their writes: atomic or not, visible or local
 
@@ -255,7 +254,7 @@ when it is made.
 | | atomic (one commit) | not atomic (records, each whole) |
 |---|---|---|
 | **visible** (replicated) | `main`, `packages`: in the store (Corestore), committed by the runtime only | `request/done`, logs: topics, each appended by its own writer, held by reference |
-| **local** | (none yet) | `execute/*`, `request/pending/*`, `request/executing`, the local inbox and outbox: on disk (native git, plain folders) |
+| **local** | (none yet) | `execute/*`, `request/pending/*`, `request/execute`, the local inbox and outbox: on disk (native git, plain folders) |
 
 Stored, so, in three modes (`structure.md`): atomic (the Corestore),
 replicated (the Corestore, copied out as files where a process needs them:
