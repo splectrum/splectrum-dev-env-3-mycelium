@@ -168,6 +168,7 @@ and the store's own failures).
 <work>/
   mrepos/
     host/                                    the host's repository (type haicc)
+      .git/                                  its non-atomic layers: request/*, execute/* (git on disk)
       inbox/                                 non-atomic: /inbox, a message a document
       outbox/                                non-atomic: /outbox
       packages/                              replicated: the packages layer's files
