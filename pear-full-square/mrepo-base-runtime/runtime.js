@@ -19,7 +19,7 @@ if (command === 'version') {
   const work = resolve(flags.work)
   const log = logTo(work)
   try {
-    await run({ work, say: log })
+    await run({ work })
     process.exit(0) // stopped: ended here (its signal handlers would hold the process open)
   } catch (err) {
     log({ runtime: 'failed', error: err.message })

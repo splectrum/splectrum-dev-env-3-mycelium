@@ -29,7 +29,7 @@ export const API = {
 
 async function layers (backend, { preload }) {
   const w = writer(backend)
-  for (const l of ['main', 'packages', 'runtime', 'inbox', 'outbox', 'request/pending/default', 'request/execute', 'request/done']) await w.createLayer(l, `Create ${l}`, { author })
+  for (const l of ['main', 'packages', 'runtime', 'inbox', 'outbox', 'log', 'request/pending/default', 'request/execute', 'request/done']) await w.createLayer(l, `Create ${l}`, { author })
   const bundle = new Bundle()
   bundle.write('/api.json', JSON.stringify(API))
   const p = await w.change('packages')

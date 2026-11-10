@@ -43,7 +43,7 @@ test('boot: init, the repository and its layers; the packages layer as a source;
     t.ok(/^[0-9a-f]{64}$/.test(r.key), 'the repository\'s key')
     await hostRepo(work, async repo => {
       const branches = (await repo.select('/*')).map(([p]) => p).concat((await repo.select('/*/*')).map(([p]) => p), (await repo.select('/*/*/*')).map(([p]) => p))
-      for (const b of ['/main', '/packages', '/runtime', '/request/pending/default', '/request/execute', '/request/done']) t.ok(branches.includes(b), b)
+      for (const b of ['/main', '/packages', '/runtime', '/inbox', '/outbox', '/log', '/request/pending/default', '/request/execute', '/request/done']) t.ok(branches.includes(b), b)
       t.alike(JSON.parse((await repo.read('/runtime/service.json')).toString()), { state: 'booted', type: 'haicc', package: HAICC }, 'booted, of type haicc')
       const preloaded = await repo.select('/request/pending/default/*')
       t.is(preloaded.length, 1, 'preloaded with one request')

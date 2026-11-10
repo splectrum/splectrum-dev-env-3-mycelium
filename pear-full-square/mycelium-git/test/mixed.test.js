@@ -13,7 +13,7 @@ async function store (dir) {
 }
 
 test('isLocal: the request layers, the boxes and the execution branches on disk, the rest atomic', (t) => {
-  for (const n of ['request/pending/default', 'request/execute', 'request/done', 'inbox', 'outbox', 'execute/main', 'execute/request/execute']) t.ok(isLocal(n), n)
+  for (const n of ['request/pending/default', 'request/execute', 'request/done', 'inbox', 'outbox', 'log', 'execute/main', 'execute/request/execute']) t.ok(isLocal(n), n)
   for (const n of ['main', 'packages', 'runtime', 'data/x']) t.absent(isLocal(n), n)
 })
 
