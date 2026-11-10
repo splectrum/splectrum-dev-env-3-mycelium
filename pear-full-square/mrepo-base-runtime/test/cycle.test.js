@@ -61,7 +61,29 @@ for (const storage of ['p2p', 'git']) {
         t.is(JSON.parse((await repo.read('/runtime/service.json')).toString()).state, 'booted')
       } finally { await r.close() }
       const log = readFileSync(join(work, 'log', 'runtime.log'), 'utf8').trim().split('\n').map(l => JSON.parse(l))
-      t.absent(log.some(e => e.runtime === 'failed'), 'nothing failed: ' + JSON.stringify(log.filter(e => e.runtime === 'failed')))
+      t.ok(log.every(r => r.topic === '/log'), 'the log: records')
+      t.absent(log.some(r => r.value.runtime === 'failed'), 'nothing failed: ' + JSON.stringify(log.filter(r => r.value.runtime === 'failed')))
+      // One request's journey, as the records show it: the put of the note.
+      const r2 = await open(work)
+      try {
+        const repo = openRepo(r2.backend)
+        let name = null
+        for (const [p] of await repo.select('/inbox/*')) {
+          const env = JSON.parse((await repo.read(p)).toString())
+          if (env.value.value.action === 'put' && env.value.value.uri === '/main/notes/hello.json') { name = p.slice('/inbox/'.length, -'.json'.length); break }
+        }
+        const input = JSON.parse((await repo.read(`/inbox/${name}.json`)).toString())
+        const about = log.filter(r => r.value.name === name)
+        const output = JSON.parse((await repo.read(`/outbox/${name}.json`)).toString())
+        t.alike(about.map(r => { const [k] = Object.keys(r.value); return `${k}:${r.value[k]}` }), ['request:received', 'request:pending', 'request:execute', 'execute:done', 'request:done', 'request:sent back'], 'its journey in the log')
+        t.alike(about.map(r => r.value.record.topic), ['/host/inbox', '/request/pending/default', '/request/execute', '/request/execute', '/request/done', '/outbox'], 'each transfer: a new envelope, its topic the new place')
+        t.ok(about.every(r => r.value.record.value.topic === '/haicc/terminal'), 'the core inside, unchanged in its address')
+        t.alike(output, about[about.length - 1].value.record, 'the output: the last envelope, as stored in the outbox')
+        t.comment(`the journey of ${name} (${storage}): the input, the log, the output, as records`)
+        t.comment(`input  ${JSON.stringify(input)}`)
+        for (const r of about) t.comment(`log    ${JSON.stringify(r)}`)
+        t.comment(`output ${JSON.stringify(output)}`)
+      } finally { await r2.close() }
     } finally { rmSync(work, { recursive: true, force: true }) }
   })
 }

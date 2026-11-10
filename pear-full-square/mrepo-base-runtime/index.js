@@ -40,7 +40,7 @@ import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
 import { nativeBackend } from 'mycelium-git'
-import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
+import { INBOX, OUTBOX, inboxFolder, post, logRecord, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
 import { execute } from 'mrepo-base-execute'
 import pkg from './package.json' with { type: 'json' }
 
@@ -168,9 +168,10 @@ export async function start ({ work, bare = process.execPath, bundle = bundleOf(
   return null
 }
 
-// One line to the runtime's log (<work>/log/runtime.log): the minimal file
-// log.
+// One line to the runtime's log (<work>/log/runtime.log), a record
+// (logRecord: topic /log, value the event); where the log lives is the log's
+// own design, next.
 export const logTo = work => e => {
   mkdirSync(join(work, 'log'), { recursive: true })
-  appendFileSync(join(work, 'log', 'runtime.log'), JSON.stringify({ time: new Date().toISOString(), ...e }) + '\n')
+  appendFileSync(join(work, 'log', 'runtime.log'), JSON.stringify(logRecord(e)) + '\n')
 }
