@@ -27,8 +27,9 @@ or by SIGTERM / SIGINT; run again, it opens what it left.
 - `modules/`: the code, copied whole: ours (`modules/pear-full-square/`,
   from `mrepo-base-runtime`, all the way down) and the third-party code
   (`modules/node_modules/`, recorded in `modules/third-party.json`).
-- `test/`: `test/test` runs the boot as above, built, answering, stopped,
-  run again.
+- `test/`: the tests, a folder each, each a structure unit as the package
+  is (here only an entry): `test/boot/` (`bare test/boot/run.js`) runs the
+  boot as above, built, answering, stopped, run again.
 
 Written from the development repository
 ([splectrum/splectrum-dev-env-3-mycelium](https://github.com/splectrum/splectrum-dev-env-3-mycelium)):
