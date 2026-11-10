@@ -301,7 +301,7 @@ LICENSE kept, the rest the module as it is here (what phase 2 had and this
 phase removed, e.g. `mycelium-git`'s `cli.js`, gone). By
 `tools/products.sh <module>...` (new: the rule in `rules.md` as a script).
 Removed modules' repositories (`mycelium-repo`, `haicc-reconcile`,
-`p2p-swarm-manager`) to archive by the human.
+`p2p-swarm-manager`): archived already (checked on GitHub).
 
 | Module (pear-full-square/) | Split | Product's main |
 |---|---|---|

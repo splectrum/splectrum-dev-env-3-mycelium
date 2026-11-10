@@ -1,466 +1,326 @@
-# Mycelium repositories: the truth, views, branches, execution
+# Mycelium repositories: storage, layers, the framework, the API
 
 Status marks: **built** (in the code, tested), **agreed** (decided, not
-built), **open** (to settle). Decided with the human, 2026-11-08 (phase 3,
-step 1's review); to be built in step 3, step by step.
+built), **direction** (the way to go, its design later), **open** (to
+settle). Decided with the human in phase 3 (2026-11-08 to 10); how each
+decision was reached is in the step records (`steps/1-review/`,
+`steps/2-rebuild/readme.md`). This file says what holds now.
 
 ## The repository is the truth; a working tree is a view
 
 **Agreed.** Our code reads and writes repositories through mycelium (the
-backend contract: `select`, `read`, a writer's change, commits), by path from
-the branch root; it never needs files. A working tree is a view, made only at
-the boundary, for what cannot go through mycelium: a person, Bare loading
-code, Docker's mounts, the browser. Inside, repositories only.
+backend contract: `select`, `read`, a writer's change, commits), by URI from
+the branch root; it never needs files. Files exist only where a process
+needs them (Bare running a bundle, `dlopen`, Docker's mounts) or where a
+layer is stored on disk by its kind (below).
 
-- **Reading**: a view shows a layer at a commit; extracted by mycelium
-  (`extract`), incrementally (by tree differences: unchanged subtrees share
-  their ids), atomically where readers must not see half a commit (written
-  aside, then renamed); later a read-only, lazy mount. The view records the
-  commit it shows, in plain sight.
-- **Writing**: only as commits (a writer's change, or a folder deployed as a
-  layer), never by editing a view in place; the views follow.
-- **Sync**: replication moves the repository; each view is refreshed from
-  the new commit by its owner. Nobody syncs folders: a `.git` folder synced
-  file by file is not atomic (a ref can arrive before its objects), the
-  working tree does not follow (the index and the files stay behind), and
-  hooks and config would come along (code that runs).
+- **Reading**: by URI, at a pinned commit (`pinned(backend, state)`); a copy
+  of a layer as files is extracted from a commit, never edited, replaced
+  when the layer moves.
+- **Writing**: only as commits (a writer's change, a merge), never by
+  editing files in place.
+- **Sync**: replication moves the repository, never a folder synced file by
+  file (not atomic: a ref can arrive before its objects).
 
-*Why*: the code needs no working tree; one truth, its views derived and
-refreshed, never edited, so a view can always be made again.
+## One repository over two stores
 
-## Storage on the p2p layer
+**Built** (2026-11-10). A repository's layers are stored by how they are
+written, in one of three modes:
 
-**Built** (as phase 2 left it). A repository on the p2p layer is a
-Hyperdrive holding the git directory (p2p-git's: loose objects, refs), in its
-Corestore, persisted by `hypercore-storage` in RocksDB: on disk, durable,
-replicable, but not as readable files; reached only through Hypercore's API
-and mycelium's backend on it. A git directory on disk would need a mirror (a
-second copy of every object) or a FUSE mount; neither is needed, since the
-code reads the repository and views are extracted.
+| Mode | Where | Written | Layers |
+|---|---|---|---|
+| **atomic** | the Corestore (a Hyperdrive holding the git directory, p2p-git's) | one commit at a time, by the store's single writer (the runtime) | `main`, `runtime` |
+| **replicated** | the Corestore, and copied out as files for the process that needs them | as atomic | `packages` (its files at `<work>/mrepos/<name>/packages/`: Bare, `dlopen`) |
+| **non-atomic** | git on disk, `<work>/mrepos/<name>/.git` | by its own writers, in parallel, one per branch | `request/*`, `execute/*` |
 
-## The git engine is handed in by the storage's owner
+- **One repository to everything above it**: `mycelium-git`'s
+  `mixedBackend` wraps the two stores behind the backend contract (it
+  passes the contract's tests), routed by the branch's layer (`isLocal`:
+  `request/*` and `execute/*` on disk); the branches of both are listed
+  together. `p2p-mrepo` opens a repository with its disk side when given a
+  folder for it (`local`).
+- **Objects**: written to the disk side; a commit or a tree written there
+  gets what it refers to first, so the disk side holds the whole history of
+  what it has. When an atomic branch moves, its commit's objects are
+  transferred into the Corestore (`transfer`: the same ids, those there
+  skipped) before its ref, so the Corestore always holds its layers whole
+  on its own. Reads take an object from whichever side has it; history and
+  merges are computed on the disk side.
+- **One engine**: p2p-git on both sides (on a Hyperdrive; on `bare-fs`), so
+  no `git` binary is needed and both behave alike. The storage's owner
+  chooses the engine (`p2p-mrepo`); `mycelium-git` imports none.
+- **What replicates**: the Corestore only. A peer holding a replica sees
+  the atomic and replicated layers; the non-atomic ones are the repository's
+  own working state. (`request/done` replicated as a topic: below, open.)
+- **One writer per store, parallel writers on disk**: the Corestore opens
+  writable once (`structure.md`, "One writer per store"); git on disk takes
+  parallel writers, one per branch (objects content-addressed and renamed
+  into place, a ref moved under its own lock only from the commit expected).
+- *Why*: git gives the consistency and our use needs no indexes, so RocksDB
+  (and the single writer it brings) only where replication needs it.
 
-**Agreed.** `mycelium-git` holds the contract, the iso-style adapter (any
-engine with isomorphic-git's API, given as a parameter) and the native
-backend; it imports no engine. The owner of a storage kind chooses its engine
-once, when it makes a repository's backend: `p2p-mrepo` for a Hyperdrive
-(p2p-git, the only engine that writes there), whatever opens repositories on
-disk (native git). Everything above works on backends. *Why*: mycelium knows
-no p2p; the engine follows the storage, not the package.
+**Agreed**, not built: a layer kind for the boxes (`/inbox`, `/outbox`,
+folders today, below); an extension layer declaring its mode when it is
+made; `request/done` and logs as visible, non-atomic topics (each appended
+by its own writer, held in the repository by reference: `values.md`, "A
+topic in git").
+
+## Layers
+
+**Built** for those the host's repository has (the boot creates them).
+
+| Layer | Holds | Mode |
+|---|---|---|
+| `main` | the repository's data | atomic |
+| `packages` | the code store: bundles as objects by `[org]/[package]` (`/packages/haiccing/base-package-haicc.bundle`), native addons by hash (`/packages/addons/<sha256>`), the pinned manifest (`/packages/manifest.json`); laid out as a source, so it is a source for others | replicated |
+| `runtime` | the runtime's data: `/runtime/service.json` (the service state, the type), `/runtime/api.json` (the type's API, once initialised); later its settings and signals | atomic |
+| `request/pending/default` | the local queue: requests waiting, one record each (one queue per source, `request/pending/<source>`, later) | non-atomic |
+| `request/execute` | the request being executed, its record completed by the execute protocol | non-atomic |
+| `request/done` | each finished request with its full record (below) | non-atomic (agreed: visible, as a topic) |
+| `execute/<target>` | an execution branch: made from its target, written by the execute protocol, merged back into its target (`execute/main`, `execute/runtime`, `execute/request/execute`) | non-atomic |
+
+- **Layers are disjoint, never merged into each other**; a layer's
+  execution branch is merged back into its own layer only. A move between
+  layers (`request/execute` to `request/done`) is the owning protocol's, by
+  writes. (`rules.md`, Layers.)
+- **`packages`, no purposes in it** (agreed): a level's packages layer holds
+  what that level runs. Testing is a separate instance (its own
+  repository) composing what it needs by reference: its packages a mix of
+  production and development builds by a custom manifest marked `mixed`,
+  signed by a development key only a test level accepts (`packages.md`).
+  Every bundle checked by its hash either way. A bundle is one blob: the
+  same bundle in many repositories is one object; replication moves only
+  what a peer lacks.
+- **Another writer's layer is named by URI, pinned first** (agreed): the
+  reading repository's commit is fixed before anything is resolved; a URI
+  is then resolved through the mappings as they are at that commit (which
+  repository, which layer: part of the repository's own state, the resource
+  name service resolving names on a swarm). At a pinned commit every URI
+  means one thing, so a read or a unit is reproducible from it.
+- **A repository's URIs are its own** (agreed): stored data names by
+  repository-scoped URIs (`/main/x/y`), never by a host's or a swarm's; a
+  mapping at the repository's boundary translates. *Why*: a repository
+  moves, is restored and replicated across roots unchanged, and a recorded
+  unit reruns exactly wherever it is.
 
 ## The branch model: one writer per branch
 
-**Agreed** (the starting point; crucial to make portable execution work).
-**One writer per branch, full stop** (the human, 2026-11-09): no
-multi-writer layer (Autobase); a multi-writer of our own, tied in with git
-merge, may come later, not a concern now. Hypercore has one writer per core, so a repository on a Hyperdrive has one
-writer, and the branch model follows the writers: **each branch is written by
-exactly one party**, in a store of its own. What looks like one repository is
-a composition of layers from several writers (`rules.md`, Layers: disjoint,
-never merged into each other, only referenced; local, imported or virtual).
-Nothing is merged across writers; each side moves only its own branches.
+**Agreed.** Each branch is written by exactly one party; no multi-writer
+layer (Autobase); a multi-writer of our own, tied in with git merge, may
+come later. What looks like one repository is a composition of layers from
+several writers (`rules.md`: local, imported or virtual). Nothing is merged
+across writers.
 
-### Passive and active repositories
-
-**Direction, not an initial concern** (the human, 2026-11-09: it needs a
-design of its own, later; not part of the repository implementation now).
-The sketch, kept as the starting point for that design:
-
-| | the passive repository (requester) | the active repository (executor) |
-|---|---|---|
-| writes | `request/pending` only | `request/execute`, `request/done`, `execute/main`, `main` |
-| reads, by replication, as read-only layers | the active one's `main`, `request/execute`, `request/done` | the passive one's `request/pending` |
-
-The flow: a request committed to `request/pending`; replicated, an imported
-layer on the active side; taken (recorded on `request/execute`: its name,
-the pending commit it was taken at); executed as a unit on `execute/main`,
-the request layer's commit among the unit's fixed states (so it reruns
-exactly); merged into `main`; closed on `request/done` (its outcome, the
-`main` commit with its response, or why there is none); replicated back, the
-passive side's composed view showing it. A request's state is read by
-composing the branches; nothing moves from one writer to another.
-
-- **Several requesters are several request layers**, one per writer: the
-  request manager's sources (a source being a layer of another repository).
-- **One repository both requester and executor** (active for its own
-  requests) is a configuration of the same model.
-
-### The request branches
-
-**Agreed** (the human, 2026-11-08 and 09). `pending/default` (today: the
-requests and their notes, the record of all requests) is restructured, data
-and metadata kept apart:
-
-| Branch | Holds |
-|---|---|
-| `request/pending/default` | the local queue: requests waiting (one queue per source: `request/pending/<source>`, `default` the local one; no branch `request/pending` itself, a name never both a branch and a prefix) |
-| `request/execute` | the request being executed, with its metadata gathered as it runs: the unit's record (invocation, the states it ran on by commit, environment, nondeterministic inputs), its outcome, the `execute/main` commit it produced; cleared when it ends |
-| `request/done` | each completed request with its full record: the request as submitted, the unit's record (rerun exactly by it), its outcome (a failure included), the `execute/main` commit and its merge into `main` |
-| `execute/main` | only the visible change to `main`: the data the request produced; merged plainly into `main` |
-
-`main` and `execute/main` hold data only; the request branches hold the
-requests and the metadata around producing the visible state (`rules.md`:
-outcomes are data on `main`). Today's `executeRequests` writes the unit's
-record into `main` beside the response: changed when rebuilt. In one
-repository with one writer, taking a request is a commit moving it from the
-queue to `request/execute`, finishing one moving it with its record to
-`request/done`. The passive and active split of these branches comes with
-that design, later. The reserved segment `pending` becomes `request`;
-`rules.md` (its branches and commit references) is changed when it is
-built.
-
-### The packages layer
-
-**Agreed** (the human, 2026-11-09; changed twice: from a layer of links,
-decided 2026-11-08, once packages became bundles; then from
-`packages/<purpose>` to one layer). `packages`, a layer of its own like
-`main`, in place of `capability/<purpose>`, is the code store: it holds the
-bundles themselves as objects, by `[org]/[package]`
-(`/packages/haiccing/base-package-haicc.bundle`), their native addons by
-hash (`/packages/addons/<sha256>`) and the pinned manifest
-(`/packages/manifest.json`): laid out as a source, so a repository's
-packages layer is itself a source for others. A bundle is a blob, its id
-its content's hash: the same bundle in many repositories is one object,
-replication moves only what a peer lacks. Mycelium browses a bundle's
-contents by URI, as if extracted (`values.md`); a level runs a bundle from
-its view (`structure.md`). Releases outside git history stay where the
-outside world meets us (GitHub's haiccing releases, built by local).
-
-**No purposes in the layer, no test organisations**: a level's packages
-layer holds what that level runs. Testing is **a separate instance** (a
-test HAICC platform, its own repository), composing what it needs by
-reference (`rules.md`, Layers): its packages a mix of production and
-development builds, by **a custom manifest** listing them (production
-entries exactly as the publisher's, the same id and hash; development
-builds beside them), marked `mixed` (`packages.md`: validated and mixed),
-signed by a development key that only a level set up for testing accepts
-(its `boot.json`); its sources may include a production level's packages
-layer. Every bundle still checked by its hash: mixing changes who vouches
-for the list, not how bundles are checked. Promotion: a tested build
-published under its organisation, through the release path.
-
-### Naming another writer's layer: pinned, then resolved by URI
-
-**Agreed** (the human, 2026-11-09). Another writer's layer is named by URI
-(the most powerful form). Pinning comes first and stays fixed: the reading
-repository's commit is fixed before anything is resolved; a URI is then
-resolved through the mappings as they are at that commit (which repository,
-which layer, a URI points to: part of the repository's own state, the
-resource name service resolving names on the swarm). Mappings may change
-across commits, only by new commits; at a pinned commit every URI means one
-thing, so a pinned commit fully determines what its URIs refer to, and a
-read or a unit is reproducible from it. (`mycelium-xpath` already reads
-below a branch in one commit's tree; `pinned(backend, state)` fixes
-branches to commits.)
-
-### Open
-
-- The request manager (the human, 2026-11-09): it runs where the requests
-  are generated, one manager (and queue) per source; settled with the
-  repository implementation.
-
-## Portable execution, triggered by data
-
-**Agreed** (the direction the structure must allow; the triggering itself is
-out of phase 3's scope: "triggers and internal processing requests" are not
-in this phase). With every level set up the same way (`structure.md`),
-execution is portable; with self-contained repositories, it is triggered by
-data: code executing puts a request into a repository; an active repository
-(an executor attached) runs it as a unit and writes the response; a passive
-one syncs to an active one, the execution happens there, the result syncs
-back. Where something executes is a matter of which repository is active,
-not of the code; a unit gives the same result wherever it ran.
-
-## Near real time: RPC as the signal, replication as the record
-
-**Direction**, with passive and active repositories (their own design, later). On the connection replication already uses (`values.md`): the
-passive side commits its request and sends "request `<name>` at commit
-`<id>`"; the active side fetches exactly those objects at once, executes, and
-answers "response at `main` commit `<id>`". No polling, no reader having to
-notice. A small request may travel in the RPC message, so the work starts
-before replication completes; but the unit runs only on what is in the
-replica: what is recorded, and what a rerun uses, is always the replicated
-commit.
+**Direction** (its own design, later): **passive and active repositories**.
+A requester (passive) writes only its `request/pending`; an executor
+(active) reads it by replication, executes, and writes `request/execute`,
+`request/done`, `execute/main` and `main`, which the requester reads back.
+Several requesters are several request layers (one queue per source); one
+repository both requester and executor is a configuration of the same
+model. With it: **portable execution**, triggered by data (where something
+executes is which repository is active, not the code; a unit gives the same
+result wherever it ran), and **near real time** (RPC as the signal,
+"request `<name>` at commit `<id>`", replication as the record: what a unit
+runs on and a rerun uses is always the replicated commit).
 
 ## A running repository: the mrepo framework
 
-**Agreed** (the human, 2026-11-09). A repository's own behaviour is the
-framework's, not HAICC's: HAICC is a repository's API (below); the package
-manager puts bundles in its packages layer. Execution is its own heading,
-`mrepo`, apart from `mycelium` (the data layer: values, URIs, containers).
+**Built**, the base (2026-11-10). A repository's own behaviour is the
+framework's: `mrepo`, apart from `mycelium` (the data layer: values, URIs,
+containers, git). Its API is a set of **protocols**, a module per protocol;
+the base variant (`mrepo-base-*`) is a simple implementation, others later
+shaped by configuration (log level, timeouts) as new variants of the same
+protocols.
 
-- **The framework's API is a set of protocols** (the human, 2026-11-09):
-  each protocol owns a flow and its layer (its top URI part), and defines
-  what an implementation provides; the framework enforces the flow, an
-  implementation fills in the specific part. Logically one API documented
-  as protocols; physically **a module per protocol**. The base variant
-  (`mrepo-base-*`) a simple implementation; others, shaped by configuration
-  (logging levels, timeouts, ...), new variants of the same protocols.
+| Protocol | Layer | It owns | Module |
+|---|---|---|---|
+| runtime | `/runtime` | the always-alive process; its data, the service state | `mrepo-base-runtime` (**built**) |
+| request | `/request` | the inbox taken in, the queue, the moves between request layers, the answers | `mrepo-base-request` (**built**) |
+| execute | `/execute` | a request executed in execution branches, its record, the merges back | `mrepo-base-execute` (**built**) |
+| log | `/log` | records appended by one writer, a topic held by reference | `mrepo-base-log` (agreed) |
 
-| Protocol | Layer | The flow it owns | What an implementation provides | Base module |
-|---|---|---|---|---|
-| request | `/request` | the inbox taken in, each message checked against the API (the root mapping), then a request in `request/pending/<source>`, or refused and answered | the API: its commands and their arguments (`haicc`) | `mrepo-base-request` |
-| execute | `/execute` | the queue watched; a request taken (`request/execute`), launched as a unit, the repository's state pinned, writing into `execute/main`; on completion committed, merged into `main`, recorded in `request/done` (the command as launched, the states it ran on, its exit code and output, the environment), answered; one at a time, in queue order | each command mapped to the functions that do it, run as configured | `mrepo-base-execute` |
-| log | `/log` | records appended, one writer, a topic held by reference | what is logged | `mrepo-base-log` |
-
-  More as required (the transport between roots, the verbs, once there is
-  more than one root).
-- **The runtime protocol and its layer** (the human, 2026-11-10): the
-  runtime is always alive; it reads the repository, keeps the watchers
-  going (one poller firing the protocols, for now), and may place requests
-  itself (straight into `request/pending`: inside the root, nothing to
-  validate). Its data is a standalone layer, `runtime`, **atomic**, managed
-  by the runtime protocol: `/runtime/api` (the type's API declaration),
-  `/runtime/service` (the service state, gating the API), the signals (set
-  in the same commit as the state they belong with, where consistency needs
-  it), later `/runtime/settings` (log level, timeouts).
-- **A repository's type is a package** (the human, 2026-11-10):
-  `haiccing/base-package-haicc` is the type `haicc`, requiring
-  `haiccing/base-package-mrepo` (the framework) as its prerequisite; its
-  API is data in the package (the URI types, the protocols and actions each
-  offers, the package's command doing each). `boot` assembles the
-  repository and preloads it with one request, `service initialise /`;
-  `initialise` extracts the API into `/runtime/api`. The framework never
-  imports a type's code: it reads its declaration.
-- **The service state gates the API**: booted: `initialise`, `teardown`;
-  initialised: `start`, `shutdown`; started: the type's API, `stop`,
-  `pause`; paused: `resume`, `stop`. The runtime itself is always running
-  (it takes `initialise` and `start` in); `start` makes the type's API
-  available.
-- **Built, the base** (2026-11-10, phase 3 step 2, part 5): the runtime
-  (`mrepo-base-runtime`) firing the request (`mrepo-base-request`) and
-  execute (`mrepo-base-execute`) protocols by one poller; the `runtime`
-  layer; HAICC's API in its package (`haiccing/base-package-haicc/api.json`);
-  `boot` preloading `service initialise /`; the framework's generic actions
-  (`rest`: get, put, delete; `service`: initialise, start, stop, shutdown);
-  every message a record. Simplified for now: the protocols, in the runtime's process, are handed its
-  writer; the runtime ends once shut down (booted, nothing waiting), HAICC's
-  input starting it again. Found: **the service state gates a request as it
-  executes, not at the inbox** (a queued request may change it first: a
-  `start` behind the preloaded `initialise`); the inbox checks what does
-  not change (not misdelivered, canonical, offered by the API once
-  extracted).
-- **Protocols meet in data, never by calls** (the human, 2026-11-10;
-  `Portable execution, triggered by data`): each watches data states and
+- **The runtime** is always alive while the service is: it holds the store
+  as its single writer, serves the local connection (`<work>/runtime.sock`,
+  owner only: `status`, `stop`), runs one poller firing the protocols in
+  turn, logs to `<work>/log/runtime.log`, and may place requests itself
+  (straight into `request/pending`: inside the root, nothing to validate).
+  Once the service is shut down (booted, nothing waiting) it ends; an input
+  posting a request starts it again (HAICC's does). Started through the
+  shell, detached (`bare-subprocess` ends its own children when its process
+  ends).
+- **Protocols meet in data, never by calls**: each watches data states and
   writes the next; a restart picks up where the data stands.
 
 | Data state | Who reacts | What it does |
 |---|---|---|
-| a message in `/inbox` | request | validated against the API; a request in `request/pending/default`, or refused and answered |
+| a record in `/inbox` | request | checked (below); a request in `request/pending/default`, or refused and answered |
 | pending not empty, `request/execute` empty | request | the next request moved into `request/execute` |
-| a request in `request/execute`, not completed | execute | its execution branches made from their targets (`execute/main` from `main`, `execute/request/execute` from `request/execute`); the action instantiated in the execute and runtime contexts, reading `main` overlaid by `execute/main`, writing `execute/main`; the request's metadata written into `execute/request/execute` (the states it ran on, its result); on completion each branch merged back into its own target, `main` first |
-| a completed request in `request/execute` (its record merged in) | request | copied into `request/done`, then `request/execute` cleared (a restart in between finishes the clearing); answered on the outbox; the next cycle |
+| a request in `request/execute`, not completed | execute | its execution branches made from their targets or brought up to them; checked again against the state now; its action run, reading a target overlaid by its execution branch, writing only execution branches; its record written into `execute/request/execute` (the states it ran on, its result, the merges it made); each branch merged back into its own target, `main` and `runtime` first, `request/execute` last (completing it) |
+| a completed request in `request/execute` | request | copied into `request/done`, then cleared from `request/execute` (a restart in between finishes the clearing); answered on the outbox; the next cycle |
 
-- **Writes inside a protocol's own branches; merges back to the layer a
-  branch came from** (the human, 2026-11-10): the execute protocol writes
-  only its execution branches and merges each into its own target; a move
-  between layers (`request/execute` to `request/done`) is the owning
-  protocol's, by writes. The layer rule stands (layers disjoint, never
-  merged into each other).
+- **Checked twice, for what each moment can know**: at the inbox what does
+  not change (not misdelivered: its `api` this repository's type; its URI
+  canonical; its protocol and action offered there, once the API is
+  extracted); as it executes, the service state then (a request queued may
+  change it first: a `start` queued behind the preloaded `initialise` is
+  allowed in, and runs after it).
+- **Simplified in the base**: the protocols run in the runtime's process
+  and are handed its writer (agreed: a protocol signals the runtime, which
+  writes; threads, each started with its protocol and context, later); one
+  poller, no threads; the signals are the data states themselves.
 
-## Layers by their writes: atomic or not, visible or local
+### A repository's type is a package
 
-**Agreed** (the human, 2026-11-09). A layer's kind says how it is written,
-so its storage follows from its name; an extension layer declares both
-when it is made.
+**Built.** `haiccing/base-package-haicc` is the type `haicc`, requiring
+`haiccing/base-package-mrepo` (the framework). Its API is data in the
+package (`/api.json` in its bundle, from `haiccing/base-package-haicc/api.json`):
+the URI types, the protocols and actions each offers. `boot` assembles the
+repository (its layers, its packages, `/runtime/service.json` booted, of
+type `haicc`) and preloads it with one request, `service initialise /`;
+`initialise` extracts the API into `/runtime/api.json`. The framework never
+imports a type's code: it reads its declaration. The base offers the
+framework's generic actions only (`rest`: get, put, delete; `service`:
+initialise, start, stop, shutdown); a type's own actions, mapped to its
+package's functions and run as its configuration says, come later.
 
-| | atomic (one commit) | not atomic (records, each whole) |
-|---|---|---|
-| **visible** (replicated) | `main`, `packages`: in the store (Corestore), committed by the runtime only | `request/done`, logs: topics, each appended by its own writer, held by reference |
-| **local** | (none yet) | `execute/*`, `request/pending/*`, `request/execute`, the local inbox and outbox: on disk (native git, plain folders) |
+### The service state gates the API
 
-Stored, so, in three modes (`structure.md`): atomic (the Corestore),
-replicated (the Corestore, copied out as files where a process needs them:
-`packages`), non-atomic (the filesystem).
+**Built** (pause and resume agreed). booted: `initialise` (`teardown`,
+agreed); initialised: `start`, `shutdown`; started: the type's API, `stop`
+(`pause`, agreed); paused: `resume`, `stop`. The runtime takes `initialise`
+and `start` in; `start` makes the type's API available.
 
-- **One repository over two stores** (**built**, 2026-11-10:
-  `mycelium-git`'s `mixedBackend`, `p2p-mrepo`'s `local`): the atomic and
-  replicated layers in the Corestore, `request/*` and `execute/*` in git on
-  disk, `<work>/mrepos/<name>/.git` (the same engine, p2p-git, on the
-  filesystem: no `git` binary); routed by the branch's layer, listed
-  together. Objects are written to disk, a commit or tree there getting what
-  it refers to first; an atomic branch moved has its commit's objects
-  transferred into the store (the same ids) before its ref; history and
-  merges are computed on the disk side. It passes the backend contract.
-- **Only atomic layers go through the runtime**; it moves a result in
-  (`transfer`: the same object ids, nothing copied twice) and merges it.
-- **The disk layers take parallel writers** (threads, processes), one per
-  branch: objects content-addressed and renamed into place, a ref moved
-  under its own lock only from the commit expected, a message written under
-  a temporary name and renamed.
-- *Why*: git gives the consistency, our use needs no indexes; RocksDB (and
-  the single writer it brings) only where replication needs it.
+## The external API
 
-## How repositories communicate: inbox, outbox, dispatcher
+**Built** for the base (2026-11-10).
 
-**Agreed** (the human, 2026-11-09; the details at implementation).
-Nothing in a repository is callable from outside by default: its
-functionality (the bundles in `packages/`) is not exposed.
-
-- **Each repository has an inbox and an outbox**, two topics outside the
-  repository's boundary (inside the swarm). One writer per core, without
-  exception: the outbox is written by its repository (what it sends), the
-  inbox by the dispatcher (what was sent to it).
-- **A dispatcher** reads the outboxes and appends each message to the inbox
-  of the repository it is addressed to: it routes, it does not process.
-- **Each repository watches its boxes**: from its inbox, each message is
-  validated where it crosses into the repository, then processed by the
-  repository's own code (which may place a request in its queue: the queue
-  is fed from inside only); on its outbox, it follows what it sent.
-- **A root is set by a validation boundary** (the human, 2026-11-09;
-  replaces validation at both edges): where data is validated, a URI space
-  begins. All input on the host (the terminal, the web) is validated, so
-  the host is a root; all data entering a swarm is validated, so the swarm
-  is a root (a node inside it, `p2p-rns`'s `/<swarm>/<node>/…`). Input from
-  outside (no root of its own) enters the host's repository: validated
-  there once, and translated into the host's URIs. Inside a root, the
-  happy path: the dispatcher matches prefixes, a repository takes a
-  message unchecked. Between roots (host and swarm), traffic crosses a
-  boundary both ways: validated, translated, and where a security policy
-  goes, in each direction.
-- **Everyone the same way**: the owner's terminal (`haicc request add`)
-  posts a message, through the dispatcher, to the repository's inbox, as
-  any sender does.
-- **An external API** (later, opt-in): mounted in a repository as data
-  (pinned, versioned), declaring which commands are accepted, with their
-  arguments, from whom (capability URIs mapped to commands: `rules.md`,
-  Layers, deferred to that level); a policy over the inbox.
-- **The boxes, placed** (the human, 2026-11-09; supersedes the two topics
-  per repository above): a repository has a **file inbox** only; a node has
-  a **file outbox**, written directly by its repositories (each message
-  under a temporary name, then renamed), copied by the node into its
-  **outbox topic**, and an **inbox topic**, written by the node with what
-  it takes from other nodes' outbox topics. The node's **local
-  dispatcher** delivers from its inbox topic into the addressed
-  repository's file inbox. One core per node crosses the network; a
-  repository never handles a topic.
-- **Two modes between nodes**, chosen by the receiver: **followed** (the
-  sender's outbox topic kept open and replicated live: Hypercore's own
-  notice of an append is the signal; for regular partners) and
-  **announced** (the sender signals the addressee only, by `p2p-request`,
-  the outbox's key and length, the latest length standing for a burst; the
-  receiver fetches those blocks sparsely and checks them; for occasional
-  senders). Both land in the receiver's inbox topic.
-- **Posting is `POST <inbox URI> {message}`** (the human, 2026-11-09;
-  first built as `PUT`): the inbox names the new message. The REST verbs
-  everywhere for the CRUD operations, in their meaning: `GET` reads, `PUT`
-  writes at a URI the caller names, `POST` adds to a collection that names
-  the item, `DELETE` removes. **The verbs are the transport between
-  repositories** (the human, 2026-11-09): an RPC server has a fixed set of
-  messages, the verbs; the real requests (a command of a repository's API)
-  travel wrapped, as the body of a `POST` to an inbox. The host's root is the host's repository, so
-  its inbox is `/inbox`; from outside a root, through its mapping, only
-  `POST /inbox` is allowed (the gate); inside, code writes any layer under
-  the layer rules. Folders for now, no layer kind (**built**:
-  `<work>/mrepos/host/inbox/` and `outbox/`);
-  more advanced implementations later.
-- **HAICC is a repository's API** (the human, 2026-11-09): the host's
-  repository is of type `haicc`, instance `host`; it is the host (the node
-  bridgehead), a node's the same type. Every command is a message to its
-  inbox, from any input (the terminal one of them; a node, a peer, the web
-  others); **every repository's inbox is a validation point** (the root
-  mapping): taken in, checked against the API, then a request in
-  `request/pending/default`, or refused and answered. The terminal checks
-  more only where it is itself a repository's application. **No command
-  stays outside**: each passes through the inbox and is recorded (starting
-  and stopping the host's runtime, the boot's own record).
-- **An API package maps the API to internal functionality** (the human,
-  2026-11-09): the `haicc` package declares the commands (their arguments,
-  validated at the inbox) and maps each to the functions that do it; how a
-  command is executed follows the repository's configuration settings.
-- **A protocol is part of an API, internal or external, giving its actions
-  their meaning** (the human, 2026-11-09): the same word for the same
-  meaning in every context. The framework's API (internal) has its
-  protocols (request, execute, log, above); a repository's external API its
-  own, generic sets to start with, to see how far they get us:
+- **HAICC is a repository's API**: the host's repository is of type
+  `haicc`, instance `host`; it is the host, the node bridgehead; a node's
+  repository the same type. Every command is a request to its inbox, from
+  any input: the terminal is one (`haicc-base-cli`), a node, a peer, the
+  web others. **No command stays outside**: starting and stopping included,
+  each passes through the inbox and is recorded.
+- **A protocol gives an API's actions their meaning**, the same word for
+  the same meaning in every context (the framework's protocols are the
+  internal API's). The external API's first protocols, generic, to see how
+  far they get us:
   - **`rest`**: `get`, `put` (at a URI the caller names: create or
     replace), `post` (to a collection, which names the item), `delete`. No
-    update: a URI goes deep (into a JSON document, to a single value), so a
-    `put` at a deeper URI is the partial update. Extended if ever needed.
-  - **`service`** (named 2026-11-10: the lifecycle of a service, an
-    amended service protocol; first called `lifecycle`), four pairs, each
-    the other's inverse: `boot` (brought into existence from a source: what
-    we called the cold boot) and `teardown` (removed entirely);
-    `initialise` (configuration and state set up, checked, ready to run:
-    what we called the warm boot) and `shutdown` (undone, back to booted);
-    `start` (its processes running) and `stop` (halted between requests,
-    everything kept); `pause` (halted mid-request) and `resume` (continued
-    from there). And `run`: the whole cycle, from boot to teardown (a
-    test's run, a one-off execution). A thing without some of them (a
-    plain process: no boot) offers only those it has, by its type.
-- **Every message is a Kafka record** (the human, 2026-11-10): the record is
-  the dispatch wrapper. Its `topic` is the URI where it lives (`/inbox`,
-  `/request/pending/default`, `/request/execute`, `/request/done`): a move
-  rewrites it, so a record is fully qualified within its context. Its
-  `value` is the message or request, unchanged as it travels. Its
-  `headers` are JSON, namespaced data structures accessible by URI (a
-  header a path inside the record), for any metadata (`vision.md`; their
-  schemas with AVRO). Its `key`, later, a URI: where it first entered
-  (`/inbox/<name>`), kept through its moves. The base uses the minimum:
-  `topic`, `timestamp`, `headers`, `value`; a record keeps its name through
-  its moves (the answer names it).
-- **A request is fully qualified**: `{ api, protocol, action, uri, body }`
-  (`api` the repository type: the first check that it is not misdelivered), as it
-  travels and as it is recorded (an action unique today may not stay so; a
-  recorded request keeps its meaning for an exact rerun). The URI names the
-  object, its type decides what an action means there; the mappings say
-  which protocols may be used where. At the terminal: `haicc <protocol>
-  <action> <uri> [body]`; an action unique among the protocols may be given
-  alone (`haicc post /inbox '{…}'`), the input expanding it where it enters,
-  refusing an ambiguous one.
-- **The boxes are a level's** (the human, 2026-11-09): the host (the first
-  level) as any swarm or node; "node" above stands for any level. Each
-  level has its own root; a URI is read in its level's URI space, its
-  dispatcher matching its own root by prefix (local: a repository's file
-  inbox) and sending anything else out. Translating between roots is done
-  mostly by repository referencing (the mappings). **Open**: each
-  context's root (the host's differs from a swarm node's, `p2p-rns`'s
-  `/<swarm>/<node>/…`).
-- **A crossing is a mapping** (the human, 2026-11-09): from a root (none,
-  for input from outside) to a root; the prefix translated; validation
-  required or not, and its type (full: the content; the envelope only;
-  none: a trusted translation); a policy per direction. Host input: none →
-  host, full. Where roots sit is then configuration, not design.
-- **A repository's URIs are its own** (the human, 2026-11-09): stored data
-  names by repository-scoped URIs (`/main/x/y`), never by a swarm's or a
-  host's; a mapping at the repository's boundary translates (inside a root,
-  validation none). The naming scope (the repository) and the trust root
-  (the validation boundary: host, swarm) are two things. *Why*: a
-  repository moves, is restored and replicated across roots unchanged, and a
-  recorded unit reruns exactly wherever it is; host- and swarm-scoped URIs
-  exist only for addressing (the dispatcher, the RNS).
-- At implementation: the addressee by URI, resolved by the resource name
-  service; a message as a Kafka record (its value the message; headers:
-  from, to, a correlation id).
+    update: a URI goes deep (into a JSON document, to one value: agreed),
+    so a `put` at a deeper URI is the partial update. **The verbs are the
+    transport between repositories** (agreed): an RPC server has a fixed
+    set of messages, the verbs; a real request travels wrapped, the body of
+    a `post` to an inbox.
+  - **`service`**, the lifecycle of a service, four pairs, each the other's
+    inverse: `boot` (brought into existence from a source; was the cold
+    boot) and `teardown` (removed entirely); `initialise` (configuration and
+    state set up, checked, ready to run; was the warm boot) and `shutdown`
+    (undone, back to booted); `start` (its processes running) and `stop`
+    (halted between requests, everything kept); `pause` (halted
+    mid-request) and `resume`. And `run`: the whole cycle, boot to teardown
+    (a test's run, a one-off execution). A thing without some of them
+    offers only those it has, by its type.
+- **A request is fully qualified**: `{ api, protocol, action, uri, body }`,
+  as it travels and as it is recorded (an action unique today may not stay
+  so; a recorded request keeps its meaning for an exact rerun). The URI
+  names the object, its type decides what an action means there.
+- **At the terminal**: `haicc [protocol] <action> <uri> [body]`; an action
+  unique among the protocols may be given alone (`haicc put /main/x.json
+  '{…}'`), expanded where it enters, an ambiguous one refused. The input
+  reads it (the URI canonical, the body JSON), posts it, starts the runtime
+  if it is not running, and prints the answer (exit 0 answered ok, 1
+  refused or failed, 2 a bad call).
+- **Every message is a Kafka record**: the record is the dispatch wrapper.
+  `topic` the URI where it lives, rewritten as it moves (`/inbox`,
+  `/request/pending/default`, `/request/execute`, `/request/done`): a
+  record is fully qualified in its context; `value` the message or request,
+  unchanged as it travels; `headers` JSON, namespaced (`mrepo` the
+  framework's: `from`, `to`, `execute`), reachable by URI, for any metadata
+  (`vision.md`; their schemas with AVRO); `timestamp`. A record keeps its
+  name through its moves; an answer names it. Agreed, not in the base:
+  `key`, a URI (where it first entered, `/inbox/<name>`).
+
+## Roots, boundaries, mappings
+
+**Agreed**; the host's part **built**.
+
+- **A root is set by a validation boundary**: where data is validated, a URI
+  space begins. All input on the host (the terminal, the web) is validated:
+  the host is a root, its root the host's repository (`/inbox` its inbox).
+  All data entering a swarm is validated: a swarm is a root, a node inside
+  it (`p2p-rns`'s `/<swarm>/<node>/…`). Input from outside (no root of its
+  own) enters the host's repository. **Open**: each context's root.
+- **Every repository's inbox is a validation point**; inside a root, the
+  happy path (the dispatcher matches prefixes, a request checked at the
+  inbox is not checked again for what cannot change).
+- **A crossing is a mapping**: from a root (none, for input from outside) to
+  a root; the prefix translated; validation required or not, and of which
+  type (full: the content; the envelope only; none: a trusted translation);
+  a policy per direction, so traffic between host and swarm can be secured
+  both ways. Host input: none → host, full. Where roots sit is then
+  configuration. From outside, only `post /inbox` is allowed (the gate);
+  inside, code writes any layer under the layer rules.
+- **The naming scope and the trust root are two things**: the repository
+  names its data (its own URIs); the root (host, swarm) is where it is
+  validated. Host- and swarm-scoped URIs exist only for addressing (the
+  dispatcher, the RNS); translating between roots is done mostly by
+  repository referencing (the mappings).
+
+## The boxes and the dispatcher
+
+**Built** for the host, as folders (2026-11-10): `/inbox` at
+`<work>/mrepos/host/inbox/`, `/outbox` at `<work>/mrepos/host/outbox/`, a
+record a document (`mycelium-container-document`, JSON), written under a
+temporary name then renamed (any writer, in parallel). The local dispatcher
+(in `mrepo-base-request`, run by the runtime) delivers an outbox record
+addressed to `/inbox` there, leaves one addressed to the outside (`to`
+null) for its input to take, and holds any other.
+
+**Agreed**, for levels beyond the host (a level is the host, a swarm or a
+node, each with its own root):
+
+- A repository has a file inbox only. A level has a file outbox (written
+  directly by its repositories), copied by the level into its **outbox
+  topic**, and an **inbox topic** (written by the level with what it takes
+  from other levels' outbox topics); its local dispatcher delivers from its
+  inbox topic into the addressed repository's file inbox. One core per
+  level crosses the network; a repository never handles a topic. A
+  message to a repository on the same level goes file to file.
+- **Two modes between levels**, chosen by the receiver: **followed** (the
+  sender's outbox topic kept open and replicated live: Hypercore's own
+  notice of an append is the signal; for regular partners) and **announced**
+  (the sender signals the addressee only, by `p2p-request`, the outbox's key
+  and length, the latest length standing for a burst; the receiver fetches
+  those blocks sparsely and checks them; for occasional senders). Both land
+  in the receiver's inbox topic.
+- Nothing in a repository is callable from outside by default: its
+  functionality (its packages) is exposed only through its API.
 
 ## Backup at the repository level
 
-**Agreed** (the human, 2026-11-09). With every level's state in mycelium
-repositories, a backup is the repository's own, in its own terms, knowing
-nothing of the store beneath (Corestore, RocksDB):
-
-- **by replication**: a backup peer follows the repository's cores in full:
-  a live, verified copy; restored by replicating back;
-- **by export**: the repository as a git bundle (`mycelium-layer`'s export;
-  `vision.md`: bundles the transport between repositories outside
-  replication, self-contained, immutable, verifiable): a checkpoint at a
-  commit; restored by importing it. (A git bundle, not Bare's code bundle.)
-
-Backups may happen at different levels, for different purposes (a node's
-state, a swarm's, the host's install), each by its own policy; the
-important point is that they are **disjoint** (the human): a backup covers
-its own repositories only, never another level's, so each can be taken and
-restored on its own. The roadmap's teardown with checkpointing and backup
-builds on it.
+**Agreed.** A backup is the repository's own, knowing nothing of the store
+beneath: by replication (a backup peer following its cores; restored by
+replicating back) or by export (a git bundle at a commit; restored by
+importing it). Backups happen at different levels for different purposes,
+each by its own policy, and are **disjoint**: a backup covers its own
+repositories only, never another level's. The service protocol's `teardown`
+with checkpointing builds on it.
 
 ## The node's own repository
 
 **Agreed.** Every level's config, state and events in its own repository,
 the node's first: the manager writes what it decides (container, image,
 address) there, the node reads its own data and knows no manager; the
-manager and Splectral subscribe by replication, knowing no event kinds (in
-place of today's shadow on stdin and the manager knowing the node's event
-kinds). **Logs** (direction, the human, 2026-11-09; the design in detail
-when the implementation starts): individual topics (records appended, not a
-commit per line), which the swarm can centralise, and which are added to
-the local mycelium repository as well; state as git objects.
+manager and Splectral subscribe by replication, knowing no event kinds.
+**Logs** (direction): individual topics (records appended, not a commit per
+line), which the swarm can centralise, held in the local repository by
+reference; state as git objects.
+
+## Open
+
+- The request manager: one manager and queue per source, where the requests
+  are generated.
+- Each context's root (the host's, a swarm's, a node's).
+- `request/done` as a topic: its replication and the reference's commits.
+- A type's own actions: how its package maps them to its functions, and the
+  configuration that shapes their execution.

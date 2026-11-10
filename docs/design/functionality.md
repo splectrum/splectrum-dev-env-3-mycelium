@@ -1,5 +1,10 @@
 # A package's functionality, and its tests
 
+> **Phase 2's platform.** This describes what phase 2 built; phase 3's
+> rebuild replaces it part by part (`steps/2-rebuild/readme.md`) and it is
+> rewritten in step 3 (the documentation). What holds now:
+> `design/repositories.md`, `design/structure.md`, `design/modules.md`.
+
 Status marks: **built** (in the code, tested), **agreed** (decided, not built).
 
 ## Functionality by URI

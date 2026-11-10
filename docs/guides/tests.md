@@ -1,5 +1,10 @@
 # Writing tests
 
+> **Phase 2's platform.** This describes what phase 2 built; phase 3's
+> rebuild replaces it part by part (`steps/2-rebuild/readme.md`) and it is
+> rewritten in step 3 (the documentation). What holds now:
+> `design/repositories.md`, `design/structure.md`, `design/modules.md`.
+
 For a developer. A package carries its tests, at each level, and they run
 bottom up: each module's own, then (agreed) its swarms', then the package's
 named tests. All on Bare. The rules: `../rules.md`, "Tests".

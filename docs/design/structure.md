@@ -2,8 +2,8 @@
 
 Status marks: **built** (in the code, tested), **agreed** (decided, not
 built), **open** (to settle), **to probe** (to try before designing
-further). Decided with the human, 2026-11-08 (phase 3, step 1's review); the
-folder structure to be fixed in this phase, step by step.
+further). Decided with the human in phase 3 (2026-11-08 to 10); how each
+decision was reached is in the step records. This file says what holds now.
 
 ## Every level set up as a node is
 
@@ -58,10 +58,10 @@ descriptor could not be locked`); opened read-only it works, taking no lock,
 and a reader opened after an append sees it; the writer closed, another may
 write. (`wait` queues a writer for the lock.)
 
-- **Each level has one writer process for its store**: the level's HAICC
-  process; commands that change something go through it (or wait for the
-  lock). Commands that only read (status, a list, browsing by URI) open the
-  store read-only, any time, in parallel. The same single-writer rule as
+- **Each level has one writer process for its store**: its repository's
+  runtime (`mrepo-base-runtime`, **built**); every change is a request it
+  executes (`repositories.md`). A short-lived reader may open the store
+  read-only, any time, in parallel. The same single-writer rule as
   Hypercore's, one level down.
 - **Two writers, two meanings**: a core's writer holds its key pair (a
   topic's producer: the only one who can append, every block signed into
@@ -77,15 +77,14 @@ write. (`wait` queues a writer for the lock.)
   opens writable once; a second open fails even in the same thread, and
   from a child thread (`bare-thread`) of the same process; a Bare thread
   cannot share another thread's store (each its own isolate, sharing only
-  messages). The store's writer is the open store, held by
-  `mrepo-base-runtime` (the repository's runtime); the cores' writer is the same open
-  store (every core of the repository, its layers' drive, its topics, its
-  outbox, keyed from the store's primary key). Child threads and launched
-  commands are its clients, never writers: a child thread sends what it
-  wants written as a message; a launched command (a request's execution)
-  writes into the execute layer itself, on disk (changed 2026-11-09:
-  `repositories.md`, "Layers by their writes"), the runtime, on
-  completion, committing, merging and recording.
+  messages). The store's writer is the open store, held by the
+  repository's runtime; the cores' writer is the same open store (every
+  core of the repository, its layers' drive, its topics, keyed from the
+  store's primary key). Child threads and launched commands are its
+  clients, never the store's writers: a child thread sends what it wants
+  written as a message; a launched command writes the non-atomic layers on
+  disk itself (`repositories.md`, "One repository over two stores"), the
+  runtime merging into the atomic ones.
 - **More writers, more stores** (agreed, the human, 2026-11-09): another
   store (its own folder, its own primary key) has its own single writer (a
   child thread, another process, a package's process); the repository
@@ -100,9 +99,8 @@ write. (`wait` queues a writer for the lock.)
 - **A read-only reader sees a snapshot as of its opening** (tried
   2026-11-09: a reader kept open while the writer appended five times saw
   none of them, `update()` returning `false`; a reader opened afterwards saw
-  all). So read-only opening is for short-lived readers: a command that
-  opens, reads and closes (status, a list, `haicc read <uri>`) sees all
-  written before it opened. A long-lived reader (Splectral watching a
+  all). So read-only opening is for short-lived readers: one that opens,
+  reads and closes sees all written before it opened. A long-lived reader (Splectral watching a
   level, a log viewer, anything waiting for new data) follows the writer
   instead (proposed): the level's writer process serves its cores to local
   followers over a local connection, the same Hypercore replication as
@@ -119,29 +117,15 @@ write. (`wait` queues a writer for the lock.)
 
 ## A level: a mycelium repository first, its layers stored by their writes
 
-**Agreed** (the human, 2026-11-09): a level is a mycelium repository with
-layers, first; a person sees it through a Splectral component. A layer is
-stored in one of **three modes**, by its writes (`repositories.md`, "Layers
-by their writes"): **atomic** (in the Corestore, committed by the main
-thread), **replicated** (in the Corestore, and copied out as files for a
-process that needs them: Bare runs a bundle from its file, `dlopen` loads an
-addon from one), **non-atomic** (on the filesystem only, written directly).
-(Changed 2026-11-09: a folder was first only a translation, where a host
-process needs files.)
-
-| Layer | Holds | On the filesystem |
-|---|---|---|
-| `main` | the level's data (config, state) | no (seen by URI) |
-| `packages` (a layer of its own, like `main`) | the bundles and their native addons, as objects, laid out as a source (the pinned manifest, `<org>/<package>.bundle`, `addons/<sha256>`) | replicated: `<work>/mrepos/host/packages/`, the bundles this level runs and the addons they name |
-| `execute/main` | executions: only the visible change to `main` (from `main`, synced before each) | no |
-| `request/pending/default`, `request/execute`, `request/done` | the requests and their metadata (`repositories.md`) | no |
-| the log topic | the level's log | no (the minimal file log aside) |
-| child levels | each its own repository, named in this one's mappings by URI | a child's folder, where the child runs on this host |
-
-Always there, outside the layers: `haicc` (the boot's way in, shell),
-`store/` (the substrate: the repository itself, Corestore and RocksDB),
-`log/` (the minimal plain-file log, **open**: its scope, for the boot
-and the store's own failures).
+**Built** for the host (2026-11-10): a level is a mycelium repository with
+layers, first; a person or an agent reaches it by URI (the terminal), later
+through a Splectral component too. Its layers are stored in three modes,
+atomic, replicated and non-atomic, one repository over the Corestore and
+git on disk (`repositories.md`, "One repository over two stores", and its
+layers there). Child levels (agreed): each its own repository, named in
+this one's mappings by URI, its folder here where the child runs on this
+host. The level's log: a topic (agreed), the minimal file log meanwhile
+(`<work>/log/`, **open**: its scope).
 
 - **The folders are an install-internal issue** (agreed, the human,
   2026-11-09): people and agents interact through the command line or
@@ -149,20 +133,20 @@ and the store's own failures).
   folders are set up is the install's own concern, not part of the
   platform's interface. What follows is how the install translates, free to
   change.
-- **Each repository a folder of its own, `<work>/mrepos/<name>/`** (**built**,
-  agreed with the human, 2026-11-09; replacing `<work>/haicc/`, built first, itself
-  replacing the level's folder as the repository's root): a repository is
-  stored partly in the Corestore, partly on the filesystem, so every
-  repository has its place in the folder structure; a flat list for now,
-  each by its unique name (a URI segment; its id stays its identity, what
-  references pin). Under it, a layer's files at the same path as its URI
+- **Each repository a folder of its own, `<work>/mrepos/<name>/`**
+  (**built**): a repository is stored partly in the Corestore, partly on
+  disk, so every repository has its place in the folder structure; a flat
+  list for now, each by its unique name (a URI segment; its id stays its
+  identity, what references pin). In it, its git on disk (`.git`: the
+  non-atomic layers) and a layer's files at the same path as its URI
   (`mrepos/host/inbox` is `/inbox` of `host`). The host's repository is
   `host`: of type `haicc` (HAICC is the repository's API), it is the host,
   the node bridgehead. **One Corestore per host**, `<work>/store/`, holding
   every repository's atomic and replicated layers, its single writer the
   host's runtime; beside it `<work>/setup/` (the source the boot came
-  from) and `<work>/log/`. A command finds its level by walking up from its
-  bundle to the folder holding `store/`.
+  from, Bare linked there), `<work>/log/` and the runtime's local
+  connection, `<work>/runtime.sock`. A command finds its level by walking
+  up from its bundle to the folder holding `store/`.
 
 ```
 <work>/
@@ -178,7 +162,8 @@ and the store's own failures).
         manifest.json                        the pinned manifest, packages keyed [org]/[package]
   store/                                     the Corestore: every repository's atomic and replicated layers
   setup/                                     the source the boot came from
-  log/                                       the minimal plain-file log
+  log/                                       the minimal plain-file log (runtime.log)
+  runtime.sock                               the runtime's local connection, while it runs
 ```
 
 - **What is in the Corestore is never written as files except as a copy**:
@@ -199,65 +184,67 @@ and the store's own failures).
 
 ### Boot: getting the host's repository (the service protocol's `boot`)
 
-**Agreed** (the human, 2026-11-09). The boot's job: get the level's
-repository, then start its single writer from it. Its source:
+**Built** for a new repository (2026-11-10; a restore agreed). The boot's
+job: get the level's repository, then start its single writer, the
+runtime, from it. Its source:
 
 | Source | Getting the repository | For |
 |---|---|---|
 | new (now) | created empty in a new store (`p2p-mrepo`'s `create`, a new internal id) and seeded from the release | a first install |
 | existing (later) | opened from a backup: a git bundle imported (`p2p-mrepo`'s `import`, the id kept), or replicated from a backup peer by key | a restore |
 
-After that, one path: the addons bound, HAICC's bundle copied into the
-scope, HAICC started as the writer, initialisation refreshing from the
-sources (a restored repository's older bundles handled as the setup's
-bootstrap bundles are). Kept in mind for restore: a restore brings the old
+After that, one path: the bundles the level runs copied out of its
+`packages` layer, the runtime started as the writer, `initialise`
+(preloaded as the repository's first request) setting the repository up
+from its type's package (a restored repository's older bundles handled as
+the setup's bootstrap bundles are). Kept in mind for restore: a restore brings the old
 identity back, keys included (a backup that allows one holds secrets);
 nothing the level needs lives outside its repository (the scope and the
 addons rebuilt from it); nothing after "get the repository" assumes it new.
 
-**Seeding a new repository, `init`**: its initial layers `main`,
-`packages`, `execute/main` (from `main`), `request/pending/default`,
-`request/execute`, `request/done`. Two concerns, two owners, both
-committing through `mycelium-git`'s writer: HAICC creates the repository
-(`p2p-mrepo`) and its layers and seeds `main` (the level's name, what is
-provided: the level's shape, HAICC's concern, its own module,
-`haicc-base-level`, when a second repository paradigm needs a shape); the
-package manager installs the release's bundles and addons into
-`packages` (checked against the release's manifest) and deploys HAICC's
-bundle into the layer's view. The boot's shell runs the checks, then
-Bare runs HAICC's bundle with `init`, then starts HAICC as the writer.
+**Seeding a new repository** (**built**, `haicc-base-boot`): the setup's
+shell unpacks, ensures Bare, checks the boot bundle's hash and runs it; the
+boot checks the machine, loads the publisher's signed manifest and the
+packages it installs (each checked by hash), creates the repository `host`
+(`p2p-mrepo`, its disk side in `<work>/mrepos/host/.git`) with its layers
+`main`, `packages`, `runtime`, `request/pending/default`,
+`request/execute`, `request/done`, commits the packages (the boot's,
+HAICC's, mrepo's) with the pinned manifest into `packages`, writes
+`/runtime/service.json` (booted, of type `haicc`), preloads `service
+initialise /`, copies HAICC's and mrepo's bundles with their addons out of
+`packages`, closes the store and starts the runtime. Agreed: `main` seeded
+with what is provided (the level's shape).
 
 **How people and agents interact with the platform** (agreed, the human,
 2026-11-09): **the terminal is the primary way in, for a person and an agent
 alike; Splectral is secondary.** The terminal access mode, as an agent wants
 it, and a person uses the same:
 
-- **Structured output**: `haicc <command> --json` returns the result as one
-  JSON value (stable field names, data names); human text the default; the
-  exit codes as today (0 done, 1 not done, 2 a bad call).
+- **Structured output** (**built**): every answer is one JSON value (stable
+  field names, data names); exit 0 answered ok, 1 refused or failed, 2 a
+  bad call. Agreed: human text beside it, by a flag.
 - **Never a prompt that blocks**: every question has a flag (`--yes`); with
   no terminal a question is answered no, and said (`docs/rules.md` 11).
-- **State read by URI**: `haicc read <uri>` (or a `select` with `*`)
-  through mycelium, at a pinned commit, instead of a command per question.
-- **Self-describing commands**: `haicc commands --json` lists every command,
-  its arguments and what it changes; the same description drives the
-  boundary's validation and Splectral's page.
-- **Changes as requests where it matters**: a significant change submitted
-  as a request into the level's repository: recorded, executed as a unit,
-  reproducible, its response on `main`, checked back later.
+- **State read by URI** (**built**): `haicc get <uri>`, instead of a
+  command per question.
+- **Self-describing**: the type's API declaration (`/runtime/api.json`,
+  **built**) lists what is offered where; agreed: it drives Splectral's page
+  and a listing at the terminal.
+- **Every command a request** (**built**, `repositories.md`, "The external
+  API"): recorded, executed as a unit, reproducible, answered.
 - **A dry run**: `--plan` says what a command would change, without changing
   it.
 
-HAICC runs inside the boundary, its input valid. Input enters at a boundary
-and becomes an internal `haicc` command:
+Input enters through an input of the host's repository's API and becomes a
+request in its inbox, checked there (the inbox is the root's validation
+point):
 
-| From | The boundary | Then |
+| From | The input | Then |
 |---|---|---|
-| the host's terminal (primary: a person or an agent) | the command line: parsed (`haicc-cli-parser`) and validated | launched as an internal `haicc` command |
-| the browser (secondary) | Splectral's server (initially a command line typed in the page), validated there | launched as an internal `haicc` command |
+| the host's terminal (primary: a person or an agent) | `haicc` (`haicc-base-cli`, **built**): read (the URI canonical, the body JSON), posted | a request in `/inbox`, answered |
+| the browser (secondary) | Splectral's server (agreed), posting the same way | a request in `/inbox`, answered |
 
-Inside, a `haicc` command trusts its input (the happy path); a change is
-committed by the level's single writer.
+Inside, the happy path; a change is committed by the level's single writer.
 
 ## Code without a code folder
 
@@ -273,14 +260,15 @@ Dropped (the human, 2026-11-09): a mycelium module protocol for Bare
 code from a commit's tree), not needed with bundles: the code runs, and URIs
 browse as if all were on the filesystem.
 
-Today (**built**): the platform's nodes run from the master's `packages/`,
-assembled on the host, mounted read-only (a transitional shortcut for one
-host); host B's node gets its code by replication and extraction
-(`p2p-node/boot.js`), the direction `vision.md` names.
+Phase 2's platform (still in the code, not yet rebuilt): its nodes run
+from the master's `packages/`, assembled on the host, mounted read-only;
+host B's node gets its code by replication and extraction
+(`p2p-node/boot.js`).
 
 ### Bundles: a package's runnable form
 
-**To probe.** Tried (2026-11-08, the installed `bare-bundle`): a two-module
+**Built** (the package writer, `tools/package-writer`, by `bare-pack`;
+probed first). The probe (2026-11-08, the installed `bare-bundle`): a two-module
 bundle built by hand runs directly (`bare app.bundle`), no folder, nothing
 resolved on disk; Bare itself runs its own JavaScript from a bundle
 (`bare:/bare.bundle/…`). What it teaches:
@@ -308,8 +296,8 @@ resolved on disk; Bare itself runs its own JavaScript from a bundle
   manager's `closure.js`: one way to compute a closure, for what a package
   carries and for what its bundles hold.
 
-If the probe holds: **a bundle is a package's runnable form, beside the
-package, not instead of it**. The package stays the self-contained folder
+**A bundle is a package's runnable form, beside the package, not instead of
+it**. The package stays the self-contained folder
 (modules whole, README, tests, swarms, platform definitions: read by people,
 tested, viewed); **one bundle per package, the full package** (changed
 2026-11-09 from a bundle per entry point, the human): the closure of all
@@ -334,9 +322,10 @@ it; no longer copied to every level); data and configuration (in the
 level's repositories). Stack traces point into the bundle
 (`…/app.bundle/app/index.mjs`), mapped back to the package repository.
 
-Where packages are used at a level today, and with bundles:
+Where phase 2's platform uses packages, and with bundles (the host's part
+built; the rest as it is rebuilt):
 
-| Today | With bundles |
+| Phase 2 | With bundles |
 |---|---|
 | the root's and swarms' HAICC (`haicc-base-boot/haicc.js` in `packages/base-package-haicc/`) | a HAICC bundle |
 | a node's HAICC (`haicc-deployment/haicc.js`) | a node-HAICC bundle (one, after the convergence) |
@@ -353,8 +342,8 @@ source and where tests run.
 
 ### Packages as bundles, published as releases
 
-**Agreed** (the human, 2026-11-09; implemented next, the probe's points
-first). Our haiccing and splectral packages are bundles; a bundle is a
+**Built** for the boot, HAICC and mrepo (the others as they are rebuilt).
+Our haiccing and splectral packages are bundles; a bundle is a
 built artifact, not source: it is published as a release, not kept in the
 repository's history (as `haicc-setup.sh`, a release asset of
 `base-package-haicc`, already is).
@@ -371,9 +360,11 @@ repository's history (as `haicc-setup.sh`, a release asset of
   paths canonicalised, its tests and data as files; addons offloaded by
   hash), runs the package's tests from the bundle, records the hashes. Only the writer makes
   bundles (rules 13, 17).
-- **Built and published by local** (the local agent, with the human's word,
-  as the releases today): a release per package (`tools/publish.sh`
-  creating releases instead of pushing written folders).
+- **Built and published by local** (the local agent, with the human's word;
+  **built**): `tools/publish.sh` writes the packages signed, builds the
+  setup, checks it in a fresh folder with Node.js off the PATH, and
+  publishes it with the manifest as a release of
+  `haiccing/base-package-boot`, tagged by the packages' identities.
 - **The repository** holds what people read and the writer works from: the
   README, the manifest's history, the hand-written parts; no longer the
   copied `modules/` and `node_modules/` (the source lives in the
