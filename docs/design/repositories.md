@@ -252,13 +252,22 @@ and `start` in; `start` makes the type's API available.
   rewrapped or changed on the way. **Processing completes the form**: its
   value the request with its `output` (or the `error` that stopped it); the
   completed form goes back in an envelope, its core's topic saying where.
-  What a terminal shows is the completed form, a record. A record keeps its
-  name (its document's) through its moves.
+  What a terminal shows is the completed form, a record.
+- **The key: a GUID** (the human, 2026-11-10; **built**), set by the sender
+  on the core when it makes the request, carried by every envelope around
+  it and every log record about it, and the name of its document in every
+  layer: a request traced everywhere by one key.
+- **Order is the commit chain** (the human, 2026-11-10; **built**): taking
+  in follows the `inbox` layer's commits, the queue the `pending` layer's
+  (first parent, from the layer's first commit; within one commit, by
+  name): the order requests arrived in the repository, no sender's clock
+  involved. One writer moving a branch only from the commit it started from
+  (compare-and-swap) keeps each chain a line.
 - **Headers left empty for now** (the human, 2026-11-10: their use to be
   planned carefully): JSON, namespaced, reachable by URI, for metadata
   (`vision.md`; their schemas with AVRO). So for now no record carries the
   execution's metadata (the states it ran on, the merges it made: in the
-  commits). Agreed, not in the base: `key`, a URI (where it first entered).
+  commits).
 
 ## Roots, boundaries, mappings
 

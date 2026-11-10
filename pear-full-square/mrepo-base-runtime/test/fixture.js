@@ -11,8 +11,7 @@ import Bundle from 'bare-bundle'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { writer, openRepo, nativeBackend, p2pgitBackend } from 'mycelium-git'
-import { newName } from 'mycelium-container-document'
-import { record, post, inboxFolder, setting, gitdirOf, PENDING } from 'mrepo-base-request'
+import { record, wrap, guid, post, inboxFolder, setting, gitdirOf, PENDING } from 'mrepo-base-request'
 
 const author = { name: 'test', email: 'test@localhost' }
 // The test's type: haicc, as its package declares it (haiccing/base-package-haicc/api.json),
@@ -42,7 +41,8 @@ async function layers (backend, { preload }) {
   await r.commit('Booted', { author })
   if (preload) {
     const q = await w.change(PENDING)
-    await q.put('/0000000000001-00000000.json', Buffer.from(JSON.stringify(record(`/${PENDING}`, record(null, { api: 'haicc', protocol: 'service', action: 'initialise', uri: '/' })))))
+    const core = record(null, { api: 'haicc', protocol: 'service', action: 'initialise', uri: '/' }, guid())
+    await q.put(`/${core.key}.json`, Buffer.from(JSON.stringify(wrap(`/${PENDING}`, core))))
     await q.commit('Preloaded', { author })
   }
 }
@@ -70,9 +70,11 @@ export async function bootedHost (work, { preload = true, storage = 'p2p' } = {}
 export async function sendForm (work, form, { wait = 10000, to } = {}) {
   const { storage, name } = setting(work)
   const disk = storage === 'git' ? nativeBackend(gitdirOf(work, name)) : p2pgitBackend(gitdirOf(work, name), { fs })
-  const envelope = record(to ?? `/${name}/inbox`, record('/haicc/terminal', { api: 'haicc', ...form }))
-  let id
-  if (storage === 'git') { id = newName(); await post({ work, backend: disk, writer: writer(disk), repo: openRepo(disk) }, envelope, id) } else id = inboxFolder(work).add(envelope)
+  const core = record('/haicc/terminal', { api: 'haicc', ...form }, guid())
+  const envelope = wrap(to ?? `/${name}/inbox`, core)
+  const id = core.key
+  if (storage === 'git') await post({ work, backend: disk, writer: writer(disk), repo: openRepo(disk) }, envelope, id)
+  else inboxFolder(work).write(id, envelope)
   const repo = openRepo(disk)
   for (const end = Date.now() + wait; Date.now() < end;) {
     const back = await repo.read(`/outbox/${id}.json`).then(b => JSON.parse(b.toString()), () => null)

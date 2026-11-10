@@ -5,9 +5,36 @@ import * as json from 'mycelium-value-json'
 
 export const AUTHOR = { name: 'mrepo', email: 'mrepo@localhost' }
 
-export function layer ({ repo, writer }, branch) {
+// The names a layer's commits added, in the order of its commit chain (first
+// parent, from its first commit to its head); within one commit, by name.
+async function arrivals (backend, branch) {
+  const head = Object.fromEntries(await backend.listBranches())[branch]
+  if (!head) return []
+  const chain = []
+  for (let c = head; c;) {
+    const commit = await backend.readCommit(c)
+    chain.push(commit)
+    c = commit.parents[0]
+  }
+  const namesOf = async tree => new Set((await backend.readTree(tree)).filter(e => e.type === 'blob' && e.name.endsWith('.json')).map(e => e.name.slice(0, -'.json'.length)))
+  const order = []
+  let before = new Set()
+  for (const commit of chain.reverse()) {
+    const now = await namesOf(commit.tree)
+    order.push(...[...now].filter(n => !before.has(n)).sort())
+    before = now
+  }
+  return order
+}
+
+export function layer ({ repo, writer, backend }, branch) {
   return {
     branch,
+    // The names it holds, in the order they arrived (its commit chain).
+    async arrived () {
+      const here = new Set(await this.list())
+      return [...new Set((await arrivals(backend, branch)).filter(n => here.has(n)))]
+    },
     list: async () => (await repo.select(`/${branch}/*`))
       .filter(([p, n]) => n.type === 'blob' && p.endsWith('.json'))
       .map(([p]) => p.slice(p.lastIndexOf('/') + 1, -'.json'.length)).sort(),

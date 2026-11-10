@@ -39,7 +39,11 @@ for (const engine of ['p2p-git', 'native']) {
       t.alike(await post(ctx), [], 'nothing new: nothing')
       t.alike(await box().list(), ['r1', f, g].sort())
       t.alike(inboxFolder(work).list(), [f, g], 'the folder kept (housekeeping later)')
-      t.alike(await untaken(ctx), ['r1', f, g].sort(), 'none taken in yet')
+      t.alike(await untaken(ctx), ['r1', f, g], 'none taken in yet, in the order they arrived')
+      // The commit chain orders, not the names: z posted before a.
+      await post(ctx, record('/inbox', { z: 1 }), 'zz')
+      await post(ctx, record('/inbox', { a: 1 }), 'aa')
+      t.alike((await untaken(ctx)).slice(-2), ['zz', 'aa'], 'by the commit chain: zz first, as it came first')
     } finally { rmSync(work, { recursive: true, force: true }) }
   })
 }

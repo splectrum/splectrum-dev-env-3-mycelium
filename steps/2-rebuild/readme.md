@@ -361,6 +361,18 @@ until their use is planned.
 - Tests: runtime 6, the other suites unchanged: all pass. `tools/publish.sh`
   without `--push`: passed. The tag it would publish: `setup-6c2209bd463e`.
 
+## 10. The key and the order: done (2026-11-10)
+
+- The record gains its `key`: a GUID set by the sender on the core, carried
+  by every envelope (`wrap`) and log record (`logRecord`) about it, the
+  name of its document in every layer.
+- Order by the commit chain: taking in by the `inbox` layer's, the queue by
+  the `pending` layer's (`arrived()`, first parent from the first commit;
+  within a commit by name), not by names or clocks.
+- Tests: the key's shape and its carrying; the order of arrival over the
+  names (`zz` posted before `aa`, taken first); the journey with one key
+  throughout. All suites pass.
+
 Next: the log's design (where it lives, the `log` layer, levels, topics),
 with the human.
 
