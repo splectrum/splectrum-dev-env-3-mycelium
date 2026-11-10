@@ -26,3 +26,6 @@ the directions to take into account, not settled.
   work is planned here, as it goes, and its outcome reported back.
 - In a Claude Code cloud session, execution runs on the session's
   `claude/…` branch until the session is told to use `execute/main`.
+- **Where work stands**: the current step's record (`steps/<step>/readme.md`)
+  and, after a context reset, its handover (`steps/2-rebuild/handover-next.md`):
+  how the human works with us, what is done, what is open.
