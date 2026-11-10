@@ -1,8 +1,8 @@
 # Values: the data type, encodings, containers, the wire
 
 Status marks: **built** (in the code, tested), **agreed** (decided, not
-built), **open** (to settle). Decided with the human, 2026-11-08 (phase 3,
-step 1's review).
+built), **open** (to settle). Decided with the human in phase 3 (from
+2026-11-08, step 1's review).
 
 ## Three concerns, a module each
 
@@ -12,8 +12,8 @@ step 1's review).
 | Module | Concern |
 |---|---|
 | `mycelium-value` | the data type: values in memory (plain objects, the form avsc gives them), data names (lowerCamelCase, their URI form both ways; moved from `mycelium-uri`, where nothing uses them); encoding handed to a handler |
-| `mycelium-value-json` | an encoding, a handler module from the start: one value to bytes and back (`-avro` later, the same way) |
-| `mycelium-container-document` | a storage container: one value per file, written atomically (a temporary file, then rename), in the encoding it is given |
+| `mycelium-value-json` (**built**) | an encoding, a handler module from the start: one value to bytes and back (`-avro` later, the same way) |
+| `mycelium-container-document` (**built**) | a storage container: one value per file, written atomically (a temporary file, then rename), in the encoding it is given; time-ordered names for added documents |
 | `mycelium-container-lines` | a storage container: one value per line, appended, read in order, for a line-safe text encoding such as JSON |
 | `mycelium-container-bundle` | a read-only storage container of files: a bundle's files listed, one read by its offset and length (the header and a slice, never the whole file in memory), extracted where needed; written only by the package writer (agreed 2026-11-09: a bundle's assets and data files read this way, `structure.md`) |
 

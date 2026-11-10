@@ -73,6 +73,18 @@ mycelium repositories at every level, logs as topics centralised by the
 swarm, the demos on it with a log viewer. Collaborative: the work decided
 with the human as it moves along.
 
+Done (each recorded in `2-rebuild/readme.md`): 1, the boot creates the
+host's repository from a signed release; 2, the framework installed as a
+package; 3, the repository's runtime started by the boot; 4, the boxes and
+the local dispatcher; 4b, the runtime and the host renamed, `mrepos/<name>/`;
+5, requests flowing (the request and execute protocols, the runtime layer,
+a type's API as a package, every `haicc` command a request); 6, one
+repository over two stores (the Corestore, git on disk). The product
+repositories updated (`tools/products.sh`).
+
+Next: populate `main` and `initialise` for the repository's internal
+functionality; then swarms, nodes, centralised logs, the demos.
+
 ### Step 3: the documentation
 
 The stale notes (`notes/`, phase 2's) cleaned up; what still holds moved
