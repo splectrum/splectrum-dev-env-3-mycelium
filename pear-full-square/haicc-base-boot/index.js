@@ -34,8 +34,7 @@ import { mrepos } from 'p2p-mrepo'
 import { writer, openRepo } from '../mycelium-git/index.js'
 import { loadManifest, loadPackage } from '../pkgm-base-manager/lib/sources.js'
 import { start as startRuntime, HOST, viewOf } from '../mrepo-base-runtime/index.js'
-import { record, PENDING } from '../mrepo-base-request/index.js'
-import { newName } from '../mycelium-container-document/index.js'
+import { record, wrap, guid, PENDING } from '../mrepo-base-request/index.js'
 
 export const BOOT = 'haiccing/base-package-boot'
 export const HAICC = 'haiccing/base-package-haicc'
@@ -121,10 +120,12 @@ export async function boot ({ setup, work, say = () => {}, runtime = true }) {
       const r = await w.change('runtime')
       await r.put('/service.json', Buffer.from(JSON.stringify({ state: 'booted', ...TYPE }) + '\n'))
       await r.commit('Booted', { author })
-      const name = newName()
+      const core = record(null, { api: TYPE.type, protocol: 'service', action: 'initialise', uri: '/' }, guid())
+      const name = core.key
       const p = await w.change(PENDING)
-      // The core: no topic (nobody waits for it), the form its value.
-      await p.put(`/${name}.json`, Buffer.from(JSON.stringify(record(`/${PENDING}`, record(null, { api: TYPE.type, protocol: 'service', action: 'initialise', uri: '/' }))) + '\n'))
+      // The core: no topic (nobody waits for it), the form its value; its key
+      // a GUID, its document's name.
+      await p.put(`/${name}.json`, Buffer.from(JSON.stringify(wrap(`/${PENDING}`, core)) + '\n'))
       await p.commit(`Request ${name}: service initialise /`, { author })
       say({ step: 'booted', type: TYPE.type, preloaded: `/${PENDING}/${name}` })
       let bundle = null

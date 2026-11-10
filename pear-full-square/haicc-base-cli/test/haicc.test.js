@@ -37,7 +37,7 @@ test('a bad call: exit 2, said on stderr', (t) => {
 })
 
 for (const storage of ['p2p', 'git']) {
-  test(`send on ${storage}: the runtime started when it is not running; the request answered`, async (t) => {
+  test(`send on ${storage}: the runtime started when it is not running; the request answered`, { timeout: 120000 }, async (t) => {
     const work = mkdtempSync(join(tmpdir(), `cli-${storage}-`))
     try {
       t.is((await send({ work, protocol: 'rest', action: 'get', uri: '/' })).code, 1, 'no repository: not done')

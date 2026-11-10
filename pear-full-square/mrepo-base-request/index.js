@@ -25,11 +25,11 @@
 // done (in both: the old place cleared). The boxes (lib/boxes.js) are layers.
 import { validate as canonical } from 'mycelium-uri'
 import { post, ensure, inboxFolder, INBOX, OUTBOX } from './lib/boxes.js'
-import { record, complete, isComplete, logRecord } from './lib/record.js'
+import { record, wrap, guid, complete, isComplete, logRecord } from './lib/record.js'
 import { layer, AUTHOR } from './lib/layer.js'
 import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
 
-export { post, ensure, inboxFolder, INBOX, OUTBOX, record, complete, isComplete, logRecord, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
+export { post, ensure, inboxFolder, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logRecord, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'
@@ -81,21 +81,22 @@ export function check (value, { service, api }, { state = true } = {}) {
 async function sendBack (ctx, name, core) {
   if (!core.topic) return
   await ensure(ctx, 'outbox')
-  const envelope = record(OUTBOX, core)
+  const envelope = wrap(OUTBOX, core)
   await layer(ctx, 'outbox').put(name, envelope, `Output ${name}`)
   ctx.say?.({ request: 'sent back', name, record: envelope })
 }
 
 const branches = async ctx => Object.fromEntries(await ctx.backend.listBranches())
 
-// The inbox's records not yet taken in: in no request layer (every one taken
-// in ends in request/done, a refused one too).
+// The inbox's records not yet taken in, in the order they arrived (its commit
+// chain): in no request layer (every one taken in ends in request/done, a
+// refused one too).
 export async function untaken (ctx) {
   const b = await branches(ctx)
   if (!b.inbox) return []
   const taken = new Set()
   for (const l of [PENDING, EXECUTE, DONE]) if (b[l]) for (const n of await layer(ctx, l).list()) taken.add(n)
-  return (await layer(ctx, 'inbox').list()).filter(n => !taken.has(n))
+  return (await layer(ctx, 'inbox').arrived()).filter(n => !taken.has(n))
 }
 
 export async function request (ctx) {
@@ -116,13 +117,13 @@ export async function request (ctx) {
       const core = envelope.value
       const why = envelope.topic !== here ? `misdelivered: for ${envelope.topic}, this is ${here}` : check(core?.value, await runtimeData(ctx), { state: false })
       if (why) {
-        const refused = complete(core ?? record(null, null), { ok: false, error: why })
-        const into = record(`/${DONE}`, refused)
+        const refused = complete(core ?? record(null, null, envelope.key), { ok: false, error: why })
+        const into = wrap(`/${DONE}`, refused)
         await done.put(name, into, `Refused ${name}`)
         say({ request: 'refused', name, why, record: into })
         await sendBack(ctx, name, refused)
       } else {
-        const into = record(`/${PENDING}`, core)
+        const into = wrap(`/${PENDING}`, core)
         await pending.put(name, into, `Request ${name}: ${core.value.protocol} ${core.value.action} ${core.value.uri}`)
         say({ request: 'pending', name, record: into })
       }
@@ -134,7 +135,7 @@ export async function request (ctx) {
   for (const name of await execute.list()) {
     const core = (await execute.read(name)).value
     if (!isComplete(core)) continue
-    const into = record(`/${DONE}`, core)
+    const into = wrap(`/${DONE}`, core)
     await done.put(name, into, `Done ${name}`)
     await execute.remove(name, `Done ${name}: out of execute`)
     say({ request: 'done', name, record: into })
@@ -142,13 +143,14 @@ export async function request (ctx) {
   }
 
   // The next pending request into execute (a move half done finished first).
+  // The queue in the order requests arrived in it: its commit chain.
   const executing = await execute.list()
-  const queued = await pending.list()
+  const queued = await pending.arrived()
   for (const name of queued.filter(n => executing.includes(n))) await pending.remove(name, `${name}: in execute`)
   const next = queued.find(n => !executing.includes(n))
   if (!executing.length && next) {
     const core = (await pending.read(next)).value
-    const into = record(`/${EXECUTE}`, core)
+    const into = wrap(`/${EXECUTE}`, core)
     await execute.put(next, into, `Execute ${next}`)
     await pending.remove(next, `${next}: in execute`)
     say({ request: 'execute', name: next, record: into })

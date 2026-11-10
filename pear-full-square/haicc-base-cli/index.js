@@ -26,9 +26,8 @@
 import fs from 'bare-fs'
 import { validate } from '../mycelium-uri/index.js'
 import { nativeBackend, p2pgitBackend, openRepo, writer } from '../mycelium-git/index.js'
-import { newName } from '../mycelium-container-document/index.js'
 import { ask, start as startRuntime } from '../mrepo-base-runtime/index.js'
-import { post, inboxFolder, record, setting, isWork, gitdirOf, INBOX } from '../mrepo-base-request/index.js'
+import { post, inboxFolder, record, wrap, guid, setting, isWork, gitdirOf, INBOX } from '../mrepo-base-request/index.js'
 import pkg from './package.json' with { type: 'json' }
 
 export const version = { name: pkg.name, version: pkg.version }
@@ -66,14 +65,15 @@ export async function send ({ work, protocol, action, uri, body, wait = 30000, b
   if (!work || !isWork(work)) return { code: 1, out: { error: `no repository here: ${work} (not booted)` } }
   const { storage, name } = setting(work)
   const value = { api: TYPE, protocol, action, uri, ...(body !== undefined ? { body } : {}) }
-  const envelope = record(`/${name}${INBOX}`, record(ME, value))
+  // The core: addressed back to this input, its key a GUID (the request's,
+  // traced everywhere; its document's name); in an envelope to the inbox.
+  const core = record(ME, value, guid())
+  const envelope = wrap(`/${name}${INBOX}`, core)
+  const id = core.key
   // The repository's disk side: where its inbox and outbox layers are.
   const disk = storage === 'git' ? nativeBackend(gitdirOf(work, name)) : p2pgitBackend(gitdirOf(work, name), { fs })
-  let id
-  if (storage === 'git') {
-    id = newName()
-    await post({ work, backend: disk, writer: writer(disk), repo: openRepo(disk) }, envelope, id)
-  } else id = inboxFolder(work).add(envelope)
+  if (storage === 'git') await post({ work, backend: disk, writer: writer(disk), repo: openRepo(disk) }, envelope, id)
+  else inboxFolder(work).write(id, envelope)
   if (!await ask({ work, op: 'status' })) {
     if (!await startRuntime({ work, ...(bundle ? { bundle } : {}) })) return { code: 1, out: { error: 'the runtime did not start (see log/runtime.log)', request: `${INBOX}/${id}` } }
   }

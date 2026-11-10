@@ -17,7 +17,7 @@
 //      runtime first, then request/execute (the request completed)
 // The base's actions are the framework's generic ones (lib/actions.js); a
 // type's own come later, read from its package.
-import { layer, record, complete, isComplete, AUTHOR, EXECUTE, check, runtimeData } from 'mrepo-base-request'
+import { layer, wrap, complete, isComplete, AUTHOR, EXECUTE, check, runtimeData } from 'mrepo-base-request'
 import { ACTIONS } from './lib/actions.js'
 
 export { ACTIONS }
@@ -78,7 +78,7 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       merged[b] = await w.merge(`execute/${b}`, b, `Merge ${name}: ${protocol} ${action} ${form.uri}`, { author: AUTHOR })
     }
     // The form completed, in its envelope, through its own execution branch.
-    const completed = record(`/${EXECUTE}`, complete(core, result))
+    const completed = wrap(`/${EXECUTE}`, complete(core, result))
     const c = await w.change(`execute/${EXECUTE}`)
     await c.put(`/${name}.json`, Buffer.from(JSON.stringify(completed) + '\n'))
     await c.commit(`${name}: executed`, { author: AUTHOR })

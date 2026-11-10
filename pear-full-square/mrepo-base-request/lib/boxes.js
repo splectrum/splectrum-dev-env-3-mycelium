@@ -3,7 +3,8 @@
 // <name>.json, at the layer's root; nothing removed (housekeeping later).
 // What arrives in the inbox is an envelope: its topic this repository's
 // inbox (/<name>/inbox), its value the core record (the pre-filled form).
-//   post(ctx, record, name)  a record committed into the inbox as it is: the
+//   post(ctx, record, name)  a record committed into the inbox as it is (its
+//                            name its key, by default): the
 //                            input adding its own commit (native git: no
 //                            working tree)
 //   post(ctx)                the inbox folder's new files committed: the
@@ -12,7 +13,8 @@
 //                            many inputs add files, the runtime commits)
 //   inboxFolder(work)        that folder, a documents container (JSON)
 import { join } from 'bare-path'
-import { documents, newName } from 'mycelium-container-document'
+import { documents } from 'mycelium-container-document'
+import { guid } from './record.js'
 import * as json from 'mycelium-value-json'
 import { viewOf, setting } from './view.js'
 import { layer, AUTHOR } from './layer.js'
@@ -26,7 +28,7 @@ export async function ensure ({ backend, writer }, branch) {
   if (!(await backend.listBranches()).some(([b]) => b === branch)) await writer.createLayer(branch, `Create ${branch}`, { author: AUTHOR })
 }
 
-export async function post (ctx, rec = null, name = newName()) {
+export async function post (ctx, rec = null, name = rec?.key ?? guid()) {
   await ensure(ctx, 'inbox')
   const box = layer(ctx, 'inbox')
   const have = new Set(await box.list())

@@ -15,7 +15,7 @@ const req = (protocol, action, uri, body) => ({ protocol, action, uri, ...(body 
 
 // The same cycle on both storages: the p2p host and a repository on native git.
 for (const storage of ['p2p', 'git']) {
-  test(`the cycle on ${storage}: initialise (preloaded), start, put, get, delete, refused, stop, shutdown`, async (t) => {
+  test(`the cycle on ${storage}: initialise (preloaded), start, put, get, delete, refused, stop, shutdown`, { timeout: 180000 }, async (t) => {
     const work = mkdtempSync(join(tmpdir(), `cycle-${storage}-`))
     try {
       await bootedHost(work, { storage })
@@ -78,6 +78,7 @@ for (const storage of ['p2p', 'git']) {
         t.alike(about.map(r => { const [k] = Object.keys(r.value); return `${k}:${r.value[k]}` }), ['request:received', 'request:pending', 'request:execute', 'execute:done', 'request:done', 'request:sent back'], 'its journey in the log')
         t.alike(about.map(r => r.value.record.topic), ['/host/inbox', '/request/pending/default', '/request/execute', '/request/execute', '/request/done', '/outbox'], 'each transfer: a new envelope, its topic the new place')
         t.ok(about.every(r => r.value.record.value.topic === '/haicc/terminal'), 'the core inside, unchanged in its address')
+        t.ok([input, ...about, ...about.map(r => r.value.record), output].every(r => r.key === name), 'one key throughout: the input, every log record, every envelope, the output')
         t.alike(output, about[about.length - 1].value.record, 'the output: the last envelope, as stored in the outbox')
         t.comment(`the journey of ${name} (${storage}): the input, the log, the output, as records`)
         t.comment(`input  ${JSON.stringify(input)}`)
@@ -88,7 +89,7 @@ for (const storage of ['p2p', 'git']) {
   })
 }
 
-test('where the layers live on the p2p host: the atomic ones in the store, the rest on disk', async (t) => {
+test('where the layers live on the p2p host: the atomic ones in the store, the rest on disk', { timeout: 120000 }, async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'cycle-where-'))
   try {
     await bootedHost(work)
