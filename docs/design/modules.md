@@ -1,8 +1,9 @@
 # The modules: who does what
 
 Status marks: **built** (in the code, tested), **agreed** (decided, not
-built), **open** (to settle). Decided with the human, 2026-11-08 (phase 3,
-step 1's review, `steps/1-review/findings.md`). In development a concern is
+built), **open** (to settle). Decided with the human in phase 3 (from
+2026-11-08, step 1's review, `steps/1-review/findings.md`; the `mrepo-`
+modules 2026-11-09 and 10). In development a concern is
 one single-concern module, used by the modules that need it; the package
 writer copies it into every package that needs it (`rules.md`, "One
 concern, one place" and "Shared in development, copied into packages").
@@ -24,14 +25,20 @@ ones named, renamed or created, 2026-11-09), all in `pear-full-square`:
 | Module | Concern | Replaces |
 |---|---|---|
 | `docker-manager` | Docker for the platform: the call, networks (with a subnet; addresses), the node image, hardened containers (run, stop, remove, pause, inspect, logs as JSON lines) | four Docker wrappers (`haicc-base-boot`, `haicc-deployment`, `p2p-node-manager`, Splectral's p2p side), the hardening flags twice |
-| `haicc-cli-parser` | the terminal's boundary into HAICC: a command line parsed once (flags and arguments, values kept whole), for validation and launch as an internal `haicc` command (`structure.md`); for the transitional tools too, until HAICC replaces them | eight parsers in three variants |
+| `haicc-cli-parser` | a command line parsed once (flags and arguments, values kept whole), for the inputs that read one: HAICC's terminal input (`haicc-base-cli` parses its own for now: moved here when a second input needs it) and the transitional tools until HAICC replaces them | eight parsers in three variants |
 | `p2p-observe` | the p2p series' instrumentation: the observer call and its helpers | the emitter and `hex` in eight p2p modules |
 | `mycelium-value`, `-value-json`, `-container-document`, `-container-lines` | values, an encoding, storage containers (`values.md`; `-value-json` and `-container-document` **built**) | JSON in five places, JSON lines in three |
 | `mycelium-container-bundle` | a bundle as a read-only container of files (`values.md`); its product repository to be created by the human | (new: assets and data files read from bundles) |
-| `mrepo-base-runtime` (**built**; first `mycelium-repo-main`) | a running repository's runtime, always on: the framework running its protocols; it holds the store as its single writer, keeps the required watchers running, serves the local connection, restarts what stops (`repositories.md`) | (new: the running repository) |
-| `mrepo-base-request` (**built**, the base; was `mycelium-request-submit`) | the request protocol: the inbox taken in, each message validated against the API where it enters, a request placed in `request/pending/<source>` | `mycelium-layer`'s intake and `p2p-node`'s copy (which takes a peer's names unchecked) |
-| `mrepo-base-execute` (**built**, the base; was `mycelium-request-execute`) | the execute protocol: requests executed and answered, one unit, recorded for an exact rerun | `mycelium-layer`'s `executeRequests` |
+| `mrepo-base-runtime` (**built**; first `mycelium-repo-main`) | a running repository's runtime: the framework running its protocols by one poller; the store held as its single writer; the local connection; started detached, ended once shut down (`repositories.md`, "A running repository") | (new: the running repository) |
+| `mrepo-base-request` (**built**; was `mycelium-request-submit`) | the request protocol: the inbox taken in and checked, the queue, the moves between request layers, the answers; and the records, the boxes, the local dispatcher | `mycelium-layer`'s intake and `p2p-node`'s copy (which takes a peer's names unchecked) |
+| `mrepo-base-execute` (**built**; was `mycelium-request-execute`) | the execute protocol: a request run in execution branches made from their targets, its record, the merges back; the framework's generic actions (`rest`, `service`) | `mycelium-layer`'s `executeRequests` |
 | `mrepo-base-log` | the log protocol | (new) |
+
+Built in existing modules this phase: `mycelium-git`'s `mixedBackend` (one
+repository over two stores) and the `runtime` layer; `p2p-mrepo`'s `local`
+(a repository's disk side); `haicc-base-boot` rebuilt (the boot of the host's
+repository); `haicc-base-cli` (HAICC's terminal input: every command a
+request).
 
 `mycelium-layer` keeps the branches (import, export, bundles, deploy,
 extract). The request queue (`plan` today) waits for the request manager:
@@ -74,10 +81,10 @@ concern of its own, shared with the development pipeline (**open**).
 ## Wrapped in HAICC
 
 **Agreed.** HAICC in the container (the node's program started through the
-node's HAICC); Splectral wrapped in HAICC (its server and `act`); the cold
-boots: the initial one (the setup's `./boot`, or the Pear release:
-`structure.md`) may use the module directly, every other is wrapped in
-HAICC; the shell commands (the modules' scripts, the booted tests, the
+node's HAICC); Splectral wrapped in HAICC (its server and `act`); the boots
+(the service protocol's `boot`): the initial one (the setup, or the Pear
+release: `structure.md`) uses the module directly (**built**), every other
+is a request to a repository's HAICC; the shell commands (the modules' scripts, the booted tests, the
 setup) analysed and wrapped. A shell script is glue (`docs/rules.md` 30).
 
 ## Splectral, done properly

@@ -22,22 +22,22 @@ Three kinds of document, each with its own job:
 
 | | |
 |---|---|
-| [design/platform.md](design/platform.md) | the levels (host, swarm, node), cold and warm boot, a node's validation, the log |
+| [design/platform.md](design/platform.md) | (phase 2's) the levels (host, swarm, node), cold and warm boot, a node's validation, the log |
 | [design/packages.md](design/packages.md) | a package's structure; self-contained; sealed, validated, mixed; the two sides of the airgap |
-| [design/work-folder.md](design/work-folder.md) | the work folder; boot and shutdown by level; swarms and nodes; teardown |
-| [design/functionality.md](design/functionality.md) | a package's functionality by URI: cold boot, teardown; tests and sets |
+| [design/work-folder.md](design/work-folder.md) | (phase 2's) the work folder; boot and shutdown by level; swarms and nodes; teardown |
+| [design/functionality.md](design/functionality.md) | (phase 2's) a package's functionality by URI: cold boot, teardown; tests and sets |
 | [design/sources.md](design/sources.md) | where packages come from; contents; air-gapping |
 | [design/bare.md](design/bare.md) | Bare only; the runtime in the setup; hard links; brittle |
-| [design/releases.md](design/releases.md) | the setup; publishing; who tests what |
+| [design/releases.md](design/releases.md) | (phase 2's) the setup; publishing; who tests what |
 | [design/pipeline.md](design/pipeline.md) | the development pipeline: modules as the source of truth, cloud and local, candidates |
-| [design/repositories.md](design/repositories.md) | mycelium repositories: the truth and its views, the branch model (one writer per branch, passive and active, requests, packages), portable execution |
-| [design/structure.md](design/structure.md) | every level set up as a node is; a level's folder; code without a code folder; Pear below HAICC, the bridgehead, upgrades |
+| [design/repositories.md](design/repositories.md) | mycelium repositories: one repository over two stores (the Corestore, git on disk); the layers; one writer per branch; the mrepo framework (the runtime, the request and execute protocols); a type's API as a package; the external API (`rest`, `service`, requests as Kafka records); roots and mappings; the boxes; backup |
+| [design/structure.md](design/structure.md) | every level set up as a node is; one writer per store; a level's folders (`mrepos/<name>/`); the boot; the terminal; code without a code folder (bundles, addons); Pear below HAICC |
 | [design/values.md](design/values.md) | values: the data type, encodings and containers; envelope and content; RPC on the replication connection |
 | [design/modules.md](design/modules.md) | the modules: removed, new, moved; wrapped in HAICC; Splectral done properly |
 | [rules.md](rules.md) | the consistency rules |
-| [guides/install.md](guides/install.md) | setting up and booting a work folder; testing a release |
-| [guides/swarms.md](guides/swarms.md) | swarms and nodes: the commands, level by level |
-| [guides/tests.md](guides/tests.md) | writing tests: a module's, a package's, a booted one |
+| [guides/install.md](guides/install.md) | (phase 2's) setting up and booting a work folder; testing a release |
+| [guides/swarms.md](guides/swarms.md) | (phase 2's) swarms and nodes: the commands, level by level |
+| [guides/tests.md](guides/tests.md) | (phase 2's) writing tests: a module's, a package's, a booted one |
 | [guides/packages.md](guides/packages.md) | writing a package with the package writer |
 | [guides/release.md](guides/release.md) | publishing a release and checking it |
 

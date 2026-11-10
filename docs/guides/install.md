@@ -1,5 +1,10 @@
 # Installing HAICC, and testing it
 
+> **Phase 2's platform.** This describes what phase 2 built; phase 3's
+> rebuild replaces it part by part (`steps/2-rebuild/readme.md`) and it is
+> rewritten in step 3 (the documentation). What holds now:
+> `design/repositories.md`, `design/structure.md`, `design/modules.md`.
+
 For a user. Linux on x86-64 (on Windows: inside WSL2), with `curl` and
 `tar`; for swarms, Docker Engine (rootful, native: not Docker Desktop) and
 git, which the boot checks and fixes with your yes.

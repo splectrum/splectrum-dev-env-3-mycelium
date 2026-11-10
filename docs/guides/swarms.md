@@ -1,5 +1,10 @@
 # Swarms and nodes, level by level
 
+> **Phase 2's platform.** This describes what phase 2 built; phase 3's
+> rebuild replaces it part by part (`steps/2-rebuild/readme.md`) and it is
+> rewritten in step 3 (the documentation). What holds now:
+> `design/repositories.md`, `design/structure.md`, `design/modules.md`.
+
 For a user, in a booted work folder (`cd ~/haicc-work`). Each level has its
 own `haicc`; a `boot` or `shutdown` works on the config of the folder it is
 called from. Removing asks first (`--yes` agrees). Names are URI parts:
