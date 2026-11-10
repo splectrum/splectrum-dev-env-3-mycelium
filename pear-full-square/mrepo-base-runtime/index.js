@@ -7,7 +7,7 @@
 //                           mrepo-base-request's `setting`): on native git
 //                           (`git`: <work>/mrepos/<name>/.git, mycelium-git's
 //                           native backend), on p2p-git with every layer on
-//                           disk (`disk`: the same folder, no Corestore; the
+//                           the filesystem (`filesystem`: the same folder, no Corestore; the
 //                           boot mrepo), or on the p2p layer (`p2p`, the
 //                           default: the store, <work>/store, held as its
 //                           single writer, the host's repository `host` over
@@ -62,7 +62,7 @@ export async function open (work) {
     const backend = nativeBackend(gitdirOf(work, name))
     return { name, id: null, key: null, storage, backend, close: async () => {} }
   }
-  if (storage === 'disk') {
+  if (storage === 'filesystem') {
     const backend = p2pgitBackend(gitdirOf(work, name), { fs })
     return { name, id: null, key: null, storage, backend, close: async () => {} }
   }

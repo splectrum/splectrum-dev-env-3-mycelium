@@ -14,18 +14,18 @@ installed by HAICC's boot into the host's packages. Built step by step
   entry (`start --work=<folder>`, `version`).
 - Its repository opened by the setting beside it (`<work>/mrepo.json`):
   `git`, a standalone repository on native git (`<work>/mrepos/<name>/.git`,
-  bare); `disk`, p2p-git's hybrid with every layer on disk (the same
+  bare); `filesystem`, p2p-git's hybrid with every layer on the filesystem (the same
   folder, no Corestore: the boot mrepo); `p2p` (the default), the host's
   repository over its Corestore and disk side. The same protocols on all.
 - `lib/build.js`: an mrepo built from its structure (`build({ from, work,
   name, time })`): a folder laid out by layers, a `layer.json` at each leaf
-  (`docs/design/packages.md`), written as a standalone repository on disk,
+  (`docs/design/packages.md`), written as a standalone repository on the filesystem,
   one orphan branch a leaf, its files one commit (`layer.json` with them, not
   one of the layer's records); the inbox's files its working tree;
-  `<work>/mrepo.json` set to `disk`. A fixed `time`: the same commits every
+  `<work>/mrepo.json` set to `filesystem`. A fixed `time`: the same commits every
   build. The first piece of the install routine.
 - One poller fires the protocols in turn over their data states: on the
-  p2p host (and on `disk`) the inbox folder's new files committed, the request protocol (`mrepo-base-request`), the
+  p2p host (and on `filesystem`) the inbox folder's new files committed, the request protocol (`mrepo-base-request`), the
   execute protocol (`mrepo-base-execute`). Once the service is shut down
   (booted, nothing waiting) the runtime ends; a request posted later starts
   it again (HAICC's input does).

@@ -491,8 +491,8 @@ hybrid with all layers on disk.
   /`), `request/execute`, `request/done`.
 - `mrepo-base-runtime`'s `lib/build.js`: the folder written as a standalone
   repository (p2p-git on `bare-fs`, one orphan branch a leaf, a fixed time:
-  the same commits every build); the setting `disk` (`<work>/mrepo.json`).
-- The runtime's `disk` storage: p2p-git on disk, every layer there, no
+  the same commits every build); the setting `filesystem` (`<work>/mrepo.json`).
+- The runtime's `filesystem` storage (not `disk`: the Corestore is on disk too): p2p-git on the filesystem, every layer there, no
   Corestore; the inbox folder posted as on the p2p host.
 - `layer.json` committed with its layer, never one of its records
   (`mrepo-base-request`: `layer().list`, the arrivals, the inbox folder).

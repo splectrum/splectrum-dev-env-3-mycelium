@@ -1,7 +1,7 @@
 // An mrepo built from its structure (docs/design/packages.md, "Installing an
 // mrepo from its structure"): a folder laid out by layers, a layer.json at
 // each leaf, written as a standalone repository on disk, p2p-git's hybrid
-// with every layer on disk (the setting's `disk` storage).
+// with every layer on the filesystem (the setting's `filesystem` storage).
 //   build({ from, work, name, time })  from: the mrepo/ folder; the repository
 //                                     written at <work>/mrepos/<name>/.git, one
 //                                     layer per leaf (an orphan branch, its
@@ -57,6 +57,6 @@ export async function build ({ from, work, name, time = Math.floor(Date.now() / 
     mkdirSync(inbox, { recursive: true })
     for (const f of files(join(from, 'inbox'))) copyFileSync(join(from, 'inbox', f), join(inbox, f))
   }
-  writeFileSync(join(work, SETTING), JSON.stringify({ storage: 'disk', name }) + '\n')
+  writeFileSync(join(work, SETTING), JSON.stringify({ storage: 'filesystem', name }) + '\n')
   return { name, layers }
 }
