@@ -153,7 +153,7 @@ protocols.
 - **The runtime** is always alive while the service is: it holds the store
   as its single writer, serves the local connection (`<work>/runtime.sock`,
   owner only: `status`, `stop`), runs one poller firing the protocols in
-  turn, logs to `<work>/log/runtime.log`, and may place requests itself
+  turn, logs into its `log` layer (below, "The log"), and may place requests itself
   (straight into `request/pending`: inside the root, nothing to validate).
   Once the service is shut down (booted, nothing waiting) it ends; an input
   posting a request starts it again (HAICC's does). Started through the

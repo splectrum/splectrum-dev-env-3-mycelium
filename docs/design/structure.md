@@ -124,8 +124,8 @@ atomic, replicated and non-atomic, one repository over the Corestore and
 git on disk (`repositories.md`, "One repository over two stores", and its
 layers there). Child levels (agreed): each its own repository, named in
 this one's mappings by URI, its folder here where the child runs on this
-host. The level's log: a topic (agreed), the minimal file log meanwhile
-(`<work>/log/`, **open**: its scope).
+host. The level's log: a topic (agreed); meanwhile each repository's `log`
+layer (`repositories.md`, "The log").
 
 - **The folders are an install-internal issue** (agreed, the human,
   2026-11-09): people and agents interact through the command line or

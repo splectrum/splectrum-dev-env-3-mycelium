@@ -397,6 +397,17 @@ its working tree; to start, the easiest: a file a request.
 - Tests: the log helper; the runtime's log a file a request and one for the
   runtime; the journey's log file committed into the layer. All suites pass.
 
+Then, asked by the human: no log outside the repository (the boot and a
+runtime failing before its repository opens drop their records into its log
+folder, the next commit picking them up: `boot-<start>.jsonl`,
+`runtime-<start>.jsonl`; `<work>/log/` gone); the command as typed, in the
+form (`command`); the tests and the release check waiting for the runtime's
+process to end, not only for it to stop answering (it commits its last log
+lines and closes its store after; a test deleting its folder too early was
+caught by the package writer's run). `tools/publish.sh` without `--push`:
+passed, the boot's log file committed into the `log` layer. The tag it
+would publish: `setup-3d242717a6a3`.
+
 Next: the log's topics on p2p (time segments, the reference), levels, what
 each protocol logs; the terminal as a mini mrepo; the dispatcher.
 
