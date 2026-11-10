@@ -313,16 +313,31 @@ writing into a repository's inbox and reading its outbox (built for now).
   outbox, pulled by its owner (the new records copied in, its position kept:
   the commit it last took, as a Kafka consumer's offset). Every inbox has
   one writer, its owner.
-- **The dispatcher** (a level's): its one inbox (on the filesystem)
-  subscribes to every party's outbox; its outboxes are one per destination
-  (each repository, the terminal, each peer's dispatcher); routing is moving
-  each record from its inbox to the outbox for the record's `to`. The one
-  place where traffic is monitored and managed (a priority field ordering
-  it, counts, holding back).
+- **The dispatcher is an application, like HAICC** (the human,
+  2026-11-10): a repository type of its own (its package, its API declared
+  as data) on the same framework, a level's. Its one inbox (on the
+  filesystem) subscribes to every party's outbox; its outboxes are one per
+  destination (each repository, the terminal, each peer's dispatcher). A
+  record addressed to the dispatcher is a request to its API, processed by
+  it (as HAICC processes its own); any other is routed: moved from its inbox
+  to the outbox for the record's `to`. The one place where traffic is
+  monitored and managed (a priority field ordering it, counts, holding
+  back).
+- **A stray record goes back to the dispatcher**: an application receiving
+  a record addressed to another destination returns it to the dispatcher,
+  as misdelivered, through the dispatcher's API (not answered as refused).
 - **Each inbox subscribes to its outbox at the dispatcher**: a repository's
   to the dispatcher's outbox for it, the terminal's (its postbox) to the
-  dispatcher's outbox for the terminal; a peer's dispatcher to ours for it
-  (by replication or a topic, `p2p-request` announcing).
+  dispatcher's outbox for the terminal. **A local subscription is a file
+  operation**: the boxes' folders are their layers' working trees, so the
+  new files of the outbox followed are copied into one's inbox folder, then
+  committed by its owner. **A remote subscription is another node**: a
+  peer's dispatcher following ours for it, in one of two modes chosen by the
+  receiver: **followed** (kept open and replicated live: Hypercore's notice
+  of an append the signal; for regular partners) or **announced** (the
+  sender signals the addressee only, by `p2p-request`, the outbox's key and
+  length, the latest standing for a burst; the receiver fetches those blocks
+  sparsely and checks them; for occasional senders).
 - **A request's round trip**: the terminal's outbox, the dispatcher's
   inbox, the dispatcher's outbox for the repository, the repository's inbox;
   executed; its output record into the repository's outbox, the dispatcher's
