@@ -2,18 +2,26 @@
 // repository `host`, its layers, its packages (a manifest; a HAICC bundle
 // carrying its API, /api.json), the runtime's data booted, the pending queue
 // preloaded with service initialise /. Without a setup: written directly.
-import { readFileSync } from 'bare-fs'
-import { join, dirname } from 'bare-path'
-import { fileURLToPath } from 'bare-url'
+import { join } from 'bare-path'
 import Bundle from 'bare-bundle'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { writer } from 'mycelium-git'
 import { record, PENDING } from 'mrepo-base-request'
 
-const here = dirname(fileURLToPath(import.meta.url))
 const author = { name: 'test', email: 'test@localhost' }
-export const API = JSON.parse(readFileSync(join(here, '..', '..', '..', 'haiccing', 'base-package-haicc', 'api.json')))
+// The test's type: haicc, as its package declares it (haiccing/base-package-haicc/api.json),
+// the tests' own copy (a module's tests run inside its packages too).
+export const API = {
+  api: 'haicc',
+  types: [
+    { uri: '/', protocols: { service: ['initialise', 'start', 'stop', 'shutdown'], rest: ['get'] } },
+    { uri: '/main', deep: true, protocols: { rest: ['get', 'put', 'delete'] } },
+    { uri: '/runtime', deep: true, protocols: { rest: ['get'] } },
+    { uri: '/packages', deep: true, protocols: { rest: ['get'] } },
+    { uri: '/request', deep: true, protocols: { rest: ['get'] } }
+  ]
+}
 
 export async function bootedHost (work, { preload = true } = {}) {
   const store = await openStore({ storage: join(work, 'store') })
