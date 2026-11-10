@@ -205,6 +205,28 @@ manager puts bundles in its packages layer. Execution is its own heading,
 
   More as required (the transport between roots, the verbs, once there is
   more than one root).
+- **The runtime protocol and its layer** (the human, 2026-11-10): the
+  runtime is always alive; it reads the repository, keeps the watchers
+  going (one poller firing the protocols, for now), and may place requests
+  itself (straight into `request/pending`: inside the root, nothing to
+  validate). Its data is a standalone layer, `runtime`, **atomic**, managed
+  by the runtime protocol: `/runtime/api` (the type's API declaration),
+  `/runtime/service` (the service state, gating the API), the signals (set
+  in the same commit as the state they belong with, where consistency needs
+  it), later `/runtime/settings` (log level, timeouts).
+- **A repository's type is a package** (the human, 2026-11-10):
+  `haiccing/base-package-haicc` is the type `haicc`, requiring
+  `haiccing/base-package-mrepo` (the framework) as its prerequisite; its
+  API is data in the package (the URI types, the protocols and actions each
+  offers, the package's command doing each). `boot` assembles the
+  repository and preloads it with one request, `service initialise /`;
+  `initialise` extracts the API into `/runtime/api`. The framework never
+  imports a type's code: it reads its declaration.
+- **The service state gates the API**: booted: `initialise`, `teardown`;
+  initialised: `start`, `shutdown`; started: the type's API, `stop`,
+  `pause`; paused: `resume`, `stop`. The runtime itself is always running
+  (it takes `initialise` and `start` in); `start` makes the type's API
+  available.
 - **Protocols meet in data, never by calls** (the human, 2026-11-10;
   `Portable execution, triggered by data`): each watches data states and
   writes the next; a restart picks up where the data stands.
