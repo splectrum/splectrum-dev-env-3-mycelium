@@ -205,6 +205,16 @@ manager puts bundles in its packages layer. Execution is its own heading,
 
   More as required (the transport between roots, the verbs, once there is
   more than one root).
+- **Protocols meet in data, never by calls** (the human, 2026-11-10;
+  `Portable execution, triggered by data`): each watches data states and
+  writes the next; a restart picks up where the data stands.
+
+| Data state | Who reacts | What it does |
+|---|---|---|
+| a message in `/inbox` | request | validated against the API; a request in `request/pending/default`, or refused and answered |
+| pending not empty, executing empty | request | the next request moved into `request/executing` (ready to execute) |
+| a request in `request/executing`, no result | execute | run as a unit, writing into `execute/main`; its result written beside it (execution done) |
+| a request in `request/executing` with its result | request | committed, merged into `main`, both moved to `request/done`, answered on the outbox; the next cycle |
 - **The runtime**, `mrepo-base-runtime` (named 2026-11-09; first built as
   `mycelium-repo-main`, its "main" colliding with the `main` layer): the
   always-on process of a repository, running its protocols; it holds the
@@ -324,13 +334,17 @@ functionality (the bundles in `packages/`) is not exposed.
     replace), `post` (to a collection, which names the item), `delete`. No
     update: a URI goes deep (into a JSON document, to a single value), so a
     `put` at a deeper URI is the partial update. Extended if ever needed.
-  - **`lifecycle`**, three pairs, each the other's inverse: `boot`
-    (brought into existence from a source: what we called the cold boot) and
-    `teardown` (removed entirely); `initialise` (configuration and state set
-    up, checked, ready to run: what we called the warm boot) and `shutdown`
-    (undone, back to booted); `start` (its processes running) and `stop`
-    (halted, everything kept). And `run`: the whole cycle, from boot to
-    teardown (a test's run, a one-off execution).
+  - **`service`** (named 2026-11-10: the lifecycle of a service, an
+    amended service protocol; first called `lifecycle`), four pairs, each
+    the other's inverse: `boot` (brought into existence from a source: what
+    we called the cold boot) and `teardown` (removed entirely);
+    `initialise` (configuration and state set up, checked, ready to run:
+    what we called the warm boot) and `shutdown` (undone, back to booted);
+    `start` (its processes running) and `stop` (halted between requests,
+    everything kept); `pause` (halted mid-request) and `resume` (continued
+    from there). And `run`: the whole cycle, from boot to teardown (a
+    test's run, a one-off execution). A thing without some of them (a
+    plain process: no boot) offers only those it has, by its type.
 - **A request is fully qualified**: `{ protocol, action, uri, body }`, as it
   travels and as it is recorded (an action unique today may not stay so; a
   recorded request keeps its meaning for an exact rerun). The URI names the

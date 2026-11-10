@@ -196,7 +196,7 @@ and the store's own failures).
   runs, inside the container; the host holds only the views the container
   needs (its bundles, its addons).
 
-### Boot: getting the host's repository (the lifecycle's `boot`)
+### Boot: getting the host's repository (the service protocol's `boot`)
 
 **Agreed** (the human, 2026-11-09). The boot's job: get the level's
 repository, then start its single writer from it. Its source:
