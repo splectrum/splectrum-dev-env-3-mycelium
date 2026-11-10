@@ -77,7 +77,7 @@ export async function send ({ work, protocol, action, uri, body, command, wait =
   if (storage === 'git') await post({ work, backend: disk, writer: writer(disk), repo: openRepo(disk) }, envelope, id)
   else inboxFolder(work).write(id, envelope)
   if (!await ask({ work, op: 'status' })) {
-    if (!await startRuntime({ work, ...(bundle ? { bundle } : {}) })) return { code: 1, out: { error: 'the runtime did not start (see its log folder, mrepos/<name>/log/)', request: `${INBOX}/${id}` } }
+    if (!await startRuntime({ work, ...(bundle ? { bundle } : {}) })) return { code: 1, out: { error: 'the runtime did not start', request: `${INBOX}/${id}` } }
   }
   const repo = openRepo(disk)
   for (const end = Date.now() + wait; Date.now() < end;) {

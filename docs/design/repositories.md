@@ -31,7 +31,7 @@ written, in one of three modes:
 |---|---|---|---|
 | **atomic** | the Corestore (a Hyperdrive holding the git directory, p2p-git's) | one commit at a time, by the store's single writer (the runtime) | `main`, `runtime` |
 | **replicated** | the Corestore, and copied out as files for the process that needs them | as atomic | `packages` (its files at `<work>/mrepos/<name>/packages/`: Bare, `dlopen`) |
-| **non-atomic** | git on disk, `<work>/mrepos/<name>/.git` | by its own writers, in parallel, one per branch | `request/*`, `inbox`, `outbox`, `log`, `execute/*` |
+| **non-atomic** | git on disk, `<work>/mrepos/<name>/.git` | by its own writers, in parallel, one per branch | `request/*`, `inbox`, `outbox`, `execute/*` |
 
 - **One repository to everything above it**: `mycelium-git`'s
   `mixedBackend` wraps the two stores behind the backend contract (it
@@ -69,8 +69,8 @@ repository); `p2p`, the hybrid. The same runtime, protocols and inputs on
 both (the cycle tested on both).
 
 **Agreed**, not built: an extension layer declaring its mode when it is
-made; `request/done` and logs as visible, non-atomic topics (each appended
-by its own writer, held in the repository by reference: `values.md`, "A
+made; `request/done` as a visible, non-atomic topic (appended by its own
+writer, held in the repository by reference: `values.md`, "A
 topic in git").
 
 ## Layers
@@ -84,10 +84,9 @@ topic in git").
 | `runtime` | the runtime's data: `/runtime/service.json` (the service state, the type), `/runtime/api.json` (the type's API, once initialised); later its settings and signals | atomic |
 | `request/pending/default` | the local queue: requests waiting, one record each (one queue per source, `request/pending/<source>`, later) | non-atomic |
 | `request/execute` | the request being executed, its record completed by the execute protocol | non-atomic |
-| `request/done` | each finished request with its full record (below) | non-atomic (agreed: visible, as a topic) |
+| `request/done` | each finished request with its full record, in the order done (its commit chain): the repository's history (below, "No log") | non-atomic (agreed: visible, as a topic) |
 | `inbox` | the records posted to the repository, as they came; nothing removed (housekeeping later) | non-atomic |
 | `outbox` | the answers and what the repository sends, its single writer the runtime | non-atomic |
-| `log` | the repository's log: a file a request (`<key>.jsonl`), one a runtime start; its working tree the log folder | non-atomic |
 | `execute/<target>` | an execution branch: made from its target, written by the execute protocol, merged back into its target (`execute/main`, `execute/runtime`, `execute/request/execute`) | non-atomic |
 
 - **Layers are disjoint, never merged into each other**; a layer's
@@ -140,7 +139,7 @@ runs on and a rerun uses is always the replicated commit).
 framework's: `mrepo`, apart from `mycelium` (the data layer: values, URIs,
 containers, git). Its API is a set of **protocols**, a module per protocol;
 the base variant (`mrepo-base-*`) is a simple implementation, others later
-shaped by configuration (log level, timeouts) as new variants of the same
+shaped by configuration (timeouts, say) as new variants of the same
 protocols.
 
 | Protocol | Layer | It owns | Module |
@@ -148,17 +147,17 @@ protocols.
 | runtime | `/runtime` | the always-alive process; its data, the service state | `mrepo-base-runtime` (**built**) |
 | request | `/request` | the inbox taken in, the queue, the moves between request layers, the answers | `mrepo-base-request` (**built**) |
 | execute | `/execute` | a request executed in execution branches, its record, the merges back | `mrepo-base-execute` (**built**) |
-| log | `/log` | records appended by one writer, a topic held by reference | `mrepo-base-log` (agreed) |
 
 - **The runtime** is always alive while the service is: it holds the store
   as its single writer, serves the local connection (`<work>/runtime.sock`,
   owner only: `status`, `stop`), runs one poller firing the protocols in
-  turn, logs into its `log` layer (below, "The log"), and may place requests itself
+  turn, and may place requests itself
   (straight into `request/pending`: inside the root, nothing to validate).
   Once the service is shut down (booted, nothing waiting) it ends; an input
   posting a request starts it again (HAICC's does). Started through the
   shell, detached (`bare-subprocess` ends its own children when its process
-  ends).
+  ends). No log of its own: a pass that fails puts its error in the request
+  executing (below, "No log").
 - **Protocols meet in data, never by calls**: each watches data states and
   writes the next; a restart picks up where the data stands.
 
@@ -166,9 +165,18 @@ protocols.
 |---|---|---|
 | new envelopes in the `inbox` layer (its head moved; records in no request layer) | request | checked (below); the core, in a new envelope, in `request/pending/default`; or refused: the form completed with its error, in `request/done`, sent back |
 | pending not empty, `request/execute` empty | request | the next core moved into `request/execute`, in a new envelope |
-| a form in `request/execute`, not completed | execute | its execution branches made from their targets or brought up to them; checked again against the state now; its action run, reading a target overlaid by its execution branch, writing only execution branches (the visible state); each branch merged back into its own target, `main` and `runtime` first; the form completed with its output (or the error that stopped it), merged into `request/execute` last |
+| a form in `request/execute`, not completed | execute | its execution branches made from their targets or brought up to them; checked again against the state now; its action run, reading a target overlaid by its execution branch, writing only execution branches (the visible state), inside the execution context (read-only to it; the runtime's context read through it, for config later); each branch merged back into its own target, `main` and `runtime` first; the form completed with its output (or the error that stopped it), merged into `request/execute` last |
 | a completed form in `request/execute` | request | its core, in a new envelope, in `request/done`, then cleared from `request/execute` (a restart in between finishes the clearing); sent back: in the `outbox`, in an envelope, when the core names where it is to arrive; the next cycle |
 
+- **The boot is a request too** (the human, 2026-11-10; **built**):
+  `service boot /`, with the command as typed. The boot completes its form
+  with what it did (or the error that stopped it) and hands it into
+  `request/execute` as the execute protocol hands one (through
+  `execute/request/execute`, merged back), before the runtime starts. The
+  request protocol's first pass finds it completed, moves it to
+  `request/done`, then starts the next pending request, the preloaded
+  `initialise`: `request/done` begins boot, initialise. The boot prints its
+  completed request, one record (no step by step output).
 - **Checked twice, for what each moment can know**: at the inbox what does
   not change (not misdelivered: the envelope addressed to this repository's
   inbox, the form's `api` its type; its URI
@@ -258,7 +266,7 @@ and `start` in; `start` makes the type's API available.
   What a terminal shows is the completed form, a record.
 - **The key: a GUID** (the human, 2026-11-10; **built**), set by the sender
   on the core when it makes the request, carried by every envelope around
-  it and every log record about it, and the name of its document in every
+  it, and the name of its document in every
   layer: a request traced everywhere by one key.
 - **Order is the commit chain** (the human, 2026-11-10; **built**): taking
   in follows the `inbox` layer's commits, the queue the `pending` layer's
@@ -328,7 +336,7 @@ dispatcher.** Replaces the dispatcher inside the request protocol, the input
 writing into a repository's inbox and reading its outbox (built for now).
 
 - **Every party has an inbox and an outbox**: a repository, the terminal
-  (a mini mrepo of its own: its boxes, its local log), the dispatcher. A
+  (a mini mrepo of its own: its boxes, its requests done), the dispatcher. A
   party writes only its own boxes.
 - **Every connection is one subscription**: an inbox subscribing to one
   outbox, pulled by its owner (the new records copied in, its position kept:
@@ -365,34 +373,35 @@ writing into a repository's inbox and reading its outbox (built for now).
   inbox, the dispatcher's outbox for the terminal, the terminal's inbox.
 - **Routing reads the onion**: the dispatcher routes a record by its
   envelope's topic, and a completed form back by its core's topic.
-- **What the terminal shows are records** (**built**): completed forms, and
-  log events (`logRecord`: topic `/log`, its key the request's, value the
-  event; each transfer logged with the envelope it made, so the log tells a
-  request's journey). The tests and the release check show a request's
-  journey: input, transfers, output, log.
+- **What the terminal shows are records** (**built**): the completed form,
+  the end of the execution. The tests show a request's journey (its input in
+  `inbox`, its record in `request/done`, its output in `outbox`, one key
+  throughout); the release check the requests done, in order.
 
-## The log
+## No log: a request is its own record
 
-**Agreed** (the human, 2026-11-10): **a level's log is a topic** (on p2p),
-append-only, in time segments, and a repository holds it **by reference**
-(`{ type: 'topic', key, length, root }`, pinned with its executions). On
-native git, a `log` layer, its working tree the log folder, takes the
-topic's place, its commit the pin.
+**Built** (the human, 2026-11-10; replaced a log layer and log folder, built
+and then removed the same day: too complicated). What happened to a request
+is in its document, and the documents done, in order, are the repository's
+history:
 
-**Built**, the start (2026-11-10), the same on both storages for now: the
-`log` layer (non-atomic, on disk), its working tree the log folder
-(`<work>/mrepos/<name>/log/`). Writers append records, one a line: a
-request's to `<key>.jsonl` (its key; written while it executes, then never
-again: each commit adds files, rewrites none), the rest to
-`runtime-<start>.jsonl` (one file a runtime start) and `boot-<start>.jsonl`
-(the boot's steps). The runtime commits the folder's new lines after each
-pass of its poller in which something happened (about one commit an
-execution), and at its stop. **No log outside the repository** (the human,
-2026-11-10): its name is known before it opens, or before it exists, so the
-boot and a runtime failing before its repository opens drop their records
-into its log folder all the same; the next commit picks them up. Later: the
-level's topic (time segments, the reference), levels, what each protocol
-logs.
+- **`request/done` is the history**: each request completed, the refused
+  ones too, in the order done (its commit chain), each move between request
+  layers a commit. The boot's own request first, then `initialise`.
+  Agreed: a visible topic (above, "One repository over two stores").
+- **An error goes into the request it happened to**: an action failing, its
+  form completed with the error; a record failing to be taken in, refused
+  with it (`runtime: <message>`); a runtime's pass failing, the request
+  executing completed with it (`runtime: <message>`), then done and sent
+  back like any other. Only what has no request, or no repository, goes to
+  stderr: a runtime that cannot start (the caller also says it did not
+  start), an error failing to be recorded.
+- **What a terminal shows** is the completed form, the end of execution;
+  no step by step output.
+- **Open**: a request's own history in its document (the events of its
+  journey, in the envelope or the completed form), when step by step
+  logging is wanted; the runtime's own events (started, stopped) dropped
+  meanwhile (its status checked by signal).
 - Watching is the same everywhere: on git, a branch head moving; on p2p,
   Hypercore's notice of an append.
 - Nothing in a repository is callable from outside by default: its
@@ -414,9 +423,9 @@ with checkpointing builds on it.
 the node's first: the manager writes what it decides (container, image,
 address) there, the node reads its own data and knows no manager; the
 manager and Splectral subscribe by replication, knowing no event kinds.
-**Logs** (direction): individual topics (records appended, not a commit per
-line), which the swarm can centralise, held in the local repository by
-reference; state as git objects.
+**Its history** (direction): its requests done, a topic the swarm can
+centralise, held in the local repository by reference; state as git
+objects.
 
 ## Open
 

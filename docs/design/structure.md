@@ -9,7 +9,7 @@ decision was reached is in the step records. This file says what holds now.
 
 **Agreed.** The host, a swarm's master, a node: the same structure. Its code
 from its packages layer (bundles: below); its
-config, state and log in its own repositories, in a store of its own
+config, state and history (its requests done) in its own repositories, in a store of its own
 (`repositories.md`); its own HAICC. Then it does not matter where HAICC
 runs (a container, the host, another machine): one structure, one set of
 commands, one test path; execution becomes portable (`repositories.md`).
@@ -32,16 +32,15 @@ commands, one test path; execution becomes portable (`repositories.md`).
 - **Mycelium repositories at every level, the host's install included**
   (agreed, the human, 2026-11-09: it closes the loop). A level's code is
   its packages layer (the bundles; the host's is the host's global store),
-  its config and state its own layers, its log a topic, its requests the
-  request branches; what it runs, bundles copied out of its packages layer
+  its config and state its own layers, its requests the request branches
+  (those done its history); what it runs, bundles copied out of its packages layer
   into its scope. Swarms and nodes the same, their packages layers filled
   by replication. Outside, at every level, by necessity: the boot
   (the bootstrap: it runs before any repository exists, from the setup's or
   the Pear release's bundle and shell, creates the level's repository and
   commits the release's bundles into its packages layer; initialisation runs
   out of the repository); the substrate (the store: Corestore and RocksDB
-  on disk; Bare; Docker; native addons as files); the minimal plain-file
-  log. The host is no longer special: the first level, made by the cold
+  on disk; Bare; Docker; native addons as files). The host is no longer special: the first level, made by the cold
   boot.
 
 *Why*: the same structure everywhere makes execution portable and the
@@ -94,14 +93,13 @@ write. (`wait` queues a writer for the lock.)
   sparsely). Writes never cross stores; what joins them is a reference and
   replication, as between machines. So a level may have several stores,
   each with one writer, composed by reference: the level's repository
-  (`mrepo-base-runtime`), a log store written by a logging thread (heavy
-  appends kept off the runtime), a package's own store.
+  (`mrepo-base-runtime`), a package's own store.
 - **A read-only reader sees a snapshot as of its opening** (tried
   2026-11-09: a reader kept open while the writer appended five times saw
   none of them, `update()` returning `false`; a reader opened afterwards saw
   all). So read-only opening is for short-lived readers: one that opens,
   reads and closes sees all written before it opened. A long-lived reader (Splectral watching a
-  level, a log viewer, anything waiting for new data) follows the writer
+  level, a viewer of requests done, anything waiting for new data) follows the writer
   instead (proposed): the level's writer process serves its cores to local
   followers over a local connection, the same Hypercore replication as
   between peers, appends arriving live and verified: one mechanism for the
@@ -124,8 +122,8 @@ atomic, replicated and non-atomic, one repository over the Corestore and
 git on disk (`repositories.md`, "One repository over two stores", and its
 layers there). Child levels (agreed): each its own repository, named in
 this one's mappings by URI, its folder here where the child runs on this
-host. The level's log: a topic (agreed); meanwhile each repository's `log`
-layer (`repositories.md`, "The log").
+host. No log: a repository's requests done are its history
+(`repositories.md`, "No log").
 
 - **The folders are an install-internal issue** (agreed, the human,
   2026-11-09): people and agents interact through the command line or
@@ -154,7 +152,6 @@ layer (`repositories.md`, "The log").
     host/                                    the host's repository (type haicc)
       .git/                                  its non-atomic layers: request/*, inbox, outbox, execute/* (git on disk)
       inbox/                                 the inbox layer's working tree: inputs add records, the runtime commits
-      log/                                   the log layer's working tree: a file a request (<key>.jsonl), a runtime start, a boot
       packages/                              replicated: the packages layer's files
         haiccing/base-package-boot.bundle    bundles by [org]/[package]
         haiccing/base-package-haicc.bundle

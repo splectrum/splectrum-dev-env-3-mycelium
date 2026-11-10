@@ -39,8 +39,10 @@ request). 6: one repository over two stores (`mixedBackend`). 7: the boxes
 as layers (`post`), a repository on native git (`<work>/mrepo.json`). 8:
 records as an onion (a pre-filled form in a pre-addressed envelope). 9: log
 events as records, a request's journey shown. 10: the key (a GUID) and order
-by the commit chain. 11: the `log` layer (a file a request), no log outside
-the repository, the command as typed in the form. The docs consolidated;
+by the commit chain. 11: the `log` layer, built, then removed in 12: no log,
+a request is its own record (`request/done` the history; errors into the
+request they happened to), the boot a request too, the action wrapped in a
+read-only execution context; the command as typed in the form. The docs consolidated;
 the module READMEs; the product repositories updated after each part.
 
 The release check (no publishing): `sh tools/publish.sh <folder>
@@ -50,20 +52,19 @@ real publisher's key is on the local machine only.
 
 ## Open, in the order discussed
 
-1. **The log, further**: on p2p the level's log as topics in time segments,
-   held by reference (`{ type: 'topic', key, length, root }`); levels; what
-   each protocol logs.
-2. **The terminal as a mini mrepo** (its boxes, its local log).
-3. **The dispatcher application** (like HAICC: its own API; requests to it
+1. **The terminal as a mini mrepo** (its boxes, its requests done).
+2. **The dispatcher application** (like HAICC: its own API; requests to it
    processed, others routed; stray records returned to it as misdelivered;
    local subscriptions file operations, remote ones other nodes, followed
    or announced). Until then HAICC's input posts into the repository's
    inbox and reads its completed form from the outbox.
-4. **The headers**: to plan with the human (the execution's metadata, the
+3. **The headers**: to plan with the human (the execution's metadata, the
    states a request ran on, are in the commits only meanwhile).
-5. **Populating `main` and `initialise`**: a type's own actions (its
+4. **Populating `main` and `initialise`**: a type's own actions (its
    package's functions, run as configured).
-6. Then swarms, nodes, centralised logs, the demos; step 3, the docs.
+5. A request's own history in its document (step by step), when wanted.
+6. Then swarms, nodes, the requests done centralised, the demos; step 3,
+   the docs.
 
 ## Elsewhere
 
@@ -77,5 +78,7 @@ real publisher's key is on the local machine only.
   request's step 2 (the storage setting, the opener) and the boxes as
   layers are already built here (part 7 on): open whether to update the
   seed to say so (one commit to `roadmap-1`).
+- `pear-full-square/mrepo-base-log` (created empty by the human): dropped,
+  to be archived by the human.
 - The product repositories of removed modules (`mycelium-repo`,
   `haicc-reconcile`, `p2p-swarm-manager`) are archived.

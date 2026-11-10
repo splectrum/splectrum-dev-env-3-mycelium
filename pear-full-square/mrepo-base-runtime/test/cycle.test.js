@@ -1,6 +1,6 @@
 import test from 'brittle'
 import { spawnSync } from 'bare-subprocess'
-import fs, { mkdtempSync, rmSync, readFileSync, readdirSync } from 'bare-fs'
+import fs, { mkdtempSync, rmSync, existsSync } from 'bare-fs'
 import { join, dirname } from 'bare-path'
 import { tmpdir } from 'bare-os'
 import { fileURLToPath } from 'bare-url'
@@ -29,7 +29,7 @@ for (const storage of ['p2p', 'git']) {
       t.alike(await send(work, req('rest', 'get', '/main/notes')), { ok: true, value: { entries: ['hello.json'] } })
       const status = await send(work, req('rest', 'get', '/'))
       t.is(status.value.service, 'started')
-      t.alike(status.value.layers, ['inbox', 'log', 'main', 'outbox', 'packages', 'request/done', 'request/execute', 'request/pending/default', 'runtime'], 'the layers (the execution branches not among them)')
+      t.alike(status.value.layers, ['inbox', 'main', 'outbox', 'packages', 'request/done', 'request/execute', 'request/pending/default', 'runtime'], 'the layers (the execution branches not among them)')
       t.alike(await send(work, req('rest', 'put', '/packages/x.json', 1)), { ok: false, error: 'not offered: rest put at /packages/x.json' }, 'the API: only what it offers')
       t.alike(await send(work, req('rest', 'get', '/main/none.json')), { ok: false, error: 'nothing at /main/none.json' }, 'failed in execution: answered')
       t.alike(await send(work, { ...req('rest', 'get', '/'), api: 'other' }), { ok: false, error: 'misdelivered: api other, this repository is of type haicc' })
@@ -60,12 +60,9 @@ for (const storage of ['p2p', 'git']) {
         t.is((await repo.select('/outbox/*')).length, 15, 'the outbox: every completed form sent back')
         t.is(JSON.parse((await repo.read('/runtime/service.json')).toString()).state, 'booted')
       } finally { await r.close() }
-      const folder = join(work, 'mrepos', 'host', 'log')
-      const lines = f => readFileSync(join(folder, f), 'utf8').trim().split('\n').map(l => JSON.parse(l))
-      const log = readdirSync(folder).flatMap(lines)
-      t.ok(log.every(r => r.topic === '/log'), 'the log: records')
-      t.absent(log.some(r => r.value.runtime === 'failed'), 'nothing failed: ' + JSON.stringify(log.filter(r => r.value.runtime === 'failed')))
-      // One request's journey, as the records show it: the put of the note.
+      t.absent(existsSync(join(work, 'mrepos', 'host', 'log')), 'no log folder')
+      // One request's journey, as the records show it: the put of the note,
+      // posted, done, sent back; each move a commit of the request layers.
       const r2 = await open(work)
       try {
         const repo = openRepo(r2.backend)
@@ -75,17 +72,15 @@ for (const storage of ['p2p', 'git']) {
           if (env.value.value.action === 'put' && env.value.value.uri === '/main/notes/hello.json') { name = p.slice('/inbox/'.length, -'.json'.length); break }
         }
         const input = JSON.parse((await repo.read(`/inbox/${name}.json`)).toString())
-        const about = lines(`${name}.jsonl`)
-        t.alike(JSON.parse('[' + (await repo.read(`/log/${name}.jsonl`)).toString().trim().split('\n').join(',') + ']'), about, 'its log file committed into the log layer')
+        const done = JSON.parse((await repo.read(`/request/done/${name}.json`)).toString())
         const output = JSON.parse((await repo.read(`/outbox/${name}.json`)).toString())
-        t.alike(about.map(r => { const [k] = Object.keys(r.value); return `${k}:${r.value[k]}` }), ['request:received', 'request:pending', 'request:execute', 'execute:done', 'request:done', 'request:sent back'], 'its journey in the log')
-        t.alike(about.map(r => r.value.record.topic), ['/host/inbox', '/request/pending/default', '/request/execute', '/request/execute', '/request/done', '/outbox'], 'each transfer: a new envelope, its topic the new place')
-        t.ok(about.every(r => r.value.record.value.topic === '/haicc/terminal'), 'the core inside, unchanged in its address')
-        t.ok([input, ...about, ...about.map(r => r.value.record), output].every(r => r.key === name), 'one key throughout: the input, every log record, every envelope, the output')
-        t.alike(output, about[about.length - 1].value.record, 'the output: the last envelope, as stored in the outbox')
-        t.comment(`the journey of ${name} (${storage}): the input, the log, the output, as records`)
+        t.alike([input.topic, done.topic, output.topic], ['/host/inbox', '/request/done', '/outbox'], 'each place: a new envelope, its topic the place')
+        t.ok([input, done, output].every(r => r.key === name && r.value.key === name), 'one key throughout: every envelope, its core')
+        t.alike(done.value, output.value, 'the core completed: in done, and sent back')
+        t.alike({ ...input.value, value: { ...input.value.value, output: { put: '/main/notes/hello.json' } } }, done.value, 'the core as posted, only completed (its output)')
+        t.comment(`the journey of ${name} (${storage}): the input, the done request, the output, as records`)
         t.comment(`input  ${JSON.stringify(input)}`)
-        for (const r of about) t.comment(`log    ${JSON.stringify(r)}`)
+        t.comment(`done   ${JSON.stringify(done)}`)
         t.comment(`output ${JSON.stringify(output)}`)
       } finally { await r2.close() }
     } finally { rmSync(work, { recursive: true, force: true }) }
@@ -103,7 +98,7 @@ test('where the layers live on the p2p host: the atomic ones in the store, the r
     await send(work, req('service', 'shutdown', '/'))
     for (let i = 0; i < 100 && alive(s.pid); i++) await wait(100)
     const onDisk = (await p2pgitBackend(join(work, 'mrepos', 'host', '.git'), { fs }).listBranches()).map(([n]) => n)
-    t.alike(onDisk, ['execute/main', 'execute/request/execute', 'execute/runtime', 'inbox', 'log', 'outbox', 'request/done', 'request/execute', 'request/pending/default'], 'on disk: the boxes, the log, the request layers, the execution branches')
+    t.alike(onDisk, ['execute/main', 'execute/request/execute', 'execute/runtime', 'inbox', 'outbox', 'request/done', 'request/execute', 'request/pending/default'], 'on disk: the boxes, the request layers, the execution branches')
     const { openStore } = await import('p2p-store')
     const { mrepos } = await import('p2p-mrepo')
     const store = await openStore({ storage: join(work, 'store') })

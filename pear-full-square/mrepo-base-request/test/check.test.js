@@ -1,5 +1,5 @@
 import test from 'brittle'
-import { check, record, wrap, guid, logRecord, complete, isComplete } from '../index.js'
+import { check, record, wrap, guid, complete, isComplete } from '../index.js'
 
 const api = {
   api: 'haicc',
@@ -48,8 +48,6 @@ test('a record: topic, key, timestamp, headers (empty), value; the onion; a form
   const envelope = wrap('/host/inbox', core)
   t.ok(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(core.key), 'the key: a GUID')
   t.is(envelope.key, core.key, 'the envelope carries its core\'s key')
-  t.is(logRecord({ request: 'pending', record: envelope }).key, core.key, 'a log record about it too')
-  t.is(logRecord({ runtime: 'running' }).key, null, 'one about no request: none')
   t.alike(Object.keys(envelope), ['topic', 'key', 'timestamp', 'headers', 'value'])
   t.alike(envelope.headers, {})
   t.is(envelope.value, core, 'the core inside')
