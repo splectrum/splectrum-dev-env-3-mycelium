@@ -292,10 +292,38 @@ their writes.
   real bundles, `mrepos/host/.git` beside the boxes and packages, nothing
   left running. The tag it would publish: `setup-c06d0725ddde`.
 
+## The product repositories: updated (2026-11-10)
+
+The modules changed in this phase so far, each folder's history split from
+`main` (`661b94c`) and merged into its product repository's `main`: the
+first merge from this repository (joining the histories), the product's
+LICENSE kept, the rest the module as it is here (what phase 2 had and this
+phase removed, e.g. `mycelium-git`'s `cli.js`, gone). By
+`tools/products.sh <module>...` (new: the rule in `rules.md` as a script).
+Removed modules' repositories (`mycelium-repo`, `haicc-reconcile`,
+`p2p-swarm-manager`) to archive by the human.
+
+| Module (pear-full-square/) | Split | Product's main |
+|---|---|---|
+| `mycelium-value-json` | `eb04eb4` | `7608f01` |
+| `mycelium-container-document` | `235d0cc` | `faadad2` |
+| `mrepo-base-runtime` | `00847f8` | `f066ec1` |
+| `mrepo-base-request` | `d1ee0c7` | `7c281d7` |
+| `mrepo-base-execute` | `485fc8c` | `39d8806` |
+| `haicc-base-boot` | `bde5592` | `33bb008` |
+| `haicc-base-cli` | `9f12132` | `095c140` |
+| `haicc-deployment` | `bed7496` | `341b224` |
+| `mycelium-git` | `7685e3c` | `f3ad767` |
+| `mycelium-layer` | `74ec4d7` | `184cb8e` |
+| `mycelium-uri` | `d58aa72` | `b31a0e6` |
+| `mycelium-xpath` | `45a6d17` | `b0d4031` |
+| `p2p-mrepo` | `1ce64ad` | `a2db0f8` |
+| `p2p-store` | `feaf8f7` | `2e0595f` |
+| `pkgm-base-manager` | `c4e51f1` | `9ee176e` |
+
 Next: populate `main` and the warm boot (`initialise`) for the
 repository's internal functionality; then swarms, nodes, centralised logs,
-the demos. Product repositories: the new and renamed modules' first
-updates still to do.
+the demos.
 
 Not yet: the tests run from the bundle (their third-party code, brittle,
 is not reached from the entry); the other packages (`swarm-three-nodes`, the
