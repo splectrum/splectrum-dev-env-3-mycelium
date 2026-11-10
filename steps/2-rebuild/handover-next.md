@@ -52,6 +52,12 @@ real publisher's key is on the local machine only.
 
 ## Open, in the order discussed
 
+0. **Packages from scratch** (part 13, in progress): the design agreed so
+   far in `docs/design/packages.md`; next `boot.js` per unit, the build
+   instructions, the manifest; then built (the boot package the first,
+   `haiccing/base-package-boot/` here; the package repositories written
+   again).
+
 1. **The terminal as a mini mrepo** (its boxes, its requests done).
 2. **The dispatcher application** (like HAICC: its own API; requests to it
    processed, others routed; stray records returned to it as misdelivered;

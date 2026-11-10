@@ -453,6 +453,23 @@ into the request they happened to.
 
 Next: the terminal as a mini mrepo; the dispatcher.
 
+## 13. Packages from scratch: the design (agreed, 2026-11-10)
+
+Found first: the package repositories in `haiccing` no longer written since
+step 2 began (`tools/publish.sh` releases a setup only), against the docs
+(`packages.md`, `releases.md`, `structure.md`); the boot's shell outside
+its package (`tools/setup/`); no `haiccing/base-package-boot/` here. The
+human: start the package structure again from scratch, and build it up.
+Agreed so far (`docs/design/packages.md`, "What a package is", "Installing
+an mrepo from its structure"): a package depends only on packages; a
+recursive structure unit (`boot.js`, `mrepo/`, `test/`, further units by
+URI part name; `modules/` once at the package's top); `mrepo/` laid out by
+layers, a `layer.json` at each leaf, committed; the install an overlay
+(common, then the type's) into `<work>/mrepos/<name>/`, built in place,
+then cleaned up.
+
+Next: `boot.js` per unit, the build instructions, the manifest; then built.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
