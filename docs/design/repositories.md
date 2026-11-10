@@ -68,11 +68,11 @@ The sketch, kept as the starting point for that design:
 
 | | the passive repository (requester) | the active repository (executor) |
 |---|---|---|
-| writes | `request/pending` only | `request/executing`, `request/done`, `execute/main`, `main` |
-| reads, by replication, as read-only layers | the active one's `main`, `request/executing`, `request/done` | the passive one's `request/pending` |
+| writes | `request/pending` only | `request/execute`, `request/done`, `execute/main`, `main` |
+| reads, by replication, as read-only layers | the active one's `main`, `request/execute`, `request/done` | the passive one's `request/pending` |
 
 The flow: a request committed to `request/pending`; replicated, an imported
-layer on the active side; taken (recorded on `request/executing`: its name,
+layer on the active side; taken (recorded on `request/execute`: its name,
 the pending commit it was taken at); executed as a unit on `execute/main`,
 the request layer's commit among the unit's fixed states (so it reruns
 exactly); merged into `main`; closed on `request/done` (its outcome, the
@@ -94,7 +94,7 @@ and metadata kept apart:
 | Branch | Holds |
 |---|---|
 | `request/pending/default` | the local queue: requests waiting (one queue per source: `request/pending/<source>`, `default` the local one; no branch `request/pending` itself, a name never both a branch and a prefix) |
-| `request/executing` | the request being executed, with its metadata gathered as it runs: the unit's record (invocation, the states it ran on by commit, environment, nondeterministic inputs), its outcome, the `execute/main` commit it produced; cleared when it ends |
+| `request/execute` | the request being executed, with its metadata gathered as it runs: the unit's record (invocation, the states it ran on by commit, environment, nondeterministic inputs), its outcome, the `execute/main` commit it produced; cleared when it ends |
 | `request/done` | each completed request with its full record: the request as submitted, the unit's record (rerun exactly by it), its outcome (a failure included), the `execute/main` commit and its merge into `main` |
 | `execute/main` | only the visible change to `main`: the data the request produced; merged plainly into `main` |
 
@@ -103,7 +103,7 @@ requests and the metadata around producing the visible state (`rules.md`:
 outcomes are data on `main`). Today's `executeRequests` writes the unit's
 record into `main` beside the response: changed when rebuilt. In one
 repository with one writer, taking a request is a commit moving it from the
-queue to `request/executing`, finishing one moving it with its record to
+queue to `request/execute`, finishing one moving it with its record to
 `request/done`. The passive and active split of these branches comes with
 that design, later. The reserved segment `pending` becomes `request`;
 `rules.md` (its branches and commit references) is changed when it is
@@ -200,19 +200,65 @@ manager puts bundles in its packages layer. Execution is its own heading,
 | Protocol | Layer | The flow it owns | What an implementation provides | Base module |
 |---|---|---|---|---|
 | request | `/request` | the inbox taken in, each message checked against the API (the root mapping), then a request in `request/pending/<source>`, or refused and answered | the API: its commands and their arguments (`haicc`) | `mrepo-base-request` |
-| execute | `/execute` | the queue watched; a request taken (`request/executing`), launched as a unit, the repository's state pinned, writing into `execute/main`; on completion committed, merged into `main`, recorded in `request/done` (the command as launched, the states it ran on, its exit code and output, the environment), answered; one at a time, in queue order | each command mapped to the functions that do it, run as configured | `mrepo-base-execute` |
+| execute | `/execute` | the queue watched; a request taken (`request/execute`), launched as a unit, the repository's state pinned, writing into `execute/main`; on completion committed, merged into `main`, recorded in `request/done` (the command as launched, the states it ran on, its exit code and output, the environment), answered; one at a time, in queue order | each command mapped to the functions that do it, run as configured | `mrepo-base-execute` |
 | log | `/log` | records appended, one writer, a topic held by reference | what is logged | `mrepo-base-log` |
 
   More as required (the transport between roots, the verbs, once there is
   more than one root).
-- **The runtime**, `mrepo-base-runtime` (named 2026-11-09; first built as
-  `mycelium-repo-main`, its "main" colliding with the `main` layer): the
-  always-on process of a repository, running its protocols; it holds the
-  store as its single writer, keeps the required watchers running (the
-  queue, the sources it follows, replication), serves the local connection,
-  and restarts what stops. Packaged as `haiccing/base-package-mrepo`.
-- **The first bundles**: `packages` starts with `haiccing/base-package-boot`,
-  `-haicc` and `-mrepo`, committed at `init`.
+- **The runtime protocol and its layer** (the human, 2026-11-10): the
+  runtime is always alive; it reads the repository, keeps the watchers
+  going (one poller firing the protocols, for now), and may place requests
+  itself (straight into `request/pending`: inside the root, nothing to
+  validate). Its data is a standalone layer, `runtime`, **atomic**, managed
+  by the runtime protocol: `/runtime/api` (the type's API declaration),
+  `/runtime/service` (the service state, gating the API), the signals (set
+  in the same commit as the state they belong with, where consistency needs
+  it), later `/runtime/settings` (log level, timeouts).
+- **A repository's type is a package** (the human, 2026-11-10):
+  `haiccing/base-package-haicc` is the type `haicc`, requiring
+  `haiccing/base-package-mrepo` (the framework) as its prerequisite; its
+  API is data in the package (the URI types, the protocols and actions each
+  offers, the package's command doing each). `boot` assembles the
+  repository and preloads it with one request, `service initialise /`;
+  `initialise` extracts the API into `/runtime/api`. The framework never
+  imports a type's code: it reads its declaration.
+- **The service state gates the API**: booted: `initialise`, `teardown`;
+  initialised: `start`, `shutdown`; started: the type's API, `stop`,
+  `pause`; paused: `resume`, `stop`. The runtime itself is always running
+  (it takes `initialise` and `start` in); `start` makes the type's API
+  available.
+- **Built, the base** (2026-11-10, phase 3 step 2, part 5): the runtime
+  (`mrepo-base-runtime`) firing the request (`mrepo-base-request`) and
+  execute (`mrepo-base-execute`) protocols by one poller; the `runtime`
+  layer; HAICC's API in its package (`haiccing/base-package-haicc/api.json`);
+  `boot` preloading `service initialise /`; the framework's generic actions
+  (`rest`: get, put, delete; `service`: initialise, start, stop, shutdown);
+  every message a record. Simplified for now: the request layers are git
+  branches in the Corestore (with the merges they need), not the
+  filesystem; the protocols, in the runtime's process, are handed its
+  writer; the runtime ends once shut down (booted, nothing waiting), HAICC's
+  input starting it again. Found: **the service state gates a request as it
+  executes, not at the inbox** (a queued request may change it first: a
+  `start` behind the preloaded `initialise`); the inbox checks what does
+  not change (not misdelivered, canonical, offered by the API once
+  extracted).
+- **Protocols meet in data, never by calls** (the human, 2026-11-10;
+  `Portable execution, triggered by data`): each watches data states and
+  writes the next; a restart picks up where the data stands.
+
+| Data state | Who reacts | What it does |
+|---|---|---|
+| a message in `/inbox` | request | validated against the API; a request in `request/pending/default`, or refused and answered |
+| pending not empty, `request/execute` empty | request | the next request moved into `request/execute` |
+| a request in `request/execute`, not completed | execute | its execution branches made from their targets (`execute/main` from `main`, `execute/request/execute` from `request/execute`); the action instantiated in the execute and runtime contexts, reading `main` overlaid by `execute/main`, writing `execute/main`; the request's metadata written into `execute/request/execute` (the states it ran on, its result); on completion each branch merged back into its own target, `main` first |
+| a completed request in `request/execute` (its record merged in) | request | copied into `request/done`, then `request/execute` cleared (a restart in between finishes the clearing); answered on the outbox; the next cycle |
+
+- **Writes inside a protocol's own branches; merges back to the layer a
+  branch came from** (the human, 2026-11-10): the execute protocol writes
+  only its execution branches and merges each into its own target; a move
+  between layers (`request/execute` to `request/done`) is the owning
+  protocol's, by writes. The layer rule stands (layers disjoint, never
+  merged into each other).
 
 ## Layers by their writes: atomic or not, visible or local
 
@@ -223,7 +269,7 @@ when it is made.
 | | atomic (one commit) | not atomic (records, each whole) |
 |---|---|---|
 | **visible** (replicated) | `main`, `packages`: in the store (Corestore), committed by the runtime only | `request/done`, logs: topics, each appended by its own writer, held by reference |
-| **local** | (none yet) | `execute/*`, `request/pending/*`, `request/executing`, the local inbox and outbox: on disk (native git, plain folders) |
+| **local** | (none yet) | `execute/*`, `request/pending/*`, `request/execute`, the local inbox and outbox: on disk (native git, plain folders) |
 
 Stored, so, in three modes (`structure.md`): atomic (the Corestore),
 replicated (the Corestore, copied out as files where a process needs them:
@@ -315,6 +361,46 @@ functionality (the bundles in `packages/`) is not exposed.
   2026-11-09): the `haicc` package declares the commands (their arguments,
   validated at the inbox) and maps each to the functions that do it; how a
   command is executed follows the repository's configuration settings.
+- **A protocol is part of an API, internal or external, giving its actions
+  their meaning** (the human, 2026-11-09): the same word for the same
+  meaning in every context. The framework's API (internal) has its
+  protocols (request, execute, log, above); a repository's external API its
+  own, generic sets to start with, to see how far they get us:
+  - **`rest`**: `get`, `put` (at a URI the caller names: create or
+    replace), `post` (to a collection, which names the item), `delete`. No
+    update: a URI goes deep (into a JSON document, to a single value), so a
+    `put` at a deeper URI is the partial update. Extended if ever needed.
+  - **`service`** (named 2026-11-10: the lifecycle of a service, an
+    amended service protocol; first called `lifecycle`), four pairs, each
+    the other's inverse: `boot` (brought into existence from a source: what
+    we called the cold boot) and `teardown` (removed entirely);
+    `initialise` (configuration and state set up, checked, ready to run:
+    what we called the warm boot) and `shutdown` (undone, back to booted);
+    `start` (its processes running) and `stop` (halted between requests,
+    everything kept); `pause` (halted mid-request) and `resume` (continued
+    from there). And `run`: the whole cycle, from boot to teardown (a
+    test's run, a one-off execution). A thing without some of them (a
+    plain process: no boot) offers only those it has, by its type.
+- **Every message is a Kafka record** (the human, 2026-11-10): the record is
+  the dispatch wrapper. Its `topic` is the URI where it lives (`/inbox`,
+  `/request/pending/default`, `/request/execute`, `/request/done`): a move
+  rewrites it, so a record is fully qualified within its context. Its
+  `value` is the message or request, unchanged as it travels. Its
+  `headers` are JSON, namespaced data structures accessible by URI (a
+  header a path inside the record), for any metadata (`vision.md`; their
+  schemas with AVRO). Its `key`, later, a URI: where it first entered
+  (`/inbox/<name>`), kept through its moves. The base uses the minimum:
+  `topic`, `timestamp`, `headers`, `value`; a record keeps its name through
+  its moves (the answer names it).
+- **A request is fully qualified**: `{ api, protocol, action, uri, body }`
+  (`api` the repository type: the first check that it is not misdelivered), as it
+  travels and as it is recorded (an action unique today may not stay so; a
+  recorded request keeps its meaning for an exact rerun). The URI names the
+  object, its type decides what an action means there; the mappings say
+  which protocols may be used where. At the terminal: `haicc <protocol>
+  <action> <uri> [body]`; an action unique among the protocols may be given
+  alone (`haicc post /inbox '{…}'`), the input expanding it where it enters,
+  refusing an ambiguous one.
 - **The boxes are a level's** (the human, 2026-11-09): the host (the first
   level) as any swarm or node; "node" above stands for any level. Each
   level has its own root; a URI is read in its level's URI space, its

@@ -10,9 +10,10 @@
 #    boot.json (the publisher's public key).
 # 3. Checked as a user would: a fresh folder, Node.js off the PATH (a PATH
 #    of links to the system's tools, node, nodejs, npm, npx and corepack
-#    left out, wherever they are installed): the setup run (the host's
-#    runtime started), then `haicc status`, a message POSTed (`haicc
-#    post /inbox`) and seen taken in by the host's repository, then `haicc stop`.
+#    left out, wherever they are installed): the setup run (the host
+#    booted, its runtime started, the preloaded `service initialise /` run),
+#    then the cycle through HAICC's requests: `start /`, a `put` into main
+#    and its `get`, `get /`, `stop /`, `shutdown /` (the runtime ends).
 # 4. With --push only: the setup and the manifest published as a release of
 #    haiccing/base-package-boot. Its tag: setup-<12 hex of the packages'
 #    identities in the manifest (each package's id and addons)>: the same
@@ -47,14 +48,18 @@ done
 (cd / && env -i PATH="$nonode" HOME="$HOME" sh -c 'command -v node >/dev/null && { echo "node still on the PATH"; exit 1; }; exit 0')
 (cd / && env -i PATH="$nonode" HOME="$HOME" sh "$folder/out/haicc-setup.sh" "$folder/check")
 bundle=$(ls "$folder/check/mrepos/host/packages/haiccing/base-package-haicc.bundle")
-(cd / && env -i PATH="$nonode" "$folder/check/setup/bare" "$bundle" status)
-# A message, from the terminal: POST /inbox, taken in by the runtime
-# (seen in its log).
-(cd / && env -i PATH="$nonode" "$folder/check/setup/bare" "$bundle" post /inbox '{"text":"hello"}')
-i=0; until grep -q '"runtime":"received"' "$folder/check/log/runtime.log" 2>/dev/null; do i=$((i+1)); [ $i -gt 50 ] && { echo "the message was not taken in"; "$folder/check/setup/bare" "$bundle" stop; exit 1; }; sleep 0.2; done
-echo "the message: taken in by the host's repository"
-# The host's runtime, started by the boot: stopped, the check leaves nothing running.
-(cd / && env -i PATH="$nonode" "$folder/check/setup/bare" "$bundle" stop)
+# The cycle, each a request through the host's inbox, answered (exit 0).
+# Should one fail, the runtime is ended on the way out: nothing left running.
+trap 'pkill -f "$folder/check/mrepos/host/packages" 2>/dev/null || true' EXIT
+h () { (cd / && env -i PATH="$nonode" "$folder/check/setup/bare" "$bundle" "$@"); }
+h start /
+h put /main/notes/hello.json '{"text":"hello"}'
+h get /main/notes/hello.json
+h get /
+h stop /
+h shutdown /
+i=0; while [ -S "$folder/check/runtime.sock" ]; do i=$((i+1)); [ $i -gt 50 ] && { echo "the runtime did not end"; exit 1; }; sleep 0.2; done
+echo "the cycle: answered; shut down, the runtime ended"
 rm -rf "$nonode"
 # The tag: the packages' identities (ids and addons), not the build's.
 tag=$("$dev/tools/bare" "$dev/tools/setup/tag.js" "$folder/out/source/manifest.json")

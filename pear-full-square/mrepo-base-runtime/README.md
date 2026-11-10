@@ -10,8 +10,12 @@ installed by HAICC's boot into the host's packages. Built step by step
 
 - `index.js`: the library; `runtime.js`: the command line, the package's
   entry (`start --work=<folder>`, `version`).
-- `lib/boxes.js`: the host's inbox and outbox, the local dispatcher;
-  `lib/view.js`: a repository's folder, `<work>/mrepos/<name>/`.
+- One poller fires the protocols in turn over their data states: the
+  outbox dispatched, the request protocol (`mrepo-base-request`), the
+  execute protocol (`mrepo-base-execute`). Once the service is shut down
+  (booted, nothing waiting) the runtime ends; a request posted later starts
+  it again (HAICC's input does).
+- `test/fixture.js`: a booted host, for the tests.
 
 ## Tests
 
