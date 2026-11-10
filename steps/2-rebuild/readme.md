@@ -519,6 +519,15 @@ JSON file each, `{ description, tests }`, `validate.json` (the deployment
 checked) and `full.json` (all); `test/run.js` runs one, `validate` by
 default, each test its own process (every unit's entry its `run.js`).
 
+The package structure documented outside this repository (the human):
+`haiccing/package-docs-template` (created by the human; its description
+short: "The haiccing package structure, documented."), written from
+`haiccing/package-docs-template/` here: a README at each level (`mrepo/`,
+`test/`, `test/<name>/`, a further unit, `modules/`), example files
+(`layer.json`, the sets), the rules, `base-package-boot` the example.
+Only what is agreed. In a real package no README inside a layer (it would
+be committed into it): `layer.json` says what the layer is for.
+
 Next: `service boot /host` (the boot's action: the host installed from
 the mrepo and haicc bundles and linked into `main`); then the boot's
 bundle.
