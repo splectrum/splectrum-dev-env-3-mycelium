@@ -500,6 +500,18 @@ hybrid with all layers on disk.
   commits; run, the preloaded start done, requests answered, its API held,
   stopped. Every affected module's tests pass.
 
+Then the package whole (the human: modules, test, package.json, to be
+bundled with the boot mrepo inside; what is on GitHub replaced):
+`haiccing/base-package-boot/` holds `mrepo/`, `boot.js` (the entry: `bare
+boot.js --work=<folder>`, built the first time with a fixed time, then
+run in its process), `package.json` (its `modules`: what it starts from),
+`test/` (the boot run as a process: built, answering, stopped, run again),
+`README.md`, `LICENSE`, and `modules/`, assembled by
+`tools/package-assemble.js` (the package writer's closure: ours copied
+whole, committed here; the third-party code in `modules/node_modules/`,
+ignored here, recorded in `modules/third-party.json`). Tested from a copy
+outside this repository: only Bare needed.
+
 Next: `service boot /host` (the boot's action: the host installed from
 the mrepo and haicc bundles and linked into `main`); then the boot's
 bundle.

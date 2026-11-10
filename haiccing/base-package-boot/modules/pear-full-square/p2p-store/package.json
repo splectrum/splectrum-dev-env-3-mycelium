@@ -1,0 +1,17 @@
+{
+  "name": "p2p-store",
+  "id": "77768e0a-2614-413f-bc7c-baa68a62d995",
+  "description": "Local storage for the p2p layer: a Corestore and its resources, no peer needed",
+  "type": "module",
+  "exports": "./index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "corestore": "7.16.1",
+    "hyperbee": "2.27.3",
+    "hypercore-crypto": "3.7.0",
+    "hyperdrive": "13.3.4"
+  }
+}
