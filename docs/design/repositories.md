@@ -302,20 +302,43 @@ nothing removed (housekeeping later).
   answer while the runtime writes) may find a ref missing for a moment: it
   reads again. The runtime's own reads and writes are sequential.
 
-**Agreed**, for levels beyond the host (a level is the host, a swarm or a
-node, each with its own root):
+**Agreed** (the human, 2026-11-10): **routing by subscription, through a
+dispatcher.** Replaces the dispatcher inside the request protocol, the input
+writing into a repository's inbox and reading its outbox (built for now).
 
-- A level has an **outbox topic**, fed from its repositories' outboxes, and an **inbox topic** (written by the level with what it takes
-  from other levels' outbox topics); its local dispatcher delivers from its
-  inbox topic into the addressed repository's inbox layer (posting). One
-  core per level crosses the network; a repository never handles a topic.
-- **Two modes between levels**, chosen by the receiver: **followed** (the
-  sender's outbox topic kept open and replicated live: Hypercore's own
-  notice of an append is the signal; for regular partners) and **announced**
-  (the sender signals the addressee only, by `p2p-request`, the outbox's key
-  and length, the latest length standing for a burst; the receiver fetches
-  those blocks sparsely and checks them; for occasional senders). Both land
-  in the receiver's inbox topic.
+- **Every party has an inbox and an outbox**: a repository, the terminal
+  (a mini mrepo of its own: its boxes, its local log), the dispatcher. A
+  party writes only its own boxes.
+- **Every connection is one subscription**: an inbox subscribing to one
+  outbox, pulled by its owner (the new records copied in, its position kept:
+  the commit it last took, as a Kafka consumer's offset). Every inbox has
+  one writer, its owner.
+- **The dispatcher** (a level's): its one inbox (on the filesystem)
+  subscribes to every party's outbox; its outboxes are one per destination
+  (each repository, the terminal, each peer's dispatcher); routing is moving
+  each record from its inbox to the outbox for the record's `to`. The one
+  place where traffic is monitored and managed (a priority field ordering
+  it, counts, holding back).
+- **Each inbox subscribes to its outbox at the dispatcher**: a repository's
+  to the dispatcher's outbox for it, the terminal's (its postbox) to the
+  dispatcher's outbox for the terminal; a peer's dispatcher to ours for it
+  (by replication or a topic, `p2p-request` announcing).
+- **A request's round trip**: the terminal's outbox, the dispatcher's
+  inbox, the dispatcher's outbox for the repository, the repository's inbox;
+  executed; its output record into the repository's outbox, the dispatcher's
+  inbox, the dispatcher's outbox for the terminal, the terminal's inbox.
+- **Processing makes an output record from an input record** (the human,
+  2026-11-10): the input record never changes (its value the message as
+  sent, incomplete: a request); the output record is a new record, its value
+  the payload completed (the request and its output, later more), its
+  headers `from` this repository, `to` the input's sender (flipped), `re`
+  the input record. Both kept in `request/done`; the output into the
+  outbox. (Built for now: the result in the input record's headers, the
+  answer its own record in the outbox.)
+- **What the terminal shows are records**: requests, outputs and log
+  events as Kafka records.
+- Watching is the same everywhere: on git, a branch head moving; on p2p,
+  Hypercore's notice of an append.
 - Nothing in a repository is callable from outside by default: its
   functionality (its packages) is exposed only through its API.
 
