@@ -26,4 +26,5 @@ Its `layer.json` lists the packages and where they come from:
 - **Linked**: a bundle is one file in a store, hard linked into each
   mrepo's `packages/`. Never edited in place.
 - Every mrepo has `haiccing/base-package-mrepo`: the runtime, the
-  protocols, the install routine.
+  common protocols. An mrepo that deploys others also has
+  `haiccing/base-package-boot`: the `boot` protocol, the install routine.
