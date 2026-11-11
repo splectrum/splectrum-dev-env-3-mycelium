@@ -45,10 +45,11 @@ request they happened to), the boot a request too, the action wrapped in a
 read-only execution context; the command as typed in the form. The docs consolidated;
 the module READMEs; the product repositories updated after each part.
 
-The release check (no publishing): `sh tools/publish.sh <folder>
---key-dir=<folder>`, with a test key made by `tools/bare
-tools/setup/keygen.js <folder>` (the container is temporary: make one). The
-real publisher's key is on the local machine only.
+(2026-11-11) Phase 2's release (`tools/publish.sh`, `tools/setup/`) and
+package writer are removed; the boot's release is being rebuilt (a
+standalone executable, `docs/design/packages.md`). A test key: `tools/bare
+tools/keygen.js <folder>`. The real publisher's key is on the local
+machine only. Where the work stands now: `readme.md`, parts 14 to 16.
 
 ## Next session: packages from scratch, the boot first
 

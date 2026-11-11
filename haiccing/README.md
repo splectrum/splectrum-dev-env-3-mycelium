@@ -1,7 +1,13 @@
 # haiccing (folder)
 
-The hand-written parts of the `haiccing` organisation's packages, each at
-`haiccing/<repo>`: what the package writer (`tools/package-writer`, from
-`packages.json`) writes in with the modules: a package's swarms, its tests,
-its README. Published as the `haiccing` repositories (`docs/guides/release.md`).
-Running the demos: `demos.md`.
+The `haiccing` organisation's repositories, as they are developed here,
+each at `haiccing/<repo>`, in the package structure
+(`docs/design/packages.md`, `haiccing/package-docs-template/`):
+
+- `base-package-boot/`: the boot (its `modules/` assembled by
+  `tools/package-assemble.js`);
+- `package-docs-template/`, `package-docs-mrepo/`: documentation packages.
+
+Each is written to its repository from here. Still in phase 2's structure,
+to be redone: `base-package-haicc/`, `base-swarm-three-nodes/`, the demos
+(`base-demo-*`, `demos.md`).

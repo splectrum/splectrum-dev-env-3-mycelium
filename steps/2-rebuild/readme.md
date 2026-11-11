@@ -599,6 +599,25 @@ runtime moves it to `request/done` first, then runs the preloaded start.
 A prerequisite missing: no mrepo, the completed record printed, exit 3.
 Tested: the history's order, a deploy a run, the outcomes logged.
 
+## 17. Cleanup: what the reset deprecates (2026-11-11)
+
+The human: remove from this repository what relates to the work now and is
+deprecated, keep what is reused or not related yet; an ongoing process as
+the reset proceeds; the human archives the deprecated repositories.
+
+Removed: `pear-full-square/haicc-base-boot` (phase 2's boot; its product
+repository to archive), `tools/setup/` (the setup builder; `keygen.js`
+kept, now `tools/keygen.js`), `tools/publish.sh` (the release),
+`tools/package-writer` (`tools/package-assemble.js` takes the workspaces
+itself), `packages.json`, `docs/design/releases.md`, the guides
+`install.md`, `packages.md`, `release.md`. Fixed what pointed at them
+(`packages.md`'s phase 2 sections removed, `structure.md` marked,
+`haiccing/README.md`, the docs' index, the handover). Kept: `tools/install.sh`
+and `ensure-bare.sh` (this repository's install without npm),
+`pkgm-base-manager` (its closure, tree and signing used), the swarm,
+Splectral and phase 2 HAICC parts (not related yet). Every affected
+module's tests and the boot's `validate` pass.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

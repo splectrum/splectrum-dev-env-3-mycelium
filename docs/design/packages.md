@@ -4,8 +4,8 @@ Status marks: **built** (in the code, tested), **agreed** (decided, not built).
 
 ## What a package is
 
-**Agreed** (the human, 2026-11-10; restarted from scratch, not built: what
-is built is phase 2's structure, below and in `packages.json`). A package
+**Agreed** (the human, 2026-11-10; restarted from scratch; phase 2's
+structure and its package writer removed, 2026-11-11). A package
 models a structure of mrepos and how it is built and installed.
 
 - **A package depends only on packages**, never on a module elsewhere.
@@ -174,29 +174,7 @@ repository by `mrepo-base-runtime`'s `lib/build.js` and run on the `filesystem`
 storage (p2p-git, every layer on the filesystem). Not yet: `service boot /host`, the
 overlay on `base-package-mrepo`'s structure, the clean-up, the bundle.
 
-**Open**: the build instructions in the package (today `packages.json`'s
-entry); the package's manifest; the boot mrepo's API beyond the generic.
-
-## Built: phase 2's structure (to be replaced)
-
-```
-<package>/
-  package.json  README.md       its manifest ("pkgm": what it holds, its hash), its readme
-  modules/
-    <org>/<module>/             each module whole, as developed, with its own test/
-    node_modules/               the third-party code they use; links to ours by name
-    third-party.json            the record: each third-party module's version, licence, integrity
-  swarms/<swarm>/               nodes.json, modules.json, splectral.json, host.json, README.md, test/
-  platform/                     the platform's definitions (becomes mrepo/)
-  test/
-    validation.json full.json   its test sets
-    <test>/                     a named test: its script (test, or boot), test.json, README.md,
-                                and the package's parts it adds (modules/, swarms/, platform/)
-```
-
-The package writer writes it (`packages.json`, the hand-written parts in
-`haiccing/<repo>/`), the bundle made from it (`structure.md`, "Packages as
-bundles").
+**Open**: the package's manifest; the boot mrepo's API beyond the generic.
 
 ## Self-contained
 
@@ -237,10 +215,11 @@ development, without pretending one is the other (the human).
 **Built.**
 
 - **Writing packages is the development environment's**, on the connected
-  side: the package writer (`tools/package-writer`, in this repository,
-  never shipped) writes haiccing's packages from this repository's modules
-  (`packages.json`, and the hand-written parts in `haiccing/<repo>/`),
-  taking the third-party code from this repository's `node_modules`.
+  side: a package's folder in `haiccing/<repo>/`, its `modules/`
+  assembled from this repository's modules and `node_modules`
+  (`tools/package-assemble.js`, never shipped); its bundles and the release
+  written from it (to be rebuilt: phase 2's package writer and release
+  removed, 2026-11-11).
   **Installed with Bare only** (2026-11-09, the human: no Node.js on the
   development side): `sh tools/install.sh` replays `package-lock.json`
   as `npm ci` would (Bare's runtime ensured first by the shell from its
@@ -262,22 +241,7 @@ tested elsewhere, and can be carried across an airgap as files.
 
 **Built.** Its identity: everything in it but `package.json` and `.git`,
 its `LICENSE` included, the readme last (paths, exec bits, links,
-contents; sha256). Recorded by the package writer in `package.json`;
-checked by the package manager (`verify`) wherever a copy is used. The
-writer puts the `LICENSE` in (the published repository's own, else this
-repository's) before it tests and hashes: what is tested and hashed is
-what ships. (The ninth release's candidate failed without it: the hash was
-taken before the repository's `LICENSE` was back, so every node refused
-its copy; found by the local agent.)
-
-## Packages in this repository
-
-**Built.** `packages.json` defines the packages the writer writes, one a
-step: `haicc` (the platform) and `swarm-three-nodes` (a configured swarm,
-the p2p node as its codebase: 13 modules of ours, all on Bare). The writer
-knows every module of this repository (its workspaces, `splectral/`), writes
-every package's `modules-load` and `sets` tests, and gives a package that
-brings no test sets the defaults (`validation`, `full`). The code-only packages (`p2p`,
-`mycelium`, `splectral`) and the demos return one at a time, each on Bare,
-each with its tests on the platform. `base-package-third-party` is no
-longer written.
+contents; sha256). Was recorded by phase 2's package writer, checked by
+the package manager (`verify`); to be recorded again when packages are
+written. What is tested and hashed is what ships: the `LICENSE` in before
+it is hashed (a release's candidate once failed without it).
