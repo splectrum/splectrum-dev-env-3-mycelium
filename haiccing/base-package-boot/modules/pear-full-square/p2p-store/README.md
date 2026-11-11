@@ -35,3 +35,9 @@ await store.close()
 Metrics: `resources()`.
 
 `npm test`: 5 tests.
+
+## The folders
+
+| | |
+|---|---|
+| [test/](test/) | its tests, what each checks |

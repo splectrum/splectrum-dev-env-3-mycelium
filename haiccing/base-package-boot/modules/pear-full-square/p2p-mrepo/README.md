@@ -38,6 +38,12 @@ openRepo(repo.backend).read('/main/readme.md')             // mycelium, unchange
 `repo-imported`, `repo-cloned`, `repo-opened`, `replica-opened`: names,
 ids, keys and counts, never a secret.
 
+## The folders
+
+| | |
+|---|---|
+| [test/](test/) | its tests, what each checks |
+
 ## Tests
 
 - `npm test`: create, reopen, import (native and bundle), clone, a replica

@@ -10,6 +10,12 @@ json.encode({ a: 1 })     // <Buffer '{"a":1}\n'>
 json.decode(bytes)        // { a: 1 }
 ```
 
+## The folders
+
+| | |
+|---|---|
+| [test/](test/) | its tests, what each checks |
+
 ## Tests
 
 - `npm test`: the unit tests

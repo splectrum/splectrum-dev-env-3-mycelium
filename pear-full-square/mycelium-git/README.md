@@ -168,6 +168,13 @@ is the environment, like Node and git: installed where the module runs
 A commit message always ends with a newline, as git's own commits do, so
 the same writes give the same oids on every engine (`test/engines.test.js`).
 
+## The folders
+
+| | |
+|---|---|
+| [lib/](lib/) | its parts, a file each |
+| [test/](test/) | its tests, what each checks |
+
 ## Tests
 
 - `npm test`: the contract suite on each engine and on the mixed backend,

@@ -43,6 +43,13 @@ installed by HAICC's boot into the host's packages. Built step by step
   it again (HAICC's input does).
 - `test/fixture.js`: a booted host, for the tests.
 
+## The folders
+
+| | |
+|---|---|
+| [lib/](lib/) | its parts, a file each |
+| [test/](test/) | its tests, what each checks |
+
 ## Tests
 
 - `npm test`: the unit tests

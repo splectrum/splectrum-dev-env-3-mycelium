@@ -23,6 +23,13 @@ Names match exactly.
 `select` is async. Plain, pure functions, not instrumented: a run reproduces
 them from their arguments.
 
+## The folders
+
+| | |
+|---|---|
+| [lib/](lib/) | its parts, a file each |
+| [test/](test/) | its tests, what each checks |
+
 ## Tests
 
 - `npm test`: the unit tests

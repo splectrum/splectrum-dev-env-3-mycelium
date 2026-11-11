@@ -24,3 +24,9 @@ rep.metrics()
 (db, blobs) and peer: blocks and bytes uploaded and downloaded.
 
 `npm test`: 1 test.
+
+## The folders
+
+| | |
+|---|---|
+| [test/](test/) | its tests, what each checks |

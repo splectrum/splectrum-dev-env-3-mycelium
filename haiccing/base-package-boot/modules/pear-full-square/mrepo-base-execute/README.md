@@ -11,6 +11,13 @@ hands over a form completed elsewhere the same way (the boot's own request). Run
 (`mrepo-base-runtime`). The base's actions are the framework's generic ones
 (`rest`: get, put, delete; `service`: initialise, start, stop, shutdown).
 
+## The folders
+
+| | |
+|---|---|
+| [lib/](lib/) | its parts, a file each |
+| [test/](test/) | its tests, what each checks |
+
 ## Tests
 
 - `npm test`: the unit tests

@@ -157,6 +157,12 @@ Scope: branch names and repository folders, wherever XPath is used.
   format is part of its name.
 - Inside our repositories every name is lowercase, files included.
   Uppercase names are external (`README.md`, by convention elsewhere).
+- READMEs cascade, in every organisation's repositories except
+  `splectrum`'s: a repository's root README links to the README of each
+  folder below it, and each of those to theirs, so from the root every
+  folder is reached. Not inside a layer of an `mrepo/` structure (it would
+  be committed into the layer): `mrepo/`'s own README covers its layers
+  (`haiccing/package-docs-template`).
 - URIs are case-insensitive. A URI coming in is validated into its
   canonical, lowercase form and selected; external content keeps its own
   case, and the requester gets the object as stored. That lookup is the
