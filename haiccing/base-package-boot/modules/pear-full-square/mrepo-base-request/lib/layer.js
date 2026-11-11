@@ -5,7 +5,7 @@ import * as json from 'mycelium-value-json'
 
 export const AUTHOR = { name: 'mrepo', email: 'mrepo@localhost' }
 // A layer's config (its mode, what it is for), committed with it when it is
-// built from its structure (docs/design/packages.md): not one of its records.
+// built from its structure: not one of its records.
 export const CONFIG = 'layer'
 
 // The names a layer's commits added, in the order of its commit chain (first

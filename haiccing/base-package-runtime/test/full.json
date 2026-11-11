@@ -3,6 +3,7 @@
   "tests": [
     "start",
     "help",
+    "code",
     "modules"
   ]
 }

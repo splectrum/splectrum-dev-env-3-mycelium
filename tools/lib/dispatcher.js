@@ -31,6 +31,9 @@ function unitsOf (folder) {
   // runtime extracted it (/test/help-in-situ: MREPO, PACKAGE).
   const validate = join(folder, 'modules', 'pear-full-square', 'mrepo-base-help', 'validate')
   for (const n of ['help', 'help-in-situ']) if (existsSync(join(validate, `${n}.test.js`))) units[`/test/${n}`] = [`./modules/pear-full-square/mrepo-base-help/validate/${n}.test.js`]
+  // The code test, every package that carries pkgm-base-check: its modules
+  // and its own code against the code rules (/test/code).
+  if (existsSync(join(folder, 'modules', 'pear-full-square', 'pkgm-base-check', 'validate', 'code.test.js'))) units['/test/code'] = ['./modules/pear-full-square/pkgm-base-check/validate/code.test.js']
   const modules = join(folder, 'modules')
   if (existsSync(modules)) {
     for (const org of readdirSync(modules).filter(n => n !== 'node_modules' && statSync(join(modules, n)).isDirectory()).sort()) {

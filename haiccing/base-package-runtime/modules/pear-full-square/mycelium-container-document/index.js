@@ -1,4 +1,4 @@
-// mycelium-container-document: a storage container (docs/design/values.md):
+// mycelium-container-document: a storage container:
 // a folder of documents, one value per file, in the encoding it is given (a
 // handler: { extension, encode, decode }, e.g. mycelium-value-json).
 //   const box = documents(folder, json)

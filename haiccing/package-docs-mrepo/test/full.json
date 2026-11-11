@@ -1,6 +1,7 @@
 {
   "description": "Every test.",
   "tests": [
-    "help"
+    "help",
+    "code"
   ]
 }

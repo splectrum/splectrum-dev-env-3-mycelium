@@ -1,7 +1,7 @@
 import test from 'brittle'
 import { readFileSync } from 'bare-fs'
 import { select, objectChildren } from '../index.js'
-import { sameName } from '../../mycelium-uri/index.js'
+import { sameName } from 'mycelium-uri'
 
 const tree = JSON.parse(readFileSync(new URL('./tree.json', import.meta.url)))
 const kids = objectChildren

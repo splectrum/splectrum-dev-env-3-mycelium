@@ -44,7 +44,7 @@ test('help get: the levels, a section, the nearest when nothing is there', async
 })
 
 test('the rules: a README against them, and a tree with a broken link, an unlinked folder, an unreached README', (t) => {
-  const bad = '# bad\n\nA one-liner far too long (with parentheses), going on and on and on and on and on and on and on and on and on, see docs/design/x.md\n\n## A title much too long here\n'
+  const bad = '# bad\n\nA one-liner far too long (with parentheses), going on and on and on and on and on and on and on and on and on, see ' + 'docs' + '/design/x.md\n\n## A title much too long here\n'
   t.alike(check(bad).map(([c]) => c).sort(), ['oneliner', 'oneliner', 'oneliner', 'sections', 'transient'].sort(), 'its length, its parentheses, not one sentence; a long section title; a reference to the development repository')
   t.alike(check(README), [], 'a good one: none')
   const out = extract([{ pkg: 'o/p', help: null, paths: ['/README.md', '/a/README.md', '/b/README.md', '/c/x/README.md'], files: {

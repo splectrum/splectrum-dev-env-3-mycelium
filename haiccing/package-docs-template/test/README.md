@@ -28,6 +28,7 @@ README.
 | `/test/modules` | the generic modules test: every carried module's own tests |
 | `/test/help` | the package's help, extracted from its own files, checked against the README rules |
 | `/test/help-in-situ` | the package's help as a running mrepo's runtime extracted it, checked |
+| `/test/code` | the package's code, its modules and its own, checked against the code rules |
 | `/test/<set>` | a set: its tests, in order (`modules` expands to every module) |
 
 Each a unit, each unit its own process. Beside them the entry points,
@@ -43,7 +44,7 @@ Each a unit, each unit its own process. Beside them the entry points,
 ```
 
 Every package has `validate` (the package on its own, in a floating
-instance: its own tests and `help`), `validate-in-situ` (where it is
+instance: its own tests, `help` and `code`), `validate-in-situ` (where it is
 deployed: `help-in-situ`, run with `runtime run`, which names the mrepo
 and the package) and `full` (everything: also `modules`). More sets as
 needed.

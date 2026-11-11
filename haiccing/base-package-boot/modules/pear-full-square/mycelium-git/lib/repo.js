@@ -7,7 +7,7 @@
 // Nodes: { type: 'branches', prefix } above the branches,
 //        { type: 'tree', oid }, { type: 'blob', oid } below.
 
-import { select as xselect } from '../../mycelium-xpath/index.js'
+import { select as xselect } from 'mycelium-xpath'
 
 export function openRepo (backend) {
   async function children (node) {

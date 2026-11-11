@@ -1,8 +1,8 @@
-// A repository's folder (docs/design/structure.md): <work>/mrepos/<name>/,
+// A repository's folder: <work>/mrepos/<name>/,
 // its git on disk (.git), and a layer's files at the path of its URI
 // (/inbox at <work>/mrepos/<name>/inbox).
 //
-// Which repository, on which storage (docs/design/native.md): the setting
+// Which repository, on which storage: the setting
 // beside it, <work>/mrepo.json, { "storage": "git" | "filesystem" | "p2p", "name" }
 // (git: native git; filesystem: the p2p-git hybrid with every layer on the
 // filesystem, no Corestore, as the boot mrepo runs); without

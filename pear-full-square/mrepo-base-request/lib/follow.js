@@ -1,5 +1,4 @@
-// The requests followed, as they move (docs/design/repositories.md, "No log:
-// a request is its own record"): each record arriving in an mrepo's request
+// The requests followed, as they move: each record arriving in an mrepo's request
 // layers (pending, execute, done), and its children's in view
 // (<dir>/main/<name>/, theirs too), printed as it is stored, one compact line
 // a record, its envelope's topic the full path (/boot/request/done,

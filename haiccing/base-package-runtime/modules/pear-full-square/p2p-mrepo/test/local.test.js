@@ -6,7 +6,7 @@ import fs, { mkdtempSync, rmSync, existsSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { tmpdir } from 'bare-os'
 import { openStore } from 'p2p-store'
-import { writer, p2pgitBackend } from '../../mycelium-git/index.js'
+import { writer, p2pgitBackend } from 'mycelium-git'
 import { mrepos } from '../index.js'
 
 const author = { name: 'test', email: 'test@localhost' }

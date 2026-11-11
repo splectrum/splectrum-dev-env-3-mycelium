@@ -1,5 +1,4 @@
-// One repository over two stores (docs/design/repositories.md, "Layers by
-// their writes"): its atomic and replicated layers in one backend (the
+// One repository over two stores: its atomic and replicated layers in one backend (the
 // Corestore's), its non-atomic layers in another (git on disk), routed by
 // the branch's layer (isLocal). The backend contract, so everything above
 // works on it unchanged.
