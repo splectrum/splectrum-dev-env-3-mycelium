@@ -94,9 +94,11 @@ copies); only native addons are shared, once by hash
   mrepo itself executes `initialise`/`shutdown`, `start`/`stop`,
   `pause`/`resume`. **The boot mrepo is never torn down** (only the work
   folder removed by hand removes it).
-- **Building is the framework's**: the install routine (overlay, build,
-  clean up) a module of `base-package-mrepo`, the code a parent's `service
-  boot` runs; no `boot.js` per unit.
+- **Building is the boot protocol's**: the install routine (overlay,
+  build, clean up) is in `base-package-boot`, which mounts the `boot`
+  protocol (`deploy`, `teardown`); an mrepo that deploys others has it
+  linked into its `packages` (the human, 2026-11-11; was the framework's,
+  `base-package-mrepo`); no install code per unit.
 - **The boot's release is its bundle**: `base-package-boot.bundle` carries
   the boot mrepo, prebuilt (its git directory as files, or a git bundle
   inside it if that proves awkward), and the code to unpack it; run with

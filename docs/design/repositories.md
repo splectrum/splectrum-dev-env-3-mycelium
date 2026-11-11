@@ -246,10 +246,13 @@ and `start` in; `start` makes the type's API available.
   `protocols` layer holds, one config a protocol (its actions, the URIs,
   the service states each is allowed in, the package that implements it),
   composed by the overlay like any file.
-  - **Every mrepo** has, from the common package (`base-package-mrepo`):
-    **`boot`** (`deploy`, `teardown`: executed by the parent) and
-    **`service`** (`initialise`, `start`, `stop`, `shutdown`, `pause`,
-    `resume`, `run`). An application adds its own (`haicc`, `dispatch`).
+  - **Every mrepo** has **`service`** (`initialise`, `start`, `stop`,
+    `shutdown`, `pause`, `resume`, `run`), from the common package. **`boot`**
+    (`deploy`, `teardown`: executed by the parent) is a capability: it
+    comes with `base-package-boot` (its config and its code, the install
+    routine), linked into the `packages` of every mrepo that deploys others
+    (the boot mrepo; the host, for its nodes) (the human, 2026-11-11). An
+    application adds its own (`haicc`, `dispatch`).
   - **Global** protocols at the layer's root (`protocols/boot.json`): the
     whole mrepo. The base has only these.
   - **Local** protocols, later, shadow `main`: `protocols/notes/dispatch.json`
