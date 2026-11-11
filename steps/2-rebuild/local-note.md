@@ -12,7 +12,12 @@ made it run is proposed here; **the code is not changed in this commit**
 note"). The changes were made and tested locally, then taken out; the patch
 is at the end (`git apply`; the assembled copy in
 `haiccing/base-package-boot/modules/` left out: `tools/package-assemble.js
-haiccing/base-package-boot` remakes it).
+haiccing/base-package-boot` remakes it). Made against `6599afd`; on parts
+20 and 21 (`6a072ff`) `git apply -3` applies it with two small conflicts:
+`haiccing/base-package-boot/README.md` (the prerequisites paragraph) and
+`pear-full-square/mrepo-base-boot/index.js` (the export line, `acceptable`
+added). The release built and tested here is from `6599afd` with the patch,
+before parts 20 and 21.
 
 ## 1. `tools/install.sh`: the lockfile no longer fits one argument
 
