@@ -822,6 +822,11 @@ cleanup). Tested: the execution's log and levels; the follower (one line a
 record, topics from the root); the boot package 3/3; the try script under
 a terminal.
 
+`teardown` ends a runtime that will not stop (the human): asked over its
+socket, then SIGTERM, then SIGKILL, each waited for until its process has
+ended (the pid from its status, else the one recorded at the node), how
+logged. Tested with a process that ignores SIGTERM and has no socket.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
