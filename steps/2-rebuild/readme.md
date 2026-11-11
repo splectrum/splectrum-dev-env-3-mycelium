@@ -640,6 +640,15 @@ the runtime's context gives no `work` yet (`exec.runtime.work`); one
 setting a work folder, so one mrepo run a work folder: each mrepo its own
 setting (`<work>/mrepos/<name>/mrepo.json`?), to settle.
 
+Then (the human): `redeploy` commits its teardown before deploying, and
+an action can roll back. `mrepo-base-execute`: `exec.commit()` (a
+checkpoint, later reads see it), `exec.rollback()` (back to the start),
+a failure rolling back the same way, merged once at the end; the context
+gives the work folder. `redeploy` = teardown, `exec.commit()`, deploy (no
+skipped check). Tested (execute: a checkpoint seen, undone by a failure
+and by a rollback). Open: a rollback covers the repository only, not what
+an action did outside it (teardown's folder removed).
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

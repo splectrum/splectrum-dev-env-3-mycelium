@@ -65,6 +65,62 @@ test('the execution context: read-only to the action, the runtime\'s context rea
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
 
+test('exec.commit and exec.rollback: a checkpoint later reads see; merged once at the end; undone by a rollback or a failure', async (t) => {
+  const work = mkdtempSync(join(tmpdir(), 'execute-'))
+  try {
+    await bootedHost(work, { preload: false })
+    await withHost(work, async ctx => {
+      await run(ctx, { protocol: 'service', action: 'initialise', uri: '/' })
+      await run(ctx, { protocol: 'service', action: 'start', uri: '/' })
+      let seen = null
+      const go = (fail) => ({ ...ACTIONS, rest: { ...ACTIONS.rest, put: async exec => {
+        exec.put('/main/step.json', Buffer.from('1'))
+        await exec.commit('first')
+        seen = { work: exec.runtime.work, read: (await exec.read('/main/step.json')).toString() }
+        exec.remove('/main/step.json')
+        exec.put('/main/done.json', Buffer.from('2'))
+        if (fail) throw new Error('failed after a checkpoint')
+        return 'ok'
+      } } })
+      const main = async () => (Object.fromEntries(await ctx.backend.listBranches())).main
+      const at = async (repo, p) => (await repo.select(p)).length > 0
+      const one = async (fail) => {
+        const name = guid()
+        await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { api: 'haicc', protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name)))
+        await execute(ctx, { actions: go(fail) })
+        return (await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value
+      }
+      const before = await main()
+      const bad = await one(true)
+      t.is(bad.error, 'failed after a checkpoint')
+      t.is(await main(), before, 'failed: main untouched')
+      t.absent(await at(ctx.repo, '/execute/main/step.json'), 'its checkpoint undone: the execution branch back where it started')
+      const good = await one(false)
+      t.is(good.output, 'ok')
+      t.alike(seen, { work, read: '1' }, 'after a checkpoint, reads see it; the work folder in the context')
+      t.ok(await at(ctx.repo, '/main/done.json'), 'merged at the end')
+      t.absent(await at(ctx.repo, '/main/step.json'), 'with what followed the checkpoint')
+      // rollback: asked for by the action, which goes on
+      const back = { ...ACTIONS, rest: { ...ACTIONS.rest, put: async exec => {
+        exec.put('/main/gone.json', Buffer.from('3'))
+        await exec.commit()
+        exec.put('/main/also.json', Buffer.from('4'))
+        await exec.rollback()
+        const after = (await exec.select('/main/gone.json')).length
+        exec.put('/main/kept.json', Buffer.from('5'))
+        return { after }
+      } } }
+      const name = guid()
+      await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { api: 'haicc', protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name)))
+      await execute(ctx, { actions: back })
+      t.alike((await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value.output, { after: 0 }, 'rollback: the checkpoint undone, reads see it')
+      t.absent(await at(ctx.repo, '/main/gone.json'), 'nothing of it merged')
+      t.absent(await at(ctx.repo, '/main/also.json'))
+      t.ok(await at(ctx.repo, '/main/kept.json'), 'what the action wrote after it: merged')
+    })
+  } finally { rmSync(work, { recursive: true, force: true }) }
+})
+
 test('executed: a form completed elsewhere handed over as execute hands one', async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'execute-'))
   try {

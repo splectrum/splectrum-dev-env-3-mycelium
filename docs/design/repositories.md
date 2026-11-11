@@ -184,6 +184,15 @@ protocols.
   extracted); as it executes, the service state then (a request queued may
   change it first: a `start` queued behind the preloaded `initialise` is
   allowed in, and runs after it).
+- **Checkpoints and rollback in an execution** (the human, 2026-11-11;
+  **built**): the action's context has `exec.commit()` (the writes so far
+  committed to the execution branches: later reads see them) and
+  `exec.rollback()` (everything of this execution undone: the writes not
+  committed discarded, each execution branch reset to where it started);
+  a failure rolls back the same way. Merged back once, at the end. A
+  rollback covers the repository only: what an action did outside it (a
+  child's folder removed by `teardown`) is the action's to undo. The
+  context also gives the work folder (`exec.runtime.work`).
 - **Simplified in the base**: the protocols run in the runtime's process
   and are handed its writer (agreed: a protocol signals the runtime, which
   writes; threads, each started with its protocol and context, later); one

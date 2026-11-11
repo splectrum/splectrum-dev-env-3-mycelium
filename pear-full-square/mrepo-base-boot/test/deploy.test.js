@@ -31,9 +31,11 @@ function context (work, backend) {
     select: uri => repo.select(uri),
     read: uri => repo.read(uri),
     put: (uri, bytes) => edits.push(['put', uri, bytes]),
-    remove: uri => edits.push(['remove', uri])
+    remove: uri => edits.push(['remove', uri]),
+    commit: () => commit()
   }
-  const commit = async () => {
+  async function commit () {
+    if (!edits.length) return
     const c = await writer(backend).change('main')
     for (const [op, uri, bytes] of edits.splice(0)) op === 'put' ? await c.put(uri.slice('/main'.length), bytes) : c.remove(uri.slice('/main'.length))
     await c.commit('test', { author: { name: 'test', email: 'test@localhost' } })
