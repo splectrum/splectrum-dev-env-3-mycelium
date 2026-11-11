@@ -40,7 +40,7 @@ import bare from './bare.json' with { type: 'json' }
 // The boot mrepo's structure: in the release, a module (no files beside
 // the code inside an executable); from the package's folder, mrepo/.
 let embedded = null
-try { embedded = (await import('./mrepo-files.js')).default } catch {}
+embedded = (await import('./mrepo-files.js')).default
 const here = embedded ? null : dirname(fileURLToPath(import.meta.url))
 const NAME = 'boot'
 // Every build of the same structure the same commits (2026-11-10T00:00:00Z).
