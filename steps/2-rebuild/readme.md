@@ -779,6 +779,16 @@ the boot package (its runtime started from `next`: the host deployed inside
 it, running; the history the boot's deploy then the host's); the release
 standalone, end to end.
 
+The first-time boot starts the runtime (the human): after its request is
+handed over, the boot starts the boot mrepo's runtime from its own
+`packages/`, on the Bare put in place, as its own process, and prints its
+status; the runtime then deploys the host. `~/haicc-try.sh` shows the boot
+mrepo, the host inside it and both runtimes, and stops them (SIGTERM,
+waited for) before cleaning up; the local agent's check stops them too.
+Tested: the boot package (the runtime started by the boot, the host
+deployed, both stopped; run again: its runtime again, the second deploy
+done, the host's not repeated); the release through the try script.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
