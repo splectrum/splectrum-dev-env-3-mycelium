@@ -1,0 +1,6 @@
+{
+  "description": "The package where it is deployed: run in a running mrepo (runtime run), it checks what that mrepo made of it.",
+  "tests": [
+    "help-in-situ"
+  ]
+}

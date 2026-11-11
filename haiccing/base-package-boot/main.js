@@ -16,6 +16,8 @@ const ENTRIES = {
 // carried module's unit tests.
 const UNITS = {
   "/test/boot": () => Promise.all([import("./test/boot/run.js")]),
+  "/test/help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-runtime/validate/help.test.js")]),
+  "/test/help-in-situ": () => Promise.all([import("./modules/pear-full-square/mrepo-base-runtime/validate/help-in-situ.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-boot": () => Promise.all([import("./modules/pear-full-square/mrepo-base-boot/test/build.test.js"), import("./modules/pear-full-square/mrepo-base-boot/test/deploy.test.js"), import("./modules/pear-full-square/mrepo-base-boot/test/prerequisites.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-execute": () => Promise.all([import("./modules/pear-full-square/mrepo-base-execute/test/execute.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-request": () => Promise.all([import("./modules/pear-full-square/mrepo-base-request/test/boxes.test.js"), import("./modules/pear-full-square/mrepo-base-request/test/check.test.js")]),
@@ -30,7 +32,7 @@ const UNITS = {
   "/test/modules/pear-full-square/p2p-store": () => Promise.all([import("./modules/pear-full-square/p2p-store/test/store.test.js")]),
 }
 // The test sets: their tests by name (modules: every module's unit tests).
-const SETS = {"/test/full":["boot","modules"],"/test/validate":["boot"]}
+const SETS = {"/test/full":["boot","help","modules"],"/test/validate-in-situ":["help-in-situ"],"/test/validate":["boot","help"]}
 
 // What a target runs: its units (a set, /test/modules, a unit); null: none.
 export function expand (target) {
@@ -44,7 +46,7 @@ export function expand (target) {
 const bundle = import.meta.url.includes('.bundle/') ? import.meta.url.slice(0, import.meta.url.indexOf('.bundle/') + '.bundle'.length) : null
 export const self = new URL(bundle ?? import.meta.url).pathname
 
-export async function run (target = '/run', { dryRun = false, print = null } = {}) {
+export async function run (target = '/run', { dryRun = false, print = null, env = null } = {}) {
   if (target === '/') {
     const all = [...Object.keys(ENTRIES), ...Object.keys(SETS), ...(Object.keys(UNITS).some(u => u.startsWith('/test/modules/')) ? ['/test/modules'] : []), ...Object.keys(UNITS)]
     if (dryRun) return all
@@ -54,7 +56,7 @@ export async function run (target = '/run', { dryRun = false, print = null } = {
   const units = expand(target)
   if (!units) throw new Error(`no such entry: ${target}`)
   if (dryRun) return units
-  return runUnits(target, units, { print })
+  return runUnits(target, units, { print, env })
 }
 
 // brittle's summary: '# tests = a/b pass', '# asserts = c/d pass'; a failed
@@ -109,17 +111,20 @@ export async function instantiate () {
   return { program: path.join(dir, 'main.js'), remove: () => fs.rmSync(dir, { recursive: true, force: true }) }
 }
 
-export async function runUnits (target, units, { program = null, print = null } = {}) {
+// env: added to each unit's environment (runtime run: MREPO, the mrepo's
+// directory, and PACKAGE, for the in-situ tests).
+export async function runUnits (target, units, { program = null, print = null, env = null } = {}) {
   const instance = program ? { program, remove: () => {} } : await instantiate()
-  try { return await runEach(target, units, instance.program, print) } finally { instance.remove() }
+  try { return await runEach(target, units, instance.program, print, env) } finally { instance.remove() }
 }
 
-async function runEach (target, units, program, print) {
+async function runEach (target, units, program, print, extra) {
+  const env = extra ? { ...Object.fromEntries(os.getEnvKeys().map(k => [k, os.getEnv(k)])), ...extra } : undefined
   const results = []
   for (const u of units) {
     if (print) print(`# ${u}`)
     results.push(await new Promise(resolve => {
-      const child = spawn(os.execPath(), [program, u], { stdio: ['ignore', 'pipe', 'pipe'] })
+      const child = spawn(os.execPath(), [program, u], { stdio: ['ignore', 'pipe', 'pipe'], ...(env ? { env } : {}) })
       let out = ''
       child.stdout.on('data', d => { out += d; if (print) for (const l of d.toString().split('\n')) if (l) print(l) })
       child.stderr.on('data', d => { out += d })

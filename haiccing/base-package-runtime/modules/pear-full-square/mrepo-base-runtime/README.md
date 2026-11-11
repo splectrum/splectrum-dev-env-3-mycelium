@@ -14,6 +14,7 @@ mrepo's own packages: `bare
 |---|---|
 | [lib/](lib/) | its parts, a file each |
 | [test/](test/) | its tests, what each checks |
+| [validate/](validate/) | the tests every package carrying it runs on itself |
 
 ## Design
 

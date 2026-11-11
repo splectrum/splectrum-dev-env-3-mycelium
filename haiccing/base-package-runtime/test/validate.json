@@ -1,4 +1,7 @@
 {
-  "description": "The package as deployed.",
-  "tests": ["start"]
+  "description": "The package on its own, in a floating instance: it works, and its help extracts without problems.",
+  "tests": [
+    "start",
+    "help"
+  ]
 }

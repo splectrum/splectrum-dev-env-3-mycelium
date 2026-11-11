@@ -8,6 +8,9 @@
 //   a package whose package.json names a `help` folder (package-docs-mrepo:
 //   "mrepo"): the READMEs in that folder        /<path inside it>
 //                                               (it documents the mrepo itself)
+// The problems, /problems.json: each README checked against the rules
+// (check; and on the whole tree: links, cascade, reached), [{ uri, check,
+// detail }]; none expected.
 // The index, /index.json: { "<uri>": { title, oneliner, links: ["<uri>"] } },
 // the uri a README's folder ("/" the root); links resolved to help URIs, only
 // those that have a README; /packages (the layer's help) linked to each
@@ -18,13 +21,14 @@
 // detail, the ## sections.
 //
 //   parse(text)                     -> { title, oneliner, summary, sections: [{ title, text }], links: [href] }
-//   extract(packages)               packages: [{ pkg, files: { '/<path>': bytes }, help }]
-//                                   -> { '/<path>': bytes } (the READMEs and /index.json)
+//   check(text)                     -> [[check, detail]] (one README, the rules)
+//   extract(packages)               packages: [{ pkg, files: { '/<path>': bytes }, help, paths }]
+//                                   -> { '/<path>': bytes } (the READMEs, /index.json, /problems.json)
 //   extractInto({ repo, writer, dir })  the help layer from the mrepo's
 //                                   packages (its packages manifest, their
 //                                   bundles in <dir>/packages/): what is there
 //                                   replaced; committed when it changed
-//                                   -> { readmes, changed }
+//                                   -> { readmes, changed, problems }
 //   help(exec, { uri, body })       runtime help <uri>, body { level:
 //                                   'oneliner' | 'summary' | 'detail', section }
 import { posix, join } from 'bare-path'
@@ -70,15 +74,68 @@ function placeOf (pkg, help, path) {
 }
 const folderOf = p => posix.dirname(p) === '/' ? '/' : posix.dirname(p)
 
+// The rules on one README's text (haiccing/package-docs-template,
+// "READMEs"): [[check, detail]...]. Mechanical: shape, length, references.
+export function check (text) {
+  const r = parse(text)
+  const out = []
+  if (!r.oneliner) out.push(['oneliner', 'none'])
+  else {
+    if (r.oneliner.length > 120) out.push(['oneliner', `${r.oneliner.length} characters`])
+    if (/[()]/.test(r.oneliner)) out.push(['oneliner', 'parentheses'])
+    if (!/[.]$/.test(r.oneliner)) out.push(['oneliner', `not one sentence: "${r.oneliner.slice(0, 60)}"`])
+  }
+  // the summary's words, its links table not counted
+  const words = r.summary.split('\n').filter(l => !l.trim().startsWith('|')).join(' ').split(/\s+/).filter(Boolean).length
+  if (words > 100) out.push(['summary', `${words} words`])
+  for (const s of r.sections) if (!/^`?[\w.-]+`?$/.test(s.title) && (s.title.split(/\s+/).length > 3 || /[:;,.()`]/.test(s.title))) out.push(['sections', s.title]) // a file's name is one
+  const transient = text.match(/(?<![\w/-])(docs\/(design|guides|rules|readme)|steps\/\d)[\w./-]*/gi) ?? []
+  if (transient.length) out.push(['transient', [...new Set(transient)].join(', ')])
+  return out
+}
+
+// The rules on the whole tree, as extracted: each README checked, each
+// relative link resolving to something in its bundle (paths: the bundle's
+// files, when given), each folder below linked (cascade), each reached
+// from the root. -> [{ uri, check, detail }]
+function validate (index, out, sources) {
+  const problems = []
+  for (const [uri, e] of Object.entries(index)) {
+    const text = out[uri === '/' ? '/README.md' : `${uri}/README.md`].toString()
+    for (const [c, d] of check(text)) problems.push({ uri, check: c, detail: d })
+    const { path, paths } = sources[uri]
+    if (paths) {
+      for (const h of parse(text).links) {
+        const target = posix.normalize(posix.join(posix.dirname(path), h)).replace(/\/$/, '')
+        if (!paths.has(target) && ![...paths].some(f => f.startsWith(target + '/'))) problems.push({ uri, check: 'links', detail: `${h}: nothing there` })
+      }
+    }
+    const within = u => u.startsWith(uri === '/' ? '/' : uri + '/')
+    for (const below of Object.keys(index)) {
+      if (below === uri || !within(below)) continue
+      const between = Object.keys(index).some(m => m !== uri && m !== below && within(m) && below.startsWith(m + '/'))
+      if (!between && !e.links.includes(below)) problems.push({ uri, check: 'cascade', detail: `${below} not linked` })
+    }
+  }
+  // reached from the root; a package's own tree alone (no root): from the
+  // package's README
+  const starts = index['/'] ? ['/'] : Object.keys(index).filter(u => /^\/packages\/[^/]+\/[^/]+$/.test(u))
+  const reached = new Set(starts)
+  const queue = [...starts]
+  while (queue.length) for (const l of index[queue.shift()]?.links ?? []) if (!reached.has(l)) { reached.add(l); queue.push(l) }
+  for (const uri of Object.keys(index)) if (!reached.has(uri)) problems.push({ uri, check: 'reached', detail: 'not reached from /' })
+  return problems
+}
+
 export function extract (packages) {
   const out = {}
   const where = {} // help folder -> { pkg, help, path }
-  for (const { pkg, files, help } of packages) {
+  for (const { pkg, files, help, paths } of packages) {
     for (const path of Object.keys(files).sort()) {
       if (posix.basename(path) !== 'README.md' || path.includes('/node_modules/')) continue
       const to = placeOf(pkg, help, path)
       out[to] = files[path]
-      where[folderOf(to)] = { pkg, help, path }
+      where[folderOf(to)] = { pkg, help, path, paths: paths ? new Set(paths) : null }
     }
   }
   const index = {}
@@ -98,6 +155,7 @@ export function extract (packages) {
   const hub = index['/packages'] ? '/packages' : index['/'] ? '/' : null
   if (hub) for (const { pkg } of packages) { const u = `/packages/${pkg}`; if (index[u] && !index[hub].links.includes(u)) index[hub].links.push(u) }
   out['/index.json'] = Buffer.from(JSON.stringify(index, null, 2) + '\n')
+  out['/problems.json'] = Buffer.from(JSON.stringify(validate(index, out, where), null, 2) + '\n')
   return out
 }
 
@@ -115,7 +173,7 @@ export async function extractInto ({ repo, writer, dir }) {
     for (const k of Object.keys(b.files)) if (k.endsWith('/README.md')) readmes[k] = b.read(k)
     let help = null
     try { help = JSON.parse(b.read('/package.json').toString()).help ?? null } catch {}
-    return { pkg, files: readmes, help }
+    return { pkg, files: readmes, help, paths: Object.keys(b.files) }
   }))
   const readmes = Object.keys(files).filter(p => p.endsWith('README.md')).length
   const old = await repo.read('/help/index.json').then(x => JSON.parse(x.toString()), () => null)
@@ -134,7 +192,7 @@ export async function extractInto ({ repo, writer, dir }) {
     if (!files[p]) { await c.remove(p); changed = true }
   }
   if (changed) await c.commit(`Help extracted: ${Object.keys(listed).join(', ')}`, { author })
-  return { readmes, changed }
+  return { readmes, changed, problems: JSON.parse(files['/problems.json'].toString()).length }
 }
 
 // runtime help <uri>: the README documenting it, at its level; each link with its
