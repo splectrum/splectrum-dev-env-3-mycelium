@@ -144,7 +144,7 @@ protocols.
 
 | Protocol | Layer | It owns | Module |
 |---|---|---|---|
-| runtime | `/runtime` | the always-alive process; its data, the service state | `mrepo-base-runtime` (**built**) |
+| runtime | `/runtime` | the engine, not a protocol (the human, 2026-11-11): the always-alive process running the protocols; its data, the service state | `mrepo-base-runtime` (**built**) |
 | request | `/request` | the inbox taken in, the queue, the moves between request layers, the answers | `mrepo-base-request` (**built**) |
 | execute | `/execute` | a request executed in execution branches, its record, the merges back | `mrepo-base-execute` (**built**) |
 
@@ -247,8 +247,8 @@ and `start` in; `start` makes the type's API available.
   the service states each is allowed in, the package that implements it),
   composed by the overlay like any file.
   - **Every mrepo** has **`service`** (`initialise`, `start`, `stop`,
-    `shutdown`, `pause`, `resume`, `run`), from the common package
-    (`base-package-mrepo`: the `service` protocol to begin with). **`boot`**
+    `shutdown`, `pause`, `resume`, `run`), from `base-package-mrepo`; the
+    runtime (`base-package-runtime`) has none of its own, it runs them. **`boot`**
     (`deploy`, `teardown`, `redeploy` = teardown then deploy: executed by
     the parent) is a capability, common to many mrepos: it
     comes with `base-package-boot` (its config and its code, the install
