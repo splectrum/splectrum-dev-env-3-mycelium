@@ -9,7 +9,7 @@ import { join, dirname } from '../../modules/node_modules/bare-path/index.js'
 import os, { tmpdir } from '../../modules/node_modules/bare-os/index.js'
 import { fileURLToPath } from '../../modules/node_modules/bare-url/index.js'
 import { openRepo, p2pgitBackend } from '../../modules/pear-full-square/mycelium-git/index.js'
-import { record, wrap, guid } from '../../modules/pear-full-square/mrepo-base-request/index.js'
+import { record, wrap, guid, layer } from '../../modules/pear-full-square/mrepo-base-request/index.js'
 import { ask, gitdirOf, viewOf } from '../../modules/pear-full-square/mrepo-base-runtime/index.js'
 
 const pkg = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
@@ -31,6 +31,11 @@ function boot (work, extra = [`--sources=folder:${src}`, '--yes']) {
   return spawn(os.execPath(), [join(pkg, 'run.js'), `--work=${work}`, ...extra], { stdio: 'ignore' })
 }
 const ended = child => new Promise(resolve => child.on('exit', code => resolve(code)))
+// What a run printed (stdout), with its exit code.
+function printed (work, extra) {
+  const r = spawnSync(os.execPath(), [join(pkg, 'run.js'), `--work=${work}`, ...extra], { stdio: ['ignore', 'pipe', 'ignore'] })
+  return { code: r.status, lines: r.stdout.toString().split('\n').filter(Boolean).map(l => JSON.parse(l)) }
+}
 async function up (work) {
   for (let i = 0; i < 100; i++) { const s = await ask({ work, op: 'status' }); if (s) return s; await wait(100) }
   return null
@@ -57,7 +62,12 @@ async function stop (t, work, child) {
 test('the prerequisites: one missing, the boot stops before writing anything', async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'boot-pre-'))
   try {
-    t.is(await ended(boot(work, ['--sources=folder:/nowhere/at/all', '--yes'])), 3, 'a source missing: exit 3')
+    const r = printed(work, ['--sources=folder:/nowhere/at/all', '--yes'])
+    t.is(r.code, 3, 'a source missing: exit 3')
+    const form = r.lines.at(-1).value
+    t.alike([form.protocol, form.action, form.uri], ['boot', 'deploy', '/boot'], 'its request printed: boot deploy /boot')
+    t.ok(form.command.includes('--sources=folder:/nowhere/at/all'), 'the command as typed')
+    t.ok(/^missing: the source folder/.test(form.error), 'completed with what is missing')
     t.absent(existsSync(join(work, 'mrepos')), 'nothing written')
     t.is(await ended(boot(work, [`--sources=folder:${src}`])), 3, 'Bare missing, no yes: exit 3')
     t.absent(existsSync(join(work, 'bare')), 'Bare not put in place')
@@ -80,7 +90,16 @@ test('the boot: Bare put in place, built, started, answering, stopped, run again
     t.ok(await up(work), 'run again: opened as it was left')
     t.alike((await send(work, { protocol: 'rest', action: 'get', uri: '/main' })).output, { entries: ['layer.json'] })
     await stop(t, work, child)
-    const repo = openRepo(p2pgitBackend(gitdirOf(work, 'boot'), { fs }))
+    const backend = p2pgitBackend(gitdirOf(work, 'boot'), { fs })
+    const repo = openRepo(backend)
+    const history = []
+    for (const n of await layer({ repo, backend }, 'request/done').arrived()) history.push((await repo.read(`/request/done/${n}.json`).then(b => JSON.parse(b.toString()))).value.value)
+    const deploys = history.filter(f => f.protocol === 'boot')
+    t.alike(history.map(f => `${f.protocol} ${f.action}`).slice(0, 2), ['boot deploy', 'service start'], 'the history: its deploy first, then the preloaded start')
+    t.is(deploys.length, 2, 'each run a deploy request')
+    t.alike(deploys[0].output.outcomes.map(o => o.step), ['prerequisites', 'built'], 'the outcomes logged in it')
+    t.ok(deploys[0].output.outcomes[0].results.find(c => c.check === 'bare').fixed, 'Bare put in place: logged')
+    t.ok(deploys[1].output.outcomes[1].already, 'run again: already built, logged')
     t.ok((await repo.select(`/request/done/${PRELOADED}.json`)).length, 'the preloaded request done, once')
   } finally {
     rmSync(work, { recursive: true, force: true })

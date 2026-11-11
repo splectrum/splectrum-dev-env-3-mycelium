@@ -8,6 +8,13 @@ its bundle, `base-package-boot.bundle`, run with Bare.
 bare run.js --work=<folder> [--sources=folder:<path>|github:<org>]... [--yes]
 ```
 
+The invocation is a request from the start: a record, `boot deploy
+/boot`, the command as typed, its key a GUID; each step's outcome is
+logged in it. Completed, it is put into the boot mrepo's `request/execute`
+once the mrepo is there, before its runtime starts: the runtime moves it to
+`request/done` first, the history's first entry of each run. Without an
+mrepo (a prerequisite missing) it is printed only.
+
 First its prerequisites (`prerequisites.json`), before anything is
 written: the platform (`linux-x64`), the work folder (writable, no other
 mrepo there), the sources (reachable; `github:haiccing` when none is
