@@ -1,15 +1,23 @@
 # mycelium-git
 
 Our git, speaking mycelium: the repository rules over a backend contract.
-Reading a repository by path from the branch root, and writing changes and
-plain merges under the rules. The rules code uses only the backend
-contract; an adapter maps the contract onto one engine.
 
-## A repository as one tree
+It reads a repository by path from the branch root, and writes changes and
+plain merges under the rules. The rules code uses only the backend contract;
+an adapter maps the contract onto one engine: native git, isomorphic-git,
+p2p-git.
+
+| | |
+|---|---|
+| [lib/](lib/) | its parts, a file each |
+| [test/](test/) | its tests, what each checks |
+
+## Tree
 
 Every path starts with a branch name, from the root: `/main/docs/a`,
 `/request/pending/default/r1.json`. Above the branches the tree is made of
-their name segments (`/request` holds `pending`, `execute`, `done`); a full branch name is
+their name segments (`/request` holds `pending`, `execute`, `done`); a full
+branch name is
 its commit's tree. A name is never both a branch and a prefix, so this is
 unambiguous. `mycelium-xpath` navigates it, `*` steps included:
 `/*/*/docs/a` finds `docs/a` in every two-segment branch.
@@ -27,7 +35,7 @@ unambiguous. `mycelium-xpath` navigates it, `*` steps included:
   `mycelium-uri`, then selected with `sameName` to find the stored names;
   `select(path, match)` and `read(path, match)` take it.
 
-## Writing under the rules
+## Writing
 
 `writer(backend)` → `{ change, merge }`. Paths are inside the branch and are
 stored names, valid when they come in.
@@ -72,7 +80,7 @@ backend into another, whatever their engines, and resolves the number of
 objects copied. Objects are content-addressed, so each arrives under the
 same oid. One the target already has is skipped, with what it reaches.
 
-## One repository over two stores
+## Two stores
 
 `mixedBackend({ atomic, local, isLocal })` is the backend contract over
 two backends: a repository's atomic layers in one (a Corestore's
@@ -86,8 +94,7 @@ its commit's objects are transferred into the atomic store first (the
 same ids, those there skipped), so the atomic store holds its layers whole
 on its own. Reads take an object from whichever side has it; history and
 merges are computed on the disk side. It passes the contract suite
-(`test/mixed.test.js`). The design: `docs/design/repositories.md` of the
-development repository, "One repository over two stores".
+(`test/mixed.test.js`).
 
 ## Bundles
 
@@ -105,7 +112,7 @@ prerequisites the backend lacks, is refused.
 Both run on the backend contract, with pako for compression, so on every
 engine and on Bare, p2p-git included.
 
-## Splitting a folder
+## Splitting
 
 `split(backend, commit, folder)` splits a folder out of a commit's history,
 as `git subtree split` does: each commit whose folder changed becomes a
@@ -167,13 +174,6 @@ is the environment, like Node and git: installed where the module runs
 
 A commit message always ends with a newline, as git's own commits do, so
 the same writes give the same oids on every engine (`test/engines.test.js`).
-
-## The folders
-
-| | |
-|---|---|
-| [lib/](lib/) | its parts, a file each |
-| [test/](test/) | its tests, what each checks |
 
 ## Tests
 

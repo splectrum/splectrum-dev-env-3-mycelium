@@ -1,6 +1,6 @@
 # lib/
 
-mycelium-xpath's parts, imported by its `index.js` (its API, in the README above).
+The parts of mycelium-xpath, a file each, imported by its `index.js`.
 
 | file | |
 |---|---|

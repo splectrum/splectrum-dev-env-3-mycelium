@@ -1,5 +1,7 @@
 # test/
 
+The boot package's tests: its sets and its one test, `boot`.
+
 | set | tests |
 |---|---|
 | `validate` | `boot` |

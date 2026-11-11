@@ -1,8 +1,21 @@
 # mrepo-base-boot
 
-The mrepo boot protocol, the base variant: `deploy`, `teardown`,
-`redeploy` (teardown, then deploy), executed by the parent. Carried by
-`haiccing/base-package-boot`, linked into every mrepo that deploys others.
+The mrepo boot protocol: deploy, tear down and redeploy a child mrepo,
+executed by its parent.
+
+A child lives inside its parent, at `main/<name>/`. Deploy builds it from a
+target package's list of packages, links its packages and starts its
+runtime. Teardown stops the runtime and removes the child; redeploy does
+both in turn. The module also holds the install routine: building an mrepo
+from its structure, placing packages, checking prerequisites. Carried by
+`haiccing/base-package-boot`.
+
+| | |
+|---|---|
+| [lib/](lib/) | its parts, a file each |
+| [test/](test/) | its tests, what each checks |
+
+## Design
 
 - `lib/deploy.js`: the actions, each `(exec, form)` in the execution
   context: `deploy` (the target package from the body; its
@@ -44,13 +57,6 @@ The mrepo boot protocol, the base variant: `deploy`, `teardown`,
 - Not yet: the requirements resolved into packages and overlaid, the
   clean-up; what an action does outside the repository (a runtime started,
   a child's folder removed) is not undone by a reset.
-
-## The folders
-
-| | |
-|---|---|
-| [lib/](lib/) | its parts, a file each |
-| [test/](test/) | its tests, what each checks |
 
 ## Tests
 

@@ -1,7 +1,23 @@
 # mrepo-base-request
 
-The mrepo request protocol, base variant (`docs/design/repositories.md`, "A
-running repository"): a repository's inbox taken in, each message (a record)
+The mrepo request protocol: it takes requests in from the inbox and moves
+them through pending, execute and done.
+
+A request is a record. It is checked at the inbox against the mrepo's API
+and service state, queued in `request/pending/default`, moved one at a time
+into `request/execute`, then into `request/done`, and sent back through the
+outbox. The module also holds the records, the boxes, logging, following,
+and the mrepo's storage setting. The runtime runs it, one pass at a time.
+
+| | |
+|---|---|
+| [lib/](lib/) | its parts, a file each |
+| [test/](test/) | its tests, what each checks |
+
+## Design
+
+The mrepo request protocol, base variant: a repository's inbox taken in,
+each message (a record)
 validated against its API and its service state, placed in
 `request/pending/default`; the next request moved into `request/execute`; a
 completed one copied into `request/done` and answered. One pass at a time,
@@ -39,13 +55,6 @@ setting.
   `{ "storage": "git" | "filesystem" | "p2p", "name" }` (native git;
   p2p-git with every layer on the filesystem, no Corestore; the p2p host
   over its Corestore and disk side); without it the p2p host.
-
-## The folders
-
-| | |
-|---|---|
-| [lib/](lib/) | its parts, a file each |
-| [test/](test/) | its tests, what each checks |
 
 ## Tests
 

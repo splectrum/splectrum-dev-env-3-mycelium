@@ -1,21 +1,28 @@
 # base-package-boot
 
-HAICC's boot: the boot mrepo, the root, and the code to start it
-(`docs/design/packages.md`, "The boot mrepo: the root"). Its release will be
-its bundle, `base-package-boot.bundle`, run with Bare.
+HAICC's boot: the boot mrepo, the root, and the code to start it.
+
+From nothing, it checks its prerequisites, builds the boot mrepo, places
+its packages and starts its runtime, which deploys the host inside it. Its
+release is a standalone executable per platform, with Bare built in.
+
+```sh
+./base-package-boot --work=<folder> --sources=folder:<release>/sources --yes
+```
+
+## Release
 
 The release, for a platform (`tools/boot-release.js` in the development
 repository): a standalone executable, Bare built in, and the sources beside
 it (`sources/haiccing/`: the runtime's bundle; `sources/addons/`;
 `sources/holepunchto/`: the Bare it puts in place, the one built in).
 
-```sh
-./base-package-boot --work=<folder> --sources=folder:<release>/sources --yes
-```
-
 From the package's folder, the same: `bare run.js --work=<folder> ...`.
 The invocation is a request from the start, `boot deploy /boot` (the
-command as typed, a GUID), each step's outcome logged in it:
+command as typed, a GUID), each step's outcome logged in it.
+
+## Steps
+
 
 1. **Prerequisites** (`prerequisites.json`), before anything is written:
    the platform (`linux-x64`), the work folder (writable, not the

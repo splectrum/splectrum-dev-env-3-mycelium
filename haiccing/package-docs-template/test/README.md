@@ -43,7 +43,7 @@ Each a unit, each unit its own process. Beside them the entry points,
 Every package has `validate` (the package as deployed: its own tests) and
 `full` (everything: also `modules`). More sets as needed.
 
-## The generic modules test
+## Modules test
 
 Every package has it, written for it: nothing to add. A package carries
 its modules (`modules/<org>/<module>/`, ours copied whole); each module's
@@ -52,7 +52,7 @@ code the package really runs. A module's tests stand on their own: what
 they need they make, or take from the environment (a sources folder as
 `SOURCES`).
 
-## Self-contained: a floating instance
+## Floating instance
 
 A test makes what it needs (an mrepo deployed, initialised, torn down) and
 leaves nothing behind. From a bundle the dispatcher first writes the

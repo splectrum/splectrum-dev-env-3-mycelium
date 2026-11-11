@@ -1,5 +1,7 @@
 # test/
 
+The tests of mycelium-uri, a section per file, each test by its name.
+
 ## `names.test.js`
 
 - names: lowercase words joined by single hyphens

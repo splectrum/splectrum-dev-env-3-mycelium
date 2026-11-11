@@ -1,5 +1,7 @@
 # test/
 
+The tests of p2p-mrepo, a section per file, each test by its name.
+
 ## `contract.test.js`
 
 mycelium-git's contract suite on a repository on the p2p layer: the fixture imported into a p2p-mrepo repository, then the same tests as on every other engine (mycelium-git's `test/contract.js`).

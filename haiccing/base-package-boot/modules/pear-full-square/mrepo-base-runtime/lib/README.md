@@ -1,7 +1,7 @@
 # lib/
 
-mrepo-base-runtime's parts, imported by its `index.js` (its API, in the README above).
+The parts of mrepo-base-runtime, a file each, imported by its `index.js`.
 
 | file | |
 |---|---|
-| `protocol.js` | The runtime protocol (docs/design/repositories.md, "The runtime protocol"): the runtime's own, built in, in every mrepo it runs. |
+| `protocol.js` | The runtime protocol: the runtime's own, built in, in every mrepo it runs. |

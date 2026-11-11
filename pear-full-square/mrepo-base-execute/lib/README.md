@@ -1,7 +1,7 @@
 # lib/
 
-mrepo-base-execute's parts, imported by its `index.js` (its API, in the README above).
+The parts of mrepo-base-execute, a file each, imported by its `index.js`.
 
 | file | |
 |---|---|
-| `actions.js` | The framework's generic actions, the base's (docs/design/repositories.md: the rest and service protocols). |
+| `actions.js` | The framework's generic actions, the base's. |

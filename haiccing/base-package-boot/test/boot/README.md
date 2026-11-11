@@ -1,8 +1,12 @@
 # boot/
 
-The boot, as the package runs it (`bare run.js --work=<folder>`), end to
-end, in a temporary work folder removed after. Entry: `run.js`; the tests:
-`boot.test.js`. Everything from the package's own `modules/`.
+The boot, tested end to end as the package runs it.
+
+It runs `bare run.js --work=<folder>` in a temporary work folder, removed
+after, with everything from the package's own `modules/`. Entry: `run.js`;
+the tests: `boot.test.js`. It leaves nothing running.
+
+## Steps
 
 1. **A prerequisite missing**: a source folder that is not there, then
    Bare missing without `--yes`; each time the boot stops before writing
@@ -28,4 +32,3 @@ end, in a temporary work folder removed after. Entry: `run.js`; the tests:
    place, no question asked, its runtime started on it; run again without
    it on the PATH: the recorded one used.
 
-Leaves nothing running.

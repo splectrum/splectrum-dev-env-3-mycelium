@@ -1,7 +1,8 @@
 # mrepo/
 
-The boot mrepo's first-boot structure, built once into `<work>/mrepos/boot/`
-(in the release, embedded). What is its own:
+The boot mrepo's first-boot structure, built once into `<work>/mrepos/boot/`.
+
+In the release it is embedded. What is its own:
 
 - **No `service`**: no `runtime/service.json`, not service managed, no
   gate; its runtime runs until stopped.

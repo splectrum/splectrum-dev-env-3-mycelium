@@ -997,3 +997,15 @@ Tested: the extractor's unit tests; the boot's integration test asks the
 running boot mrepo for `runtime help` (the root, `/packages`, its own
 test's README) and checks the host's help, extracted by its own runtime.
 Both packages' `full` sets pass.
+
+The rules settled (the human): in `package-docs-template`, "READMEs": a
+one-liner (one sentence, at most 120 characters, no parentheses), a
+summary of at most 100 words with the links table, no references to the
+development repository, a one-liner everywhere, short stable section
+titles (or a file's name). `tools/help-extract.js` checks them, on the
+bundles' help tree and, with `--files`, on the source READMEs. All 62
+source READMEs and the 94 in the boot mrepo's help brought in line: the
+module and package openings rewritten (the old text kept under `Design`,
+`Usage`, `Steps`), the folders tables moved into the summaries, stale
+statements corrected (the packages layer: no GitHub source, no signed
+manifest yet; the runtime: not packaged as `base-package-mrepo`).

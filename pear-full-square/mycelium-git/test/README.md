@@ -1,5 +1,7 @@
 # test/
 
+The tests of mycelium-git, a section per file, each test by its name.
+
 ## `bundle.test.js`
 
 Bundles against native git: ours verify and clone with native git, and native bundles (with delta-compressed objects) read into every engine.
@@ -8,9 +10,9 @@ Bundles against native git: ours verify and clone with native git, and native bu
 - readBundle: a native bundle with deltas, into every engine
 - readBundle: a corrupted bundle and missing prerequisites are refused
 
-## `contract.js` (shared, not a test)
+## `contract.js`
 
-The contract suite: the same tests, run against every backend (by `native.test.js`, `isogit.test.js`, `p2pgit.test.js`, `hyperdrive.test.js`, and p2p-mrepo's `contract.test.js`), each named with its engine:
+Shared by the tests, not a test itself. The contract suite: the same tests, run against every backend (by `native.test.js`, `isogit.test.js`, `p2pgit.test.js`, `hyperdrive.test.js`, and p2p-mrepo's `contract.test.js`), each named with its engine:
 
 - above the branches: name segments
 - into a branch
@@ -39,9 +41,9 @@ Compatibility: the same writes give the same objects on every engine, so a repos
 - native, isomorphic-git and p2p-git: same writes, same oids and outcomes
 - transfer and importLayer between every pair of engines
 
-## `fixture.sh` (shared, not a test)
+## `fixture.sh`
 
-Build the test repository: fixed authors and dates, so its oids are stable.
+Shared by the tests, not a test itself. Build the test repository: fixed authors and dates, so its oids are stable.
 
 ## `hyperdrive.test.js`
 

@@ -1,9 +1,17 @@
 # p2p-mrepo
 
-Mycelium repositories on the p2p layer. Each repository is a drive in a
-`p2p-store`, with p2p-git on it, and is given to its users as a mycelium
-backend (mycelium-git's backend contract): mycelium works with it and
-knows nothing of p2p. Part of the p2p series.
+Mycelium repositories on the p2p layer: each a drive in a `p2p-store`, given
+to its users as a mycelium backend.
+
+Mycelium works with these repositories and knows nothing of p2p. A
+repository is created, imported, cloned or opened on a store; part of the
+p2p series.
+
+| | |
+|---|---|
+| [test/](test/) | its tests, what each checks |
+
+## Usage
 
 ```js
 import { openStore } from 'p2p-store'
@@ -37,12 +45,6 @@ openRepo(repo.backend).read('/main/readme.md')             // mycelium, unchange
 **Instrumentation** (the series' contract): `repo-created`,
 `repo-imported`, `repo-cloned`, `repo-opened`, `replica-opened`: names,
 ids, keys and counts, never a secret.
-
-## The folders
-
-| | |
-|---|---|
-| [test/](test/) | its tests, what each checks |
 
 ## Tests
 

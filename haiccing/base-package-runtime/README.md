@@ -8,6 +8,8 @@ others from the packages linked in), and serves its local connection.
 bare <dir>/packages/haiccing/base-package-runtime.bundle <dir>
 ```
 
+## Usage
+
 The mrepo at `<dir>` (on the filesystem storage), started from its own
 `packages/` (its pinned runtime): by the boot for the boot mrepo, by a
 parent's `boot deploy` for a child. It loads the protocols its linked
