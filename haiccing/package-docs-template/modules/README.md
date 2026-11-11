@@ -1,7 +1,8 @@
 # modules/
 
-The code the package carries, once, at its top. Assembled from the
-modules `package.json` lists, all the way down; never edited by hand.
+A unit's dependencies, with the `package.json` listing what it starts
+from. Assembled from those modules, all the way down; never edited by
+hand.
 
 ```
 modules/
@@ -10,6 +11,6 @@ modules/
   third-party.json     each third-party module: version, licence, where from
 ```
 
-Code in the package reaches it by relative path:
-`./modules/<org>/<module>/index.js`. Our modules find
-each other by name, through `modules/node_modules/`.
+The unit's code reaches it by relative path:
+`./modules/<org>/<module>/index.js`. Our modules find each other by name,
+through `modules/node_modules/`.

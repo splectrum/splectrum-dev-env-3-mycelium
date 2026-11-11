@@ -1,36 +1,39 @@
 # package-docs-template
 
-The haiccing package structure, documented. Each folder here is a level of
-a package; its README says what goes there.
+The haiccing package structure, documented. Each folder here is a part
+of a structure unit; its README says what goes there.
 
-```
-<package>/
-  README.md        the package: what it is, how to run it
-  package.json     its name, entry, modules
-  run.js           its entry: bare run.js [arguments]
-  mrepo/           its mrepo, by layers
-  test/            its tests and test sets
-  <name>/          a further unit (another mrepo), by its URI part name
-  example/<name>/  optional: examples, a folder each, each a structure unit
-  modules/         its code, assembled, once at the top
-```
+## A structure unit
 
-| level | |
+A folder, at any level: a package, a further unit inside it, a test, an
+example. Every part is optional; a part present gives the unit what it
+is for.
+
+| part | the unit then |
+|---|---|
+| `run.js` | can be executed: `bare run.js [arguments]` |
+| `modules/`, `package.json` | carries its own dependencies |
+| `mrepo/` | comes with an mrepo, by layers |
+| `test/` | has tests and test sets |
+| `<name>/` | holds a further unit, by its URI part name |
+| `example/` | has examples |
+| `README.md` | says what it is |
+
+| | |
 |---|---|
 | [mrepo/](mrepo/) | an mrepo's definition, by layers |
 | [test/](test/) | tests, a folder each, and the sets |
-| [name/](name/) | a further unit, the same structure again |
+| [name/](name/) | a further unit |
 | [example/](example/) | examples, a folder each |
-| [modules/](modules/) | the code the package carries |
+| [modules/](modules/) | a unit's dependencies |
 
 ## The rules
 
 - A package depends only on packages.
-- A structure unit is the same at every level: a package, an mrepo inside
-  it, a test. Each part is optional.
-- Every unit's entry is `run.js`.
-- Examples, where wanted, in `example/<name>/`, each a structure unit;
-  never a reference to another package.
+- A unit's entry is `run.js`.
+- A collection folder (`test/`, `example/`) holds units, a folder each;
+  it is not a unit itself.
+- Examples in `example/<name>/`, never a reference to another package.
 - No install code in a unit: building an mrepo is the framework's.
 - What a person reads is what the repository will hold: expanded folders,
   carried in the package's bundle and read from it by path.
@@ -51,8 +54,8 @@ a package; its README says what goes there.
 }
 ```
 
-`modules`: our modules the package starts from; what they use is worked
-out from them ([modules/](modules/)).
+`modules`: our modules the unit starts from; what they use is worked out
+from them ([modules/](modules/)).
 
 ## Running
 
