@@ -124,6 +124,20 @@ that release puts in place (pinned, checked), so the executable and every
 mrepo it starts run on one version; a newer `bare-build` moves it. No
 custom runtime.
 
+**Prerequisites** (agreed, the human, 2026-11-11): each mrepo checks its
+own when it is deployed, declared with their conditions in its package's
+config; a fix only with a yes, otherwise it stops and says what is
+missing; the outcome recorded in the request.
+
+| Prerequisite | When | Whose |
+|---|---|---|
+| platform (`linux-x64`), the work folder (writable, no other mrepo there), the sources reachable | always | the boot, at the start of `run.js` |
+| Bare | always; put in place if missing | the boot |
+| Docker Engine (installed, running, rootful, native; the user in its group) | only where nodes run as containers, and not inside a container itself (`/.dockerenv`, `/proc/1/cgroup`) | the host |
+
+No longer needed: git (p2p-git), curl (fetching in Bare). In a container
+the host runs no nodes (the HAICC platform alone).
+
 **Built** (2026-11-10, the first piece): the boot mrepo's structure,
 `haiccing/base-package-boot/mrepo/` (type `boot`, initialised already, its
 API in `runtime/`; preloaded `service start /`), built into a standalone
