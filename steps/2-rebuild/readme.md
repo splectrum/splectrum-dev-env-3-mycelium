@@ -860,6 +860,42 @@ preloaded request), redeployed, torn down (its runtime ended, its folder
 and record gone), deployed again (a new runtime), each a request posted to
 the running boot mrepo's inbox. 3/3, 57 asserts, nothing left running.
 
+## 22. The dispatcher, the tests, the runtime protocol (2026-11-11)
+
+The human: the package tests are there to be run as part of a running
+mrepo, returning their results; the dispatcher runs every entry by path;
+a dry run instead of a list; a `runtime` protocol with `run`; a test
+self-contained, a floating instance ("instantiating run() does the whole
+lifecycle self-contained returning the result").
+
+- **The dispatcher** (`tools/lib/dispatcher.js`, generated into each
+  package as `main.js` and `test/run.js` by assemble and bundle):
+  `run(target, { dryRun })`; `/run`, `/protocol`, `/deploy`,
+  `/test/<name>`, `/test/modules/<org>/<module>`, `/test/modules` (the
+  generic modules test: each carried module's own tests, every package has
+  it; `test/modules/` folders removed), `/test/<set>`; `/` lists them (a
+  dry run only). A test's result `{ target, ok, units: [{ unit, ok, tests,
+  asserts, failures }] }`, each unit its own process.
+- **The floating instance**: from a bundle, the package written into a
+  temporary folder (its files, its addons back at their prebuilds, its
+  module links), the units run there, removed. Not attached to anything.
+- **The runtime protocol** (`mrepo-base-runtime/lib/protocol.js`, built
+  in): `runtime run /packages/<org>/<package><target>`, body `{ dryRun }`;
+  only a linked package; the result the output, a line a unit in the log;
+  `/run` refused. `protocolsOf` loads a package's protocols by
+  `run('/protocol')`.
+- **Docs**: `docs/design/packages.md` (the dispatcher, the floating
+  instance), `docs/design/repositories.md` (the runtime protocol),
+  `package-docs-template` (`test/README.md` rewritten: targets, sets, the
+  generic modules test, the floating instance, running, the result),
+  `package-docs-mrepo` (`protocols/`, `packages/`), the packages' and the
+  module's READMEs.
+
+Tested: the boot package's integration test posts a dry run of the
+runtime package's `full`, a run of its `validate` (passed, in a floating
+instance, inside the running boot mrepo) and a refused `/run`. Both
+packages' `full` sets from their bundles: passed, nothing left running.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

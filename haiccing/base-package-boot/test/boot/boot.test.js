@@ -143,11 +143,11 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
 
     // teardown, then deploy again, each a request to the running boot mrepo
     // (the child the runtime package alone)
-    const sent = async form => {
+    const sent = async (form, tries = 300) => {
       const c = record('/test', { api: 'boot', protocol: 'boot', ...form }, guid())
       writeFileSync(join(viewOf(work, 'boot'), 'inbox', `${c.key}.json`), JSON.stringify(wrap('/boot/inbox', c)))
       let v = null
-      for (let i = 0; i < 300 && !v; i++) { v = await repo.read(`/request/done/${c.key}.json`).then(b => JSON.parse(b.toString()).value.value, () => null); if (!v) await wait(100) }
+      for (let i = 0; i < tries && !v; i++) { v = await repo.read(`/request/done/${c.key}.json`).then(b => JSON.parse(b.toString()).value.value, () => null); if (!v) await wait(100) }
       return v
     }
     const down = await sent({ action: 'teardown', uri: '/host' })
@@ -162,6 +162,18 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     const h3 = await ask({ repo: host, op: 'status' })
     t.ok(h3 && h3.pid !== h2.pid, 'the host back, a new runtime running')
 
+    // the runtime protocol, built in: a linked package's tests, through its
+    // dispatcher; a dry run says what would run, a run returns the results
+    const dry = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/test/full', body: { dryRun: true } })
+    const runs = dry?.output?.runs ?? []
+    t.ok(!dry?.error && runs[0] === '/test/start' && runs.length > 1 && runs.slice(1).every(u => u.startsWith('/test/modules/')), `runtime run, a dry run: what test/full would run, nothing run ${JSON.stringify(dry?.output ?? dry?.error)}`)
+    const ran = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/test/validate' }, 1200)
+    t.absent(ran?.error, `runtime run test/validate: done ${ran?.error ?? ''}`)
+    t.alike([ran?.output?.ok, ran?.output?.units?.map(u => u.unit)], [true, ['/test/start']], 'its result: the start test passed, in a floating instance')
+    t.ok(ran?.log?.some(e => e.event === 'unit' && e.unit === '/test/start' && e.ok), 'a summary logged, a line a unit')
+    const refused = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/run' })
+    t.ok(/not run here/.test(refused?.error ?? ''), 'a package\'s program: not run in the runtime')
+
     for (const r of [viewOf(work, 'boot'), host]) t.ok((await ask({ repo: r, op: 'stop' }))?.stopping, `stopped: ${r.endsWith('host') ? 'the host' : 'the boot'}`)
     for (let i = 0; i < 100 && (alive(child.pid) || alive(h3.pid)); i++) await wait(100)
     t.absent(alive(child.pid) || alive(h3.pid), 'both processes ended')
@@ -174,8 +186,8 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
     const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
     let n = 0
-    for (let i = 0; i < 100 && (n = await records('done')) < 6; i++) await wait(100)
-    t.is(n, 6, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy among them)')
+    for (let i = 0; i < 100 && (n = await records('done')) < 9; i++) await wait(100)
+    t.is(n, 9, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs among them)')
     t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
     const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
     t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')

@@ -78,13 +78,27 @@ for what it contributes; no copies between them:
   the parent's `boot deploy`); `protocol.js`, its protocols' actions
   (loaded by the mrepo's runtime, named by each protocol's config); `run.js`,
   self-contained execution (run by Bare: the runtime package, a test, the
-  boot's standalone release). One bundle a package, one hash. Its main,
-  `main.js`, is the package's dispatcher (the human, 2026-11-11; **built**,
-  written by `tools/package-bundle.js` from the entry points it has): started
-  as the program (`bare <package>.bundle ...`), `run.js` runs; imported,
-  nothing runs and `run`, `deploy`, `protocol` are offered (a bundle is
-  loaded only through its main: once loaded, its modules can be imported by
-  path).
+  boot's standalone release). One bundle a package, one hash.
+- **The dispatcher: every entry by path** (the human, 2026-11-11; **built**,
+  `tools/lib/dispatcher.js`, written into the package by
+  `tools/package-assemble.js` and `tools/package-bundle.js`). The bundle's
+  main, `main.js`: `run(target, { dryRun })`, the targets `/run`,
+  `/protocol`, `/deploy`, and the tests: `/test/<name>` (a test folder),
+  `/test/modules/<org>/<module>` (a carried module's own tests),
+  `/test/modules` (all of them: the generic modules test, every package has
+  it), `/test/<set>` (a set, from `test/<set>.json`). A dry run returns what
+  the target would run, nothing run; `/` lists every target, a dry run only.
+  A test returns its result, `{ target, ok, units: [{ unit, ok, tests,
+  asserts, failures }] }`, each unit its own process. Started as the program
+  (`bare <package>.bundle [<target>]`) a known target runs, else `/run`;
+  imported, nothing runs (a bundle is loaded only through its main).
+- **A test is self-contained: a floating instance** (the human,
+  2026-11-11; **built**). From a bundle, `run('/test/...')` writes the
+  package into a temporary folder (its files, its addons back in place, its
+  module links), runs each unit there, removes it, returns the result. What
+  a test needs it makes itself (an mrepo deployed, initialised, torn down):
+  nothing attached to the mrepo that asked, no boot protocol. From the
+  package's folder, the same without the copy.
 - **Packages put in place are a boot activity** (the human, 2026-11-11):
   the store, `<work>/packages/<org>/<package>.bundle` (and
   `<work>/packages/addons/<sha256>`), holds each package an mrepo

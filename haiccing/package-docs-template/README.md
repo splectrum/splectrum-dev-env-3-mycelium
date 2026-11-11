@@ -12,7 +12,7 @@ is for.
 | part | the unit then |
 |---|---|
 | `run.js` | can be executed on its own: `bare run.js [arguments]` |
-| `main.js` | its bundle's dispatcher, written when the bundle is made: run as the program, `run.js` runs; imported, nothing runs and `run`, `deploy`, `protocol` are offered |
+| `main.js` | its dispatcher, the bundle's main (generated): `run(target, { dryRun })`, every entry by path (`/run`, `/protocol`, `/deploy`, the tests: [test/](test/)); as the program, the target named, else `/run`; imported, nothing runs |
 | `deploy.js` | brings structure beyond its protocols: its part of the mrepo and its requirements, to the parent's `boot deploy` |
 | `protocol.js` | provides protocols: their configs and actions; linked into an mrepo, its protocols are registered, the actions loaded by the runtime |
 | `modules/`, `package.json` | carries its own dependencies |
@@ -72,9 +72,10 @@ and run with Bare:
 bare <package>.bundle [arguments]
 ```
 
-From its folder, the same: `bare run.js [arguments]`. Imported, a bundle
-runs nothing: a runtime takes a protocol from it (`protocol()`), a deploy
-its structure (`mrepo/`, read from the bundle).
+A target first runs that entry (`bare <package>.bundle /test/validate`).
+From its folder, the same: `bare main.js [target] [arguments]`. Imported, a
+bundle runs nothing: a runtime takes its protocols (`run('/protocol')`), a
+deploy its structure (`mrepo/`, read from the bundle).
 
 The boot is the exception: released as a standalone executable, one per
 platform, Bare built in, so nothing is needed before it. It uses an
