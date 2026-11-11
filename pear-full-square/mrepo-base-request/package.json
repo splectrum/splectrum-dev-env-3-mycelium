@@ -1,7 +1,7 @@
 {
   "name": "mrepo-base-request",
   "version": "0.1.0",
-  "description": "The mrepo request protocol (base variant): a repository's inbox taken in, each message validated against its API, placed as a request in its pending queue; the next request moved to execute, a completed one to done, answered",
+  "description": "Module: the mrepo request protocol, a request from the inbox through pending, execute and done.",
   "type": "module",
   "main": "index.js",
   "scripts": {
