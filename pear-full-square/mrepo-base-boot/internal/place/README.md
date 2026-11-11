@@ -19,3 +19,7 @@ returns them; `list` the packages, `<org>/<package>`.
 ## Errors
 
 Those of `fetch`.
+
+## Also exported
+
+- `storeOf(work)`: the work folder's package store, `<work>/packages`.

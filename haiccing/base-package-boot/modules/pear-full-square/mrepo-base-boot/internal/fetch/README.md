@@ -18,3 +18,12 @@ The package's manifest entry: `{ file, id, sha256, entries, addons, ... }`.
 
 - Not in the store nor the sources.
 - A bundle or an addon not as its manifest says.
+
+## Also exported
+
+- `structureOf({ store, pkg })`: a package's `mrepo/` part, read from its
+  bundle in the store: `{ <path inside mrepo/>: bytes }`.
+- `put(from, to)`: a file into place, hard linked where it shares a disk,
+  else copied.
+- `parseSource(s)`: a source, `folder:<path>` or `github:<org>`, parsed
+  into `{ kind, path }` or `{ kind, org }`.

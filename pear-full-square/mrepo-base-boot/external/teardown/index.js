@@ -2,7 +2,7 @@
 import { rmSync } from 'bare-fs'
 import os from 'bare-os'
 import { ask } from 'mrepo-base-runtime'
-import { child } from '../../internal/child/index.js'
+import { child } from '../../internal/child.js'
 
 const alive = pid => { try { os.kill(pid, 0); return true } catch { return false } }
 const ended = async (pid, ms) => { for (let i = 0; i < ms / 100 && alive(pid); i++) await new Promise(resolve => setTimeout(resolve, 100)); return !alive(pid) }

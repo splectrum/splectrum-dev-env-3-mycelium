@@ -14,3 +14,17 @@ modules/
 The unit's code reaches it by relative path:
 `./modules/<org>/<module>/index.js`. Our modules find each other by name,
 through `modules/node_modules/`.
+
+## Methods
+
+Inside one of our modules, a documented method is a directory: its
+`index.js` and its `README.md`, under one of two folders.
+
+- `external/`: the methods mounted as protocol actions, `(exec, form)`.
+- `internal/`: the methods called by code, never requested.
+
+Only the methods that matter are documented. Smaller ones live in the
+method they belong to, listed in its README under "Also exported"; a
+helper with nothing to document is a plain file. A method's README: the
+one-liner, the summary, then `Signature`, `Body` for an action, `Returns`,
+`Errors`, as they apply. The module's `index.js` exports its methods.

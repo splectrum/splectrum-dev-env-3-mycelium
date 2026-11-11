@@ -17,8 +17,10 @@ from its structure, placing packages, checking prerequisites. Carried by
 
 ## Design
 
-- **A method a directory**: its `index.js` and its `README.md`. The
-  module's `index.js` exports them all.
+- **A documented method a directory**: its `index.js` and its
+  `README.md`. Smaller methods live in the one they belong to, listed
+  there under "Also exported"; a helper with nothing to document is a
+  plain file. The module's `index.js` exports them.
 - **External methods** are protocol actions, `(exec, form)`, run inside
   the execution context; the parent's directory comes from
   `exec.runtime.dir`.

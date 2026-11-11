@@ -1,5 +1,5 @@
 // redeploy(exec, form): the boot protocol's redeploy, teardown then deploy (README.md beside it).
-import { child } from '../../internal/child/index.js'
+import { child } from '../../internal/child.js'
 import { deploy } from '../deploy/index.js'
 import { teardown } from '../teardown/index.js'
 

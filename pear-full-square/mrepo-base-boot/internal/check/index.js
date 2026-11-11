@@ -1,4 +1,4 @@
-// check(list, ctx): an mrepo's prerequisites checked, a fix only with a yes (README.md beside it).
+// check: an mrepo's prerequisites checked; also inContainer, acceptable, bareOf (README.md beside it).
 import { existsSync, readFileSync, writeFileSync, mkdirSync, accessSync, rmSync, renameSync, chmodSync, constants } from 'bare-fs'
 import { join, dirname, resolve } from 'bare-path'
 import os from 'bare-os'
@@ -6,10 +6,6 @@ import crypto from 'bare-crypto'
 import zlib from 'bare-zlib'
 import https from 'bare-https'
 import { spawnSync } from 'bare-subprocess'
-import { inContainer } from '../in-container/index.js'
-import { acceptable } from '../acceptable/index.js'
-import { placed, recordOf } from '../bare-of/index.js'
-
 
 const WHEN = { 'not-in-container': () => !inContainer() }
 
@@ -189,3 +185,17 @@ export async function check (list, ctx) {
   }
   return { ok: true, results }
 }
+
+export const inContainer = () => existsSync('/.dockerenv') ||
+  (() => { try { return /docker|containerd|kubepods|libpod|lxc/.test(readFileSync('/proc/1/cgroup', 'utf8')) } catch { return false } })()
+
+export function acceptable (have, want) {
+  const [a, b] = [have, want].map(v => String(v).replace(/^v/, '').split('.').map(Number))
+  if (a.length < 3 || a.some(Number.isNaN) || a[0] !== b[0]) return false
+  for (let i = 1; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i]
+  return true
+}
+
+export const placed = work => join(work, 'bare', 'bin', 'bare')
+export const recordOf = work => { try { return JSON.parse(readFileSync(join(work, 'bare.json'), 'utf8')) } catch { return null } }
+export const bareOf = work => recordOf(work)?.bare ?? placed(work)
