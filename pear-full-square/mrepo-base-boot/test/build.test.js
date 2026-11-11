@@ -23,7 +23,7 @@ test('the boot mrepo: built from its folder, the same twice', async (t) => {
   try {
     const one = await build({ from: BOOT, work: a, name: 'boot', time: 1762732800 })
     const two = await build({ from: BOOT, work: b, name: 'boot', time: 1762732800 })
-    t.alike(Object.keys(one.layers).sort(), ['inbox', 'main', 'outbox', 'request/done', 'request/execute', 'request/pending/default', 'runtime'], 'a layer per leaf')
+    t.alike(Object.keys(one.layers).sort(), ['inbox', 'main', 'outbox', 'packages', 'request/done', 'request/execute', 'request/pending/default', 'runtime'], 'a layer per leaf')
     t.alike(one.layers, two.layers, 'the same folder, the same commits')
     t.alike(JSON.parse(readFileSync(join(a, 'mrepo.json'))), { storage: 'filesystem', name: 'boot' }, 'the setting: every layer on the filesystem')
     t.ok(existsSync(join(a, 'mrepos', 'boot', 'inbox', 'layer.json')), 'the inbox\'s working tree')
