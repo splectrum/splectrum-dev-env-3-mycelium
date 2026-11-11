@@ -1,8 +1,8 @@
 // The boot, as the package runs it: bare run.js --work=<folder> (test/boot/run.js
 // its entry). Its prerequisites, the boot mrepo built, its packages put in
-// place, its request handed over; the runtime not started by it: started
-// here, from the boot mrepo's own packages/: it executes its preloaded
-// boot deploy /host, the host inside it with its runtime running.
+// place, its request handed over, its runtime started (from its own
+// packages/): it executes its preloaded boot deploy /host, the host inside
+// it with its runtime running.
 // The sources: SOURCES, else the development repository's sources/ (the
 // runtime's bundle written there, the pinned Bare's tarball); what needs them
 // skipped without. Everything from the package's own modules/.
@@ -63,16 +63,17 @@ test('the prerequisites: one missing, the boot stops before writing anything', a
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
 
-test('the boot: put in place up to the runtime; the runtime started from its packages; run again', { timeout: 120000, skip: !have }, async (t) => {
+test('the boot: put in place, its runtime started, the host deployed inside it; run again', { timeout: 120000, skip: !have }, async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'boot-'))
   try {
     const r = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
     t.is(r.code, 0, `done ${r.err}`)
-    const out = r.lines.at(-1).value.output
+    const out = r.lines.find(l => l.value).value.output
+    const started = r.lines.at(-1).runtime
+    t.is(started?.repository, 'boot', 'its runtime started by the boot (its status printed last)')
     t.alike(out.outcomes.map(o => o.step), ['prerequisites', 'built', 'packages'], 'its outcomes logged in its request')
     t.ok(out.outcomes[0].results.find(c => c.check === 'bare').fixed, 'Bare put in place')
     t.is(readFileSync(join(work, 'bare', 'tarball.sha512'), 'utf8').trim(), bare.integrity, 'as pinned')
-    t.absent(existsSync(join(viewOf(work, 'boot'), 'runtime.sock')), 'the runtime not started')
 
     // the packages: in the store once, hard linked into the boot mrepo
     const store = join(work, 'packages', 'haiccing', 'base-package-runtime.bundle')
@@ -84,14 +85,11 @@ test('the boot: put in place up to the runtime; the runtime started from its pac
     t.alike(Object.keys(listed), ['haiccing/base-package-runtime', 'haiccing/base-package-boot'], 'the packages layer: the list (the runtime, the boot protocol)')
     t.is(listed['haiccing/base-package-runtime'].sha256, out.outcomes[2].packages['haiccing/base-package-runtime'].sha256, 'and the hashes')
     t.absent((await repo.select('/packages/haiccing')).length, 'not the bytes')
-    t.ok((await repo.select('/request/execute/*')).some(([p]) => !p.endsWith('layer.json')), 'its request in request/execute')
-
-    // the runtime, as printed (next): from the boot mrepo's own packages, on the Bare put in place
-    t.is(out.next, `${join(work, 'bare', 'bin', 'bare')} ${mine} ${viewOf(work, 'boot')}`)
-    const child = spawn(join(work, 'bare', 'bin', 'bare'), [mine, viewOf(work, 'boot')], { stdio: 'ignore' })
-    let s = null
-    for (let i = 0; i < 100 && !s; i++) { s = await ask({ repo: viewOf(work, 'boot'), op: 'status' }); if (!s) await wait(100) }
-    t.alike(s?.repository, { name: 'boot', storage: 'filesystem', id: null, key: null }, 'the runtime: running the boot mrepo')
+    // the runtime: from the boot mrepo's own packages, on the Bare put in place
+    t.is(out.runtime, `${join(work, 'bare', 'bin', 'bare')} ${mine} ${viewOf(work, 'boot')}`, 'its command recorded')
+    const s = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
+    t.alike(s?.repository, { name: 'boot', storage: 'filesystem', id: null, key: null }, 'running the boot mrepo')
+    const child = { pid: s.pid }
     // its preloaded request: boot deploy /host (the runtime the target): the
     // host inside it, main/host/, its runtime running
     const host = join(viewOf(work, 'boot'), 'main', 'host')
@@ -117,14 +115,20 @@ test('the boot: put in place up to the runtime; the runtime started from its pac
     for (let i = 0; i < 100 && (alive(child.pid) || alive(h.pid)); i++) await wait(100)
     t.absent(alive(child.pid) || alive(h.pid), 'both processes ended')
 
-    // run again: already built, the packages unchanged
+    // run again: already built, the packages unchanged; its runtime started again
     const again = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
     t.is(again.code, 0)
-    const o2 = again.lines.at(-1).value.output.outcomes
+    const o2 = again.lines.find(l => l.value).value.output.outcomes
     t.ok(o2[1].already, 'already built')
     t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
     const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
-    t.is(await records('execute'), 1, 'run again: its own deploy in request/execute, for its runtime')
-    t.is(await records('done'), 2, 'the host\'s deploy not repeated')
+    let n = 0
+    for (let i = 0; i < 100 && (n = await records('done')) < 3; i++) await wait(100)
+    t.is(n, 3, 'its runtime again: the second deploy done; the host\'s not repeated')
+    t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
+    const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
+    t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')
+    for (let i = 0; i < 100 && alive(s2.pid); i++) await wait(100)
+    t.absent(alive(s2.pid))
   } finally { rmSync(work, { recursive: true, force: true }) }
 })

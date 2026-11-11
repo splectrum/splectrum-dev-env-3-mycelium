@@ -123,8 +123,9 @@ for what it contributes; no copies between them:
   base-package-runtime.bundle <repo>`; the runtime runs the mrepo it is
   given, its socket inside its directory: several in one work folder): its
   inbox operational. `teardown` stops it first (waiting until its process
-  has ended). The boot's release, for now, stops before its runtime (the
-  human's test) and prints that command as `next`.
+  has ended). The first-time boot does the same for the boot mrepo: its
+  request handed over, its runtime started from its own `packages/` (the
+  human, 2026-11-11), which then deploys the host.
 - **Linking registers a package's protocols** (the human, 2026-11-11):
   linking a package into an mrepo puts its bundle in `packages/` and writes
   the configs its `protocol.js` exports into the `protocols` layer, as

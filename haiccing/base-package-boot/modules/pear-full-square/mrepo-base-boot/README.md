@@ -5,27 +5,24 @@ The mrepo boot protocol, the base variant: `deploy`, `teardown`,
 `haiccing/base-package-boot`, linked into every mrepo that deploys others.
 
 - `lib/deploy.js`: the actions, each `(exec, form)` in the execution
-  context: `deploy` (the child's definition, `/main/<name>/mrepo/` in the
-  parent, built into `<work>/mrepos/<name>/`; its packages put in place, the
-  list its `packages` layer holds, from the store or the sources the
-  parent's came from; linked into the parent's `main` as
-  `/main/<name>.json`; its runtime started from its own `packages/`, by its
-  directory), `teardown` (its runtime stopped, waited for until its process
-  ended; its folder removed; its link out of `main`), `redeploy` (teardown,
-  committed locally with `exec.commit()`, then deploy). The child named by
-  the URI's one part (`/host`); the work folder from the context
-  (`exec.runtime.work`).
-- `lib/packages.js`: packages put in place (`place({ work, name, sources,
-  list })`): each listed package from the sources (a folder by
-  organisation: `<org>/<repo>.bundle`, `<org>/manifest.json`, `addons/`),
-  checked by its sha256, into the work folder's store (`<work>/packages/`,
-  once), hard linked into the mrepo's `packages/` (a copy across disks),
-  the list and hashes committed into its `packages` layer (`/manifest.json`,
-  with the sources used: a child's deploy sources from them; unchanged: no
-  commit). Each package linked individually: the mrepo runs only what is
-  registered for it.
+  context: `deploy` (the target package from the body; its
+  `mrepo/packages/layer.json` the packages, in order; each fetched into the
+  store, reached by the store the parent's packages manifest records, its
+  `mrepo/` part laid in in that order; built inside the parent,
+  `<parent>/main/<name>/`; its packages linked individually; its type
+  recorded at the node, `/main/<name>.json`; its runtime started from its
+  own `packages/`, by its directory), `teardown` (its runtime stopped until
+  its process ended, its folder removed, its record out), `redeploy`
+  (teardown, a local commit, deploy: the recorded type unless the body
+  names one). The parent's directory from the context (`exec.runtime.dir`).
+- `lib/packages.js`: packages put in place: `fetch` (into the work folder's
+  store once, from the sources, checked by sha256), `structureOf` (a
+  package's `mrepo/` part, from its bundle), `place({ dir, store, sources,
+  list })` (each linked individually into `<dir>/packages/`: the mrepo runs
+  only what is registered for it; its `packages` layer's manifest
+  committed: the packages with their entry points, the sources, the store).
 - `lib/build.js`: an mrepo built from its structure (`build({ from, work,
-  name, time, setting })`): a folder laid out by layers, a `layer.json` at each leaf,
+  name, dir, time, setting })`; `dir`: a child, inside its parent): a folder laid out by layers, a `layer.json` at each leaf,
   written as a standalone repository on the filesystem, one orphan branch a
   leaf, its files one commit (`layer.json` with them, not one of the
   layer's records); the inbox's files its working tree; `<work>/mrepo.json`
