@@ -8,11 +8,14 @@
 //      the request printed only (no mrepo to hold it);
 //   2. the boot mrepo built from its structure into <work>/mrepos/boot/ the
 //      first time (mrepo/: in the release, the module mrepo-files.js);
-//   3. its packages put in place (its packages layer's list): the store
-//      <work>/packages/, hard linked into its packages/, the list and hashes
+//   3. its packages put in place (its packages layer's list: the runtime and
+//      the boot protocol): the store <work>/packages/, hard linked
+//      individually into its packages/, the list, hashes, sources and store
 //      committed;
 //   4. the request, completed, into its request/execute: its runtime moves
-//      it to request/done first, when it starts.
+//      it to request/done first, when it starts; then it executes its
+//      preloaded request, boot deploy /host (the host deployed inside it,
+//      main/host/, its runtime started).
 // Its runtime not started here (for now): <work>/bare/bin/bare
 // <work>/mrepos/boot/packages/haiccing/base-package-runtime.bundle
 // <work>/mrepos/boot (printed as `next`): from its own packages/, by its
@@ -30,7 +33,7 @@ import { tmpdir } from './modules/node_modules/bare-os/index.js'
 import { join, dirname, resolve, basename } from './modules/node_modules/bare-path/index.js'
 import { fileURLToPath } from './modules/node_modules/bare-url/index.js'
 import { gitdirOf, open, viewOf } from './modules/pear-full-square/mrepo-base-runtime/index.js'
-import { build, check, parseSource, place, bareOf } from './modules/pear-full-square/mrepo-base-boot/index.js'
+import { build, check, parseSource, place, bareOf, storeOf } from './modules/pear-full-square/mrepo-base-boot/index.js'
 import { record, wrap, guid, complete, EXECUTE } from './modules/pear-full-square/mrepo-base-request/index.js'
 import { executed } from './modules/pear-full-square/mrepo-base-execute/index.js'
 import { writer, openRepo } from './modules/pear-full-square/mycelium-git/index.js'
@@ -94,7 +97,7 @@ try {
   const repo = await open(work)
   let list
   try { list = JSON.parse((await openRepo(repo.backend).read('/packages/layer.json')).toString()).packages } finally { await repo.close() }
-  const placed = await place({ work, name: NAME, sources, list })
+  const placed = await place({ dir: viewOf(work, NAME), store: storeOf(work), sources, list })
   outcomes.push({ step: 'packages', ok: true, ...placed })
 } catch (err) {
   // The mrepo there or not: the request printed, the error said.

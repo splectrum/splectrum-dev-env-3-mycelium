@@ -45,6 +45,8 @@ import Pipe from 'bare-pipe'
 import { spawnSync } from 'bare-subprocess'
 import fs, { existsSync, rmSync } from 'bare-fs'
 import { join, dirname, basename } from 'bare-path'
+import os from 'bare-os'
+import crypto from 'bare-crypto'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
@@ -61,6 +63,16 @@ export const HOST = 'host'
 export const SOCKET = 'runtime.sock'
 export const bundleOf = work => join(viewOf(work, setting(work).name), 'packages', 'haiccing', 'base-package-mrepo.bundle')
 
+// An mrepo's socket: <dir>/runtime.sock, when the path fits a Unix socket's
+// (about 107 bytes; children nest inside their parents); else a short path in
+// the system's temporary folder, named by the directory's hash (the same for
+// every process that asks).
+export function socketIn (dir) {
+  const inside = join(dir, SOCKET)
+  if (Buffer.byteLength(inside) <= 100) return inside
+  return join(os.tmpdir(), `mrepo-${crypto.createHash('sha256').update(dir).digest('hex').slice(0, 16)}.sock`)
+}
+
 // Which repository: by an mrepo's directory (repo: <work>/mrepos/<name>,
 // on the filesystem storage, its socket inside it: several in one work
 // folder), or by the work folder's setting (<work>/mrepo.json; its socket
@@ -71,7 +83,7 @@ export function whereOf (at) {
   // under main/); work: where its store and Bare are reached (the work
   // folder; for an mrepo by its directory, the parent of mrepos/ when it is
   // <work>/mrepos/<name>, else none: reached through its packages manifest)
-  if (repo) return { dir: repo, work: basename(dirname(repo)) === 'mrepos' ? dirname(dirname(repo)) : null, name: basename(repo), storage: 'filesystem', socket: join(repo, SOCKET) }
+  if (repo) return { dir: repo, work: basename(dirname(repo)) === 'mrepos' ? dirname(dirname(repo)) : null, name: basename(repo), storage: 'filesystem', socket: socketIn(repo) }
   const s = setting(work)
   return { dir: viewOf(work, s.name), work, ...s, socket: join(work, SOCKET) }
 }

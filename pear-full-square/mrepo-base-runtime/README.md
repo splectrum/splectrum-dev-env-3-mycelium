@@ -12,9 +12,17 @@ installed by HAICC's boot into the host's packages. Built step by step
 
 - `index.js`: the library; `runtime.js`: the command line, the package's
   entry (`start --work=<folder>`, `version`).
+- The protocols its linked packages offer (`protocolsOf`): each package
+  in its `packages` layer with a `protocol` entry, imported from its
+  `packages/` (the bundle's dispatcher: nothing runs on import), its actions
+  beside the framework's. Without `service` (no `runtime/service.json`): no
+  gate, and the runtime keeps running until stopped.
 - An mrepo by its directory (`run({ repo })`, as `ask`, `start`, `open`):
   `<work>/mrepos/<name>`, on the filesystem storage, its socket
-  `<repo>/runtime.sock` (several mrepos in one work folder); started from
+  `<repo>/runtime.sock`, else (too long for a Unix socket: nested children)
+  a short path in the temporary folder named by the directory's hash
+  (several mrepos in one work folder); its own folder its working place
+  (`dir`: its inbox folder, its packages); started from
   its own `packages/` (`start({ repo })`: `bare <repo>/packages/haiccing/
   base-package-runtime.bundle <repo>`).
 - Its repository opened by the setting beside it (`<work>/mrepo.json`):

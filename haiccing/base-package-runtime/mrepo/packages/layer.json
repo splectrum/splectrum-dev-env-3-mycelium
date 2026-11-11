@@ -1,0 +1,7 @@
+{
+  "mode": "replicated",
+  "description": "The packages this mrepo is made of, in deploy order: the runtime alone (deployed as the target, an mrepo with a runtime and no protocols).",
+  "packages": [
+    "haiccing/base-package-runtime"
+  ]
+}
