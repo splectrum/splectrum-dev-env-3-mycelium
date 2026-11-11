@@ -9,7 +9,7 @@
 //                             parent's main: /main/<name>.json
 //   teardown(exec, { uri })   the child removed (<work>/mrepos/<name>/), its
 //                             link out of main
-//   redeploy(exec, form)      teardown, committed (exec.commit()), then deploy
+//   redeploy(exec, form)      teardown, committed locally (exec.commit()), then deploy
 // Not yet: the requirements resolved into packages and overlaid, the
 // clean-up, the child started.
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'bare-fs'
@@ -68,7 +68,7 @@ export async function teardown (exec, { uri }) {
   return { tornDown: uri }
 }
 
-// Teardown committed (a checkpoint of the execution), then deploy.
+// Teardown committed locally (its removal of the link then seen), then deploy.
 export async function redeploy (exec, form) {
   const down = await teardown(exec, form)
   await exec.commit('torn down')

@@ -649,6 +649,14 @@ skipped check). Tested (execute: a checkpoint seen, undone by a failure
 and by a rollback). Open: a rollback covers the repository only, not what
 an action did outside it (teardown's folder removed).
 
+Then the commit model (the human): two contexts. Local, the action's:
+`exec.commit()`, `exec.rollback()` (to the last local commit), `exec.reset()`
+(all of it, back to the start), for building up changes and handling
+errors; the action goes on. Global, the runtime's, never the action's: the
+merge back at the end of the invoked action, a failure resetting. Tested.
+Still open: what an action does outside the repository (teardown's folder)
+is not undone by a reset.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
