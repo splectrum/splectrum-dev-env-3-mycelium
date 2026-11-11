@@ -21,9 +21,11 @@ try=$HOME/haicc-try
 cleanup () {
   # its runtimes first (the boot's, the host's: started from inside the try's
   # folder): stopped by SIGTERM, waited for until their processes ended
-  if pgrep -f -- "$try/" >/dev/null 2>&1; then
-    pkill -TERM -f -- "$try/"
-    i=0; while pgrep -f -- "$try/" >/dev/null 2>&1 && [ $i -lt 100 ]; do sleep 0.1; i=$((i+1)); done
+  # (the pattern [/]bin/bare: the runtimes only, never this script's shell)
+  pat="[/]bin/bare $try/"
+  if pgrep -f -- "$pat" >/dev/null 2>&1; then
+    pkill -TERM -f -- "$pat"
+    i=0; while pgrep -f -- "$pat" >/dev/null 2>&1 && [ $i -lt 100 ]; do sleep 0.1; i=$((i+1)); done
     echo "stopped: its runtimes"
   fi
   # only the try's own folder, never anything else
@@ -53,7 +55,7 @@ if [ -d "$try" ]; then
   echo "== what it left in $try:"; ls -la "$try"
   echo "== the boot mrepo: $try/mrepos/boot"; ls -A "$try/mrepos/boot"
   [ -d "$try/mrepos/boot/main/host" ] && { echo "== the host, inside it: $try/mrepos/boot/main/host"; ls -A "$try/mrepos/boot/main/host"; }
-  echo "== its runtimes:"; pgrep -af -- "$try/" || echo "(none running)"
+  echo "== its runtimes:"; pgrep -af -- "[/]bin/bare $try/" || echo "(none running)"
 fi
 echo
 printf 'press any key to clean up '

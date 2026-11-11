@@ -15,10 +15,10 @@
 //   bare       the Bare recorded in <work>/bare.json, else the pinned one at
 //              <work>/bare/bin/bare, else one installed (ctx.path, a PATH:
 //              the first `bare` there at the pinned major, the same version
-//              or newer), recorded; fix: the pinned one put in place from the
-//              sources (folder: <path>/holepunchto/<tarball>, by its
-//              organisation; github: npm's registry), checked against its
-//              sha512
+//              or newer; npm's wrapper asked for the binary it runs),
+//              recorded; fix: the pinned one put in place from the sources
+//              (folder: <path>/holepunchto/<tarball>, by its organisation;
+//              github: npm's registry), checked against its sha512
 //   docker     Docker Engine installed, running, rootful, native, the user in
 //              its group
 // Conditions (`when`): 'not-in-container' (no /.dockerenv, no container
@@ -119,13 +119,20 @@ const versionOf = b => {
   const r = run(b, ['--version'])
   return r.status === 0 ? r.stdout.toString().trim().replace(/^v/, '') : null
 }
+// The binary itself: npm's `bare` is a Node.js script that spawns it and
+// stays its parent, so asked, the Bare it runs is recorded (else as found).
+const binaryOf = b => {
+  const r = run(b, ['-e', 'console.log(Bare.argv[0])'])
+  const real = r.status === 0 ? r.stdout.toString().trim() : ''
+  return real.startsWith('/') && existsSync(real) ? real : b
+}
 // The first `bare` on the PATH at an acceptable version.
 function installed (path, want) {
   for (const dir of String(path ?? '').split(':').filter(Boolean)) {
     const b = join(dir, 'bare')
     if (!existsSync(b)) continue
     const version = versionOf(b)
-    if (version && acceptable(version, want)) return { bare: b, version }
+    if (version && acceptable(version, want)) return { bare: binaryOf(b), version }
   }
   return null
 }

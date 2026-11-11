@@ -827,6 +827,14 @@ socket, then SIGTERM, then SIGKILL, each waited for until its process has
 ended (the pid from its status, else the one recorded at the node), how
 logged. Tested with a process that ignores SIGTERM and has no socket.
 
+The local agent's second note (`ca44de2`): the prompt ran as written; its
+three findings applied: an installed Bare from npm is a Node.js wrapper,
+so the binary it runs is recorded (its patch: `binaryOf`); the packages'
+assembled `modules/` copies committed up to date; the runtimes matched as
+`[/]bin/bare <folder>/` (in the prompt's step 4 and the try script: the
+pattern never matches the caller's own shell). Tested again: the boot
+module 8/8, both packages, the try script.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
