@@ -28,15 +28,20 @@ tar). Nothing is published: no GitHub release, no push of the build.
 >      from npm's registry with curl and pinned by its sha512.
 > 4. **Check it once**, from the clone's folder, in a fresh work folder:
 >    `sources/haiccing/base-package-boot-linux-x64 --work=/tmp/boot-check --sources=folder:sources --yes`.
->    It prints one record, the request `boot deploy /boot`: its `output`
->    lists the steps `prerequisites`, `built`, `packages`, and `next`, the
->    command that would start the runtime (not started by the boot). Exit
->    code 0. Then remove `/tmp/boot-check`.
+>    It prints the request `boot deploy /boot` (its `output` lists the steps
+>    `prerequisites`, `built`, `packages`), then the status of the boot
+>    mrepo's runtime, which it starts. Exit code 0. Within a few seconds that
+>    runtime deploys the host inside the boot mrepo:
+>    `/tmp/boot-check/mrepos/boot/main/host/` appears, and two runtime
+>    processes run (`pgrep -af /tmp/boot-check/`). Then stop them,
+>    `pkill -TERM -f /tmp/boot-check/` (wait until `pgrep` finds none), and
+>    remove `/tmp/boot-check`.
 > 5. **Put the try script in the home folder**: copy
 >    `tools/haicc-try.sh` to `~/haicc-try.sh` (executable). It runs the
 >    release from `~` with `~/haicc-try` as its work folder, saves the
->    printed record there as `boot-output.json`, lists what was left, stops
->    on `press any key to clean up`, then removes `~/haicc-try` (also on
+>    printed record there as `boot-output.json`, shows the boot mrepo, the
+>    host inside it and their runtimes, stops on `press any key to clean
+>    up`, then stops the runtimes and removes `~/haicc-try` (also on
 >    Ctrl-C). It finds the clone at `~/splectrum-dev-env-3-mycelium`; if
 >    yours is elsewhere, tell the human to run it as
 >    `HAICC_DEV=<clone> ~/haicc-try.sh`.

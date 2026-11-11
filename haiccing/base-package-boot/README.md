@@ -25,23 +25,28 @@ command as typed, a GUID), each step's outcome logged in it:
 2. **The boot mrepo built** the first time into `<work>/mrepos/boot/` (from
    `mrepo/`; in the release, embedded).
 3. **Its packages put in place**: those its `packages` layer lists (the
-   runtime's), into the work folder's store `<work>/packages/`, checked
-   against their manifest, hard linked into `<work>/mrepos/boot/packages/`;
-   the list and hashes committed.
-4. **Its request**, completed, into its `request/execute`, and printed, with
-   `next`: the command that starts its runtime. The runtime is not started
-   by the boot (for now): `<work>/bare/bin/bare
+   runtime and the boot protocol), into the work folder's store
+   `<work>/packages/`, checked against their manifest, each hard linked
+   individually into `<work>/mrepos/boot/packages/`; the list, hashes,
+   sources and store committed.
+4. **Its request**, completed, into its `request/execute`, and printed.
+5. **Its runtime started**, from its own `packages/`, by its directory, on
+   the Bare put in place (`<work>/bare/bin/bare
    <work>/mrepos/boot/packages/haiccing/base-package-runtime.bundle
-   --work=<work>`. Started, it moves the request to `request/done` first,
-   then runs the preloaded `service start /`.
+   <work>/mrepos/boot`), as its own process; its status printed last. It
+   moves the request to `request/done` first, then executes its preloaded
+   `boot deploy /host` (the runtime the target, for now): the host built
+   inside it, `main/host/`, its runtime started. The boot mrepo has no
+   `service`: its packages are the runtime and the boot protocol; its
+   runtime runs until stopped (SIGTERM, or `stop` on its socket).
 
 ## The package
 
-- `mrepo/`: the boot mrepo's structure, by layers, as the repository holds
-  them, a `layer.json` at each leaf (its mode, what it is for): `main`,
-  `runtime` (type `boot`, already initialised, its API), `inbox`, `outbox`,
-  `request/pending/default` (the preloaded request), `request/execute`,
-  `request/done`.
+- `mrepo/`: the boot mrepo's first-boot structure, by layers, a
+  `layer.json` at each leaf (its mode, what it is for): `main`, `runtime`,
+  `inbox`, `outbox`, `packages` (the runtime and the boot protocol),
+  `request/pending/default` (the preloaded `boot deploy /host`),
+  `request/execute`, `request/done`. No `service`.
 - `run.js`: the entry; `prerequisites.json`: what it checks first;
   `bare.json`: the Bare it puts in place, pinned (in the release: the one
   built in); `protocol.js`: the boot protocol's configs and actions.

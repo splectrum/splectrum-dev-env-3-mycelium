@@ -38,7 +38,7 @@ test('the boot mrepo: built from its folder, the same twice', async (t) => {
   }
 })
 
-test('the boot mrepo running: its preloaded start, a request answered, stopped', { timeout: 120000 }, async (t) => {
+test('the boot mrepo running, without its packages: no service gate; its preloaded deploy refused (no boot protocol linked), answered; stopped', { timeout: 120000 }, async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'boot-'))
   try {
     await build({ from: BOOT, work, name: 'boot' })
@@ -46,18 +46,15 @@ test('the boot mrepo running: its preloaded start, a request answered, stopped',
     t.ok(s?.pid, 'the runtime started')
     t.is(s.repository.storage, 'filesystem')
     t.is(s.repository.name, 'boot')
-    t.alike(await send(work, req('rest', 'get', '/runtime/service.json')), { ok: true, value: { state: 'started', type: 'boot', package: 'haiccing/base-package-boot' } }, 'started by its preloaded request')
-    t.alike(await send(work, req('rest', 'get', '/main')), { ok: true, value: { entries: ['layer.json'] } })
-    t.alike(await send(work, req('rest', 'put', '/main/x.json')), { ok: false, error: 'not offered: rest put at /main/x.json' }, 'its API')
-    t.alike(await send(work, { ...req('rest', 'get', '/main'), api: 'haicc' }), { ok: false, error: 'misdelivered: api haicc, this repository is of type boot' })
+    t.alike(await send(work, req('rest', 'get', '/main')), { ok: true, value: { entries: ['layer.json'] } }, 'no service: no gate, a request answered')
     t.ok((await ask({ work, op: 'stop' }))?.stopping, 'asked to stop')
     for (let i = 0; i < 100 && alive(s.pid); i++) await wait(100)
     t.absent(alive(s.pid), 'stopped')
     const r = await open(work)
     const repo = openRepo(r.backend)
-    const done = JSON.parse((await repo.read(`/request/done/${PRELOADED}.json`)).toString())
-    t.alike(done.value.value.output, { service: 'started' }, 'the preloaded request done')
-    t.is((await repo.select('/request/done/*')).length, 6, 'every request done (layer.json kept with them)')
+    const done = JSON.parse((await repo.read(`/request/done/${PRELOADED}.json`)).toString()).value.value
+    t.alike([done.protocol, done.action, done.uri, done.body], ['boot', 'deploy', '/host', { package: 'haiccing/base-package-runtime' }], 'the preloaded request: boot deploy /host, the runtime its target')
+    t.is(done.error, 'no action: boot deploy', 'done, refused here: no boot protocol linked (the package\'s test runs it with its packages)')
     t.alike((await repo.select('/request/pending/default/*')).map(([p]) => p), ['/request/pending/default/layer.json'], 'nothing pending')
   } finally {
     rmSync(work, { recursive: true, force: true })

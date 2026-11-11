@@ -1,7 +1,9 @@
 // A package written as a Bare bundle into a sources folder, by organisation
 // (docs/design/packages.md; sources/ here, gitignored):
-//   <out>/<org>/<repo>.bundle     the package: its entry (package.json's main)
-//                                 and what it reaches (bare-pack: resolutions
+//   <out>/<org>/<repo>.bundle     the package: its dispatcher (main.js, written
+//                                 into the package's folder: run.js when started
+//                                 as the program; run, deploy, protocol offered
+//                                 on import) and what it reaches (bare-pack: resolutions
 //                                 fixed, paths canonicalised), and every other
 //                                 file of the package (its mrepo/, its tests,
 //                                 its data) as files
@@ -9,7 +11,7 @@
 //                                 bundle names each /../../addons/<sha256>
 //                                 (two levels up from the bundle file)
 //   <out>/<org>/manifest.json     each bundle: its file, its id, its sha256,
-//                                 its size, its main, its addons, the commit it
+//                                 its size, its main, its entry points, its addons, the commit it
 //                                 was made from, the Bare it was made on
 // Unsigned for now. The package's modules/ assembled first
 // (tools/package-assemble.js).
@@ -37,9 +39,36 @@ function files (dir, at = '') {
   })
 }
 
+const ENTRIES = ['run', 'deploy', 'protocol']
+
+// main.js: the entry points, as functions importing them (packed as code);
+// run.js run when this bundle is the program Bare was started with.
+function dispatcher (entries) {
+  return [
+    '// The package\'s dispatcher, its bundle\'s main (written by tools/package-bundle.js).',
+    '// Started as the program (bare <package>.bundle ...): run.js runs. Imported',
+    '// (a runtime loading a protocol, a deploy reading structure): nothing runs;',
+    '// the entry points offered.',
+    "import os from './modules/node_modules/bare-os/index.js'",
+    "import { URL } from './modules/node_modules/bare-url/index.js'",
+    ...entries.map(e => `export const ${e} = () => import('./${e}.js')`),
+    '// This bundle the program: the file Bare was started with, resolved, is it.',
+    "const self = new URL('.', import.meta.url).href.replace(/\\/$/, '')",
+    "const started = Bare.argv[1] ? new URL(Bare.argv[1], `file://${os.cwd()}/`).href : null",
+    entries.includes('run') ? 'if (started === self) await run()' : '// (no run.js: nothing to run as a program)',
+    ''
+  ].join('\n')
+}
+
 export async function bundlePackage ({ folder, out, org = 'haiccing' }) {
   const repo = basename(folder)
-  const { main = 'run.js' } = readJson(join(folder, 'package.json'))
+  // The bundle's main: the package's dispatcher (main.js, written here from
+  // the entry points it has): run when started as the program; on import,
+  // nothing runs, the entry points offered (run, deploy, protocol).
+  const entries = ENTRIES.filter(e => existsSync(join(folder, `${e}.js`)))
+  if (!entries.length) throw new Error(`no entry point in ${folder} (${ENTRIES.map(e => `${e}.js`).join(', ')})`)
+  writeFileSync(join(folder, 'main.js'), dispatcher(entries))
+  const main = 'main.js'
   mkdirSync(join(out, 'addons'), { recursive: true })
   mkdirSync(join(out, org), { recursive: true })
   const base = pathToFileURL(folder.endsWith('/') ? folder : folder + '/')
@@ -77,7 +106,7 @@ export async function bundlePackage ({ folder, out, org = 'haiccing' }) {
   const file = `${org}/${repo}.bundle`
   writeFileSync(join(out, file), bytes)
   const commit = spawnSync('git', ['-C', dev, 'rev-parse', 'HEAD'], { stdio: ['ignore', 'pipe', 'ignore'] }).stdout?.toString().trim() || null
-  const entry = { file, id: bundle.id, sha256: sha256(bytes), bytes: bytes.length, main: bundle.main, addons: [...new Set(addons)].sort(), commit, bare: Bare.version }
+  const entry = { file, id: bundle.id, sha256: sha256(bytes), bytes: bytes.length, main: bundle.main, entries, addons: [...new Set(addons)].sort(), commit, bare: Bare.version }
   const mf = join(out, org, 'manifest.json')
   const manifest = existsSync(mf) ? readJson(mf) : { packages: {} }
   manifest.packages[`${org}/${repo}`] = entry

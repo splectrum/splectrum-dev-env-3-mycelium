@@ -216,6 +216,15 @@ framework's generic actions only (`rest`: get, put, delete; `service`:
 initialise, start, stop, shutdown); a type's own actions, mapped to its
 package's functions and run as its configuration says, come later.
 
+### The runtime's status (direction)
+
+**Direction** (the human, 2026-11-11; not built): the runtime has a status
+in its configuration: `deployed`, `initialised`, `started` (running),
+`stopped`, `shutdown`. A status other than `started` blocks every protocol
+except `service`. Meanwhile an mrepo without `service` (the boot mrepo:
+the runtime and `boot` only) has no gate: its runtime runs its requests
+and keeps running until stopped (a signal, `stop` on its socket).
+
 ### The service state gates the API
 
 **Built** (pause and resume agreed). booted: `initialise` (`teardown`,

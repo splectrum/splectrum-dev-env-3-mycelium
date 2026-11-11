@@ -2,6 +2,11 @@
 // framework: the process that runs its protocols, docs/design/repositories.md,
 // "A running repository"; structure.md, "One writer per store"), as a library
 // (runtime.js is its command line, base-package-mrepo's entry).
+//   run({ repo })           the runtime, in this process, for the mrepo at
+//                           an mrepo's directory (<work>/mrepos/<name>: the
+//                           filesystem storage; its socket <repo>/runtime.sock:
+//                           several in one work folder). ask, start, open take
+//                           { repo } the same way.
 //   run({ work })           the runtime, in this process: its repository
 //                           opened by the setting beside it (<work>/mrepo.json,
 //                           mrepo-base-request's `setting`): on native git
@@ -39,13 +44,16 @@ import process from 'bare-process'
 import Pipe from 'bare-pipe'
 import { spawnSync } from 'bare-subprocess'
 import fs, { existsSync, rmSync } from 'bare-fs'
-import { join } from 'bare-path'
+import { join, dirname, basename } from 'bare-path'
+import os from 'bare-os'
+import crypto from 'bare-crypto'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
 import { nativeBackend, p2pgitBackend } from 'mycelium-git'
 import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
-import { execute, failed } from 'mrepo-base-execute'
+import { execute, failed, ACTIONS } from 'mrepo-base-execute'
+import { pathToFileURL } from 'bare-url'
 import pkg from './package.json' with { type: 'json' }
 
 export { INBOX, OUTBOX, inboxFolder, viewOf, gitdirOf, setting }
@@ -55,15 +63,42 @@ export const HOST = 'host'
 export const SOCKET = 'runtime.sock'
 export const bundleOf = work => join(viewOf(work, setting(work).name), 'packages', 'haiccing', 'base-package-mrepo.bundle')
 
-// The repository, opened by its setting: { name, id, key, backend, close }.
-export async function open (work) {
-  const { storage, name } = setting(work)
+// An mrepo's socket: <dir>/runtime.sock, when the path fits a Unix socket's
+// (about 107 bytes; children nest inside their parents); else a short path in
+// the system's temporary folder, named by the directory's hash (the same for
+// every process that asks).
+export function socketIn (dir) {
+  const inside = join(dir, SOCKET)
+  if (Buffer.byteLength(inside) <= 100) return inside
+  return join(os.tmpdir(), `mrepo-${crypto.createHash('sha256').update(dir).digest('hex').slice(0, 16)}.sock`)
+}
+
+// Which repository: by an mrepo's directory (repo: <work>/mrepos/<name>,
+// on the filesystem storage, its socket inside it: several in one work
+// folder), or by the work folder's setting (<work>/mrepo.json; its socket
+// <work>/runtime.sock).
+export function whereOf (at) {
+  const { work, repo } = typeof at === 'string' ? { work: at } : at
+  // dir: the mrepo's own folder (its .git, inbox, packages, its children
+  // under main/); work: where its store and Bare are reached (the work
+  // folder; for an mrepo by its directory, the parent of mrepos/ when it is
+  // <work>/mrepos/<name>, else none: reached through its packages manifest)
+  if (repo) return { dir: repo, work: basename(dirname(repo)) === 'mrepos' ? dirname(dirname(repo)) : null, name: basename(repo), storage: 'filesystem', socket: socketIn(repo) }
+  const s = setting(work)
+  return { dir: viewOf(work, s.name), work, ...s, socket: join(work, SOCKET) }
+}
+
+// The repository, opened: { name, id, key, backend, close }. at: the work
+// folder, or { repo } (an mrepo's directory).
+export async function open (at) {
+  const { dir, storage, name } = whereOf(at)
+  const work = whereOf(at).work
   if (storage === 'git') {
-    const backend = nativeBackend(gitdirOf(work, name))
+    const backend = nativeBackend(join(dir, '.git'))
     return { name, id: null, key: null, storage, backend, close: async () => {} }
   }
   if (storage === 'filesystem') {
-    const backend = p2pgitBackend(gitdirOf(work, name), { fs })
+    const backend = p2pgitBackend(join(dir, '.git'), { fs })
     return { name, id: null, key: null, storage, backend, close: async () => {} }
   }
   const store = await openStore({ storage: join(work, 'store') })
@@ -71,14 +106,35 @@ export async function open (work) {
   return { name: repo.name, id: repo.id, key: repo.key, storage, backend: repo.backend, close: () => store.close() }
 }
 
-const socketOf = work => join(work, SOCKET)
+const socketOf = at => whereOf(at).socket
 
-export async function run ({ work, every = 200 }) {
-  const repo = await open(work)
+// The actions the mrepo's linked packages offer (their protocol entry), by
+// protocol: from its packages layer's list, each bundle in its packages/.
+export async function protocolsOf (repo, folder) {
+  const listed = await repo.read('/packages/manifest.json').then(b => JSON.parse(b.toString()).packages || {}, () => ({}))
+  const actions = {}
+  for (const [pkg, p] of Object.entries(listed)) {
+    if (!(p.entries || []).includes('protocol')) continue
+    const bundle = join(folder, `${pkg}.bundle`)
+    if (!existsSync(bundle)) throw new Error(`a linked package missing: ${bundle}`)
+    const offered = await (await import(pathToFileURL(bundle).href)).protocol()
+    for (const [protocol, fns] of Object.entries(offered.actions || {})) actions[protocol] = { ...actions[protocol], ...fns }
+  }
+  return actions
+}
+
+export async function run ({ work: w, repo: given = null, every = 200 }) {
+  const at = given ? { repo: given } : { work: w }
+  const { work, dir } = whereOf(at)
+  const repo = await open(at)
   const started = new Date().toISOString()
   // No log of its own: what happens to a request is in its document and the
   // commits that moved it (docs/design/repositories.md, "No log").
-  const ctx = { work, name: repo.name, backend: repo.backend, repo: openRepo(repo.backend), writer: writer(repo.backend), seen: {} }
+  const ctx = { work, dir, name: repo.name, backend: repo.backend, repo: openRepo(repo.backend), writer: writer(repo.backend), seen: {} }
+  // The protocols its packages offer: each linked package with a protocol
+  // entry, loaded from its bundle in the mrepo's packages/ (its dispatcher:
+  // imported, nothing runs), its actions beside the framework's.
+  const actions = { ...ACTIONS, ...await protocolsOf(ctx.repo, join(dir, 'packages')) }
   const status = () => ({ ok: true, pid: process.pid, started, repository: { name: repo.name, storage: repo.storage, id: repo.id, key: repo.key }, version })
   let stopping = null
   let stopped = false
@@ -91,10 +147,10 @@ export async function run ({ work, every = 200 }) {
     while (busy) await new Promise(resolve => setTimeout(resolve, 20))
     await repo.close()
     // The socket last (the store's lock itself is released as the process ends).
-    rmSync(socketOf(work), { force: true })
+    rmSync(socketOf(at), { force: true })
     stopped = true
   })())
-  rmSync(socketOf(work), { force: true }) // a socket left by a runtime that ended without stopping: the store's lock says none runs now
+  rmSync(socketOf(at), { force: true }) // a socket left by a runtime that ended without stopping: the store's lock says none runs now
   server = Pipe.createServer(pipe => {
     let buf = ''
     pipe.on('data', chunk => {
@@ -111,7 +167,7 @@ export async function run ({ work, every = 200 }) {
     })
     pipe.on('error', () => {})
   })
-  server.listen({ path: socketOf(work), ownerOnly: true })
+  server.listen({ path: socketOf(at), ownerOnly: true })
   // The poller: the protocols fired in turn, one pass each, never two at once.
   let busy = false
   const poller = setInterval(async () => {
@@ -120,7 +176,7 @@ export async function run ({ work, every = 200 }) {
     try {
       if (repo.storage !== 'git') await post(ctx)
       await request(ctx)
-      await execute(ctx)
+      await execute(ctx, { actions })
       await request(ctx)
         // Booted (shut down, or never initialised) and nothing waiting: the
       // runtime ends; a request posted later starts it again.
@@ -140,14 +196,15 @@ export async function run ({ work, every = 200 }) {
   await new Promise(resolve => { const t = setInterval(() => { if (stopped) { clearInterval(t); resolve() } }, 100) })
 }
 
-export function ask ({ work, op, timeout = 5000 }) {
+export function ask ({ work, repo = null, op, timeout = 5000 }) {
+  const at = repo ? { repo } : { work }
   return new Promise(resolve => {
-    if (!existsSync(socketOf(work))) return resolve(null)
+    if (!existsSync(socketOf(at))) return resolve(null)
     let buf = ''
     let done = false
     const finish = v => { if (done) return; done = true; clearTimeout(t); pipe.destroy(); resolve(v) }
     const t = setTimeout(() => finish(null), timeout)
-    const pipe = new Pipe(socketOf(work))
+    const pipe = new Pipe(socketOf(at))
     pipe.on('data', chunk => {
       buf += chunk.toString()
       const i = buf.indexOf('\n')
@@ -159,18 +216,21 @@ export function ask ({ work, op, timeout = 5000 }) {
   })
 }
 
-export async function start ({ work, bare = process.execPath, bundle = bundleOf(work), wait = 10000 }) {
-  const already = await ask({ work, op: 'status' })
+// start({ repo, bundle }): an mrepo's runtime by its directory, from a
+// runtime package's bundle (its entry takes the directory).
+export async function start ({ work, repo = null, bare = process.execPath, bundle = repo ? join(repo, 'packages', 'haiccing', 'base-package-runtime.bundle') : bundleOf(work), wait = 10000 }) {
+  const args = repo ? [bundle, repo] : [bundle, 'start', `--work=${work}`]
+  const already = await ask({ work, repo, op: 'status' })
   if (already) return already
   // Started by the shell, in the background (its own session where setsid is
   // there), the shell ending at once: the runtime is not this process's
   // child, so this process ending leaves it running (bare-subprocess sends
   // SIGTERM to its own children still running when it exits).
-  const r = spawnSync('sh', ['-c', 'if command -v setsid >/dev/null 2>&1; then setsid "$@" </dev/null >/dev/null 2>&1 & else "$@" </dev/null >/dev/null 2>&1 & fi', 'sh', bare, bundle, 'start', `--work=${work}`], { stdio: 'ignore' })
+  const r = spawnSync('sh', ['-c', 'if command -v setsid >/dev/null 2>&1; then setsid "$@" </dev/null >/dev/null 2>&1 & else "$@" </dev/null >/dev/null 2>&1 & fi', 'sh', bare, ...args], { stdio: 'ignore' })
   if (r.status !== 0) return null
   for (const end = Date.now() + wait; Date.now() < end;) {
     await new Promise(resolve => setTimeout(resolve, 200))
-    const s = await ask({ work, op: 'status', timeout: 1000 })
+    const s = await ask({ work, repo, op: 'status', timeout: 1000 })
     if (s) return s
   }
   return null

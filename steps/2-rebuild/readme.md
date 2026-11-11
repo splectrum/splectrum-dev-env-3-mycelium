@@ -723,6 +723,72 @@ end after a terminal answer, its input kept it alive (released, and the
 boot ends explicitly when done). Tried under a pseudo-terminal: asked,
 answered, inspected, cleaned up.
 
+## 20. Deploy starts the child's runtime (2026-11-11)
+
+The human: each package hard linked individually (the mrepo runs only what
+is registered for it); deploy does the linking always (cheap, at deploy
+only) and ends with the child's runtime started, from its own `packages/`,
+by its directory. The runtime addressed by an mrepo's directory
+(`mrepo-base-runtime`: `run`/`ask`/`start`/`open` take `{ repo }`; its socket
+in the directory; `inboxFolder(work, name)` in `mrepo-base-request`);
+`base-package-runtime`'s entry takes the directory. `mrepo-base-boot`:
+`deploy` puts the child's packages in place (from the store, else the
+sources the parent's packages layer records) and starts its runtime;
+`teardown` stops it (until its process has ended) before removing it.
+The boot's `next`: `bare <boot>/packages/haiccing/base-package-runtime.bundle
+<boot>`. Tested: a child deployed with the real runtime bundle, its inbox
+answering, torn down; the packages' tests; the release rebuilt and tried.
+
+## 21. Toward `boot deploy /host` in the boot mrepo (2026-11-11)
+
+The human: the boot mrepo has no `service` (the runtime and `boot` only),
+its preloaded request `boot deploy /host` with the target package; the
+target's `mrepo/packages/layer.json` the ordered list; children inside their
+parent (`boot/main/host/`); forward-only URIs, outside through a mapping.
+Built so far:
+
+- A package bundle's main is its dispatcher (`main.js`, written by
+  `tools/package-bundle.js`): run as the program, `run`/`deploy`/`protocol`
+  offered on import (a bundle loads only through its main; once loaded, its
+  modules import by path: tried). The manifest records each bundle's entry
+  points; `place()` carries them into the packages layer.
+- No gate without `service` (`mrepo-base-request`'s `check`); the runtime
+  ends by itself only with a `service` (unchanged).
+- The runtime loads the protocols its linked packages offer
+  (`protocolsOf`: each package with a `protocol` entry, imported from the
+  mrepo's `packages/`), beside the framework's actions.
+- The runtime works from its mrepo's own directory (`dir`: its `.git`, its
+  inbox folder, its packages; `exec.runtime.dir`), not from a work folder's
+  layout.
+
+Then, built: `base-package-runtime/mrepo/` (the runtime's part: `main`,
+`runtime`, the boxes, the request layers, `packages` listing the runtime);
+the boot mrepo's first-boot structure (no `service`, `packages` the runtime
+and boot, the preloaded `boot deploy /host` with the runtime as target);
+`mrepo-base-boot`: `fetch`, `structureOf` (a package's `mrepo/` from its
+bundle), `place({ dir, store, ... })` (its manifest records the store and
+the sources: the mapping); `deploy` from the target's list, the child built
+inside its parent (`build({ dir })`), its record at the node, its runtime
+started; the release bundles the boot package too. Found: a Unix socket's
+path is limited (about 107 bytes), nested children exceed it: a short path
+in the temporary folder, by the directory's hash, when too long; the
+runtime-only child needs `main` (the execute protocol works through it):
+in the runtime's structure. Tested: the deploy (a target's list, the order,
+redeploy, teardown; the real runtime started, its inbox answering, stopped);
+the boot package (its runtime started from `next`: the host deployed inside
+it, running; the history the boot's deploy then the host's); the release
+standalone, end to end.
+
+The first-time boot starts the runtime (the human): after its request is
+handed over, the boot starts the boot mrepo's runtime from its own
+`packages/`, on the Bare put in place, as its own process, and prints its
+status; the runtime then deploys the host. `~/haicc-try.sh` shows the boot
+mrepo, the host inside it and both runtimes, and stops them (SIGTERM,
+waited for) before cleaning up; the local agent's check stops them too.
+Tested: the boot package (the runtime started by the boot, the host
+deployed, both stopped; run again: its runtime again, the second deploy
+done, the host's not repeated); the release through the try script.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

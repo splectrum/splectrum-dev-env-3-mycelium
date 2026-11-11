@@ -8,13 +8,19 @@
 //      the request printed only (no mrepo to hold it);
 //   2. the boot mrepo built from its structure into <work>/mrepos/boot/ the
 //      first time (mrepo/: in the release, the module mrepo-files.js);
-//   3. its packages put in place (its packages layer's list): the store
-//      <work>/packages/, hard linked into its packages/, the list and hashes
+//   3. its packages put in place (its packages layer's list: the runtime and
+//      the boot protocol): the store <work>/packages/, hard linked
+//      individually into its packages/, the list, hashes, sources and store
 //      committed;
 //   4. the request, completed, into its request/execute: its runtime moves
-//      it to request/done first, when it starts.
-// Its runtime not started here: bare <work>/mrepos/boot/packages/haiccing/
-// base-package-runtime.bundle --work=<work> (printed as `next`).
+//      it to request/done first, when it starts; then it executes its
+//      preloaded request, boot deploy /host (the host deployed inside it,
+//      main/host/, its runtime started).
+//   5. its runtime started, from its own packages/, by its directory, on the
+//      Bare put in place (<work>/bare/bin/bare <work>/mrepos/boot/packages/
+//      haiccing/base-package-runtime.bundle <work>/mrepos/boot), as its own
+//      process (it outlives the boot); already running: kept. Its status
+//      printed after the request; it did not start: exit 1.
 //   run.js [--work=<folder>] [--sources=folder:<path>|github:<org>]... [--yes]
 //     --work      the work folder: the current one by default
 //     --sources   where packages and Bare come from, in order (github:haiccing
@@ -27,8 +33,8 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync, rmSync, readFileSync
 import { tmpdir } from './modules/node_modules/bare-os/index.js'
 import { join, dirname, resolve, basename } from './modules/node_modules/bare-path/index.js'
 import { fileURLToPath } from './modules/node_modules/bare-url/index.js'
-import { gitdirOf, open, viewOf } from './modules/pear-full-square/mrepo-base-runtime/index.js'
-import { build, check, parseSource, place, bareOf } from './modules/pear-full-square/mrepo-base-boot/index.js'
+import { gitdirOf, open, viewOf, start } from './modules/pear-full-square/mrepo-base-runtime/index.js'
+import { build, check, parseSource, place, bareOf, storeOf } from './modules/pear-full-square/mrepo-base-boot/index.js'
 import { record, wrap, guid, complete, EXECUTE } from './modules/pear-full-square/mrepo-base-request/index.js'
 import { executed } from './modules/pear-full-square/mrepo-base-execute/index.js'
 import { writer, openRepo } from './modules/pear-full-square/mycelium-git/index.js'
@@ -38,7 +44,7 @@ import bare from './bare.json' with { type: 'json' }
 // The boot mrepo's structure: in the release, a module (no files beside
 // the code inside an executable); from the package's folder, mrepo/.
 let embedded = null
-try { embedded = (await import('./mrepo-files.js')).default } catch {}
+embedded = (await import('./mrepo-files.js')).default
 const here = embedded ? null : dirname(fileURLToPath(import.meta.url))
 const NAME = 'boot'
 // Every build of the same structure the same commits (2026-11-10T00:00:00Z).
@@ -92,7 +98,7 @@ try {
   const repo = await open(work)
   let list
   try { list = JSON.parse((await openRepo(repo.backend).read('/packages/layer.json')).toString()).packages } finally { await repo.close() }
-  const placed = await place({ work, name: NAME, sources, list })
+  const placed = await place({ dir: viewOf(work, NAME), store: storeOf(work), sources, list })
   outcomes.push({ step: 'packages', ok: true, ...placed })
 } catch (err) {
   // The mrepo there or not: the request printed, the error said.
@@ -102,9 +108,14 @@ try {
 
 // 4. The request completed, into the boot mrepo's request/execute.
 const runtime = join(viewOf(work, NAME), 'packages', 'haiccing', 'base-package-runtime.bundle')
-const completed = done({ ok: true, value: { outcomes, next: `${bareOf(work)} ${runtime} --work=${work}` } })
+const completed = done({ ok: true, value: { outcomes, runtime: `${bareOf(work)} ${runtime} ${viewOf(work, NAME)}` } })
 const repo = await open(work)
 try { await executed({ backend: repo.backend, writer: writer(repo.backend) }, core.key, wrap(`/${EXECUTE}`, completed)) } finally { await repo.close() }
 console.log(JSON.stringify(completed))
+
+// 5. Its runtime started: it takes its request in, then its preloaded ones.
+const status = await start({ repo: viewOf(work, NAME), bundle: runtime, bare: bareOf(work) })
+console.log(JSON.stringify({ runtime: status ? { pid: status.pid, repository: status.repository.name, started: status.started } : null }))
+if (!status) { console.error(`boot: its runtime did not start: ${runtime}`); process.exit(1) }
 // Done: ended here (nothing left open to keep it alive, a terminal's input included).
 process.exit(0)

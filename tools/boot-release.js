@@ -4,7 +4,8 @@
 //   sources/haiccing/base-package-boot-<platform>   the release: a standalone
 //                                           executable (bare-build --standalone:
 //                                           Bare built in, the boot package embedded)
-//   sources/haiccing/base-package-runtime.bundle    the packages the boot mrepo lists
+//   sources/haiccing/base-package-runtime.bundle,
+//   sources/haiccing/base-package-boot.bundle       the packages the boot mrepo lists
 //                                           (tools/package-bundle.js), in
 //   sources/haiccing/manifest.json          their manifest
 //   sources/addons/<sha256>                 their native addons
@@ -57,6 +58,7 @@ console.log(JSON.stringify({ bare: version, integrity }))
 tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', 'base-package-runtime'))
 tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', 'base-package-boot'))
 tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-runtime'), `--out=${out}`)
+tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-boot'), `--out=${out}`)
 
 // 2. Bare's tarball, as npm publishes it, by its organisation.
 // (kept when there: npm's tarball, the same bytes)

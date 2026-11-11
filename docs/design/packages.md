@@ -78,7 +78,13 @@ for what it contributes; no copies between them:
   the parent's `boot deploy`); `protocol.js`, its protocols' actions
   (loaded by the mrepo's runtime, named by each protocol's config); `run.js`,
   self-contained execution (run by Bare: the runtime package, a test, the
-  boot's standalone release). One bundle a package, one hash.
+  boot's standalone release). One bundle a package, one hash. Its main,
+  `main.js`, is the package's dispatcher (the human, 2026-11-11; **built**,
+  written by `tools/package-bundle.js` from the entry points it has): started
+  as the program (`bare <package>.bundle ...`), `run.js` runs; imported,
+  nothing runs and `run`, `deploy`, `protocol` are offered (a bundle is
+  loaded only through its main: once loaded, its modules can be imported by
+  path).
 - **Packages put in place are a boot activity** (the human, 2026-11-11):
   the store, `<work>/packages/<org>/<package>.bundle` (and
   `<work>/packages/addons/<sha256>`), holds each package an mrepo
@@ -87,8 +93,39 @@ for what it contributes; no copies between them:
   Sourced, checked and linked by `boot deploy`, the parent's; for the
   initial boot mrepo by the release, a prerequisite step (as Bare), from
   the bundles it carries. Changing an mrepo's packages is a `redeploy`: no
-  packages protocol. The release then starts the boot's runtime from its
-  own `packages/` (`base-package-runtime`'s bundle) and exits.
+  packages protocol.
+- **Deploy targets a package** (the human, 2026-11-11; **built**): `boot
+  deploy /<name>` names its target in the body (`{ package }`); the
+  target's `mrepo/packages/layer.json` lists, in order, the packages the
+  child is made of (for the HAICC platform, `base-package-haicc`'s; for a
+  test, the runtime alone: an mrepo with a runtime and no protocols); each
+  package's `mrepo/` part, read from its bundle, laid in in that order (a
+  later file replaces). The child lives inside its parent,
+  `<parent>/main/<name>/`; its type recorded at the node, `/main/<name>.json`.
+  Only a package with a deploy part brings structure (`base-package-boot`
+  brings none: its protocol only). The boot mrepo's first-boot structure has
+  no `service` (not service managed): its packages the runtime and boot, its
+  preloaded request `boot deploy /host`.
+ (the human, 2026-11-11): a URI, as
+  `mycelium-xpath` navigates it, goes only forward from where it starts (no
+  `..`); reaching outside takes a mapping, resolved under the hood
+  (`repositories.md`, "Roots, boundaries, mappings"): the work folder's
+  store, `<work>/packages/`, is reached that way, not by a path upwards.
+  Children live inside their parent (the host at `boot/main/host/`), so
+  the parent reaches a child's inbox folder forward. One store.
+- **Each package hard linked individually** (the human, 2026-11-11): its
+  bundle and each of its addons, into the mrepo's `packages/`, so the mrepo
+  runs only the packages registered for it, at the versions its layer pins,
+  and its folder shows what it runs. Linking is part of every deploy (a few
+  dozen links, no data copied); a restart links nothing.
+- **Deploy ends with the child's runtime started** (the human): from its
+  own `packages/`, by its directory (`bare <repo>/packages/haiccing/
+  base-package-runtime.bundle <repo>`; the runtime runs the mrepo it is
+  given, its socket inside its directory: several in one work folder): its
+  inbox operational. `teardown` stops it first (waiting until its process
+  has ended). The first-time boot does the same for the boot mrepo: its
+  request handed over, its runtime started from its own `packages/` (the
+  human, 2026-11-11), which then deploys the host.
 - **Linking registers a package's protocols** (the human, 2026-11-11):
   linking a package into an mrepo puts its bundle in `packages/` and writes
   the configs its `protocol.js` exports into the `protocols` layer, as

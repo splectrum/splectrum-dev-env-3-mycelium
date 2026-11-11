@@ -1,7 +1,8 @@
 // The boot, as the package runs it: bare run.js --work=<folder> (test/boot/run.js
 // its entry). Its prerequisites, the boot mrepo built, its packages put in
-// place, its request handed over; the runtime not started by it: started
-// here, from the boot mrepo's own packages/, to see everything in place.
+// place, its request handed over, its runtime started (from its own
+// packages/): it executes its preloaded boot deploy /host, the host inside
+// it with its runtime running.
 // The sources: SOURCES, else the development repository's sources/ (the
 // runtime's bundle written there, the pinned Bare's tarball); what needs them
 // skipped without. Everything from the package's own modules/.
@@ -23,7 +24,7 @@ const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' })
 const bare = JSON.parse(readFileSync(join(pkg, 'bare.json')))
 const SOURCES = resolve(process.env.SOURCES || join(pkg, '..', '..', 'sources'))
 const have = existsSync(join(SOURCES, 'holepunchto', `bare-runtime-${os.platform()}-${os.arch()}-${bare.version}.tgz`)) &&
-  existsSync(join(SOURCES, 'haiccing', 'base-package-runtime.bundle'))
+  existsSync(join(SOURCES, 'haiccing', 'base-package-runtime.bundle')) && existsSync(join(SOURCES, 'haiccing', 'base-package-boot.bundle'))
 
 // A run of the boot: its exit code and what it printed (one record a line).
 function boot (work, extra) {
@@ -62,16 +63,17 @@ test('the prerequisites: one missing, the boot stops before writing anything', a
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
 
-test('the boot: put in place up to the runtime; the runtime started from its packages; run again', { timeout: 120000, skip: !have }, async (t) => {
+test('the boot: put in place, its runtime started, the host deployed inside it; run again', { timeout: 120000, skip: !have }, async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'boot-'))
   try {
     const r = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
     t.is(r.code, 0, `done ${r.err}`)
-    const out = r.lines.at(-1).value.output
+    const out = r.lines.find(l => l.value).value.output
+    const started = r.lines.at(-1).runtime
+    t.is(started?.repository, 'boot', 'its runtime started by the boot (its status printed last)')
     t.alike(out.outcomes.map(o => o.step), ['prerequisites', 'built', 'packages'], 'its outcomes logged in its request')
     t.ok(out.outcomes[0].results.find(c => c.check === 'bare').fixed, 'Bare put in place')
     t.is(readFileSync(join(work, 'bare', 'tarball.sha512'), 'utf8').trim(), bare.integrity, 'as pinned')
-    t.absent(existsSync(join(work, 'runtime.sock')), 'the runtime not started')
 
     // the packages: in the store once, hard linked into the boot mrepo
     const store = join(work, 'packages', 'haiccing', 'base-package-runtime.bundle')
@@ -80,32 +82,53 @@ test('the boot: put in place up to the runtime; the runtime started from its pac
     t.is(statSync(store).ino, statSync(mine).ino, 'hard linked: one file')
     const repo = openRepo(p2pgitBackend(gitdirOf(work, 'boot'), { fs }))
     const listed = JSON.parse((await repo.read('/packages/manifest.json')).toString()).packages
-    t.alike(Object.keys(listed), ['haiccing/base-package-runtime'], 'the packages layer: the list')
+    t.alike(Object.keys(listed), ['haiccing/base-package-runtime', 'haiccing/base-package-boot'], 'the packages layer: the list (the runtime, the boot protocol)')
     t.is(listed['haiccing/base-package-runtime'].sha256, out.outcomes[2].packages['haiccing/base-package-runtime'].sha256, 'and the hashes')
     t.absent((await repo.select('/packages/haiccing')).length, 'not the bytes')
-    t.ok((await repo.select('/request/execute/*')).some(([p]) => !p.endsWith('layer.json')), 'its request in request/execute')
-
-    // the runtime, as printed (next): from the boot mrepo's own packages, on the Bare put in place
-    t.is(out.next, `${join(work, 'bare', 'bin', 'bare')} ${mine} --work=${work}`)
-    const child = spawn(join(work, 'bare', 'bin', 'bare'), [mine, `--work=${work}`], { stdio: 'ignore' })
-    let s = null
-    for (let i = 0; i < 100 && !s; i++) { s = await ask({ work, op: 'status' }); if (!s) await wait(100) }
-    t.alike(s?.repository, { name: 'boot', storage: 'filesystem', id: null, key: null }, 'the runtime: running the boot mrepo')
-    t.alike((await send(work, { protocol: 'rest', action: 'get', uri: '/runtime/service.json' })).output, { state: 'started', type: 'boot', package: 'haiccing/base-package-boot' }, 'started by its preloaded request')
-    const history = []
+    // the runtime: from the boot mrepo's own packages, on the Bare put in place
+    t.is(out.runtime, `${join(work, 'bare', 'bin', 'bare')} ${mine} ${viewOf(work, 'boot')}`, 'its command recorded')
+    const s = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
+    t.alike(s?.repository, { name: 'boot', storage: 'filesystem', id: null, key: null }, 'running the boot mrepo')
+    const child = { pid: s.pid }
+    // its preloaded request: boot deploy /host (the runtime the target): the
+    // host inside it, main/host/, its runtime running
+    const host = join(viewOf(work, 'boot'), 'main', 'host')
+    let h = null
+    for (let i = 0; i < 150 && !h; i++) { h = await ask({ repo: host, op: 'status' }); if (!h) await wait(100) }
+    t.is(h?.repository.name, 'host', 'the host deployed inside the boot mrepo (main/host), its runtime running')
+    t.is(statSync(join(host, 'packages', 'haiccing', 'base-package-runtime.bundle')).ino, statSync(store).ino, 'its runtime linked from the store')
+    // (its record merged into main when the action ends, after the host is up)
+    let node = null
+    for (let i = 0; i < 100 && !node; i++) { node = await repo.read('/main/host.json').then(b => JSON.parse(b.toString()), () => null); if (!node) await wait(100) }
+    t.alike([node.package, node.packages], ['haiccing/base-package-runtime', ['haiccing/base-package-runtime']], 'its type recorded at the node')
+    // (moved to request/done on the runtime's next pass)
+    let history = []
     const backend = p2pgitBackend(gitdirOf(work, 'boot'), { fs })
-    for (const n of await layer({ repo, backend }, 'request/done').arrived()) history.push((await repo.read(`/request/done/${n}.json`).then(b => JSON.parse(b.toString()))).value.value)
-    t.alike(history.map(f => `${f.protocol} ${f.action}`).slice(0, 2), ['boot deploy', 'service start'], 'the history: its deploy first, then the preloaded start')
-    t.ok((await ask({ work, op: 'stop' }))?.stopping, 'stopped')
-    for (let i = 0; i < 100 && alive(child.pid); i++) await wait(100)
-    t.absent(alive(child.pid))
+    for (let i = 0; i < 100 && history.length < 2; i++) {
+      history = []
+      for (const n of await layer({ repo, backend }, 'request/done').arrived()) history.push((await repo.read(`/request/done/${n}.json`).then(b => JSON.parse(b.toString()))).value.value)
+      if (history.length < 2) await wait(100)
+    }
+    t.alike(history.map(f => `${f.protocol} ${f.action} ${f.uri}`), ['boot deploy /boot', 'boot deploy /host'], 'the history: the boot\'s deploy, then the host\'s')
+    t.absent(history[1].error, 'the host\'s deploy done')
+    for (const r of [host, viewOf(work, 'boot')]) t.ok((await ask({ repo: r, op: 'stop' }))?.stopping, `stopped: ${r.endsWith('host') ? 'the host' : 'the boot'}`)
+    for (let i = 0; i < 100 && (alive(child.pid) || alive(h.pid)); i++) await wait(100)
+    t.absent(alive(child.pid) || alive(h.pid), 'both processes ended')
 
-    // run again: already built, the packages unchanged
+    // run again: already built, the packages unchanged; its runtime started again
     const again = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
     t.is(again.code, 0)
-    const o2 = again.lines.at(-1).value.output.outcomes
+    const o2 = again.lines.find(l => l.value).value.output.outcomes
     t.ok(o2[1].already, 'already built')
     t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
-    t.ok((await repo.select(`/request/done/${PRELOADED}.json`)).length, 'the preloaded request done, once')
+    const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
+    let n = 0
+    for (let i = 0; i < 100 && (n = await records('done')) < 3; i++) await wait(100)
+    t.is(n, 3, 'its runtime again: the second deploy done; the host\'s not repeated')
+    t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
+    const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
+    t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')
+    for (let i = 0; i < 100 && alive(s2.pid); i++) await wait(100)
+    t.absent(alive(s2.pid))
   } finally { rmSync(work, { recursive: true, force: true }) }
 })

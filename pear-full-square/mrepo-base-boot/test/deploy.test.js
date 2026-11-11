@@ -1,33 +1,55 @@
-// The boot protocol's actions on a parent built from a structure holding a
-// child's definition (/main/host/mrepo/), with a context like the execute
-// protocol's: reads from the repository, writes collected, then committed.
+// The boot protocol's actions, with a context like the execute protocol's
+// (reads from the repository, writes collected, then committed; exec.commit()
+// a local commit). A parent built with its packages manifest naming the
+// store; the child deployed from a target package's list, inside the parent.
 import test from 'brittle'
-import fs, { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync, readFileSync } from 'bare-fs'
+import fs, { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync, readFileSync, statSync } from 'bare-fs'
+import crypto from 'bare-crypto'
 import { join } from 'bare-path'
 import { tmpdir } from 'bare-os'
+import Bundle from 'bare-bundle'
 import { openRepo, writer, p2pgitBackend } from 'mycelium-git'
-import { gitdirOf } from 'mrepo-base-request'
-import { build, deploy, teardown, redeploy } from '../index.js'
+import { record, wrap, guid } from 'mrepo-base-request'
+import { ask } from 'mrepo-base-runtime'
+import { spawnSync } from 'bare-subprocess'
+import { build, deploy, teardown, redeploy, place, parseSource } from '../index.js'
 
 const lj = (dir, mode) => { mkdirSync(dir, { recursive: true }); writeFileSync(join(dir, 'layer.json'), JSON.stringify({ mode, description: 'test' })) }
+const sha256 = b => crypto.createHash('sha256').update(b).digest('hex')
+const json = b => JSON.parse(b.toString())
 
-// A parent's structure: main (with the child's definition), runtime.
-function structure (root) {
-  lj(join(root, 'main'), 'atomic')
-  lj(join(root, 'runtime'), 'atomic')
-  const def = join(root, 'main', 'host', 'mrepo')
-  lj(join(def, 'main'), 'atomic')
-  lj(join(def, 'runtime'), 'atomic')
-  writeFileSync(join(def, 'runtime', 'service.json'), JSON.stringify({ state: 'booted', type: 'haicc' }))
+// A source by organisation holding bundles whose mrepo/ parts are given.
+function source (dir, packages) {
+  mkdirSync(join(dir, 'haiccing'), { recursive: true })
+  const manifest = { packages: {} }
+  for (const [pkg, files] of Object.entries(packages)) {
+    const b = new Bundle()
+    for (const [p, v] of Object.entries(files)) b.write(`/mrepo/${p}`, Buffer.from(typeof v === 'string' ? v : JSON.stringify(v)))
+    const bytes = b.toBuffer()
+    writeFileSync(join(dir, `${pkg}.bundle`), bytes)
+    manifest.packages[pkg] = { file: `${pkg}.bundle`, id: pkg, sha256: sha256(bytes), entries: [], addons: [] }
+  }
+  writeFileSync(join(dir, 'haiccing', 'manifest.json'), JSON.stringify(manifest))
+}
+
+// A parent: main, runtime, packages; its packages manifest (the store, the sources).
+async function parent (work, sources) {
+  const src = mkdtempSync(join(tmpdir(), 'deploy-parent-'))
+  try {
+    for (const l of ['main', 'runtime', 'packages']) lj(join(src, l), 'atomic')
+    const { dir } = await build({ from: src, work, name: 'boot' })
+    await place({ dir, store: join(work, 'packages'), sources, list: [] })
+    return dir
+  } finally { rmSync(src, { recursive: true, force: true }) }
 }
 
 // An execution's context: reads the repository, writes collected and
-// committed to main after the action (as the execute protocol does).
-function context (work, backend) {
+// committed to main after the action (exec.commit(): a local commit).
+function context (dir, backend) {
   const repo = openRepo(backend)
   const edits = []
   const exec = {
-    runtime: { name: 'boot', work },
+    runtime: { name: 'boot', dir },
     select: uri => repo.select(uri),
     read: uri => repo.read(uri),
     put: (uri, bytes) => edits.push(['put', uri, bytes]),
@@ -43,42 +65,77 @@ function context (work, backend) {
   return { exec, commit, repo }
 }
 
-test('deploy, teardown, redeploy a child', async (t) => {
+test('deploy from a target package\'s list, inside the parent; redeploy; teardown', async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'deploy-'))
-  const src = mkdtempSync(join(tmpdir(), 'deploy-src-'))
+  const pkgs = mkdtempSync(join(tmpdir(), 'deploy-src-'))
   try {
-    structure(src)
-    await build({ from: src, work, name: 'boot' })
-    const backend = p2pgitBackend(gitdirOf(work, 'boot'), { fs })
-    const { exec, commit, repo } = context(work, backend)
-    const setting = readFileSync(join(work, 'mrepo.json'), 'utf8')
+    source(pkgs, {
+      'haiccing/base': { 'runtime/layer.json': { mode: 'atomic' }, 'runtime/kind.json': { kind: 'base' }, 'inbox/layer.json': { mode: 'non-atomic' } },
+      'haiccing/target': { 'main/layer.json': { mode: 'atomic' }, 'runtime/kind.json': { kind: 'target' }, 'packages/layer.json': { mode: 'replicated', packages: ['haiccing/base', 'haiccing/target'] } }
+    })
+    const dir = await parent(work, [parseSource(`folder:${pkgs}`)])
+    const backend = p2pgitBackend(join(dir, '.git'), { fs })
+    const { exec, commit, repo } = context(dir, backend)
 
-    const d = await deploy(exec, { uri: '/host' })
+    await t.exception(deploy(exec, { uri: '/host' }), /no package/, 'the target named in the body')
+    const d = await deploy(exec, { uri: '/host', body: { package: 'haiccing/target' } })
     await commit()
+    const host = join(dir, 'main', 'host')
     t.is(d.deployed, '/host')
-    t.alike(Object.keys(d.layers).sort(), ['main', 'runtime'], 'built from its definition')
-    t.ok(existsSync(gitdirOf(work, 'host')), 'the child: <work>/mrepos/host/.git')
-    const child = openRepo(p2pgitBackend(gitdirOf(work, 'host'), { fs }))
-    t.is(JSON.parse((await child.read('/runtime/service.json')).toString()).type, 'haicc')
-    t.is(JSON.parse((await repo.read('/main/host.json')).toString()).name, 'host', 'linked into the parent\'s main')
-    t.is(readFileSync(join(work, 'mrepo.json'), 'utf8'), setting, 'the work folder\'s setting still the parent\'s')
-    await t.exception(deploy(exec, { uri: '/host' }), /deployed already/)
+    t.ok(existsSync(join(host, '.git')), 'built inside the parent: main/host/')
+    t.alike(Object.keys(d.layers).sort(), ['inbox', 'main', 'packages', 'runtime'], 'the layers of every listed package')
+    const child = openRepo(p2pgitBackend(join(host, '.git'), { fs }))
+    t.alike(json(await child.read('/runtime/kind.json')), { kind: 'target' }, 'laid in in order: a later package\'s file replaces')
+    t.alike(d.packages, ['haiccing/base', 'haiccing/target'], 'its packages, in order')
+    t.is(statSync(join(work, 'packages', 'haiccing', 'base.bundle')).ino, statSync(join(host, 'packages', 'haiccing', 'base.bundle')).ino, 'each linked from the store')
+    t.alike(json(await repo.read('/main/host.json')).package, 'haiccing/target', 'its type recorded at the node')
+    await t.exception(deploy(exec, { uri: '/host', body: { package: 'haiccing/target' } }), /deployed already/)
 
     const r = await redeploy(exec, { uri: '/host' })
     await commit()
     t.is(r.tornDown, '/host')
-    t.is(r.deployed, '/host', 'redeployed')
-    t.ok((await repo.select('/main/host.json')).length, 'linked again')
+    t.is(r.package, 'haiccing/target', 'redeployed, its type as recorded')
 
     t.alike(await teardown(exec, { uri: '/host' }), { tornDown: '/host' })
     await commit()
-    t.absent(existsSync(join(work, 'mrepos', 'host')), 'the child removed')
-    t.absent((await repo.select('/main/host.json')).length, 'its link out of main')
+    t.absent(existsSync(host), 'removed')
+    t.is(await repo.read('/main/host.json').catch(() => null), null, 'its record out of main')
     await t.exception(teardown(exec, { uri: '/host' }), /not deployed/)
-    await t.exception(deploy(exec, { uri: '/nothing' }), /no definition/)
-    await t.exception(deploy(exec, { uri: '/../x' }), /not a child/)
+    await t.exception(deploy(exec, { uri: '/x', body: { package: 'haiccing/none' } }), /not in the store nor the sources/)
+    await t.exception(deploy(exec, { uri: '/../x', body: { package: 'haiccing/target' } }), /not a child/)
   } finally {
     rmSync(work, { recursive: true, force: true })
-    rmSync(src, { recursive: true, force: true })
+    rmSync(pkgs, { recursive: true, force: true })
   }
+})
+
+// The runtime's bundle as the development repository's sources hold it
+// (tools/package-bundle.js); the test skipped without.
+const SOURCES = join(import.meta.dirname ?? new URL('.', import.meta.url).pathname, '..', '..', '..', 'sources')
+const haveRuntime = existsSync(join(SOURCES, 'haiccing', 'base-package-runtime.bundle'))
+
+test('deploy the runtime: the child\'s runtime started from its own packages, its inbox answering; teardown stops it', { timeout: 60000, skip: !haveRuntime }, async (t) => {
+  const work = mkdtempSync(join(tmpdir(), 'deploy-rt-'))
+  try {
+    const dir = await parent(work, [parseSource(`folder:${SOURCES}`)])
+    const backend = p2pgitBackend(join(dir, '.git'), { fs })
+    const { exec, commit } = context(dir, backend)
+    const d = await deploy(exec, { uri: '/host', body: { package: 'haiccing/base-package-runtime' } })
+    await commit()
+    const host = join(dir, 'main', 'host')
+    t.ok(d.runtime?.pid, 'its runtime started')
+    t.is((await ask({ repo: host, op: 'status' }))?.repository.name, 'host', 'running the child, by its directory')
+    // a request into its inbox folder (the parent reaches it, forward): answered
+    const core = record('/test', { protocol: 'rest', action: 'get', uri: '/runtime' }, guid())
+    writeFileSync(join(host, 'inbox', `${core.key}.json`), JSON.stringify(wrap('/host/inbox', core)))
+    const child = openRepo(p2pgitBackend(join(host, '.git'), { fs }))
+    let back = null
+    for (let i = 0; i < 100 && !back; i++) { back = await child.read(`/outbox/${core.key}.json`).then(json, () => null); if (!back) await new Promise(resolve => setTimeout(resolve, 100)) }
+    t.ok(back?.value.value.output, 'its inbox operational: a request answered (no service: no gate)')
+    await teardown(exec, { uri: '/host' })
+    await commit()
+    t.is(await ask({ repo: host, op: 'status' }), null, 'teardown: its runtime stopped')
+    t.absent(spawnSync('kill', ['-0', String(d.runtime.pid)], { stdio: 'ignore' }).status === 0, 'its process ended')
+    t.absent(existsSync(host), 'and removed')
+  } finally { rmSync(work, { recursive: true, force: true }) }
 })
