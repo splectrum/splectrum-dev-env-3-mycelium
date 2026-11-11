@@ -187,8 +187,9 @@ protocols.
 - **Commit and rollback, local and global** (the human, 2026-11-11;
   **built**). Local, the action's, as it builds up its changes and handles
   its errors: `exec.commit()` (the writes so far committed to the execution
-  branches: later reads see them), `exec.rollback()` (the writes since the
-  last local commit discarded), `exec.reset()` (all of the execution
+  branches: later reads see them), `exec.discard()` (the uncommitted
+  writes dropped), `exec.rollback()` (the last local commit undone),
+  `exec.reset()` (all of the execution
   ditched, back to the start); the action goes on. Global, the runtime's,
   never the action's: when the invoked action ends, the execution branches
   merged back into their targets, once (`execute/main` into `main`); a
