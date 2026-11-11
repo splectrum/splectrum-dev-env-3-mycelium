@@ -18,29 +18,11 @@ mrepo a work folder's setting names, as the p2p host.)
 
 ## The package
 
-- `mrepo/`: the runtime's part of every mrepo's structure: `main`,
-  `runtime`, the boxes, the request layers, `packages` (its
-  `layer.json` lists `haiccing/base-package-runtime`: deployed as the target,
-  an mrepo with a runtime and no protocols).
+- [mrepo/](mrepo/): the runtime's part of every mrepo's structure.
 - `main.js`: the dispatcher, the bundle's main (generated): every entry and
   test by path, `run(target, { dryRun })`.
-
 - `run.js`: the entry, the runtime's process.
-- `modules/`: the code (`mrepo-base-runtime` and what it uses), assembled.
-- `test/`: `bare test/run.js [<set>]`, or `bare <bundle> /test/<set>`, or
-  `runtime run /packages/haiccing/base-package-runtime/test/<set>` in a running
-  mrepo; `validate` the package as deployed (`test/start/`), `full` also the
-  generic modules test (each carried module's own tests, on the package's
-  copies). From the bundle in a floating instance; the result returned.
-  `SOURCES`: a sources folder, for the tests that need one. See
-  `haiccing/package-docs-template`, `test/README.md`.
-
-## The folders
-
-| | |
-|---|---|
-| [mrepo/](mrepo/) | its part of the structure, by layers |
-| [test/](test/) | its tests and sets |
-| [modules/](modules/) | its code, assembled: ours and the third-party code |
+- [modules/](modules/): the code, assembled: ours and the third-party code.
+- [test/](test/): its tests.
 
 Written from [splectrum/splectrum-dev-env-3-mycelium](https://github.com/splectrum/splectrum-dev-env-3-mycelium).
