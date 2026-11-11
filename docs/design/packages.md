@@ -147,6 +147,19 @@ prerequisites: the nodes' container base image (`docker save`, loaded with
 `docker load` when missing; e.g. `library/<image>-<tag>.tar`). Docker
 Engine itself has none: a system install, only checked.
 
+**Direction** (the human, 2026-11-11; not now): **`package-sources-https`**,
+a package that fills a local sources folder with what is missing, over
+HTTPS (the packages and their manifest from GitHub, Bare's tarball from
+npm's registry, later the base image from Docker Hub), each by its
+organisation and checked against its pin. The boot then reads `folder:`
+sources only and carries no HTTPS addons (`bare-tls`, `bare-tcp`,
+`bare-dns`, about 13 MB); a machine without network gets a filled
+`sources/` copied to it. To settle: how the boot reaches it (a standalone
+executable too, run before the boot or by it). Likewise each package
+carries only the addons of what it imports: the p2p storage's
+(`rocksdb-native` and others, about 10 MB) and the swarm's (`udx-native`,
+`sodium-native`) with the packages that use them, not the boot.
+
 **Built** (2026-11-10, the first piece): the boot mrepo's structure,
 `haiccing/base-package-boot/mrepo/` (type `boot`, initialised already, its
 API in `runtime/`; preloaded `service start /`), built into a standalone
