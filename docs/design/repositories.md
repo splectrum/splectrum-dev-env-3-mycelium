@@ -247,11 +247,15 @@ and `start` in; `start` makes the type's API available.
   the service states each is allowed in, the package that implements it),
   composed by the overlay like any file.
   - **Every mrepo** has **`service`** (`initialise`, `start`, `stop`,
-    `shutdown`, `pause`, `resume`, `run`), from the common package. **`boot`**
-    (`deploy`, `teardown`: executed by the parent) is a capability: it
+    `shutdown`, `pause`, `resume`, `run`), from the common package
+    (`base-package-mrepo`: the `service` protocol to begin with). **`boot`**
+    (`deploy`, `teardown`, `redeploy` = teardown then deploy: executed by
+    the parent) is a capability, common to many mrepos: it
     comes with `base-package-boot` (its config and its code, the install
     routine), linked into the `packages` of every mrepo that deploys others
-    (the boot mrepo; the host, for its nodes) (the human, 2026-11-11). An
+    (the boot mrepo; the host, for its nodes) (the human, 2026-11-11). The
+    base boot mrepo mounts only `boot`, for the host: `boot deploy /host`,
+    `boot teardown /host`, `boot redeploy /host`. An
     application adds its own (`haicc`, `dispatch`).
   - **Global** protocols at the layer's root (`protocols/boot.json`): the
     whole mrepo. The base has only these.
