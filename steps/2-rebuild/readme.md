@@ -1021,3 +1021,16 @@ its own files, in a floating instance; in `validate`) and
 `validate-in-situ`, run with `runtime run`, which passes `MREPO` and
 `PACKAGE`). The boot's integration test runs both packages'
 `validate-in-situ` in the running boot mrepo. Both `full` sets pass.
+
+A directory per method (the human): a module's exported methods, each in
+its own directory with its `index.js` and `README.md`, split into
+`external/` (protocol actions, `(exec, form)`) and `internal/` (called by
+code, never requested; the execute and request engines are internal). A
+helper shared by several methods becomes an internal method of its own.
+Method READMEs: one-liner, summary, then `Signature`, `Body` (external),
+`Returns`, `Errors`, as they apply. Pilot: `mrepo-base-boot` (external:
+deploy, teardown, redeploy; internal: build, place, fetch, structure-of,
+store-of, put, child, check, parse-source, in-container, bare-of,
+acceptable); `lib/` gone, `index.js` exports the same. Its tests unchanged,
+9/9; both packages' `full` sets pass; 112 READMEs in the help tree, no
+problems.
