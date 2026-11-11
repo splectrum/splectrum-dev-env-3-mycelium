@@ -166,10 +166,10 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     // dispatcher; a dry run says what would run, a run returns the results
     const dry = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/test/full', body: { dryRun: true } })
     const runs = dry?.output?.runs ?? []
-    t.ok(!dry?.error && runs[0] === '/test/start' && runs.length > 1 && runs.slice(1).every(u => u.startsWith('/test/modules/')), `runtime run, a dry run: what test/full would run, nothing run ${JSON.stringify(dry?.output ?? dry?.error)}`)
+    t.ok(!dry?.error && runs[0] === '/test/start' && runs[1] === '/test/help' && runs.length > 2 && runs.slice(2).every(u => u.startsWith('/test/modules/')), `runtime run, a dry run: what test/full would run, nothing run ${JSON.stringify(dry?.output ?? dry?.error)}`)
     const ran = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/test/validate' }, 1200)
     t.absent(ran?.error, `runtime run test/validate: done ${ran?.error ?? ''}`)
-    t.alike([ran?.output?.ok, ran?.output?.units?.map(u => u.unit)], [true, ['/test/start']], 'its result: the start test passed, in a floating instance')
+    t.alike([ran?.output?.ok, ran?.output?.units?.map(u => u.unit)], [true, ['/test/start', '/test/help']], 'its result: the start test and its help passed, in a floating instance')
     t.ok(ran?.log?.some(e => e.event === 'unit' && e.unit === '/test/start' && e.ok), 'a summary logged, a line a unit')
     // its help, extracted by its runtime as it started: retrieved by URI
     const root = await sent({ protocol: 'runtime', action: 'help', uri: '/' })
@@ -180,6 +180,11 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.ok(!tb?.error && tb?.output?.title === 'boot/' && tb.output.summary, `runtime help on this very test: its README ${tb?.error ?? ''}`)
     const hostHelp = await openRepo(p2pgitBackend(join(host, '.git'), { fs })).read('/help/index.json').then(b => JSON.parse(b.toString()), () => null)
     t.ok(hostHelp?.['/packages/haiccing/base-package-runtime'], 'the host\'s help: extracted by its own runtime, from its own packages')
+    // each package checks, in situ, what this mrepo's runtime made of its help
+    for (const p of ['base-package-boot', 'base-package-runtime']) {
+      const v = await sent({ protocol: 'runtime', action: 'run', uri: `/packages/haiccing/${p}/test/validate-in-situ` }, 1200)
+      t.alike([v?.error, v?.output?.ok, v?.output?.units?.[0]?.asserts], [undefined, true, { passed: 3, total: 3 }], `${p}: validate-in-situ, its help in this mrepo ${v?.error ?? JSON.stringify(v?.output?.units?.[0]?.failures ?? '')}`)
+    }
     const refused = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/run' })
     t.ok(/not run here/.test(refused?.error ?? ''), 'a package\'s program: not run in the runtime')
 
@@ -195,8 +200,8 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
     const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
     let n = 0
-    for (let i = 0; i < 100 && (n = await records('done')) < 12; i++) await wait(100)
-    t.is(n, 12, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs, the three helps among them)')
+    for (let i = 0; i < 100 && (n = await records('done')) < 14; i++) await wait(100)
+    t.is(n, 14, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs, the three helps, the two in-situ validations among them)')
     t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
     const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
     t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')

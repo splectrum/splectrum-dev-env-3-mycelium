@@ -34,7 +34,8 @@ async function run (exec, { uri, body }) {
   const dispatcher = await import(pathToFileURL(bundle).href)
   if (typeof dispatcher.run !== 'function') throw new Error(`${pkg} has no dispatcher`)
   const dryRun = Boolean(body?.dryRun)
-  const r = await dispatcher.run(t, { dryRun })
+  // the in-situ tests: which mrepo, which package
+  const r = await dispatcher.run(t, { dryRun, env: { MREPO: exec.runtime.dir, PACKAGE: pkg } })
   if (dryRun) return { target: t, runs: r }
   if (t === '/protocol' || t === '/deploy') return { target: t, offers: Object.keys(r).filter(k => k !== 'default') }
   // a test's result: summarised in the log, whole in the output

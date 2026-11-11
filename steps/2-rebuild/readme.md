@@ -1009,3 +1009,15 @@ module and package openings rewritten (the old text kept under `Design`,
 `Usage`, `Steps`), the folders tables moved into the summaries, stale
 statements corrected (the packages layer: no GitHub source, no signed
 manifest yet; the runtime: not packaged as `base-package-mrepo`).
+
+Documentation validation (the human: no AI needed for the rules; a test in
+the package): the rules and the whole-tree checks in
+`mrepo-base-runtime/lib/help.js` (`check`; the extraction writes
+`/help/problems.json`); `tools/help-extract.js` uses the same. Every
+package carrying the runtime gets two units from its dispatcher, the tests
+in `mrepo-base-runtime/validate/`: `/test/help` (its help extracted from
+its own files, in a floating instance; in `validate`) and
+`/test/help-in-situ` (as a running mrepo's runtime extracted it; the set
+`validate-in-situ`, run with `runtime run`, which passes `MREPO` and
+`PACKAGE`). The boot's integration test runs both packages'
+`validate-in-situ` in the running boot mrepo. Both `full` sets pass.

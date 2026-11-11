@@ -26,6 +26,8 @@ README.
 | `/test/<name>` | a test folder: its `*.test.js` |
 | `/test/modules/<org>/<module>` | a carried module's own tests (`modules/<org>/<module>/test/*.test.js`) |
 | `/test/modules` | the generic modules test: every carried module's own tests |
+| `/test/help` | the package's help, extracted from its own files, checked against the README rules |
+| `/test/help-in-situ` | the package's help as a running mrepo's runtime extracted it, checked |
 | `/test/<set>` | a set: its tests, in order (`modules` expands to every module) |
 
 Each a unit, each unit its own process. Beside them the entry points,
@@ -40,8 +42,11 @@ Each a unit, each unit its own process. Beside them the entry points,
 }
 ```
 
-Every package has `validate` (the package as deployed: its own tests) and
-`full` (everything: also `modules`). More sets as needed.
+Every package has `validate` (the package on its own, in a floating
+instance: its own tests and `help`), `validate-in-situ` (where it is
+deployed: `help-in-situ`, run with `runtime run`, which names the mrepo
+and the package) and `full` (everything: also `modules`). More sets as
+needed.
 
 ## Modules test
 

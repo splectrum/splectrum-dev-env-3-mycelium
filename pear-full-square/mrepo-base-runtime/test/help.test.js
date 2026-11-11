@@ -1,7 +1,7 @@
 // The help layer: READMEs parsed into their levels, extracted from bundles'
 // files at the URIs they document, with their index; retrieved by runtime help.
 import test from 'brittle'
-import { parse, extract, help } from '../lib/help.js'
+import { parse, extract, help, check } from '../lib/help.js'
 
 const B = s => Buffer.from(s)
 const README = '# thing\n\nA thing, with `package.json` inside. More here.\n\n| | |\n|---|---|\n| [sub/](sub/) | below |\n\n## Usage\n\nUse it.\n\n## Notes\n\nNone.\n'
@@ -23,7 +23,7 @@ const packages = [
 
 test('extract: each README at the URI it documents; the index; the packages linked from the layer\'s help', (t) => {
   const files = extract(packages)
-  t.alike(Object.keys(files).sort(), ['/README.md', '/index.json', '/packages/README.md', '/packages/haiccing/app/README.md', '/packages/haiccing/app/test/README.md', '/packages/haiccing/docs/README.md'], 'the mrepo folder of the docs package at the root; the others under /packages; no third-party')
+  t.alike(Object.keys(files).sort(), ['/README.md', '/index.json', '/packages/README.md', '/packages/haiccing/app/README.md', '/packages/haiccing/app/test/README.md', '/packages/haiccing/docs/README.md', '/problems.json'], 'the mrepo folder of the docs package at the root; the others under /packages; no third-party')
   const index = JSON.parse(files['/index.json'].toString())
   t.alike(index['/'], { title: 'mrepo/', oneliner: 'The mrepo.', links: ['/packages'] })
   t.alike(index['/packages'].links, ['/packages/haiccing/docs', '/packages/haiccing/app'], 'each linked package')
@@ -40,4 +40,18 @@ test('runtime help: the levels, a section, the nearest when nothing is there', a
   t.alike(Object.keys(await help(exec, { uri: '/help/', body: { level: 'oneliner' } })), ['uri', 'title', 'oneliner', 'links'], 'the root, by /help too; one-liners only')
   await t.exception(help(exec, { uri: '/packages/haiccing/app/test/nothing', body: {} }), /no help at .*: nearest \/packages\/haiccing\/app\/test/)
   await t.exception(help({ read: async () => { throw new Error('none') } }, { uri: '/', body: {} }), /no help in this mrepo/)
+})
+
+test('the rules: a README against them, and a tree with a broken link, an unlinked folder, an unreached README', (t) => {
+  const bad = '# bad\n\nA one-liner far too long (with parentheses), going on and on and on and on and on and on and on and on and on, see docs/design/x.md\n\n## A title much too long here\n'
+  t.alike(check(bad).map(([c]) => c).sort(), ['oneliner', 'oneliner', 'oneliner', 'sections', 'transient'].sort(), 'its length, its parentheses, not one sentence; a long section title; a reference to the development repository')
+  t.alike(check(README), [], 'a good one: none')
+  const out = extract([{ pkg: 'o/p', help: null, paths: ['/README.md', '/a/README.md', '/b/README.md', '/c/x/README.md'], files: {
+    '/README.md': B('# p\n\nThe package.\n\n[a/](a/) [nowhere/](nowhere/)\n'),
+    '/a/README.md': B('# a\n\nThe a part.\n'),
+    '/b/README.md': B('# b\n\nThe b part.\n'),
+    '/c/x/README.md': B('# x\n\nThe x part.\n')
+  } }])
+  const problems = JSON.parse(out['/problems.json'].toString()).map(p => `${p.uri} ${p.check}`).sort()
+  t.alike(problems, ['/packages/o/p cascade', '/packages/o/p cascade', '/packages/o/p links', '/packages/o/p/b reached', '/packages/o/p/c/x reached'].sort(), 'the link to nothing; b and c/x not linked, not reached')
 })

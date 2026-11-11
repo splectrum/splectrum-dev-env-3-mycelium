@@ -4,8 +4,9 @@ The boot package's tests: its sets and its one test, `boot`.
 
 | set | tests |
 |---|---|
-| `validate` | `boot` |
-| `full` | `boot`, `modules` |
+| `validate` | `boot`, `help` |
+| `validate-in-situ` | `help-in-situ`: run in a running mrepo with `runtime run` |
+| `full` | `boot`, `help`, `modules` |
 
 | | |
 |---|---|
