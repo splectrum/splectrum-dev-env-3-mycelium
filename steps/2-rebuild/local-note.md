@@ -9,7 +9,8 @@ a `curl` that serves them, git URLs to local mirrors), so
 ## 2026-11-11, second: `ca44de2`
 
 The prompt ran as written (the patch below applied by the cloud), with one
-problem in the installed Bare (1) and two smaller findings (2, 3). The code
+problem in the installed Bare (1), two smaller findings (2, 3), and the
+try script not ending, from the human's run (4). The code
 not changed here; a patch for (1), made and tested locally, then taken out.
 
 | Step | Result |
@@ -18,6 +19,7 @@ not changed here; a patch for (1), made and tested locally, then taken out.
 | 3. `tools/bare tools/boot-release.js` | exit 0: `sources/haiccing/base-package-boot-linux-x64` (117,632,264 bytes), Bare 1.35.0 (its `.json`), `base-package-runtime.bundle`, `base-package-boot.bundle`, `manifest.json`, the addons, `holepunchto/bare-runtime-linux-x64-1.35.0.tgz` |
 | 4. The check, `--yes`, not on a terminal, the human's PATH | exit 0; two records: `boot deploy /boot` (its `log`: `prerequisites`, `built`, `packages`, each `info`; `output.runtime` the command), then the runtime's status (its pid, `repository: boot`). Bare: nvm's, 1.36.0, installed, recorded in `bare.json` (see 1). Within 6 s the host in `mrepos/boot/main/host/` (`.git`, `inbox/`, `outbox/`, `packages/`, `runtime.sock`). Runtimes: three processes, not two (see 1). Stopped with `pkill -TERM`, none left; removed |
 | 5. `~/haicc-try.sh --yes` (`HAICC_DEV` set: the clone is at `~/splectrum/splectrum-dev-env-3-mycelium`), no terminal | following until interrupted (SIGINT to the boot, as Ctrl-C); then exit code 0, the boot mrepo, the host inside it, the runtimes listed; on the key: the runtimes stopped, `~/haicc-try` removed, none left |
+| 5, the human's run, on a terminal | the same records, then waiting: Ctrl-C needed, the pause easily missed (see 4) |
 
 ### 1. An installed Bare from npm is a Node.js script
 
@@ -54,9 +56,32 @@ in its own command line (and any other command there naming the folder):
 pkill ends it (it happened here, twice). **Proposed** for the prompt:
 `pkill -TERM -f '[/]bin/bare /tmp/boot-check/'` in a command of its own
 (the bracket keeps the pattern from matching itself; the runtimes are
-`<…>/bin/bare <bundle in /tmp/boot-check/> …`). And the try script always
-follows (`--follow`), so without a terminal it waits for a SIGINT: fine for
-the human; an agent sends it to the boot.
+`<…>/bin/bare <bundle in /tmp/boot-check/> …`).
+
+### 4. The try script does not end: a test should
+
+The human's run of `~/haicc-try.sh`: the records came (the boot's deploy,
+its runtime's status, the preloaded `boot deploy /host` to `request/done`,
+the host's runtime), then nothing; it looked hung, and the human had to
+Ctrl-C (`--follow` follows until Ctrl-C, whatever happens). Then the
+pause, "press any key to clean up", printed without a newline after the
+runtimes' list, easily missed. Without a terminal it waits for a SIGINT.
+
+The human: "that isn't the right way for a test. After all the actions are
+completed it should exit, kill the runtime."
+
+**Proposed:** the try script a test that ends by itself: the boot run, its
+records followed (shown, kept in `boot-output.jsonl`) until every request
+it set off is done (here: the boot's own `boot deploy /boot` and the
+preloaded `boot deploy /host` in the boot mrepo's `request/done`, the host's
+runtime answering), with a time limit (failing, not hanging, when one is not
+done); then what was left shown, the runtimes stopped (until none is left),
+the work folder removed, and an exit code saying passed or failed. No
+Ctrl-C, no key needed, the same with or without a terminal (so the agent's
+step 4 can be the same script). Following open-ended (`--follow` until
+Ctrl-C) stays the boot's, for watching, not the test's. No patch: how the
+boot (or the script) knows "every request it set off is done" is the
+design's.
 
 ### The patch for (1)
 
