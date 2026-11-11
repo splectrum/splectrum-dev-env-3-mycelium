@@ -13,8 +13,9 @@
 //       built at <parent>/main/<name>/; its packages linked individually; its
 //       type recorded at the node, /main/<name>.json; its runtime started
 //       from its own packages/, by its directory (its inbox operational)
-//   teardown(exec, { uri })   its runtime stopped (until its process has
-//                             ended), its folder removed, its node record out
+//   teardown(exec, { uri })   its runtime stopped (asked over its socket; still
+//                             running, SIGTERM; still, SIGKILL; until its process
+//                             has ended), its folder removed, its node record out
 //   redeploy(exec, form)      teardown, committed locally (exec.commit()),
 //                             then deploy (the type recorded, if the body names none)
 // Not yet: the clean-up; what is done outside the repository (a runtime
@@ -26,6 +27,22 @@ import { build } from './build.js'
 import { fetch, structureOf, place } from './packages.js'
 import { parseSource } from './prerequisites.js'
 import { start, ask } from 'mrepo-base-runtime'
+
+const alive = pid => { try { os.kill(pid, 0); return true } catch { return false } }
+const ended = async (pid, ms) => { for (let i = 0; i < ms / 100 && alive(pid); i++) await new Promise(resolve => setTimeout(resolve, 100)); return !alive(pid) }
+
+// A runtime's process ended: asked first (ask), then SIGTERM, then SIGKILL,
+// each waited for; true when it has ended (how: which one ended it).
+async function stopped (pid, ask) {
+  if (!alive(pid)) { stopped.how = 'not running'; return true }
+  await ask?.()
+  if (await ended(pid, 5000)) { stopped.how = 'asked'; return true }
+  try { os.kill(pid, 'SIGTERM') } catch {}
+  if (await ended(pid, 5000)) { stopped.how = 'SIGTERM'; return true }
+  try { os.kill(pid, 'SIGKILL') } catch {}
+  if (await ended(pid, 2000)) { stopped.how = 'SIGKILL'; return true }
+  return false
+}
 
 function child (exec, uri) {
   const name = uri.slice(1)
@@ -84,14 +101,12 @@ export async function teardown (exec, { uri }) {
   const c = child(exec, uri)
   if (!(await json(exec, c.node))) throw new Error(`not deployed: ${uri}`)
   // Its runtime stopped first (when it runs), waited for until its process
-  // has ended (not only until it stops answering).
+  // has ended (not only until it stops answering): asked over its socket;
+  // still there, SIGTERM; still there, SIGKILL.
   const was = await ask({ repo: c.dir, op: 'status' })
-  if (was) {
-    await ask({ repo: c.dir, op: 'stop' })
-    const alive = () => { try { os.kill(was.pid, 0); return true } catch { return false } }
-    for (let i = 0; i < 100 && alive(); i++) await new Promise(resolve => setTimeout(resolve, 100))
-    if (alive()) throw new Error(`its runtime did not stop: pid ${was.pid}`)
-  }
+  const pid = was?.pid ?? (await json(exec, c.node))?.runtime?.pid
+  if (pid && await stopped(pid, () => was && ask({ repo: c.dir, op: 'stop' }))) exec.log?.('info', 'runtime stopped', { pid, how: stopped.how })
+  else if (pid && alive(pid)) throw new Error(`its runtime did not stop: pid ${pid}`)
   rmSync(c.dir, { recursive: true, force: true })
   exec.remove(c.node)
   return { tornDown: uri }

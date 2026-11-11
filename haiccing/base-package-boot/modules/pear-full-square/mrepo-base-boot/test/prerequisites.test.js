@@ -83,6 +83,15 @@ test('bare: an installed one on the PATH, at the pinned major, the same or newer
     t.alike(found.results[0].value, { bare: join(good, 'bare'), version: '1.40.1', installed: true })
     t.is(bareOf(work), join(good, 'bare'), 'recorded: the one the mrepo runs on')
     t.absent(existsSync(join(work, 'bare')), 'no Bare of its own')
+    // npm's wrapper: asked, it names the binary it runs; that one recorded
+    const real = fake('1.40.2')
+    const wrapper = join(bins, 'wrapper'); mkdirSync(wrapper)
+    writeFileSync(join(wrapper, 'bare'), `#!/bin/sh\n[ "$1" = -e ] && echo ${join(real, 'bare')} || echo v1.40.2\n`); chmodSync(join(wrapper, 'bare'), 0o755)
+    const w = mkdtempSync(join(tmpdir(), 'pre-wrap-'))
+    try {
+      const viaWrapper = await check(list, { ...ctx, work: w, path: wrapper })
+      t.is(viaWrapper.results[0].value.bare, join(real, 'bare'), 'a wrapper on the PATH: the binary it runs recorded')
+    } finally { rmSync(w, { recursive: true, force: true }) }
     const again = await check(list, { ...ctx })
     t.ok(again.ok && again.results[0].value.installed, 'next time: the recorded one, no PATH needed')
     rmSync(good, { recursive: true, force: true })
