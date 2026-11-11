@@ -1,0 +1,14 @@
+{
+  "name": "base-package-runtime",
+  "description": "Base package: the mrepo runtime, the engine every mrepo runs on.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "run.js",
+  "modules": [
+    "pear-full-square/mrepo-base-runtime"
+  ],
+  "scripts": {
+    "test": "bare test/run.js"
+  }
+}
