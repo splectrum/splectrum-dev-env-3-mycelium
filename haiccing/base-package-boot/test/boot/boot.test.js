@@ -4,7 +4,7 @@
 // Everything from the package's own modules/.
 import test from '../../modules/node_modules/brittle/index.js'
 import { spawn, spawnSync } from '../../modules/node_modules/bare-subprocess/index.js'
-import fs, { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync } from '../../modules/node_modules/bare-fs/index.js'
+import fs, { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, mkdirSync } from '../../modules/node_modules/bare-fs/index.js'
 import { join, dirname } from '../../modules/node_modules/bare-path/index.js'
 import os, { tmpdir } from '../../modules/node_modules/bare-os/index.js'
 import { fileURLToPath } from '../../modules/node_modules/bare-url/index.js'
@@ -17,14 +17,15 @@ const PRELOADED = '7b0c1f4e-2d3a-4c5b-9e6f-0a1b2c3d4e5f'
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
 
-// The sources: a folder holding the pinned Bare's tarball, as npm publishes
-// it (npm pack, once a run; the tests skip what needs it when npm is not
+// The sources: a folder holding the pinned Bare's tarball by its
+// organisation (holepunchto/), as npm publishes it (npm pack, once a run; the tests skip what needs it when npm is not
 // there).
 const bare = JSON.parse(readFileSync(join(pkg, 'bare.json')))
 const src = mkdtempSync(join(tmpdir(), 'boot-src-'))
 const tarball = `bare-runtime-${os.platform()}-${os.arch()}-${bare.version}.tgz`
-spawnSync('npm', ['pack', `bare-runtime-${os.platform()}-${os.arch()}@${bare.version}`, '--pack-destination', src], { stdio: 'ignore' })
-const haveBare = existsSync(join(src, tarball))
+mkdirSync(join(src, 'holepunchto'), { recursive: true })
+spawnSync('npm', ['pack', `bare-runtime-${os.platform()}-${os.arch()}@${bare.version}`, '--pack-destination', join(src, 'holepunchto')], { stdio: 'ignore' })
+const haveBare = existsSync(join(src, 'holepunchto', tarball))
 
 function boot (work, extra = [`--sources=folder:${src}`, '--yes']) {
   return spawn(os.execPath(), [join(pkg, 'run.js'), `--work=${work}`, ...extra], { stdio: 'ignore' })

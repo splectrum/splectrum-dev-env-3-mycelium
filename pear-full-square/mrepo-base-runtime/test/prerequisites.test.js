@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, mkdirSync
 import { join } from 'bare-path'
 import os, { tmpdir } from 'bare-os'
 import { spawnSync } from 'bare-subprocess'
-import { check, parseSource, inContainer, bareOf } from '../lib/prerequisites.js'
+import { check, parseSource, inContainer, bareOf, BARE_ORG } from '../lib/prerequisites.js'
 
 // Bare's tarball for putting it in place: from this repository's node_modules
 // (the lockfile's pin), packed as npm publishes it, into a folder source.
@@ -43,8 +43,10 @@ test('bare: missing, not fixed without a yes; put in place from a folder source,
     const empty = await check(list, { work, sources: [parseSource(`folder:${src}`)], bare: BARE, yes: true })
     t.ok(/not in the sources/.test(empty.results[0].missing), 'not in the sources: said')
     // npm's tarball, packed from the installed copy as the registry has it
-    const p = spawnSync('npm', ['pack', `bare-runtime-${os.platform()}-${os.arch()}@${BARE.version}`, '--pack-destination', src], { stdio: 'ignore' })
-    if (p.status !== 0 || !existsSync(join(src, TARBALL))) { t.comment('npm pack not available: skipped'); return }
+    // by its organisation, as a source holds it
+    mkdirSync(join(src, BARE_ORG), { recursive: true })
+    const p = spawnSync('npm', ['pack', `bare-runtime-${os.platform()}-${os.arch()}@${BARE.version}`, '--pack-destination', join(src, BARE_ORG)], { stdio: 'ignore' })
+    if (p.status !== 0 || !existsSync(join(src, BARE_ORG, TARBALL))) { t.comment('npm pack not available: skipped'); return }
     const bad = { ...BARE, integrity: 'sha512-AAAA' }
     const wrong = await check(list, { work, sources: [parseSource(`folder:${src}`)], bare: bad, yes: true })
     t.ok(/not as pinned/.test(wrong.results[0].missing), 'not as pinned: refused')
