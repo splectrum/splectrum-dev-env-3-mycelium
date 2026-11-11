@@ -17,19 +17,6 @@ installed by HAICC's boot into the host's packages. Built step by step
   bare); `filesystem`, p2p-git's hybrid with every layer on the filesystem (the same
   folder, no Corestore: the boot mrepo); `p2p` (the default), the host's
   repository over its Corestore and disk side. The same protocols on all.
-- `lib/build.js`: an mrepo built from its structure (`build({ from, work,
-  name, time })`): a folder laid out by layers, a `layer.json` at each leaf
-  (`docs/design/packages.md`), written as a standalone repository on the filesystem,
-  one orphan branch a leaf, its files one commit (`layer.json` with them, not
-  one of the layer's records); the inbox's files its working tree;
-  `<work>/mrepo.json` set to `filesystem`. A fixed `time`: the same commits every
-  build. The first piece of the install routine.
-- `lib/prerequisites.js`: an mrepo's prerequisites, checked before
-  anything is written (`check(list, ctx)`): `platform`, `work`, `sources`,
-  `bare` (fixed, with a yes: the pinned Bare put in place from the sources,
-  a folder or npm's registry, checked by its sha512), `docker` (installed,
-  running, rootful, native, the user in its group); a condition each
-  (`when: 'not-in-container'`). Stops at the first missing.
 - One poller fires the protocols in turn over their data states: on the
   p2p host (and on `filesystem`) the inbox folder's new files committed, the request protocol (`mrepo-base-request`), the
   execute protocol (`mrepo-base-execute`). Once the service is shut down

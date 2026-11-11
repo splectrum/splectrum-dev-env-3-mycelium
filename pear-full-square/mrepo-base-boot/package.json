@@ -1,0 +1,11 @@
+{
+  "name": "mrepo-base-boot",
+  "version": "0.1.0",
+  "description": "The mrepo boot protocol (base variant): deploy, teardown, redeploy; the install routine (an mrepo built from its structure) and the prerequisite checks",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

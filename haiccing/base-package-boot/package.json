@@ -6,6 +6,7 @@
   "type": "module",
   "main": "run.js",
   "modules": [
+    "pear-full-square/mrepo-base-boot",
     "pear-full-square/mrepo-base-runtime"
   ],
   "scripts": {

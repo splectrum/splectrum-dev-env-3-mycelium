@@ -618,6 +618,14 @@ and `ensure-bare.sh` (this repository's install without npm),
 Splectral and phase 2 HAICC parts (not related yet). Every affected
 module's tests and the boot's `validate` pass.
 
+The boot protocol's module (the human created it):
+`pear-full-square/mrepo-base-boot`, the code moved there from
+`mrepo-base-runtime` (`lib/build.js`, `lib/prerequisites.js` and their
+tests); its index exports them; the actions (deploy, teardown, redeploy),
+the overlay and the clean-up to come. `base-package-boot` starts from it
+and the runtime (`modules`), `run.js` imports it. Its tests (5), the
+runtime's (6) and the boot's `validate` pass.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

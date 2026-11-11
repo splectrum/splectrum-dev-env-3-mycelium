@@ -170,7 +170,7 @@ reads a filled sources folder.
 **Built** (2026-11-10, the first piece): the boot mrepo's structure,
 `haiccing/base-package-boot/mrepo/` (type `boot`, initialised already, its
 API in `runtime/`; preloaded `service start /`), built into a standalone
-repository by `mrepo-base-runtime`'s `lib/build.js` and run on the `filesystem`
+repository by `mrepo-base-boot`'s `lib/build.js` and run on the `filesystem`
 storage (p2p-git, every layer on the filesystem). Not yet: `service boot /host`, the
 overlay on `base-package-mrepo`'s structure, the clean-up, the bundle.
 
