@@ -2,3 +2,7 @@ node_modules/
 
 # A HAICC command run in a source folder logs there (HAICC_WORK defaults to .): never kept.
 pear-full-square/*/log/
+
+# The local source: the packages written as Bare bundles, their addons, the
+# manifest, the pinned Bare (--sources=folder:sources). Built here, never kept.
+/sources/
