@@ -5,16 +5,24 @@ HAICC's boot: the boot mrepo, the root, and the code to start it
 its bundle, `base-package-boot.bundle`, run with Bare.
 
 ```sh
-bare run.js --work=<folder>
+bare run.js --work=<folder> [--sources=folder:<path>|github:<org>]... [--yes]
 ```
 
-The first time, the boot mrepo is built from its structure (`mrepo/`) into
-`<work>/mrepos/boot/` (a standalone repository: p2p-git, every layer on the
-filesystem, no Corestore; `<work>/mrepo.json` says so); then its runtime
-runs, in this process. Its preloaded request (`service start /`) starts
-it. A request posted to `<work>/mrepos/boot/inbox/` is answered in its
-`outbox` layer. Stopped over its local connection (`<work>/runtime.sock`),
-or by SIGTERM / SIGINT; run again, it opens what it left.
+First its prerequisites (`prerequisites.json`), before anything is
+written: the platform (`linux-x64`), the work folder (writable, no other
+mrepo there), the sources (reachable; `github:haiccing` when none is
+given), Bare (`bare.json`: the pinned version at `<work>/bare/`, put in
+place from the sources if missing, only with a yes: `--yes`, or asked on a
+terminal). One missing: it says which and stops (exit 3).
+
+The first time, the boot mrepo is then built from its structure (`mrepo/`)
+into `<work>/mrepos/boot/` (a standalone repository: p2p-git, every layer
+on the filesystem, no Corestore; `<work>/mrepo.json` says so); then its
+runtime runs, in this process. Its preloaded request (`service start /`)
+starts it. A request posted to `<work>/mrepos/boot/inbox/` is answered in
+its `outbox` layer. Stopped over its local connection
+(`<work>/runtime.sock`), or by SIGTERM / SIGINT; run again, it opens what
+it left.
 
 ## The package
 
@@ -23,7 +31,8 @@ or by SIGTERM / SIGINT; run again, it opens what it left.
   `runtime` (type `boot`, already initialised, its API), `inbox`, `outbox`,
   `request/pending/default` (the preloaded request), `request/execute`,
   `request/done`.
-- `run.js`: the entry.
+- `run.js`: the entry; `prerequisites.json`: what it checks first;
+  `bare.json`: the Bare it puts in place, pinned.
 - `modules/`: the code, copied whole: ours (`modules/pear-full-square/`,
   from `mrepo-base-runtime`, all the way down) and the third-party code
   (`modules/node_modules/`, recorded in `modules/third-party.json`).

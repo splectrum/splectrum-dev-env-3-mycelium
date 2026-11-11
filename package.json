@@ -47,6 +47,7 @@
     "bare-hrtime": "2.1.2",
     "bare-http1": "4.6.3",
     "bare-os": "3.9.4",
+    "bare-pack": "3.0.2",
     "bare-path": "3.1.2",
     "bare-process": "4.5.1",
     "bare-runtime": "1.36.0",
@@ -54,6 +55,7 @@
     "bare-tcp": "2.6.1",
     "bare-tty": "5.2.2",
     "bare-url": "2.5.6",
+    "bare-zlib": "^1.4.1",
     "brittle": "4.5.0",
     "child_process": "npm:bare-node-child-process@1.0.1",
     "crypto": "npm:bare-node-crypto@1.0.0",
@@ -62,7 +64,6 @@
     "path": "npm:bare-node-path@1.0.1",
     "process": "npm:bare-node-process@1.0.1",
     "url": "npm:bare-node-url@1.0.1",
-    "util": "npm:bare-node-util@1.0.0",
-    "bare-pack": "3.0.2"
+    "util": "npm:bare-node-util@1.0.0"
   }
 }

@@ -564,6 +564,25 @@ With the human, for the boot's bundle:
   definition (no `layer.json`); siblings later (`example/` with actual
   configs, compliance tests).
 
+## 16. The boot's prerequisites: built (2026-11-11)
+
+- `mrepo-base-runtime`'s `lib/prerequisites.js`: the checks (`platform`,
+  `work`, `sources`, `bare`, `docker`), each with a condition
+  (`not-in-container`), a fix only with a yes; Bare put in place from the
+  sources (a folder, or npm's registry), its tarball checked by sha512,
+  unpacked in Bare (`bare-zlib` added; npm drops the exec bit: set).
+- `base-package-boot`: `prerequisites.json` (platform, work, sources,
+  Bare), `bare.json` (the pinned Bare: the repository's for now; at the
+  standalone build, the one built in), `run.js` checking them first
+  (`--sources=` repeatable, replacing the default `github:haiccing`;
+  `--yes`; asked on a terminal); one missing: exit 3, nothing written.
+- Tested: the module (Bare put in place from a folder source, refused
+  without a yes, a wrong pin refused; Docker: missing here, "running", the
+  CLI without a daemon); the package (a source missing, Bare without a
+  yes: exit 3, nothing written; with: put in place, the boot runs).
+  Direct HTTPS from Bare fails in this container (its proxy's
+  certificate): sourcing over the network not tried here.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
