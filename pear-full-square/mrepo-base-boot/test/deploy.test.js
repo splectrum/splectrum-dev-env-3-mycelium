@@ -11,7 +11,7 @@ import Bundle from 'bare-bundle'
 import { openRepo, writer, p2pgitBackend } from 'mycelium-git'
 import { record, wrap, guid } from 'mrepo-base-request'
 import { ask } from 'mrepo-base-runtime'
-import { spawnSync } from 'bare-subprocess'
+import { spawn, spawnSync } from 'bare-subprocess'
 import { build, deploy, teardown, redeploy, place, parseSource } from '../index.js'
 
 const lj = (dir, mode) => { mkdirSync(dir, { recursive: true }); writeFileSync(join(dir, 'layer.json'), JSON.stringify({ mode, description: 'test' })) }
@@ -96,7 +96,17 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
     t.is(r.tornDown, '/host')
     t.is(r.package, 'haiccing/target', 'redeployed, its type as recorded')
 
+    // a runtime that does not stop (no socket, SIGTERM ignored): teardown ends it all the same
+    const stubborn = spawn('sh', ['-c', 'trap "" TERM; while true; do sleep 1; done'], { stdio: 'ignore', detached: true })
+    const rec = json(await repo.read('/main/host.json'))
+    exec.put('/main/host.json', Buffer.from(JSON.stringify({ ...rec, runtime: { pid: stubborn.pid } })))
+    await commit()
+    const logged = []
+    exec.log = (level, event, data) => logged.push({ level, event, ...data })
     t.alike(await teardown(exec, { uri: '/host' }), { tornDown: '/host' })
+    t.absent(spawnSync('kill', ['-0', String(stubborn.pid)], { stdio: 'ignore' }).status === 0, 'a runtime that would not stop: ended (SIGKILL)')
+    t.is(logged.find(e => e.event === 'runtime stopped')?.how, 'SIGKILL', 'and how, logged')
+    delete exec.log
     await commit()
     t.absent(existsSync(host), 'removed')
     t.is(await repo.read('/main/host.json').catch(() => null), null, 'its record out of main')
