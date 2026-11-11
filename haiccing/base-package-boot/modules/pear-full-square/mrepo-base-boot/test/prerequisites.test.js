@@ -5,12 +5,13 @@ import os, { tmpdir } from 'bare-os'
 import { spawnSync } from 'bare-subprocess'
 import { check, parseSource, inContainer, bareOf, acceptable, BARE_ORG } from '../lib/prerequisites.js'
 
-// Bare's tarball for putting it in place: from this repository's node_modules
-// (the lockfile's pin), packed as npm publishes it, into a folder source.
-const dev = join(import.meta.dirname ?? new URL('.', import.meta.url).pathname, '..', '..', '..')
-const lock = JSON.parse(readFileSync(join(dev, 'package-lock.json'), 'utf8'))
-const pin = lock.packages['node_modules/bare-runtime-linux-x64']
-const BARE = { version: pin.version, integrity: pin.integrity }
+// Bare's tarball for putting it in place: the version running this test, as
+// npm publishes it (npm view: its sha512; npm pack: the tarball), into a
+// folder source; what needs it skipped without npm (the module's tests stand
+// on their own: no development repository needed).
+const version = Bare.version.replace(/^v/, '')
+const viewed = spawnSync('npm', ['view', `bare-runtime-${os.platform()}-${os.arch()}@${version}`, 'dist.integrity'], { stdio: ['ignore', 'pipe', 'ignore'] })
+const BARE = { version, integrity: viewed.status === 0 ? viewed.stdout.toString().trim() : null }
 const TARBALL = `bare-runtime-${os.platform()}-${os.arch()}-${BARE.version}.tgz`
 
 test('platform, work, sources', async (t) => {
@@ -33,7 +34,7 @@ test('platform, work, sources', async (t) => {
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
 
-test('bare: missing, not fixed without a yes; put in place from a folder source, checked; there next time', { timeout: 120000 }, async (t) => {
+test('bare: missing, not fixed without a yes; put in place from a folder source, checked; there next time', { timeout: 120000, skip: !BARE.integrity }, async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'pre-bare-'))
   const src = mkdtempSync(join(tmpdir(), 'pre-src-'))
   try {

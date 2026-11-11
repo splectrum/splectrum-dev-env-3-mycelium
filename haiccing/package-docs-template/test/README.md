@@ -19,7 +19,11 @@ test/
 }
 ```
 
-Every package has `validate` and `full`; more sets as needed.
+Every package has `validate` (the package as deployed: its own tests) and
+`full` (everything: also `modules`, the carried modules' own tests, each
+from its folder on the package's copies); more sets as needed. A module's
+tests stand on their own: nothing outside the module (a sources folder,
+when needed, given as `SOURCES`).
 
 ## Running
 

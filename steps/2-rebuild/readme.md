@@ -835,6 +835,16 @@ assembled `modules/` copies committed up to date; the runtimes matched as
 pattern never matches the caller's own shell). Tested again: the boot
 module 8/8, both packages, the try script.
 
+Testing (the human: both needed): a `modules` test in each package
+(`test/modules/run.js`: every carried module's own tests, from its folder,
+on the package's copies, each its own process; in `full`); the module's
+tests made to stand on their own (`mrepo-base-boot`: its own structure for
+the build tests, Bare's pin from the running Bare, `SOURCES` for the
+runtime deploy); the boot package's test redeploys the host through the
+running boot mrepo's inbox (the old runtime stopped, a new one running,
+the node's record updated). Both packages' `full` sets pass (12 and 11
+modules), nothing left running.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

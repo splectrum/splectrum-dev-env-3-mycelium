@@ -26,7 +26,9 @@ mrepo a work folder's setting names, as the p2p host.)
 
 - `run.js`: the entry, the runtime's process.
 - `modules/`: the code (`mrepo-base-runtime` and what it uses), assembled.
-- `test/`: `bare test/run.js [<set>]`; `test/start/` runs the runtime over
-  an mrepo written for it (set `RUNTIME` to a bundle to test that instead).
+- `test/`: `bare test/run.js [<set>]`; `validate` the package as deployed
+  (`test/start/`), `full` also the modules' own tests (`test/modules/`: each
+  carried module tested from its folder, on the package's copies; `SOURCES`
+  a sources folder for the tests that need one).
 
 Written from [splectrum/splectrum-dev-env-3-mycelium](https://github.com/splectrum/splectrum-dev-env-3-mycelium).

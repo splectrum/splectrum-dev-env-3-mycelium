@@ -1,4 +1,7 @@
 {
-  "description": "Every test of the package.",
-  "tests": ["boot"]
+  "description": "Every test: the package's, and the modules' own (the code it carries).",
+  "tests": [
+    "boot",
+    "modules"
+  ]
 }
