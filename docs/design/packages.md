@@ -105,6 +105,21 @@ copies); only native addons are shared, once by hash
   starts it. No separate setup to build: outside, only Bare ensured and the
   bundle's hash checked (the same few lines of shell for every release).
 
+**Agreed** (the human, 2026-11-11): **the boot's release is a standalone
+executable, platform-specific** (`bare-build --standalone`: Bare built in,
+the bundle embedded, native libraries self-extracting; one a platform,
+`linux-x64` first). No prerequisite outside it. It checks the machine at
+the start of `run.js` (before anything is written), unpacks the boot mrepo,
+puts Bare in place **only if none is there** (pinned, checked: every later
+mrepo process runs on it), and starts the boot's runtime from the
+repository's own `packages/` (`base-package-mrepo`), then exits. The other
+packages stay plain bundles. Tried (2026-11-11): a standalone of
+`base-package-boot/run.js` builds (104 MB) and loads all its modules,
+native addons included; files beside the code are not there inside it
+(`import.meta.url` is `bare:/app.bundle/…`), so `mrepo/` travels as a
+module; its Bare (v1.35.0, `bare-build` 1.6.2) is not the repository's
+(v1.36.0).
+
 **Built** (2026-11-10, the first piece): the boot mrepo's structure,
 `haiccing/base-package-boot/mrepo/` (type `boot`, initialised already, its
 API in `runtime/`; preloaded `service start /`), built into a standalone
