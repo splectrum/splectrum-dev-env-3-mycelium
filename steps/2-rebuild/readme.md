@@ -589,6 +589,16 @@ organisation: `haiccing/` (the packages as Bare bundles, their manifest),
 `addons/` (by hash, shared, where a bundle at `<org>/` looks for them).
 Used as `--sources=folder:sources`.
 
+The invocation a request (the human): `run.js` makes the record first
+(`boot deploy /boot`, the command as typed, a GUID), logs each step's
+outcome in it (`output.outcomes`: the prerequisites with their results,
+built or already there), and once the boot mrepo is in place puts it,
+completed, into its `request/execute` (through `execute/request/execute`,
+as the execute protocol hands one over) before starting the runtime: the
+runtime moves it to `request/done` first, then runs the preloaded start.
+A prerequisite missing: no mrepo, the completed record printed, exit 3.
+Tested: the history's order, a deploy a run, the outcomes logged.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
