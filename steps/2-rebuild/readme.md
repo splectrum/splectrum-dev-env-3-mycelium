@@ -915,6 +915,11 @@ the module's README. A test run's Corestore left in `mrepo-base-boot`
 The other modules and organisations' repositories not yet brought to the
 rule (not part of this work).
 
+No duplication (the human): a deployment package documents only its own
+tests and its own structure; the generic (how tests run, the layers) is in
+the documentation packages, said once. The packages' `test/` and `mrepo/`
+READMEs and the modules' `test/` READMEs trimmed to that.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

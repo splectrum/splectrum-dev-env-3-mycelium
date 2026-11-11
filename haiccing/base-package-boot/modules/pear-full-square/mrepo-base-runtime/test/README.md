@@ -1,13 +1,5 @@
 # test/
 
-mrepo-base-runtime's own tests (brittle), each file on its own; they make what they need and remove it.
-
-```sh
-npm test        # bare ../../node_modules/brittle/cmd.js test/*.test.js
-```
-
-In a package that carries the module, the same tests run on the package's copy: its generic modules test, `/test/modules/pear-full-square/mrepo-base-runtime`.
-
 ## `cycle.test.js`
 
 - the cycle on p2p and on git: initialise (preloaded), start, put, get, delete, refused, stop, shutdown
