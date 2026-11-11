@@ -554,6 +554,12 @@ With the human, for the boot's bundle:
   `service`; an application adds its own; global at the layer's root,
   local later shadowing `main`, adding to those above, a same-named one
   overriding.
+- **The mrepo structure documented** outside this repository:
+  `haiccing/package-docs-mrepo` (created by the human), written from
+  `haiccing/package-docs-mrepo/` here: a folder a layer, its README what
+  the layer holds; the top README the modes, the storage, a request, the
+  install. Descriptions (the human): lead with the type of package, so the
+  right one is found in the organisation's list ("Docs package: ...").
 
 ## The product repositories: updated (2026-11-10)
 
