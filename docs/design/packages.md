@@ -79,6 +79,14 @@ for what it contributes; no copies between them:
   (loaded by the mrepo's runtime, named by each protocol's config); `run.js`,
   self-contained execution (run by Bare: the runtime package, a test, the
   boot's standalone release). One bundle a package, one hash.
+- **Linking registers a package's protocols** (the human, 2026-11-11):
+  linking a package into an mrepo puts its bundle in `packages/` and writes
+  the configs its `protocol.js` exports into the `protocols` layer, as
+  global protocols: a deploy activity, generic, done by the routine, no
+  code in the package. So a protocol-only package (`base-package-boot`,
+  `base-package-mrepo`) needs no `deploy.js`; that is for a package that
+  brings more structure (the runtime's layers, an application's `main`).
+  Local registration (on a section of `main`) stays explicit.
 - **Deploying is the boot protocol's `deploy`**, executed by the parent
   (the host: `boot deploy /host`, run by the boot mrepo): the
   application's requirements resolved into an order (runtime, boot, mrepo,

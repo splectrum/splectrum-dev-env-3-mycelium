@@ -16,7 +16,8 @@ holds is what the mrepo offers; anything else is refused.
 | `boot` | `deploy`, `teardown`, `redeploy` (teardown, then deploy): executed by the parent | `base-package-boot`, linked into an mrepo that deploys others |
 
 An application adds its own (`haicc`, `dispatch`). A protocol comes with
-the package that implements it: linked in, the mrepo has it.
+the package that implements it: linking the package registers its
+protocols here (their configs, from its `protocol.js`), as global ones.
 
 - **Global**: at the layer's root, for the whole mrepo.
 - **Local**: at the path of a `main` section; available there and below
