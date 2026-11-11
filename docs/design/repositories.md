@@ -240,6 +240,23 @@ and `start` in; `start` makes the type's API available.
     mid-request) and `resume`. And `run`: the whole cycle, boot to teardown
     (a test's run, a one-off execution). A thing without some of them
     offers only those it has, by its type.
+- **Protocols configured, in a layer of their own** (agreed, the human,
+  2026-11-11; to replace the type's single `api.json`): different packages
+  bring different protocols, so the external API is what the mrepo's
+  `protocols` layer holds, one config a protocol (its actions, the URIs,
+  the service states each is allowed in, the package that implements it),
+  composed by the overlay like any file.
+  - **Every mrepo** has, from the common package (`base-package-mrepo`):
+    **`boot`** (`deploy`, `teardown`: executed by the parent) and
+    **`service`** (`initialise`, `start`, `stop`, `shutdown`, `pause`,
+    `resume`, `run`). An application adds its own (`haicc`, `dispatch`).
+  - **Global** protocols at the layer's root (`protocols/boot.json`): the
+    whole mrepo. The base has only these.
+  - **Local** protocols, later, shadow `main`: `protocols/notes/dispatch.json`
+    registers `dispatch` on `/main/notes` and below, available there only.
+    A section's protocols add to those above; a same-named one deeper
+    overrides (narrows) the one above. So: these actions here, not
+    globally.
 - **A request is fully qualified**: `{ api, protocol, action, uri, body }`,
   and the command as typed, unparsed, beside it (`command`: the human,
   2026-11-10, easier to read; **built** for HAICC's terminal),
