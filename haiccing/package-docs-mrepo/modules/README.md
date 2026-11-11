@@ -10,6 +10,6 @@ modules test, `/test/modules`.
 |---|---|
 | [pear-full-square/mrepo-base-help/](pear-full-square/mrepo-base-help/) | Module: mrepo help, the READMEs of an mrepo's packages extracted, checked against the rules and retrieved by URI. |
 
-The third-party code: `node_modules/`, 81 modules for linux-x64, each
+The third-party code: `node_modules/`, 63 modules for linux-x64, each
 with its version, licence and source in [third-party.json](third-party.json).
 Our modules find each other by name through `node_modules/` (links).

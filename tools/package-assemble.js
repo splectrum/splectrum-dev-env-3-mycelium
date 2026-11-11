@@ -60,13 +60,18 @@ const imported = third => {
   for (const t of third) for (const f of jsFiles(join(dev, 'node_modules', t))) for (const [, , spec] of readFileSync(f, 'utf8').matchAll(SPEC)) if (aliases.includes(spec.split('/')[0])) found.add(spec.split('/')[0])
   return [...found]
 }
+// The assembly's options: this repository's default (package.json,
+// assemble), the package's own replacing it (try and see: its validate
+// proves it). omit: third-party code not carried.
+const options = { ...(root.assemble || {}), ...(readJson(join(pkg, 'package.json')).assemble || {}) }
+const omit = options.omit || []
 let also = ['brittle']
-let set = closure({ ours, third: join(dev, 'node_modules'), start, also })
+let set = closure({ ours, third: join(dev, 'node_modules'), start, also, omit })
 for (;;) {
   const more = imported(set.third).filter(a => !also.includes(a))
   if (!more.length) break
   also = [...also, ...more]
-  set = closure({ ours, third: join(dev, 'node_modules'), start, also })
+  set = closure({ ours, third: join(dev, 'node_modules'), start, also, omit })
 }
 
 const out = join(pkg, 'modules')
@@ -80,6 +85,14 @@ for (const [n, m] of ours) {
   mkdirSync(dirname(link), { recursive: true })
   symlinkSync(relative(dirname(link), join(out, m.path)), link)
 }
+// Each omitted module a stub in its place: code that loads it on demand
+// still resolves when the bundle is linked; used, it says it was omitted.
+for (const name of omit) {
+  const d = join(out, 'node_modules', name)
+  mkdirSync(d, { recursive: true })
+  writeFileSync(join(d, 'package.json'), JSON.stringify({ name, version: '0.0.0-omitted', main: 'index.js' }, null, 2) + '\n')
+  writeFileSync(join(d, 'index.js'), `module.exports = function omitted () { throw new Error('${name}: omitted from this package (its assemble options)') }\n`)
+}
 const rt = join(out, 'node_modules', `bare-runtime-${platform()}`, 'bin', 'bare')
 if (existsSync(rt)) chmodSync(rt, 0o755)
 const lock = existsSync(join(dev, 'package-lock.json')) ? readJson(join(dev, 'package-lock.json')) : { packages: {} }
@@ -88,7 +101,7 @@ const record = set.third.map(t => {
   const pj = readJson(join(dev, 'node_modules', t, 'package.json'))
   return { name: t, version: pj.version, license: pj.license || e.license || null, resolved: e.resolved || null, integrity: e.integrity || null }
 })
-writeFileSync(join(out, 'third-party.json'), JSON.stringify({ platform: platform(), modules: record }, null, 2) + '\n')
+writeFileSync(join(out, 'third-party.json'), JSON.stringify({ platform: platform(), omitted: omit, modules: record }, null, 2) + '\n')
 // Its README, linking down to each of ours (READMEs cascade:
 // haiccing/package-docs-template).
 const row = p => {

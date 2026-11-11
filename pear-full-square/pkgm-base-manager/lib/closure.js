@@ -9,6 +9,8 @@
 //     third   the folder of third-party code (node_modules)
 //     start   paths of our modules
 //     also    third-party names to carry too (what a package's own tests use: brittle)
+//     omit    third-party names not carried, nor what only they bring (code
+//             loaded only on demand: brittle's coverage, bare-cov)
 //   -> { ours: [path...], third: [name...], missing: [{ from, name }...] }
 // Read: every .js/.mjs/.cjs file of a module (its tests included: a module
 // is tested within its package), and its package.json's dependencies of
@@ -38,14 +40,14 @@ function sources (dir) {
   return out
 }
 
-export function closure ({ ours, third, start, also = [] }) {
+export function closure ({ ours, third, start, also = [], omit = [] }) {
   const byPath = new Map([...ours.values()].map(m => [m.path, m]))
   const dirs = [...ours.values()].map(m => [resolve(m.dir) + sep, m.path])
   const seen = new Set()
   const thirdSeen = new Set()
   const missing = []
   const queue = [...start]
-  const addThird = name => { if (!thirdSeen.has(name)) { thirdSeen.add(name); thirdQueue.push(name) } }
+  const addThird = name => { if (!thirdSeen.has(name) && !omit.includes(name)) { thirdSeen.add(name); thirdQueue.push(name) } }
   const thirdQueue = []
   for (const n of also) if (existsSync(join(third, n))) addThird(n); else missing.push({ from: '(also)', name: n })
   while (queue.length) {
@@ -103,7 +105,7 @@ export function closure ({ ours, third, start, also = [] }) {
           if (i < 0) break
           d = join(top, rel.slice(0, i))
         }
-        if (carried) continue
+        if (carried || omit.includes(dep)) continue
         if (existsSync(join(top, dep))) addThird(dep)
         else if (!pj.optionalDependencies?.[dep] && !pj.peerDependencies?.[dep]) missing.push({ from: name, name: dep })
       }
