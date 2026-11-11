@@ -29,6 +29,8 @@ is for.
 
 ## The rules
 
+- One structure, many purposes: a definition, documentation in place,
+  examples, tests.
 - A package depends only on packages.
 - A unit's entry is `run.js`.
 - A collection folder (`test/`, `example/`) holds units, a folder each;

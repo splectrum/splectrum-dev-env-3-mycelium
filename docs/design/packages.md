@@ -37,6 +37,11 @@ models a structure of mrepos and how it is built and installed.
                      (<org>/<module>/), the third-party code (node_modules/)
 ```
 
+- **One structure, many purposes** (the human, 2026-11-11): the same
+  structure holds a definition (a package: `mrepo/` with its `layer.json`
+  files), documentation in place (a docs package: a README where each
+  level or layer would be), examples (actual configs) and tests (what a
+  repository is checked against). Known once, found everywhere.
 - **`mrepo/` is laid out by layers**, as the repository will hold them,
   with the same URIs (`mrepo/main/…` is `/main/…`): `main/`, `runtime/`,
   `packages/`, `inbox/`, `outbox/`, `request/pending/default/`, … At each
