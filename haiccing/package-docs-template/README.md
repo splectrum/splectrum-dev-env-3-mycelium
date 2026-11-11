@@ -12,8 +12,8 @@ is for.
 | part | the unit then |
 |---|---|
 | `run.js` | can be executed on its own: `bare run.js [arguments]` |
-| `deploy.js` | can be deployed: gives its part of the structure and its requirements to the parent's `boot deploy` |
-| `protocol.js` | provides protocols: their actions, loaded by the runtime |
+| `deploy.js` | brings structure beyond its protocols: its part of the mrepo and its requirements, to the parent's `boot deploy` |
+| `protocol.js` | provides protocols: their configs and actions; linked into an mrepo, its protocols are registered, the actions loaded by the runtime |
 | `modules/`, `package.json` | carries its own dependencies |
 | `mrepo/` | comes with an mrepo, by layers |
 | `test/` | has tests and test sets |
