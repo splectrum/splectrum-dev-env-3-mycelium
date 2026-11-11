@@ -87,8 +87,19 @@ for what it contributes; no copies between them:
   Sourced, checked and linked by `boot deploy`, the parent's; for the
   initial boot mrepo by the release, a prerequisite step (as Bare), from
   the bundles it carries. Changing an mrepo's packages is a `redeploy`: no
-  packages protocol. The release then starts the boot's runtime from its
-  own `packages/` (`base-package-runtime`'s bundle) and exits.
+  packages protocol.
+- **Each package hard linked individually** (the human, 2026-11-11): its
+  bundle and each of its addons, into the mrepo's `packages/`, so the mrepo
+  runs only the packages registered for it, at the versions its layer pins,
+  and its folder shows what it runs. Linking is part of every deploy (a few
+  dozen links, no data copied); a restart links nothing.
+- **Deploy ends with the child's runtime started** (the human): from its
+  own `packages/`, by its directory (`bare <repo>/packages/haiccing/
+  base-package-runtime.bundle <repo>`; the runtime runs the mrepo it is
+  given, its socket inside its directory: several in one work folder): its
+  inbox operational. `teardown` stops it first (waiting until its process
+  has ended). The boot's release, for now, stops before its runtime (the
+  human's test) and prints that command as `next`.
 - **Linking registers a package's protocols** (the human, 2026-11-11):
   linking a package into an mrepo puts its bundle in `packages/` and writes
   the configs its `protocol.js` exports into the `protocols` layer, as

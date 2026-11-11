@@ -27,8 +27,12 @@ Its `layer.json` lists the packages and where they come from:
   `<work>/packages/<org>/<package>.bundle`, hard linked into each mrepo's
   `packages/`; the layer commits the list and the hashes, not the bytes.
   Never edited in place.
+- **Each linked individually**, the bundle and each addon: the mrepo runs
+  only the packages registered for it, at the versions it pins.
 - **Put in place by `boot deploy`** (the parent's; for the initial boot
   mrepo, by its release, before it runs). Changing them: a `redeploy`.
+- **The runtime is started from here**, by the mrepo's directory:
+  `bare <repo>/packages/haiccing/base-package-runtime.bundle <repo>`.
 - The packages an mrepo links, each for what it contributes:
   `base-package-runtime` (the engine, the entry point: every mrepo),
   `base-package-mrepo` (the `service` protocol: every mrepo),

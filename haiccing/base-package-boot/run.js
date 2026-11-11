@@ -13,8 +13,10 @@
 //      committed;
 //   4. the request, completed, into its request/execute: its runtime moves
 //      it to request/done first, when it starts.
-// Its runtime not started here: bare <work>/mrepos/boot/packages/haiccing/
-// base-package-runtime.bundle --work=<work> (printed as `next`).
+// Its runtime not started here (for now): <work>/bare/bin/bare
+// <work>/mrepos/boot/packages/haiccing/base-package-runtime.bundle
+// <work>/mrepos/boot (printed as `next`): from its own packages/, by its
+// directory.
 //   run.js [--work=<folder>] [--sources=folder:<path>|github:<org>]... [--yes]
 //     --work      the work folder: the current one by default
 //     --sources   where packages and Bare come from, in order (github:haiccing
@@ -102,7 +104,7 @@ try {
 
 // 4. The request completed, into the boot mrepo's request/execute.
 const runtime = join(viewOf(work, NAME), 'packages', 'haiccing', 'base-package-runtime.bundle')
-const completed = done({ ok: true, value: { outcomes, next: `${bareOf(work)} ${runtime} --work=${work}` } })
+const completed = done({ ok: true, value: { outcomes, next: `${bareOf(work)} ${runtime} ${viewOf(work, NAME)}` } })
 const repo = await open(work)
 try { await executed({ backend: repo.backend, writer: writer(repo.backend) }, core.key, wrap(`/${EXECUTE}`, completed)) } finally { await repo.close() }
 console.log(JSON.stringify(completed))
