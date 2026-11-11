@@ -65,7 +65,7 @@ test('the execution context: read-only to the action, the runtime\'s context rea
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
 
-test('exec.commit and exec.rollback: a checkpoint later reads see; merged once at the end; undone by a rollback or a failure', async (t) => {
+test('local commit and rollback in an action; the global commit at its end, a failure rolling back globally', async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'execute-'))
   try {
     await bootedHost(work, { preload: false })
@@ -79,7 +79,7 @@ test('exec.commit and exec.rollback: a checkpoint later reads see; merged once a
         seen = { work: exec.runtime.work, read: (await exec.read('/main/step.json')).toString() }
         exec.remove('/main/step.json')
         exec.put('/main/done.json', Buffer.from('2'))
-        if (fail) throw new Error('failed after a checkpoint')
+        if (fail) throw new Error('failed after a local commit')
         return 'ok'
       } } })
       const main = async () => (Object.fromEntries(await ctx.backend.listBranches())).main
@@ -92,30 +92,47 @@ test('exec.commit and exec.rollback: a checkpoint later reads see; merged once a
       }
       const before = await main()
       const bad = await one(true)
-      t.is(bad.error, 'failed after a checkpoint')
+      t.is(bad.error, 'failed after a local commit')
       t.is(await main(), before, 'failed: main untouched')
-      t.absent(await at(ctx.repo, '/execute/main/step.json'), 'its checkpoint undone: the execution branch back where it started')
+      t.absent(await at(ctx.repo, '/execute/main/step.json'), 'its local commit undone: the execution branch back where it started')
       const good = await one(false)
       t.is(good.output, 'ok')
-      t.alike(seen, { work, read: '1' }, 'after a checkpoint, reads see it; the work folder in the context')
+      t.alike(seen, { work, read: '1' }, 'after a local commit, reads see it; the work folder in the context')
       t.ok(await at(ctx.repo, '/main/done.json'), 'merged at the end')
-      t.absent(await at(ctx.repo, '/main/step.json'), 'with what followed the checkpoint')
-      // rollback: asked for by the action, which goes on
+      t.absent(await at(ctx.repo, '/main/step.json'), 'with what followed the local commit')
+      // the local rollback: back to the last local commit; the action goes on
       const back = { ...ACTIONS, rest: { ...ACTIONS.rest, put: async exec => {
-        exec.put('/main/gone.json', Buffer.from('3'))
+        exec.put('/main/committed.json', Buffer.from('3'))
         await exec.commit()
         exec.put('/main/also.json', Buffer.from('4'))
-        await exec.rollback()
-        const after = (await exec.select('/main/gone.json')).length
+        exec.rollback()
+        const after = { committed: (await exec.select('/main/committed.json')).length, also: (await exec.select('/main/also.json')).length }
         exec.put('/main/kept.json', Buffer.from('5'))
-        return { after }
+        return after
       } } }
       const name = guid()
       await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { api: 'haicc', protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name)))
       await execute(ctx, { actions: back })
-      t.alike((await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value.output, { after: 0 }, 'rollback: the checkpoint undone, reads see it')
-      t.absent(await at(ctx.repo, '/main/gone.json'), 'nothing of it merged')
-      t.absent(await at(ctx.repo, '/main/also.json'))
+      t.alike((await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value.output, { committed: 1, also: 0 }, 'local rollback: back to the last local commit')
+      t.ok(await at(ctx.repo, '/main/committed.json'), 'what was committed locally: merged')
+      t.absent(await at(ctx.repo, '/main/also.json'), 'what was rolled back: not')
+      // reset: everything of the execution ditched, local commits too
+      const ditch = { ...ACTIONS, rest: { ...ACTIONS.rest, put: async exec => {
+        exec.put('/main/first.json', Buffer.from('6'))
+        await exec.commit()
+        exec.put('/main/second.json', Buffer.from('7'))
+        await exec.reset()
+        const after = (await exec.select('/main/first.json')).length
+        exec.put('/main/fresh.json', Buffer.from('8'))
+        return { after }
+      } } }
+      const n2 = guid()
+      await layer(ctx, EXECUTE).put(n2, wrap(`/${EXECUTE}`, record(null, { api: 'haicc', protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, n2)))
+      await execute(ctx, { actions: ditch })
+      t.alike((await json(ctx.repo, `/${EXECUTE}/${n2}.json`)).value.value.output, { after: 0 }, 'reset: back to the start, its local commit undone')
+      t.absent(await at(ctx.repo, '/main/first.json'), 'nothing before the reset merged')
+      t.absent(await at(ctx.repo, '/main/second.json'))
+      t.ok(await at(ctx.repo, '/main/fresh.json'), 'what came after it: merged')
       t.ok(await at(ctx.repo, '/main/kept.json'), 'what the action wrote after it: merged')
     })
   } finally { rmSync(work, { recursive: true, force: true }) }
