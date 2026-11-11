@@ -79,6 +79,16 @@ for what it contributes; no copies between them:
   (loaded by the mrepo's runtime, named by each protocol's config); `run.js`,
   self-contained execution (run by Bare: the runtime package, a test, the
   boot's standalone release). One bundle a package, one hash.
+- **Packages put in place are a boot activity** (the human, 2026-11-11):
+  the store, `<work>/packages/<org>/<package>.bundle` (and
+  `<work>/packages/addons/<sha256>`), holds each package an mrepo
+  references, once a work folder; an mrepo's `packages/` hard links to it;
+  its `packages` layer commits the list and the hashes, not the bytes.
+  Sourced, checked and linked by `boot deploy`, the parent's; for the
+  initial boot mrepo by the release, a prerequisite step (as Bare), from
+  the bundles it carries. Changing an mrepo's packages is a `redeploy`: no
+  packages protocol. The release then starts the boot's runtime from its
+  own `packages/` (`base-package-runtime`'s bundle) and exits.
 - **Linking registers a package's protocols** (the human, 2026-11-11):
   linking a package into an mrepo puts its bundle in `packages/` and writes
   the configs its `protocol.js` exports into the `protocols` layer, as
