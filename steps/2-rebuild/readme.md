@@ -1137,3 +1137,11 @@ All sets pass: the documentation packages' `validate` (help, code), the
 runtime's and the boot's `full` (16 and 17 units); 156 READMEs in the help
 tree, 97 source READMEs, no problems; the code check, 14 modules, 4
 packages, no problems.
+
+No mark on an internal request (the human: the inbox needs no checks, and
+internal means not in the inbox, whose history is kept): the `internal`
+field gone; `isInternal(ctx, name)`, no record of it in the inbox, asked
+as the request executes; a preloaded request internal too. Internal: no
+API, not waiting for started; the service's own actions still under its
+state machine. `pkgm-base-check` pushed to its repository (created by the
+human). All sets pass (the boot's test 72 asserts).

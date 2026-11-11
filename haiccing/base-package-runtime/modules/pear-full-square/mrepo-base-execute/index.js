@@ -25,7 +25,7 @@
 // completed ([]: none was executing).
 // The base's actions are the framework's generic ones (lib/actions.js); a
 // type's own come later, read from its package.
-import { layer, wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runtimeData } from 'mrepo-base-request'
+import { layer, wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runtimeData, isInternal } from 'mrepo-base-request'
 import { ACTIONS } from './lib/actions.js'
 
 export { ACTIONS }
@@ -151,7 +151,8 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
     try {
       // Checked again as it executes: the state now, not as it was queued
       // (two queued while booted: the second initialise refused here).
-      const why = check(form, await runtimeData(ctx))
+      // internal (no record of it in the inbox): no API, no state gate
+      const why = check(form, await runtimeData(ctx), { internal: await isInternal(ctx, name) })
       if (why) throw new Error(why)
       const fn = actions[protocol]?.[action]
       if (!fn) throw new Error(`no action: ${protocol} ${action}`)

@@ -46,10 +46,10 @@ setting.
 - **One way into pending** (`admit(ctx, core, { origin })`): the inbox's
   records and internal requests (`internal(ctx, form)`, the mrepo's own)
   pass the same handler, validated by where they come from; refused, the
-  form completed with the error in `request/done`. An internal request is
-  marked internal by the handler; one from the inbox claiming it is
-  refused. `ctx.intake === false`: the inbox not taken in yet.
-- **Checked** (`check`): an internal request only for its URI; otherwise against the type, the API and the service state;
+  form completed with the error in `request/done`. No mark: a request is
+  internal when the inbox has no record of it (`isInternal(ctx, name)`).
+  `ctx.intake === false`: the inbox not taken in yet.
+- **Checked** (`check`): an internal request for its URI, and a service action for the state; otherwise against the type, the API and the service state;
   an mrepo without `service` (no `/runtime/service.json`): no gate, the URI
   canonical only.
 - **A layer's records** (`layer(ctx, branch)`): one JSON document a

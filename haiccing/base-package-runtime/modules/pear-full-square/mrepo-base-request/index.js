@@ -56,11 +56,12 @@ export async function runtimeData ({ repo }) {
 // At the inbox the state is not checked: the queue may hold requests that
 // change it first (a start behind the preloaded initialise); the API, once
 // extracted, is.
-export function check (value, { service, api }, { state = true } = {}) {
+export function check (value, { service, api }, { state = true, internal = false } = {}) {
   if (!value || typeof value !== 'object') return 'not a request'
-  // An internal request (the mrepo's own, placed straight into pending): no
-  // API, no state gate; its URI canonical only.
-  if (value.internal === true) {
+  // An internal request (the mrepo's own: not from the inbox): its URI
+  // canonical; no API, and it need not wait for the service to be started.
+  // The service's own actions stay under its state machine, whoever asks.
+  if (internal && !(service && value.protocol === 'service')) {
     try { if (canonical(value.uri ?? '') !== value.uri) return `not canonical: ${value.uri}` } catch (err) { return err.message }
     return null
   }
@@ -70,7 +71,7 @@ export function check (value, { service, api }, { state = true } = {}) {
     try { if (canonical(value.uri ?? '') !== value.uri) return `not canonical: ${value.uri}` } catch (err) { return err.message }
     return null
   }
-  if (value.api !== service.type) return `misdelivered: api ${value.api}, this repository is of type ${service.type}`
+  if (!internal && value.api !== service.type) return `misdelivered: api ${value.api}, this repository is of type ${service.type}`
   let uri
   try { uri = canonical(value.uri ?? '') } catch (err) { return err.message }
   if (uri !== value.uri) return `not canonical: ${value.uri} (${uri})`
@@ -110,37 +111,32 @@ const branches = async ctx => Object.fromEntries(await ctx.backend.listBranches(
 // refused one too).
 // The way into pending, the one handler every request passes: validated by
 // where it comes from, then queued; or refused (its form completed with the
-// error, in request/done, sent back). The inbox itself never judges.
-//   origin 'inbox'      the external checks: addressed here, the API, the
-//                       state as known now; a form that claims to be internal
-//                       is refused (internal is where a request comes from)
+// error, in request/done, sent back). The inbox itself checks nothing.
+//   origin 'inbox'      the external checks: the API, the state as known now
 //   origin 'internal'   the mrepo's own (its runtime's, an action's):
-//                       trusted, its URI canonical only; marked internal, so
-//                       the check as it executes exempts it from the API and
-//                       the state
+//                       trusted, its URI canonical only
+// No mark on the request: internal is having no record in the inbox, which
+// keeps its history (isInternal).
 // -> { name, queued, refused }
 export async function admit (ctx, core, { origin, name = core?.key ?? guid() }) {
   let why = null
-  let form = core?.value
-  try {
-    if (origin === 'internal') {
-      form = { ...form, internal: true }
-      why = check(form, await runtimeData(ctx))
-    } else if (form && typeof form === 'object' && 'internal' in form) {
-      why = 'not internal: a request from the inbox (internal is where a request comes from, not what it says)'
-    } else {
-      why = check(form, await runtimeData(ctx), { state: false })
-    }
-  } catch (err) { why = `runtime: ${err.message}` }
+  const form = core?.value
+  try { why = check(form, await runtimeData(ctx), origin === 'internal' ? { internal: true } : { state: false }) } catch (err) { why = `runtime: ${err.message}` }
   if (why) {
     const refused = complete(core ?? record(null, null, name), { ok: false, error: why })
     await layer(ctx, DONE).put(name, wrap(`/${DONE}`, refused), `Refused ${name}`)
     await sendBack(ctx, name, refused)
     return { name, refused: why }
   }
-  const queued = { ...core, value: form }
-  await layer(ctx, PENDING).put(name, wrap(`/${PENDING}`, queued), `${origin === 'internal' ? 'Internal' : 'Request'} ${name}: ${form.protocol} ${form.action} ${form.uri}`)
+  await layer(ctx, PENDING).put(name, wrap(`/${PENDING}`, core), `${origin === 'internal' ? 'Internal' : 'Request'} ${name}: ${form.protocol} ${form.action} ${form.uri}`)
   return { name, queued: true }
+}
+
+// Whether a request is internal: no record of it in the inbox (the inbox
+// keeps every record it was given; a preloaded request is internal too).
+export async function isInternal (ctx, name) {
+  if (!(await branches(ctx)).inbox) return true
+  return !(await layer(ctx, 'inbox').list()).includes(name)
 }
 
 // An internal request: the mrepo's own, submitted straight to the handler.

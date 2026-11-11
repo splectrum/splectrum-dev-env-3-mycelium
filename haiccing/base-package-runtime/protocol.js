@@ -20,7 +20,7 @@ export const protocols = {
     description: 'The mrepo\'s help, read by URI.',
     actions: {
       get: { ...ANY, description: 'The README documenting a URI, at a level; body { level, section }.' },
-      extract: { uris: ['/'], internal: true, description: 'The help layer extracted from the linked packages\' READMEs; placed by the runtime as it starts.' }
+      extract: { uris: ['/'], description: 'The help layer extracted from the linked packages\' READMEs; placed by the runtime as it starts.' }
     }
   }
 }
