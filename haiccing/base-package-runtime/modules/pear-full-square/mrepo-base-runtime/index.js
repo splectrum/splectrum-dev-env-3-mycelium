@@ -53,6 +53,7 @@ import { openRepo, writer } from 'mycelium-git'
 import { nativeBackend, p2pgitBackend } from 'mycelium-git'
 import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
 import { execute, failed, ACTIONS } from 'mrepo-base-execute'
+import { ACTIONS as RUNTIME_ACTIONS } from './lib/protocol.js'
 import { pathToFileURL } from 'bare-url'
 import pkg from './package.json' with { type: 'json' }
 
@@ -117,7 +118,8 @@ export async function protocolsOf (repo, folder) {
     if (!(p.entries || []).includes('protocol')) continue
     const bundle = join(folder, `${pkg}.bundle`)
     if (!existsSync(bundle)) throw new Error(`a linked package missing: ${bundle}`)
-    const offered = await (await import(pathToFileURL(bundle).href)).protocol()
+    // its dispatcher: run('/protocol') (imported, nothing else runs)
+    const offered = await (await import(pathToFileURL(bundle).href)).run('/protocol')
     for (const [protocol, fns] of Object.entries(offered.actions || {})) actions[protocol] = { ...actions[protocol], ...fns }
   }
   return actions
@@ -132,9 +134,10 @@ export async function run ({ work: w, repo: given = null, every = 200 }) {
   // commits that moved it (docs/design/repositories.md, "No log").
   const ctx = { work, dir, name: repo.name, backend: repo.backend, repo: openRepo(repo.backend), writer: writer(repo.backend), seen: {} }
   // The protocols its packages offer: each linked package with a protocol
-  // entry, loaded from its bundle in the mrepo's packages/ (its dispatcher:
-  // imported, nothing runs), its actions beside the framework's.
-  const actions = { ...ACTIONS, ...await protocolsOf(ctx.repo, join(dir, 'packages')) }
+  // entry, loaded from its bundle in the mrepo's packages/ (its dispatcher's
+  // run('/protocol')), its actions beside the framework's.
+  // and its own, built in: the runtime protocol (lib/protocol.js)
+  const actions = { ...ACTIONS, ...RUNTIME_ACTIONS, ...await protocolsOf(ctx.repo, join(dir, 'packages')) }
   const status = () => ({ ok: true, pid: process.pid, started, repository: { name: repo.name, storage: repo.storage, id: repo.id, key: repo.key }, version })
   let stopping = null
   let stopped = false

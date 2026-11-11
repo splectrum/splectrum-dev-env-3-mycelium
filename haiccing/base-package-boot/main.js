@@ -54,7 +54,7 @@ export async function run (target = '/run', { dryRun = false, print = null } = {
   const units = expand(target)
   if (!units) throw new Error(`no such entry: ${target}`)
   if (dryRun) return units
-  return runUnits(target, units, { program: self, print })
+  return runUnits(target, units, { print })
 }
 
 // brittle's summary: '# tests = a/b pass', '# asserts = c/d pass'; a failed
@@ -67,7 +67,54 @@ export function summary (tap) {
 
 // The units, each its own process (bare <program> <unit>), in order: the
 // result { target, ok, units: [{ unit, ok, tests, asserts, failures }] }.
-export async function runUnits (target, units, { program = self, print = null } = {}) {
+// A floating instance: from a bundle, the package expanded into a temporary
+// folder (its files; each native addon put back where require.addon looks,
+// from the addons beside the bundle; the links to our modules by name), its
+// main.js the program the units run with; removed after. From the
+// package's folder: none needed.
+export async function instantiate () {
+  if (!bundle) return { program: self, remove: () => {} }
+  const fs = await import('./modules/node_modules/bare-fs/index.js')
+  const { default: Bundle } = await import('./modules/node_modules/bare-bundle/index.js')
+  const path = await import('./modules/node_modules/bare-path/index.js')
+  const file = new URL(bundle).pathname
+  const b = Bundle.from(fs.readFileSync(file))
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'package-'))
+  for (const key of Object.keys(b.files)) {
+    fs.mkdirSync(path.dirname(path.join(dir, key)), { recursive: true })
+    fs.writeFileSync(path.join(dir, key), b.read(key))
+  }
+  const platform = `${os.platform()}-${os.arch()}`
+  for (const [from, map] of Object.entries(b.resolutions)) {
+    for (const to of Object.values(map)) {
+      if (!to?.addon || !from.startsWith('/modules/node_modules/')) continue
+      const parts = from.slice('/modules/node_modules/'.length).split('/')
+      const pkg = parts[0].startsWith('@') ? parts.slice(0, 2).join('/') : parts[0]
+      const name = JSON.parse(b.read(`/modules/node_modules/${pkg}/package.json`)).name.replace('/', '+')
+      const target = path.join(dir, 'modules', 'node_modules', pkg, 'prebuilds', platform, `${name}.bare`)
+      fs.mkdirSync(path.dirname(target), { recursive: true })
+      fs.copyFileSync(path.join(path.dirname(file), to.addon.replace(/^\/\.\.\//, '')), target)
+    }
+  }
+  const mods = path.join(dir, 'modules')
+  for (const org of fs.readdirSync(mods).filter(n => n !== 'node_modules')) {
+    if (!fs.statSync(path.join(mods, org)).isDirectory()) continue
+    for (const mod of fs.readdirSync(path.join(mods, org))) {
+      const pj = path.join(mods, org, mod, 'package.json')
+      if (!fs.existsSync(pj)) continue
+      const link = path.join(mods, 'node_modules', JSON.parse(fs.readFileSync(pj, 'utf8')).name)
+      if (!fs.existsSync(link)) { fs.mkdirSync(path.dirname(link), { recursive: true }); fs.symlinkSync(path.relative(path.dirname(link), path.join(mods, org, mod)), link) }
+    }
+  }
+  return { program: path.join(dir, 'main.js'), remove: () => fs.rmSync(dir, { recursive: true, force: true }) }
+}
+
+export async function runUnits (target, units, { program = null, print = null } = {}) {
+  const instance = program ? { program, remove: () => {} } : await instantiate()
+  try { return await runEach(target, units, instance.program, print) } finally { instance.remove() }
+}
+
+async function runEach (target, units, program, print) {
   const results = []
   for (const u of units) {
     if (print) print(`# ${u}`)

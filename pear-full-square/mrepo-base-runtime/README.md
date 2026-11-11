@@ -14,8 +14,14 @@ installed by HAICC's boot into the host's packages. Built step by step
   entry (`start --work=<folder>`, `version`).
 - The protocols its linked packages offer (`protocolsOf`): each package
   in its `packages` layer with a `protocol` entry, imported from its
-  `packages/` (the bundle's dispatcher: nothing runs on import), its actions
-  beside the framework's. Without `service` (no `runtime/service.json`): no
+  `packages/` (the bundle's dispatcher, `run('/protocol')`: nothing else
+  runs on import), its actions beside the framework's.
+- Its own protocol, built in (`lib/protocol.js`): `runtime run
+  /packages/<org>/<package><target>`, body `{ dryRun }`: a linked package's
+  entry through its dispatcher, its tests above all (a floating instance of
+  the package, each unit its own process); the result the request's output,
+  a line a unit in its log. `/protocol`, `/deploy`: the names offered.
+  `/run` refused (a package's program, not run inside the runtime). Without `service` (no `runtime/service.json`): no
   gate, and the runtime keeps running until stopped.
 - An mrepo by its directory (`run({ repo })`, as `ask`, `start`, `open`):
   `<work>/mrepos/<name>`, on the filesystem storage, its socket

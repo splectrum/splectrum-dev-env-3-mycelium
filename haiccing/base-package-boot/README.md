@@ -64,10 +64,13 @@ command as typed, a GUID), each step's outcome logged in it:
 - `modules/`: the code, copied whole: ours (`modules/pear-full-square/`,
   from `mrepo-base-runtime`, all the way down) and the third-party code
   (`modules/node_modules/`, recorded in `modules/third-party.json`).
-- `test/`: `bare test/run.js [<set>]`; `validate` the package as deployed
-  (`test/boot/`), `full` also the modules' own tests (`test/modules/`: each
-  carried module tested from its folder, on the package's copies; `SOURCES`
-  a sources folder for the tests that need one).
+- `test/`: `bare test/run.js [<set>]`, or `bare <bundle> /test/<set>`, or
+  `runtime run /packages/haiccing/base-package-boot/test/<set>` in a running
+  mrepo; `validate` the package as deployed (`test/boot/`), `full` also the
+  generic modules test (each carried module's own tests, on the package's
+  copies). From the bundle in a floating instance; the result returned.
+  `SOURCES`: a sources folder, for the tests that need one. See
+  `haiccing/package-docs-template`, `test/README.md`.
 
 Written from the development repository
 ([splectrum/splectrum-dev-env-3-mycelium](https://github.com/splectrum/splectrum-dev-env-3-mycelium)):

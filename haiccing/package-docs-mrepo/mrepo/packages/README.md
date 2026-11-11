@@ -36,6 +36,10 @@ Its `layer.json` lists the packages and where they come from:
   mrepo, by its release, before it runs). Changing them: a `redeploy`.
 - **The runtime is started from here**, by the mrepo's directory:
   `bare <repo>/packages/haiccing/base-package-runtime.bundle <repo>`.
+- **Its tests run from here**: `runtime run
+  /packages/<org>/<package>/test/<set>` (the runtime protocol, built in),
+  through the package's dispatcher, in a floating instance; the result the
+  request's output.
 - The packages an mrepo links, each for what it contributes:
   `base-package-runtime` (the engine, the entry point: every mrepo),
   `base-package-mrepo` (the `service` protocol: every mrepo),

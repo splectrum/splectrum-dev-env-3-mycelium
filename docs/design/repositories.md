@@ -158,6 +158,18 @@ protocols.
   shell, detached (`bare-subprocess` ends its own children when its process
   ends). No log of its own: a pass that fails puts its error in the request
   executing (below, "No log").
+- **The runtime protocol** (the human, 2026-11-11; **built**,
+  `mrepo-base-runtime/lib/protocol.js`): the runtime's own, built in, in
+  every mrepo it runs, beside those its linked packages offer. One action:
+  `runtime run /packages/<org>/<package><target>`, body `{ dryRun }`: the
+  target run through the package's dispatcher (its bundle in the mrepo's
+  `packages/`, imported; only a package the mrepo has linked). A test runs
+  self-contained, a floating instance of the package (docs/design/packages.md,
+  "A test is self-contained"): its result the request's output, a line a
+  unit in its log. `/protocol`, `/deploy`: the names the entry offers. A dry
+  run: what the target would run. `/run` refused: a package's program is not
+  run inside the runtime's process. Through the gate as any protocol: where
+  the mrepo has a service, its API must offer `runtime` at `/packages`.
 - **Protocols meet in data, never by calls**: each watches data states and
   writes the next; a restart picks up where the data stands.
 
