@@ -64,6 +64,7 @@ export async function failed (ctx, why) {
 // The runtime's context as an execution reads it: read-only, no writer.
 const runtimeView = ctx => Object.freeze({
   name: ctx.name,
+  work: ctx.work ?? null,
   branches: async () => (await ctx.backend.listBranches()).map(([b]) => b),
   select: uri => ctx.repo.select(uri),
   read: uri => ctx.repo.read(uri)
@@ -78,13 +79,43 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
     const form = core.value
     for (const t of [...TARGETS, EXECUTE]) await sync(w, backend, t)
     // The action's context: reads overlaid (a target read from its execution
-    // branch), writes collected per target, committed as one change each.
+    // branch), writes collected per target. Two contexts: local, the
+    // action's (exec.commit(): the writes so far committed to the execution
+    // branches, later reads see them; exec.discard(): the uncommitted writes
+    // dropped; exec.rollback(): the last local commit undone; exec.reset():
+    // all of it ditched, back to the start), for building up its changes and handling its errors; global, the runtime's, not the action's: when the action
+    // ends, its writes committed and the execution branches merged back into
+    // their targets, once; a failure rolls back globally (the execution
+    // branches reset to where they started, nothing merged).
+    const start = await heads(backend)
     const edits = new Map()
     const branchOf = uri => {
       const [, first] = uri.split('/')
       return TARGETS.includes(first) ? first : null
     }
     const inside = uri => uri.slice(uri.indexOf('/', 1) < 0 ? uri.length : uri.indexOf('/', 1)) || '/'
+    const { protocol, action } = form
+    const message = `${name}: ${protocol} ${action} ${form.uri}`
+    const flush = async (what = message) => {
+      for (const [b, list] of edits) {
+        const c = await w.change(`execute/${b}`)
+        for (const [op, path, bytes] of list) op === 'put' ? await c.put(path, bytes) : c.remove(path)
+        await c.commit(what, { author: AUTHOR })
+      }
+      edits.clear()
+    }
+    // Back to the start: the writes not committed discarded, each execution
+    // branch reset to where this execution started (a failure; or the
+    // action's exec.reset()).
+    // The execution branches set back to given heads.
+    const back = async to => {
+      edits.clear()
+      const now = await heads(backend)
+      for (const t of TARGETS) if (now[`execute/${t}`] !== to[`execute/${t}`]) await backend.updateBranch(`execute/${t}`, to[`execute/${t}`], now[`execute/${t}`])
+    }
+    const rollbackAll = () => { commits.length = 0; return back(start) }
+    // The heads before each local commit: what a rollback goes back to.
+    const commits = []
     const exec = Object.freeze({
       runtime: runtimeView(ctx),
       // A URI as the execution sees it: /main/x read from execute/main.
@@ -92,9 +123,19 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       select: uri => repo.select(exec.path(uri)),
       read: uri => repo.read(exec.path(uri)),
       put (uri, bytes) { const b = branchOf(uri); if (!b) throw new Error(`not writable here: ${uri}`); (edits.get(b) ?? edits.set(b, []).get(b)).push(['put', inside(uri), bytes]) },
-      remove (uri) { const b = branchOf(uri); if (!b) throw new Error(`not writable here: ${uri}`); (edits.get(b) ?? edits.set(b, []).get(b)).push(['remove', inside(uri)]) }
+      remove (uri) { const b = branchOf(uri); if (!b) throw new Error(`not writable here: ${uri}`); (edits.get(b) ?? edits.set(b, []).get(b)).push(['remove', inside(uri)]) },
+      // The local commit: the writes so far committed to the execution
+      // branches (later reads see them).
+      commit: async (what = null) => { commits.push(await heads(backend)); return flush(what ? `${message}: ${what}` : message) },
+      // The uncommitted writes dropped.
+      discard: () => { edits.clear() },
+      // The last local commit undone (and what is not committed): back to the
+      // commit before it.
+      rollback: () => commits.length ? back(commits.pop()) : back(start),
+      // Everything of this execution ditched, its local commits too: back to
+      // where it started; the action goes on.
+      reset: () => rollbackAll()
     })
-    const { protocol, action } = form
     let result
     try {
       // Checked again as it executes: the state now, not as it was queued
@@ -104,16 +145,15 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       const fn = actions[protocol]?.[action]
       if (!fn) throw new Error(`no action: ${protocol} ${action}`)
       result = { ok: true, value: (await fn(exec, form)) ?? null }
+      await flush()
     } catch (err) {
       result = { ok: false, error: err.message }
-      edits.clear()
+      await rollbackAll()
     }
-    // The writes, one commit per execution branch; merged back, main first.
-    for (const [b, list] of edits) {
-      const c = await w.change(`execute/${b}`)
-      for (const [op, path, bytes] of list) op === 'put' ? await c.put(path, bytes) : c.remove(path)
-      await c.commit(`${name}: ${protocol} ${action} ${form.uri}`, { author: AUTHOR })
-      await w.merge(`execute/${b}`, b, `Merge ${name}: ${protocol} ${action} ${form.uri}`, { author: AUTHOR })
+    // Merged back, main first: each execution branch that moved.
+    if (result.ok) {
+      const now = await heads(backend)
+      for (const t of TARGETS) if (now[`execute/${t}`] !== start[`execute/${t}`]) await w.merge(`execute/${t}`, t, `Merge ${message}`, { author: AUTHOR })
     }
     // The form completed, in its envelope, through its own execution branch.
     await executed(ctx, name, wrap(`/${EXECUTE}`, complete(core, result)))

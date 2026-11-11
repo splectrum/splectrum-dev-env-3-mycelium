@@ -4,32 +4,36 @@ HAICC's boot: the boot mrepo, the root, and the code to start it
 (`docs/design/packages.md`, "The boot mrepo: the root"). Its release will be
 its bundle, `base-package-boot.bundle`, run with Bare.
 
+The release, for a platform (`tools/boot-release.js` in the development
+repository): a standalone executable, Bare built in, and the sources beside
+it (`sources/haiccing/`: the runtime's bundle; `sources/addons/`;
+`sources/holepunchto/`: the Bare it puts in place, the one built in).
+
 ```sh
-bare run.js --work=<folder> [--sources=folder:<path>|github:<org>]... [--yes]
+./base-package-boot --work=<folder> --sources=folder:<release>/sources --yes
 ```
 
-The invocation is a request from the start: a record, `boot deploy
-/boot`, the command as typed, its key a GUID; each step's outcome is
-logged in it. Completed, it is put into the boot mrepo's `request/execute`
-once the mrepo is there, before its runtime starts: the runtime moves it to
-`request/done` first, the history's first entry of each run. Without an
-mrepo (a prerequisite missing) it is printed only.
+From the package's folder, the same: `bare run.js --work=<folder> ...`.
+The invocation is a request from the start, `boot deploy /boot` (the
+command as typed, a GUID), each step's outcome logged in it:
 
-First its prerequisites (`prerequisites.json`), before anything is
-written: the platform (`linux-x64`), the work folder (writable, no other
-mrepo there), the sources (reachable; `github:haiccing` when none is
-given), Bare (`bare.json`: the pinned version at `<work>/bare/`, put in
-place from the sources if missing, only with a yes: `--yes`, or asked on a
-terminal). One missing: it says which and stops (exit 3).
-
-The first time, the boot mrepo is then built from its structure (`mrepo/`)
-into `<work>/mrepos/boot/` (a standalone repository: p2p-git, every layer
-on the filesystem, no Corestore; `<work>/mrepo.json` says so); then its
-runtime runs, in this process. Its preloaded request (`service start /`)
-starts it. A request posted to `<work>/mrepos/boot/inbox/` is answered in
-its `outbox` layer. Stopped over its local connection
-(`<work>/runtime.sock`), or by SIGTERM / SIGINT; run again, it opens what
-it left.
+1. **Prerequisites** (`prerequisites.json`), before anything is written:
+   the platform (`linux-x64`), the work folder (writable, not the
+   filesystem's root, no other mrepo there), the sources, Bare (`bare.json`:
+   put in place at `<work>/bare/` if missing, only with a yes). One missing:
+   it says which and stops (exit 3), the request printed only.
+2. **The boot mrepo built** the first time into `<work>/mrepos/boot/` (from
+   `mrepo/`; in the release, embedded).
+3. **Its packages put in place**: those its `packages` layer lists (the
+   runtime's), into the work folder's store `<work>/packages/`, checked
+   against their manifest, hard linked into `<work>/mrepos/boot/packages/`;
+   the list and hashes committed.
+4. **Its request**, completed, into its `request/execute`, and printed, with
+   `next`: the command that starts its runtime. The runtime is not started
+   by the boot (for now): `<work>/bare/bin/bare
+   <work>/mrepos/boot/packages/haiccing/base-package-runtime.bundle
+   --work=<work>`. Started, it moves the request to `request/done` first,
+   then runs the preloaded `service start /`.
 
 ## The package
 
@@ -39,7 +43,8 @@ it left.
   `request/pending/default` (the preloaded request), `request/execute`,
   `request/done`.
 - `run.js`: the entry; `prerequisites.json`: what it checks first;
-  `bare.json`: the Bare it puts in place, pinned.
+  `bare.json`: the Bare it puts in place, pinned (in the release: the one
+  built in); `protocol.js`: the boot protocol's configs and actions.
 - `modules/`: the code, copied whole: ours (`modules/pear-full-square/`,
   from `mrepo-base-runtime`, all the way down) and the third-party code
   (`modules/node_modules/`, recorded in `modules/third-party.json`).

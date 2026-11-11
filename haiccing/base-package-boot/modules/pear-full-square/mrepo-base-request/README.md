@@ -17,10 +17,17 @@ setting.
 - **The boxes are layers**, `inbox` and `outbox` (non-atomic): posting is a
   commit, `post(ctx, record, name)` (an input adding its commit: native git)
   or `post(ctx)` (the inbox folder's new files, the layer's working tree:
-  the p2p host's runtime); taken in when the `inbox` head moves; answers
-  committed into `outbox`; nothing removed.
+  the p2p host's and a `filesystem` mrepo's runtime); taken in when the
+  `inbox` head moves; answers committed into `outbox`; nothing removed.
+- **A layer's records** (`layer(ctx, branch)`): one JSON document a
+  record, `<name>.json`, listed in the order they arrived (the commit
+  chain). A layer's config, `layer.json` (committed with it when built from
+  a structure), is not one of its records, nor is it posted from the inbox
+  folder.
 - **The setting** (`setting(work)`): `<work>/mrepo.json`,
-  `{ "storage": "git" | "p2p", "name" }`; without it the p2p host.
+  `{ "storage": "git" | "filesystem" | "p2p", "name" }` (native git;
+  p2p-git with every layer on the filesystem, no Corestore; the p2p host
+  over its Corestore and disk side); without it the p2p host.
 
 ## Tests
 

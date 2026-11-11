@@ -1,16 +1,21 @@
 // The boot: the boot mrepo, the root (docs/design/packages.md, "The boot
-// mrepo: the root"). The invocation is a request from the start, a record
-// (boot deploy /boot, the command as typed, its key a GUID); each step's
-// outcome logged in it; completed, it is put into the boot mrepo's
-// request/execute once the mrepo is there, before its runtime starts, so the
-// runtime moves it to request/done first; without an mrepo (a prerequisite
-// missing) it is printed only. First its prerequisites (prerequisites.json), checked
-// before anything is written: the platform, the work folder, the sources,
-// Bare (bare.json: put in place if missing, only with a yes); a missing one
-// stops it (exit 3). Then the boot mrepo built from its structure (mrepo/)
-// into <work>/mrepos/boot/ the first time, and run: the runtime, in this
-// process, on the filesystem storage. Its preloaded request starts it.
-//   bare run.js [--work=<folder>] [--sources=folder:<path>|github:<org>]... [--yes]
+// mrepo: the root"), put in place up to its runtime's start. The invocation
+// is a request from the start, a record (boot deploy /boot, the command as
+// typed, its key a GUID); each step's outcome logged in it:
+//   1. the prerequisites (prerequisites.json), before anything is written:
+//      the platform, the work folder, the sources, Bare (bare.json: put in
+//      place if missing, only with a yes); a missing one stops it (exit 3),
+//      the request printed only (no mrepo to hold it);
+//   2. the boot mrepo built from its structure into <work>/mrepos/boot/ the
+//      first time (mrepo/: in the release, the module mrepo-files.js);
+//   3. its packages put in place (its packages layer's list): the store
+//      <work>/packages/, hard linked into its packages/, the list and hashes
+//      committed;
+//   4. the request, completed, into its request/execute: its runtime moves
+//      it to request/done first, when it starts.
+// Its runtime not started here: bare <work>/mrepos/boot/packages/haiccing/
+// base-package-runtime.bundle --work=<work> (printed as `next`).
+//   run.js [--work=<folder>] [--sources=folder:<path>|github:<org>]... [--yes]
 //     --work      the work folder: the current one by default
 //     --sources   where packages and Bare come from, in order (github:haiccing
 //                 when none is given)
@@ -18,23 +23,31 @@
 //                 refused otherwise)
 // Our modules from the package's own modules/ (no node_modules above them here).
 import process from './modules/node_modules/bare-process/index.js'
-import { existsSync, mkdirSync } from './modules/node_modules/bare-fs/index.js'
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync, rmSync, readFileSync } from './modules/node_modules/bare-fs/index.js'
+import { tmpdir } from './modules/node_modules/bare-os/index.js'
 import { join, dirname, resolve, basename } from './modules/node_modules/bare-path/index.js'
 import { fileURLToPath } from './modules/node_modules/bare-url/index.js'
-import { run, gitdirOf, open } from './modules/pear-full-square/mrepo-base-runtime/index.js'
-import { build, check, parseSource } from './modules/pear-full-square/mrepo-base-boot/index.js'
+import { gitdirOf, open, viewOf } from './modules/pear-full-square/mrepo-base-runtime/index.js'
+import { build, check, parseSource, place, bareOf } from './modules/pear-full-square/mrepo-base-boot/index.js'
 import { record, wrap, guid, complete, EXECUTE } from './modules/pear-full-square/mrepo-base-request/index.js'
 import { executed } from './modules/pear-full-square/mrepo-base-execute/index.js'
-import { writer } from './modules/pear-full-square/mycelium-git/index.js'
+import { writer, openRepo } from './modules/pear-full-square/mycelium-git/index.js'
 import prerequisites from './prerequisites.json' with { type: 'json' }
 import bare from './bare.json' with { type: 'json' }
 
-const here = dirname(fileURLToPath(import.meta.url))
+// The boot mrepo's structure: in the release, a module (no files beside
+// the code inside an executable); from the package's folder, mrepo/.
+let embedded = null
+try { embedded = (await import('./mrepo-files.js')).default } catch {}
+const here = embedded ? null : dirname(fileURLToPath(import.meta.url))
 const NAME = 'boot'
 // Every build of the same structure the same commits (2026-11-10T00:00:00Z).
 const BUILT = 1762732800
 
-const args = process.argv.slice(2)
+// The arguments: after the script (bare run.js ..., bare <bundle> ...), or
+// straight after the executable (the standalone release: no script).
+const script = /\.(js|bundle)$/.test(process.argv[1] ?? '')
+const args = process.argv.slice(script ? 2 : 1)
 const value = flag => args.filter(a => a.startsWith(`--${flag}=`)).map(a => a.slice(flag.length + 3))
 const work = resolve(value('work')[0] ?? '.')
 const sources = (value('sources').length ? value('sources') : ['github:haiccing']).map(parseSource)
@@ -44,7 +57,7 @@ const ask = process.stdin.isTTY
   : null
 
 // The request: the invocation, as typed (the entry's name, its arguments).
-const entry = basename(process.argv[1]?.endsWith('.js') ? process.argv[1] : process.argv[0])
+const entry = basename(script ? process.argv[1] : process.argv[0])
 const core = record(null, { api: NAME, protocol: 'boot', action: 'deploy', uri: `/${NAME}`, command: [entry, ...args].join(' ') }, guid())
 // The outcomes, logged as it goes: the request's output.
 const outcomes = []
@@ -59,15 +72,36 @@ if (!pre.ok) {
   process.exit(3)
 }
 mkdirSync(work, { recursive: true })
-if (!existsSync(gitdirOf(work, NAME))) {
-  const { layers } = await build({ from: join(here, 'mrepo'), work, name: NAME, time: BUILT })
-  outcomes.push({ step: 'built', ok: true, mrepo: join(work, 'mrepos', NAME), layers: Object.keys(layers) })
-} else outcomes.push({ step: 'built', ok: true, mrepo: join(work, 'mrepos', NAME), already: true })
+try {
+  // 2. Built, the first time.
+  if (!existsSync(gitdirOf(work, NAME))) {
+    let from = here && join(here, 'mrepo')
+    let tmp = null
+    if (embedded) {
+      tmp = from = mkdtempSync(join(tmpdir(), 'boot-mrepo-'))
+      for (const [p, b64] of Object.entries(embedded)) { mkdirSync(dirname(join(tmp, p)), { recursive: true }); writeFileSync(join(tmp, p), Buffer.from(b64, 'base64')) }
+    }
+    try {
+      const { layers } = await build({ from, work, name: NAME, time: BUILT })
+      outcomes.push({ step: 'built', ok: true, mrepo: viewOf(work, NAME), layers: Object.keys(layers) })
+    } finally { if (tmp) rmSync(tmp, { recursive: true, force: true }) }
+  } else outcomes.push({ step: 'built', ok: true, mrepo: viewOf(work, NAME), already: true })
 
-// The request completed, into the boot mrepo's request/execute, before its
-// runtime starts.
-const completed = done({ ok: true, value: { outcomes } })
+  // 3. Its packages put in place: the list its packages layer holds.
+  const repo = await open(work)
+  let list
+  try { list = JSON.parse((await openRepo(repo.backend).read('/packages/layer.json')).toString()).packages } finally { await repo.close() }
+  const placed = await place({ work, name: NAME, sources, list })
+  outcomes.push({ step: 'packages', ok: true, ...placed })
+} catch (err) {
+  // The mrepo there or not: the request printed, the error said.
+  console.log(JSON.stringify(done({ ok: false, error: err.message })))
+  process.exit(1)
+}
+
+// 4. The request completed, into the boot mrepo's request/execute.
+const runtime = join(viewOf(work, NAME), 'packages', 'haiccing', 'base-package-runtime.bundle')
+const completed = done({ ok: true, value: { outcomes, next: `${bareOf(work)} ${runtime} --work=${work}` } })
 const repo = await open(work)
 try { await executed({ backend: repo.backend, writer: writer(repo.backend) }, core.key, wrap(`/${EXECUTE}`, completed)) } finally { await repo.close() }
 console.log(JSON.stringify(completed))
-await run({ work })
