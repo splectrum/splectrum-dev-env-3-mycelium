@@ -7,4 +7,3 @@ pear-full-square/*/log/
 # their manifest), holepunchto/ (the pinned Bare's tarball), addons/ (by hash,
 # shared): --sources=folder:sources. Built here, never kept.
 /sources/
-/release/

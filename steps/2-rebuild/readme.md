@@ -702,6 +702,17 @@ filesystem's root (a prerequisite). Its leftovers at `/` in this container
 (`/bare`, `/mrepos`, `/packages`, `/mrepo.json`) could not be removed by me
 (a safety check).
 
+Then (the human): no GitHub release for now; the release built and kept
+in the local sources, its prerequisites there too, for a test from the
+command line. `tools/boot-release.js` builds into `sources/`: the
+release `sources/haiccing/base-package-boot-linux-x64` (with its `.json`),
+the runtime's bundle, the addons, and Bare's tarball (the built-in
+version) under `holepunchto/`, fetched with curl (no npm). Run from the
+repository's folder: `sources/haiccing/base-package-boot-linux-x64
+--work=<folder> --sources=folder:sources --yes`. The local agent's prompt
+(`prompt-local.md`) rewritten for it: update, install, build, check once,
+report; nothing published.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
