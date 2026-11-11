@@ -41,9 +41,11 @@ its note is committed.
 >    Within a few seconds that runtime deploys the host inside the boot
 >    mrepo: `/tmp/boot-check/mrepos/boot/main/host/` appears (with `.git`,
 >    `inbox/`, `outbox/`, `packages/`), and two runtime processes run
->    (`pgrep -af /tmp/boot-check/`). Then stop them,
->    `pkill -TERM -f /tmp/boot-check/` (wait until `pgrep` finds none), and
->    remove `/tmp/boot-check`.
+>    (`pgrep -af '[/]bin/bare /tmp/boot-check/'`). Then stop them,
+>    `pkill -TERM -f '[/]bin/bare /tmp/boot-check/'`, in a command of its own
+>    (the bracket keeps the pattern from matching your own shell; wait until
+>    `pgrep -f '[/]bin/bare /tmp/boot-check/'` finds none), and remove
+>    `/tmp/boot-check`.
 > 5. **Put the try script in the home folder**: copy
 >    `tools/haicc-try.sh` to `~/haicc-try.sh` (executable). It runs the
 >    release from `~` with `~/haicc-try` as its work folder, saves the

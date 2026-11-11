@@ -11,8 +11,9 @@ The mrepo boot protocol, the base variant: `deploy`, `teardown`,
   `mrepo/` part laid in in that order; built inside the parent,
   `<parent>/main/<name>/`; its packages linked individually; its type
   recorded at the node, `/main/<name>.json`; its runtime started from its
-  own `packages/`, by its directory), `teardown` (its runtime stopped until
-  its process ended, its folder removed, its record out), `redeploy`
+  own `packages/`, by its directory), `teardown` (its runtime stopped: asked over its socket,
+  still running SIGTERM, still running SIGKILL, until its process ended,
+  how logged; its folder removed, its record out), `redeploy`
   (teardown, a local commit, deploy: the recorded type unless the body
   names one). The parent's directory from the context (`exec.runtime.dir`).
 - `lib/packages.js`: packages put in place: `fetch` (into the work folder's
