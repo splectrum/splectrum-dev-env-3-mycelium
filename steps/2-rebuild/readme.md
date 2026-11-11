@@ -658,6 +658,23 @@ merge back at the end of the invoked action, a failure resetting. Tested.
 Still open: what an action does outside the repository (teardown's folder)
 is not undone by a reset.
 
+## 18. The runtime as a package, as a bundle (2026-11-11)
+
+The human: the runtime its own package, built as a Bare bundle, to test up
+to the runtime's instantiation. `haiccing/base-package-runtime/`: `run.js`
+(the runtime's process: `bare base-package-runtime.bundle --work=<folder>`),
+`package.json` (from `mrepo-base-runtime`), `test/` (`start`: an mrepo on
+the filesystem written for it, the runtime started, answering, stopped;
+`RUNTIME=<bundle>` tests a bundle instead), `modules/` assembled.
+`tools/package-bundle.js`: a package as a Bare bundle into `sources/`
+(`<org>/<repo>.bundle`, its addons offloaded to `addons/<sha256>`, its entry
+in `<org>/manifest.json`: id, sha256, size, main, addons, commit, Bare;
+unsigned for now), from the release writer phase 2 had. The runtime's
+bundle: 3.5 MB, 25 addons; its test passes from the folder and from the
+bundle; from a store layout (`<work>/packages/haiccing/`, `addons/` two up)
+on the Bare unpacked from `sources/holepunchto/`, it loads, its addons
+included.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
