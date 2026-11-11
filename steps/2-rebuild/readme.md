@@ -957,3 +957,43 @@ Not yet: the tests run from the bundle (their third-party code, brittle,
 is not reached from the entry); the other packages (`swarm-three-nodes`, the
 demos) still defined on the old platform, written with `--only` meanwhile;
 `haicc-deployment` still pointing into the old `haicc-base-boot`.
+
+## 23. Help: the extractor (2026-11-11)
+
+The human: help for the one who uses the mrepos, the AI; first raw
+retrieval from the READMEs beside each item, then command help from the
+components' summaries, then AI-enhanced. A help layer, every README
+extracted into a browsable tree: each package's concern and its
+dependencies; the retrieval URIs generated. The extractor in the runtime,
+run before the mrepo is operational; the action `runtime help`. The
+documentation packages linked like any package.
+
+- **`mrepo-base-runtime/lib/help.js`**: `parse` (title, one-liner: the
+  first sentence; summary: up to the first `##`; sections; links),
+  `extract` (each README at the URI it documents: a package's under
+  `/packages/<org>/<package>/`, a `help` folder's, `package-docs-mrepo`'s
+  `mrepo/`, at the root; `/index.json`: each URI's title, one-liner and
+  links; `/packages` linked to every package), `extractInto` (at start,
+  from the packages manifest and the bundles; committed when changed),
+  `help` (`runtime help <uri>`, levels `oneliner`, `summary`, `detail`, a
+  section; the nearest URI when none).
+- **The `help` layer**: atomic, in both structures; a layer in mycelium-git.
+- **Documentation packages**: no entry point; their main runs nothing; no
+  structure laid in at deploy (READMEs never are); `package-docs-mrepo`
+  and `package-docs-template` bundled and listed in the boot's and the
+  runtime's packages.
+- **`tools/help-extract.js`**: the same extraction from the bundles into a
+  folder (`sources/help/`), with a quality report (`report.json`):
+  one-liner, summary length, broken links, cascade, reached, references to
+  the transient `docs/`.
+
+First report, the boot mrepo's four packages: 93 READMEs; 33 one-liner
+problems (the modules' `test/` READMEs have none; some first sentences
+run to 200-490 characters), 23 summaries over 150 words, 22 references to
+`docs/design`; links, cascade and reach clean. To evaluate with the human
+and set the documentation's rules.
+
+Tested: the extractor's unit tests; the boot's integration test asks the
+running boot mrepo for `runtime help` (the root, `/packages`, its own
+test's README) and checks the host's help, extracted by its own runtime.
+Both packages' `full` sets pass.

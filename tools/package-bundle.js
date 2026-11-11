@@ -48,7 +48,7 @@ export async function bundlePackage ({ folder, out, org = 'haiccing' }) {
   // the entry points it has): run when started as the program; on import,
   // nothing runs, the entry points offered (run, deploy, protocol).
   const entries = ENTRIES.filter(e => existsSync(join(folder, `${e}.js`)))
-  if (!entries.length) throw new Error(`no entry point in ${folder} (${ENTRIES.map(e => `${e}.js`).join(', ')})`)
+  // none: a documentation package (its main runs nothing)
   writeDispatcher(folder)
   const main = 'main.js'
   mkdirSync(join(out, 'addons'), { recursive: true })

@@ -74,8 +74,11 @@ export async function deploy (exec, { uri, body }) {
   const tmp = mkdtempSync(join(tmpdir(), `deploy-${c.name}-`))
   try {
     for (const pkg of list) {
-      fetch({ store, sources, pkg })
+      // a package with no entry point is documentation: no structure, its
+      // READMEs only (into the help layer, as its packages are placed)
+      if (!(fetch({ store, sources, pkg }).entries ?? []).length) continue
       for (const [p, bytes] of Object.entries(structureOf({ store, pkg }))) {
+        if (p.endsWith('README.md')) continue // documentation: the help layer's, never a layer's
         mkdirSync(dirname(join(tmp, p)), { recursive: true })
         writeFileSync(join(tmp, p), bytes)
       }

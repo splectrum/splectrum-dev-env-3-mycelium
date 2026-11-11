@@ -1,0 +1,9 @@
+{
+  "name": "package-docs-mrepo",
+  "description": "Documentation package: the mrepo structure, documented in place; its mrepo/ is the help of every mrepo.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "main.js",
+  "help": "mrepo"
+}

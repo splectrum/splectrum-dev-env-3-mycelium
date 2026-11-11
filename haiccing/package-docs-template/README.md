@@ -20,7 +20,7 @@ is for.
 | `test/` | has tests and test sets |
 | `<name>/` | holds a further unit, by its URI part name |
 | `example/` | has examples |
-| `README.md` | says what it is |
+| `README.md` | says what it is; extracted into an mrepo's help layer |
 
 | | |
 |---|---|
@@ -35,6 +35,8 @@ is for.
 - One structure, many purposes: a definition, documentation in place,
   examples, tests.
 - A package depends only on packages.
+- A package with no entry point is documentation: it runs nothing and
+  brings no structure; its READMEs go to the help layer.
 - Entry points, each optional: `run.js` (executed on its own),
   `deploy.js` (deployment only), `protocol.js` (protocol actions).
 - A collection folder (`test/`, `example/`) holds units, a folder each;
