@@ -20,7 +20,9 @@ from its execution branch), `put`, `remove` (collected), `runtime` (the
 runtime's context, read only: its name, its work folder, its directory). Two contexts:
 local, the action's: `commit()` (the writes so far committed to the
 execution branches; later reads see them), `discard()` (the uncommitted writes
-dropped), `rollback()` (the last local commit undone), `reset()` (everything of this execution
+dropped), `rollback()` (the last local commit undone), `log(level, event, data)`
+(an entry in the request's own record, at or above the mrepo's threshold:
+`/runtime/log.json`'s level, else `info`), `reset()` (everything of this execution
 ditched, back to the start), the action going on; global, the runtime's,
 not the action's: when the action ends, its writes committed and the
 execution branches merged back, once; a failure resets.

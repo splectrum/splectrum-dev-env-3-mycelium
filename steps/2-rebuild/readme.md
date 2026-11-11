@@ -809,6 +809,19 @@ committed then the layer's head watched; the outbox folder made at build
 owner; a child in view written to directly by its parent, its outbox
 followed by it (`repositories.md`, "The boxes' folders"). Tested.
 
+Logs and the terminal (the human): a log function with levels (`error`,
+`warn`, `info`, `debug`; threshold `info` by default, an mrepo's in
+`/runtime/log.json`): `exec.log` in the execution context, `log` in the
+boot (its steps now entries in its request's `log`, `--level`); its entries
+in the request's own record. `follow` prints each record as it moves
+through the request layers of an mrepo and its children in view, one
+compact line a record, its topic the full path; the boot follows after
+starting its runtime (on a terminal, or `--follow`), until Ctrl-C; the try
+script runs it so (Ctrl-C ends the following, then the pause and the
+cleanup). Tested: the execution's log and levels; the follower (one line a
+record, topics from the root); the boot package 3/3; the try script under
+a terminal.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

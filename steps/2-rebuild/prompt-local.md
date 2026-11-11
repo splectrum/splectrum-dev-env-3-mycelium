@@ -39,7 +39,8 @@ tar). Nothing is published: no GitHub release, no push of the build.
 > 5. **Put the try script in the home folder**: copy
 >    `tools/haicc-try.sh` to `~/haicc-try.sh` (executable). It runs the
 >    release from `~` with `~/haicc-try` as its work folder, saves the
->    printed record there as `boot-output.json`, shows the boot mrepo, the
+>    records there as `boot-output.jsonl` (they follow in the terminal, one
+>    a line, until Ctrl-C), shows the boot mrepo, the
 >    host inside it and their runtimes, stops on `press any key to clean
 >    up`, then stops the runtimes and removes `~/haicc-try` (also on
 >    Ctrl-C). It finds the clone at `~/splectrum-dev-env-3-mycelium`; if

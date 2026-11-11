@@ -29,6 +29,9 @@
 //                 when none is given)
 //     --yes       a fix allowed without asking (else asked on a terminal,
 //                 refused otherwise)
+//     --level     its log's threshold: error, warn, info (default), debug
+//     --follow    the records followed after the runtime starts (the default
+//                 on a terminal; --no-follow: not), until Ctrl-C
 // Our modules from the package's own modules/ (no node_modules above them here).
 import process from './modules/node_modules/bare-process/index.js'
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync, rmSync, readFileSync } from './modules/node_modules/bare-fs/index.js'
@@ -37,7 +40,7 @@ import { join, dirname, resolve, basename } from './modules/node_modules/bare-pa
 import { fileURLToPath } from './modules/node_modules/bare-url/index.js'
 import { gitdirOf, open, viewOf, start } from './modules/pear-full-square/mrepo-base-runtime/index.js'
 import { build, check, parseSource, place, bareOf, storeOf } from './modules/pear-full-square/mrepo-base-boot/index.js'
-import { record, wrap, guid, complete, EXECUTE } from './modules/pear-full-square/mrepo-base-request/index.js'
+import { record, wrap, guid, complete, logger, follow, EXECUTE } from './modules/pear-full-square/mrepo-base-request/index.js'
 import { executed } from './modules/pear-full-square/mrepo-base-execute/index.js'
 import { writer, openRepo } from './modules/pear-full-square/mycelium-git/index.js'
 import prerequisites from './prerequisites.json' with { type: 'json' }
@@ -68,12 +71,13 @@ const ask = process.stdin.isTTY
 // The request: the invocation, as typed (the entry's name, its arguments).
 const entry = basename(script ? process.argv[1] : process.argv[0])
 const core = record(null, { api: NAME, protocol: 'boot', action: 'deploy', uri: `/${NAME}`, command: [entry, ...args].join(' ') }, guid())
-// The outcomes, logged as it goes: the request's output.
-const outcomes = []
-const done = result => complete(core, result)
+// Its log: each step's outcome, an entry in the request's own record, at or
+// above the threshold (--level=<error|warn|info|debug>, info by default).
+const { log, entries } = logger(value('level')[0] ?? 'info')
+const done = result => complete(core, result, entries)
 
 const pre = await check(prerequisites.prerequisites, { work, name: NAME, sources, bare, path: process.env.PATH, yes: args.includes('--yes'), ask })
-outcomes.push({ step: 'prerequisites', ok: pre.ok, results: pre.results })
+log(pre.ok ? 'info' : 'error', 'prerequisites', { results: pre.results })
 if (!pre.ok) {
   // No mrepo to hold it: printed only.
   const last = pre.results.at(-1)
@@ -92,16 +96,16 @@ try {
     }
     try {
       const { layers } = await build({ from, work, name: NAME, time: BUILT })
-      outcomes.push({ step: 'built', ok: true, mrepo: viewOf(work, NAME), layers: Object.keys(layers) })
+      log('info', 'built', { mrepo: viewOf(work, NAME), layers: Object.keys(layers) })
     } finally { if (tmp) rmSync(tmp, { recursive: true, force: true }) }
-  } else outcomes.push({ step: 'built', ok: true, mrepo: viewOf(work, NAME), already: true })
+  } else log('info', 'built', { mrepo: viewOf(work, NAME), already: true })
 
   // 3. Its packages put in place: the list its packages layer holds.
   const repo = await open(work)
   let list
   try { list = JSON.parse((await openRepo(repo.backend).read('/packages/layer.json')).toString()).packages } finally { await repo.close() }
   const placed = await place({ dir: viewOf(work, NAME), store: storeOf(work), sources, list })
-  outcomes.push({ step: 'packages', ok: true, ...placed })
+  log('info', 'packages', placed)
 } catch (err) {
   // The mrepo there or not: the request printed, the error said.
   console.log(JSON.stringify(done({ ok: false, error: err.message })))
@@ -110,7 +114,7 @@ try {
 
 // 4. The request completed, into the boot mrepo's request/execute.
 const runtime = join(viewOf(work, NAME), 'packages', 'haiccing', 'base-package-runtime.bundle')
-const completed = done({ ok: true, value: { outcomes, runtime: `${bareOf(work)} ${runtime} ${viewOf(work, NAME)}` } })
+const completed = done({ ok: true, value: { runtime: `${bareOf(work)} ${runtime} ${viewOf(work, NAME)}` } })
 const repo = await open(work)
 try { await executed({ backend: repo.backend, writer: writer(repo.backend) }, core.key, wrap(`/${EXECUTE}`, completed)) } finally { await repo.close() }
 console.log(JSON.stringify(completed))
@@ -119,5 +123,15 @@ console.log(JSON.stringify(completed))
 const status = await start({ repo: viewOf(work, NAME), bundle: runtime, bare: bareOf(work) })
 console.log(JSON.stringify({ runtime: status ? { pid: status.pid, repository: status.repository.name, started: status.started } : null }))
 if (!status) { console.error(`boot: its runtime did not start: ${runtime}`); process.exit(1) }
+
+// 6. Followed, on a terminal or with --follow (not with --no-follow): every
+// record as it moves through the request layers, the boot mrepo's and its
+// children's in view, one compact line a record, until Ctrl-C (the runtimes
+// keep running).
+if (args.includes('--follow') || (process.stdout.isTTY && !args.includes('--no-follow'))) {
+  const f = follow({ dir: viewOf(work, NAME), name: NAME })
+  await new Promise(resolve => process.once('SIGINT', resolve))
+  f.stop()
+}
 // Done: ended here (nothing left open to keep it alive, a terminal's input included).
 process.exit(0)

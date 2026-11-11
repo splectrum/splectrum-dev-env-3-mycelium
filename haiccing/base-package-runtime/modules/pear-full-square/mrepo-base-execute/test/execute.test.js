@@ -144,6 +144,35 @@ test('local commit and rollback in an action; the global commit at its end, a fa
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
 
+test('exec.log: entries into the request\'s record, at or above the threshold', async (t) => {
+  const work = mkdtempSync(join(tmpdir(), 'execute-'))
+  try {
+    await bootedHost(work, { preload: false })
+    await withHost(work, async ctx => {
+      await run(ctx, { protocol: 'service', action: 'initialise', uri: '/' })
+      await run(ctx, { protocol: 'service', action: 'start', uri: '/' })
+      const logging = { ...ACTIONS, rest: { ...ACTIONS.rest, get: async exec => {
+        exec.log('info', 'step', { n: 1 })
+        exec.log('debug', 'detail')
+        exec.log('warn', 'careful')
+        t.exception(() => exec.log('loud', 'x'), /not a log level/)
+        return 'logged'
+      } } }
+      const one = async () => {
+        const name = guid()
+        await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { api: 'haicc', protocol: 'rest', action: 'get', uri: '/main' }, name)))
+        await execute(ctx, { actions: logging })
+        return (await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value
+      }
+      const done = await one()
+      t.is(done.output, 'logged')
+      t.alike(done.log.map(e => [e.level, e.event]), [['info', 'step'], ['warn', 'careful']], 'kept at info and above (debug not)')
+      t.is(done.log[0].n, 1, 'with its data')
+      t.ok(done.log[0].time, 'and its time')
+    })
+  } finally { rmSync(work, { recursive: true, force: true }) }
+})
+
 test('executed: a form completed elsewhere handed over as execute hands one', async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'execute-'))
   try {

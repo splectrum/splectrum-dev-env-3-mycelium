@@ -27,11 +27,12 @@
 // done (in both: the old place cleared). The boxes (lib/boxes.js) are layers.
 import { validate as canonical } from 'mycelium-uri'
 import { post, ensure, inboxFolder, outboxOf, INBOX, OUTBOX } from './lib/boxes.js'
-import { record, wrap, guid, complete, isComplete } from './lib/record.js'
+import { record, wrap, guid, complete, isComplete, logger, LEVELS } from './lib/record.js'
 import { layer, AUTHOR } from './lib/layer.js'
 import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
 
-export { post, ensure, inboxFolder, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
+export { follow } from './lib/follow.js'
+export { post, ensure, inboxFolder, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'

@@ -1,9 +1,10 @@
 #!/bin/sh
 # Try the boot's release from the command line: run from ~, its work folder
-# ~/haicc-try (the boot mrepo, the store, the Bare it puts in place, and its
-# printed request as boot-output.json); the boot starts its runtime, which
-# deploys the host inside it (main/host); then a pause to inspect it, then
-# its runtimes stopped and everything cleaned up (also when stopped with Ctrl-C).
+# ~/haicc-try (the boot mrepo, the store, the Bare it puts in place); the
+# boot starts its runtime, which deploys the host inside it (main/host); the
+# records followed in the terminal, one a line, as they move (kept as
+# boot-output.jsonl), until Ctrl-C; then a pause to inspect it, then its
+# runtimes stopped and everything cleaned up (also when stopped later with Ctrl-C).
 #   sh haicc-try.sh [--yes]          (a copy in ~; --yes: no question asked)
 # The release and its sources: the development repository's sources/ (built
 # by tools/boot-release.js); its clone at HAICC_DEV, else
@@ -35,15 +36,20 @@ trap 'exit 130' INT TERM
 cd "$HOME" || exit 1
 echo "== the boot: $release"
 echo "   work folder: $try"
-"$release" --work="$try" --sources=folder:"$sources" "$@" > "$HOME/.haicc-try-output.json"
-code=$?
-cat "$HOME/.haicc-try-output.json"
-# (the record kept in the work folder once there is one)
-[ -d "$try" ] && mv "$HOME/.haicc-try-output.json" "$try/boot-output.json" || rm -f "$HOME/.haicc-try-output.json"
+echo "   its records follow, one a line (Ctrl-C: stop following)"
+# The boot in the foreground (its question, if any, asked here), following
+# the records until Ctrl-C; Ctrl-C ends the following, not this script.
+out=$HOME/.haicc-try-output.jsonl
+trap 'true' INT
+{ trap 'true' INT; "$release" --work="$try" --sources=folder:"$sources" --follow "$@"; echo $? > "$out.code"; } | tee "$out"
+trap 'exit 130' INT
+code=$(cat "$out.code" 2>/dev/null || echo '?')
+# (the records kept in the work folder, if there is one)
+[ -d "$try" ] && mv "$out" "$try/boot-output.jsonl" || rm -f "$out"
+rm -f "$out.code"
 echo
 echo "== exit code: $code"
 if [ -d "$try" ]; then
-  sleep 3 # the boot's runtime deploying the host
   echo "== what it left in $try:"; ls -la "$try"
   echo "== the boot mrepo: $try/mrepos/boot"; ls -A "$try/mrepos/boot"
   [ -d "$try/mrepos/boot/main/host" ] && { echo "== the host, inside it: $try/mrepos/boot/main/host"; ls -A "$try/mrepos/boot/main/host"; }
