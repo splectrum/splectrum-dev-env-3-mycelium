@@ -1,4 +1,5 @@
-// child(exec, uri): the child mrepo a boot action names (README.md beside it).
+// child(exec, uri): the child mrepo a boot action names: { name, dir, node,
+// recorded() }; shared by the actions (not documented: a helper).
 import { join } from 'bare-path'
 
 export function child (exec, uri) {

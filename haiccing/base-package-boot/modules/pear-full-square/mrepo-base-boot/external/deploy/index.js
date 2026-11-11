@@ -4,11 +4,9 @@ import { join, dirname } from 'bare-path'
 import { tmpdir } from 'bare-os'
 import { start } from 'mrepo-base-runtime'
 import { build } from '../../internal/build/index.js'
-import { fetch } from '../../internal/fetch/index.js'
-import { structureOf } from '../../internal/structure-of/index.js'
+import { fetch, structureOf, parseSource } from '../../internal/fetch/index.js'
 import { place } from '../../internal/place/index.js'
-import { parseSource } from '../../internal/parse-source/index.js'
-import { child } from '../../internal/child/index.js'
+import { child } from '../../internal/child.js'
 
 export async function deploy (exec, { uri, body }) {
   const c = child(exec, uri)

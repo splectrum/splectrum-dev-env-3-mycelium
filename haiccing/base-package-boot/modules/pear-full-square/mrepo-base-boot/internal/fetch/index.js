@@ -1,8 +1,8 @@
-// fetch({ store, sources, pkg }): a package into the store, checked (README.md beside it).
-import { existsSync, readFileSync, writeFileSync } from 'bare-fs'
-import { join } from 'bare-path'
+// fetch: a package into the store, checked; also structureOf, put, parseSource (README.md beside it).
+import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, linkSync, copyFileSync } from 'bare-fs'
+import { join, dirname } from 'bare-path'
 import crypto from 'bare-crypto'
-import { put } from '../put/index.js'
+import Bundle from 'bare-bundle'
 
 const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
 
@@ -35,4 +35,26 @@ export function fetch ({ store, sources, pkg }) {
   put(join(found.source, entry.file), file)
   writeFileSync(known, JSON.stringify(entry, null, 2) + '\n')
   return entry
+}
+
+export function structureOf ({ store, pkg }) {
+  const bundle = Bundle.from(readFileSync(join(store, `${pkg}.bundle`)))
+  const out = {}
+  for (const key of Object.keys(bundle.files)) if (key.startsWith('/mrepo/')) out[key.slice('/mrepo/'.length)] = bundle.read(key)
+  return out
+}
+
+export function put (from, to) {
+  mkdirSync(dirname(to), { recursive: true })
+  rmSync(to, { force: true })
+  try { linkSync(from, to) } catch { copyFileSync(from, to) }
+}
+
+export function parseSource (s) {
+  const i = s.indexOf(':')
+  const kind = i < 0 ? s : s.slice(0, i)
+  const at = i < 0 ? '' : s.slice(i + 1)
+  if (kind === 'folder') return { kind, path: at }
+  if (kind === 'github') return { kind, org: at || 'haiccing' }
+  throw new Error(`not a source: ${s} (folder:<path>, github:<org>)`)
 }

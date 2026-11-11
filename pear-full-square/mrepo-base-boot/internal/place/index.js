@@ -1,9 +1,8 @@
-// place({ dir, store, sources, list }): an mrepo's packages put in place, the packages layer committed (README.md beside it).
+// place: an mrepo's packages put in place; also storeOf (README.md beside it).
 import fs from 'bare-fs'
 import { join } from 'bare-path'
 import { p2pgitBackend, writer, openRepo } from 'mycelium-git'
-import { fetch } from '../fetch/index.js'
-import { put } from '../put/index.js'
+import { fetch, put } from '../fetch/index.js'
 
 const author = { name: 'mrepo-boot', email: 'mrepo-boot@localhost' }
 
@@ -31,3 +30,5 @@ export async function place ({ dir, store, sources, list }) {
   }
   return { packages, committed }
 }
+
+export const storeOf = work => join(work, 'packages')

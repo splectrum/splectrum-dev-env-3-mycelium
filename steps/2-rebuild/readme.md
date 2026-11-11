@@ -1034,3 +1034,11 @@ store-of, put, child, check, parse-source, in-container, bare-of,
 acceptable); `lib/` gone, `index.js` exports the same. Its tests unchanged,
 9/9; both packages' `full` sets pass; 112 READMEs in the help tree, no
 problems.
+
+Only what matters (the human; the AI, the principal user, judges): a
+directory only for a documented method; smaller ones live in the method
+they belong to ("Also exported"), a helper with nothing to document a
+plain file. `mrepo-base-boot`: `external/` deploy, teardown, redeploy;
+`internal/` build, place (storeOf), fetch (structureOf, put, parseSource),
+check (inContainer, acceptable, bareOf), `child.js`. The rule in
+`package-docs-template`, `modules/`, "Methods".

@@ -31,5 +31,11 @@ A condition, `when: "not-in-container"`, skips a check in a container.
 
 ## Also exported
 
-`BARE_ORG`, the organisation Bare's tarball is under in a sources folder,
-and `TARBALL(version)`, its file name.
+- `inContainer()`: whether this process runs in a container, by
+  `/.dockerenv` or a container runtime in `/proc/1/cgroup`.
+- `acceptable(have, want)`: an installed Bare's version accepted for the
+  pinned one: the same major, the same version or newer.
+- `bareOf(work)`: the Bare a work folder's mrepos run on: the one recorded
+  in `<work>/bare.json`, else the pinned one at `<work>/bare/bin/bare`.
+- `BARE_ORG` and `TARBALL(version)`: where Bare's tarball is in a sources
+  folder, and its file name.
