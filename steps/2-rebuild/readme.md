@@ -854,6 +854,12 @@ its exit code passed or failed (`--pause` to inspect first); the local
 agent's check runs the same test. Tried without a terminal: passed, ended,
 nothing left.
 
+The whole lifecycle through requests (the human): the boot package's
+integration test, the child the runtime package alone: deployed (the
+preloaded request), redeployed, torn down (its runtime ended, its folder
+and record gone), deployed again (a new runtime), each a request posted to
+the running boot mrepo's inbox. 3/3, 57 asserts, nothing left running.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

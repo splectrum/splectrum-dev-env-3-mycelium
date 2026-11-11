@@ -66,7 +66,7 @@ test('the prerequisites: one missing, the boot stops before writing anything', a
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
 
-test('the boot: put in place, its runtime started, the host deployed inside it, redeployed by a request; run again', { timeout: 120000, skip: !have }, async (t) => {
+test('the boot: put in place, its runtime started, the host deployed inside it; redeployed, torn down, deployed again by requests; run again', { timeout: 120000, skip: !have }, async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'boot-'))
   try {
     const r = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
@@ -141,9 +141,30 @@ test('the boot: put in place, its runtime started, the host deployed inside it, 
     for (let i = 0; i < 100 && node2?.runtime?.pid !== h2?.pid; i++) { node2 = await repo.read('/main/host.json').then(b => JSON.parse(b.toString()), () => null); if (node2?.runtime?.pid !== h2?.pid) await wait(100) }
     t.is(node2?.runtime?.pid, h2?.pid, 'its record at the node updated')
 
+    // teardown, then deploy again, each a request to the running boot mrepo
+    // (the child the runtime package alone)
+    const sent = async form => {
+      const c = record('/test', { api: 'boot', protocol: 'boot', ...form }, guid())
+      writeFileSync(join(viewOf(work, 'boot'), 'inbox', `${c.key}.json`), JSON.stringify(wrap('/boot/inbox', c)))
+      let v = null
+      for (let i = 0; i < 300 && !v; i++) { v = await repo.read(`/request/done/${c.key}.json`).then(b => JSON.parse(b.toString()).value.value, () => null); if (!v) await wait(100) }
+      return v
+    }
+    const down = await sent({ action: 'teardown', uri: '/host' })
+    t.alike([down?.error, down?.output], [undefined, { tornDown: '/host' }], 'boot teardown /host: done')
+    t.absent(alive(h2.pid), 'the host\'s runtime ended')
+    t.absent(existsSync(host), 'main/host removed')
+    let gone = false
+    for (let i = 0; i < 100 && !gone; i++) { gone = (await repo.read('/main/host.json').catch(() => null)) === null; if (!gone) await wait(100) }
+    t.ok(gone, 'its record out of main')
+    const up = await sent({ action: 'deploy', uri: '/host', body: { package: 'haiccing/base-package-runtime' } })
+    t.absent(up?.error, `boot deploy /host again: done ${up?.error ?? ''}`)
+    const h3 = await ask({ repo: host, op: 'status' })
+    t.ok(h3 && h3.pid !== h2.pid, 'the host back, a new runtime running')
+
     for (const r of [viewOf(work, 'boot'), host]) t.ok((await ask({ repo: r, op: 'stop' }))?.stopping, `stopped: ${r.endsWith('host') ? 'the host' : 'the boot'}`)
-    for (let i = 0; i < 100 && (alive(child.pid) || alive(h2.pid)); i++) await wait(100)
-    t.absent(alive(child.pid) || alive(h2.pid), 'both processes ended')
+    for (let i = 0; i < 100 && (alive(child.pid) || alive(h3.pid)); i++) await wait(100)
+    t.absent(alive(child.pid) || alive(h3.pid), 'both processes ended')
 
     // run again: already built, the packages unchanged; its runtime started again
     const again = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
@@ -153,8 +174,8 @@ test('the boot: put in place, its runtime started, the host deployed inside it, 
     t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
     const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
     let n = 0
-    for (let i = 0; i < 100 && (n = await records('done')) < 4; i++) await wait(100)
-    t.is(n, 4, 'its runtime again: the second deploy done; the host\'s not repeated (the redeploy among them)')
+    for (let i = 0; i < 100 && (n = await records('done')) < 6; i++) await wait(100)
+    t.is(n, 6, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy among them)')
     t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
     const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
     t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')
