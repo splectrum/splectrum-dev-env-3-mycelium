@@ -1,24 +1,14 @@
-// The package's tests, by set: bare test/run.js [<set>] (validate by
-// default). A set is test/<set>.json, { description, tests: [<name>...] };
-// each test run as its own process, its entry test/<name>/run.js, in order.
-// Exits 0 when every one passed, 1 when one failed, 2 for no such set.
+// The package's test runner (generated: tools/lib/dispatcher.js; docs:
+// haiccing/package-docs-template, test/README.md). A test set, from this
+// point the whole lifecycle, through the package's dispatcher (main.js:
+// each unit its own process, its results read from brittle's summary).
+//   bare test/run.js [<set>]   a set (validate by default): each unit's report
+//       shown, the result last (one line), exit 0 passed, 1 failed, 2 no such set
 import process from '../modules/node_modules/bare-process/index.js'
-import { spawnSync } from '../modules/node_modules/bare-subprocess/index.js'
-import os from '../modules/node_modules/bare-os/index.js'
-import { readFileSync, existsSync } from '../modules/node_modules/bare-fs/index.js'
-import { join, dirname } from '../modules/node_modules/bare-path/index.js'
-import { fileURLToPath } from '../modules/node_modules/bare-url/index.js'
+import { run } from '../main.js'
 
-const here = dirname(fileURLToPath(import.meta.url))
 const set = process.argv.slice(2).find(a => !a.startsWith('-')) ?? 'validate'
-const file = join(here, `${set}.json`)
-if (!existsSync(file)) { console.error(`no test set: ${set} (test/${set}.json)`); process.exit(2) }
-const { tests } = JSON.parse(readFileSync(file, 'utf8'))
-const failed = []
-for (const name of tests) {
-  console.log(`# test ${name}`)
-  const r = spawnSync(os.execPath(), [join(here, name, 'run.js')], { stdio: 'inherit' })
-  if (r.status !== 0) failed.push(name)
-}
-console.log(JSON.stringify({ set, tests, passed: tests.length - failed.length, failed }))
-process.exit(failed.length ? 1 : 0)
+let r
+try { r = await run(`/test/${set}`, { print: line => console.log(line) }) } catch (err) { console.error(err.message); process.exit(2) }
+console.log(JSON.stringify(r))
+process.exit(r.ok ? 0 : 1)

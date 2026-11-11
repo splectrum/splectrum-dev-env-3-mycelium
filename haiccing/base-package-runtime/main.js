@@ -1,11 +1,94 @@
-// The package's dispatcher, its bundle's main (written by tools/package-bundle.js).
-// Started as the program (bare <package>.bundle ...): run.js runs. Imported
-// (a runtime loading a protocol, a deploy reading structure): nothing runs;
-// the entry points offered.
+// The package's dispatcher, its bundle's main (generated: tools/lib/dispatcher.js).
+// run(target, { dryRun }): every entry, by path. Started as the program
+// (bare <package>.bundle [target] ..., or bare main.js from its folder):
+// the target (a known path; else /run, every argument run.js's). Imported:
+// nothing runs. Docs: haiccing/package-docs-template, test/README.md.
 import os from './modules/node_modules/bare-os/index.js'
 import { URL } from './modules/node_modules/bare-url/index.js'
-export const run = () => import('./run.js')
-// This bundle the program: the file Bare was started with, resolved, is it.
-const self = new URL('.', import.meta.url).href.replace(/\/$/, '')
+import { spawn } from './modules/node_modules/bare-subprocess/index.js'
+
+// The entry points.
+const ENTRIES = {
+  "/run": () => import("./run.js"),
+}
+// The test units, each run in one process: the package's tests, each
+// carried module's unit tests.
+const UNITS = {
+  "/test/start": () => Promise.all([import("./test/start/run.js")]),
+  "/test/modules/pear-full-square/mrepo-base-execute": () => Promise.all([import("./modules/pear-full-square/mrepo-base-execute/test/execute.test.js")]),
+  "/test/modules/pear-full-square/mrepo-base-request": () => Promise.all([import("./modules/pear-full-square/mrepo-base-request/test/boxes.test.js"), import("./modules/pear-full-square/mrepo-base-request/test/check.test.js")]),
+  "/test/modules/pear-full-square/mrepo-base-runtime": () => Promise.all([import("./modules/pear-full-square/mrepo-base-runtime/test/cycle.test.js"), import("./modules/pear-full-square/mrepo-base-runtime/test/runtime.test.js")]),
+  "/test/modules/pear-full-square/mycelium-container-document": () => Promise.all([import("./modules/pear-full-square/mycelium-container-document/test/documents.test.js")]),
+  "/test/modules/pear-full-square/mycelium-git": () => Promise.all([import("./modules/pear-full-square/mycelium-git/test/bundle.test.js"), import("./modules/pear-full-square/mycelium-git/test/engines.test.js"), import("./modules/pear-full-square/mycelium-git/test/hyperdrive.test.js"), import("./modules/pear-full-square/mycelium-git/test/isogit.test.js"), import("./modules/pear-full-square/mycelium-git/test/mixed.test.js"), import("./modules/pear-full-square/mycelium-git/test/native.test.js"), import("./modules/pear-full-square/mycelium-git/test/p2pgit.test.js"), import("./modules/pear-full-square/mycelium-git/test/split.test.js")]),
+  "/test/modules/pear-full-square/mycelium-uri": () => Promise.all([import("./modules/pear-full-square/mycelium-uri/test/names.test.js"), import("./modules/pear-full-square/mycelium-uri/test/uri.test.js")]),
+  "/test/modules/pear-full-square/mycelium-value-json": () => Promise.all([import("./modules/pear-full-square/mycelium-value-json/test/json.test.js")]),
+  "/test/modules/pear-full-square/mycelium-xpath": () => Promise.all([import("./modules/pear-full-square/mycelium-xpath/test/xpath.test.js")]),
+  "/test/modules/pear-full-square/p2p-mrepo": () => Promise.all([import("./modules/pear-full-square/p2p-mrepo/test/contract.test.js"), import("./modules/pear-full-square/p2p-mrepo/test/local.test.js"), import("./modules/pear-full-square/p2p-mrepo/test/mrepo.test.js")]),
+  "/test/modules/pear-full-square/p2p-replicate": () => Promise.all([import("./modules/pear-full-square/p2p-replicate/test/replicate.test.js")]),
+  "/test/modules/pear-full-square/p2p-store": () => Promise.all([import("./modules/pear-full-square/p2p-store/test/store.test.js")]),
+}
+// The test sets: their tests by name (modules: every module's unit tests).
+const SETS = {"/test/full":["start","modules"],"/test/validate":["start"]}
+
+// What a target runs: its units (a set, /test/modules, a unit); null: none.
+export function expand (target) {
+  if (UNITS[target]) return [target]
+  if (target === '/test/modules') return Object.keys(UNITS).filter(u => u.startsWith('/test/modules/'))
+  if (SETS[target]) return SETS[target].flatMap(n => expand(`/test/${n}`) ?? [])
+  return null
+}
+
+// The program to start a unit with: this bundle, else this main.js (its folder).
+const bundle = import.meta.url.includes('.bundle/') ? import.meta.url.slice(0, import.meta.url.indexOf('.bundle/') + '.bundle'.length) : null
+export const self = new URL(bundle ?? import.meta.url).pathname
+
+export async function run (target = '/run', { dryRun = false, print = null } = {}) {
+  if (target === '/') {
+    const all = [...Object.keys(ENTRIES), ...Object.keys(SETS), ...(Object.keys(UNITS).some(u => u.startsWith('/test/modules/')) ? ['/test/modules'] : []), ...Object.keys(UNITS)]
+    if (dryRun) return all
+    throw new Error('/ is not run: name an entry (a dry run lists them)')
+  }
+  if (ENTRIES[target]) return dryRun ? [target] : ENTRIES[target]()
+  const units = expand(target)
+  if (!units) throw new Error(`no such entry: ${target}`)
+  if (dryRun) return units
+  return runUnits(target, units, { program: self, print })
+}
+
+// brittle's summary: '# tests = a/b pass', '# asserts = c/d pass'; a failed
+// test: 'not ok n - name' at the top level.
+export function summary (tap) {
+  const count = re => { const m = tap.match(re); return m ? { passed: Number(m[1]), total: Number(m[2]) } : null }
+  const failures = tap.split('\n').filter(l => /^not ok \d+/.test(l)).map(l => l.replace(/^not ok \d+ - /, '').replace(/ # time = .*$/, ''))
+  return { tests: count(/^# tests = (\d+)\/(\d+)/m), asserts: count(/^# asserts = (\d+)\/(\d+)/m), failures }
+}
+
+// The units, each its own process (bare <program> <unit>), in order: the
+// result { target, ok, units: [{ unit, ok, tests, asserts, failures }] }.
+export async function runUnits (target, units, { program = self, print = null } = {}) {
+  const results = []
+  for (const u of units) {
+    if (print) print(`# ${u}`)
+    results.push(await new Promise(resolve => {
+      const child = spawn(os.execPath(), [program, u], { stdio: ['ignore', 'pipe', 'pipe'] })
+      let out = ''
+      child.stdout.on('data', d => { out += d; if (print) for (const l of d.toString().split('\n')) if (l) print(l) })
+      child.stderr.on('data', d => { out += d })
+      child.on('exit', code => { const s = summary(out); resolve({ unit: u, ok: code === 0 && !s.failures.length, ...s }) })
+    }))
+  }
+  return { target, ok: results.every(r => r.ok), units: results }
+}
+
+// Started as the program: this bundle, or this main.js, is what Bare was started with.
 const started = Bare.argv[1] ? new URL(Bare.argv[1], `file://${os.cwd()}/`).href : null
-if (started === self) await run()
+if (started && (started === (bundle ?? import.meta.url))) {
+  const target = Bare.argv[2]
+  if (target && UNITS[target]) await UNITS[target]() // a unit: its tests here, brittle's report, its exit code
+  else if (target && (target === '/' || expand(target) || ENTRIES[target] && target !== '/run')) {
+    const dryRun = Bare.argv.includes('--dry-run')
+    const r = await run(target, { dryRun, print: line => console.log(line) })
+    if (dryRun || target === '/protocol' || target === '/deploy') console.log(JSON.stringify(dryRun ? r : Object.keys(r)))
+    else { console.log(JSON.stringify(r)); Bare.exitCode = r.ok ? 0 : 1 }
+  } else if (ENTRIES['/run']) await run('/run')
+}

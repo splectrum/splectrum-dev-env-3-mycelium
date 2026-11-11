@@ -17,6 +17,7 @@ import { join, dirname, resolve, relative } from 'bare-path'
 import { fileURLToPath } from 'bare-url'
 import { closure } from '../pear-full-square/pkgm-base-manager/lib/closure.js'
 import { copy } from '../pear-full-square/pkgm-base-manager/lib/tree.js'
+import { writeDispatcher } from './lib/dispatcher.js'
 
 const dev = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const readJson = f => JSON.parse(readFileSync(f, 'utf8'))
@@ -62,4 +63,6 @@ const record = set.third.map(t => {
   return { name: t, version: pj.version, license: pj.license || e.license || null, resolved: e.resolved || null, integrity: e.integrity || null }
 })
 writeFileSync(join(out, 'third-party.json'), JSON.stringify({ platform: platform(), modules: record }, null, 2) + '\n')
+// Its dispatcher and test runner, from what it now has (tools/lib/dispatcher.js).
+writeDispatcher(pkg)
 console.log(JSON.stringify({ ours: set.ours, third: set.third.length, unresolved: set.missing.map(m => `${m.from}: ${m.name}`) }))
