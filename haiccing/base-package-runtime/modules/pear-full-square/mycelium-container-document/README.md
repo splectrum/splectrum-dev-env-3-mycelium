@@ -15,6 +15,12 @@ box.list()                       // names, in order
 box.read(name); box.remove(name)
 ```
 
+## The folders
+
+| | |
+|---|---|
+| [test/](test/) | its tests, what each checks |
+
 ## Tests
 
 - `npm test`: the unit tests

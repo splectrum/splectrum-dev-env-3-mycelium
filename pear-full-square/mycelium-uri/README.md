@@ -46,6 +46,13 @@ The functions are pure: their result depends only on their arguments. A
 run records the invocation of the unit they are part of, and a rerun
 reproduces every call inside it.
 
+## The folders
+
+| | |
+|---|---|
+| [lib/](lib/) | its parts, a file each |
+| [test/](test/) | its tests, what each checks |
+
 ## Tests
 
 - `npm test`: the unit tests

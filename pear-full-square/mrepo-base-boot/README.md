@@ -45,6 +45,13 @@ The mrepo boot protocol, the base variant: `deploy`, `teardown`,
   clean-up; what an action does outside the repository (a runtime started,
   a child's folder removed) is not undone by a reset.
 
+## The folders
+
+| | |
+|---|---|
+| [lib/](lib/) | its parts, a file each |
+| [test/](test/) | its tests, what each checks |
+
 ## Tests
 
 - `npm test`: the unit tests (building, running a built mrepo on the

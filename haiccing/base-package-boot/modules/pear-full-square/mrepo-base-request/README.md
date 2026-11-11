@@ -40,6 +40,13 @@ setting.
   p2p-git with every layer on the filesystem, no Corestore; the p2p host
   over its Corestore and disk side); without it the p2p host.
 
+## The folders
+
+| | |
+|---|---|
+| [lib/](lib/) | its parts, a file each |
+| [test/](test/) | its tests, what each checks |
+
 ## Tests
 
 - `npm test`: the unit tests

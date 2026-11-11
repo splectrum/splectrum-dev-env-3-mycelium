@@ -906,6 +906,15 @@ to each of ours. No README inside a layer (it would be committed into it):
 example and `package-docs-mrepo` cascade too. Checked by crawling the links
 from each root: every folder reached, none broken.
 
+The rule, for every organisation but `splectrum` (the human): in
+`rules.md` ("Development and deployment"). Applied to the modules the
+packages carry (12): a `lib/README.md` (each file, from its own header)
+and a `test/README.md` (how to run, each file and its tests), linked from
+the module's README. A test run's Corestore left in `mrepo-base-boot`
+(`store/`, committed in part 20, carried into the boot package) removed.
+The other modules and organisations' repositories not yet brought to the
+rule (not part of this work).
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
