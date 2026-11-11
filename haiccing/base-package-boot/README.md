@@ -19,8 +19,10 @@ command as typed, a GUID), each step's outcome logged in it:
 
 1. **Prerequisites** (`prerequisites.json`), before anything is written:
    the platform (`linux-x64`), the work folder (writable, not the
-   filesystem's root, no other mrepo there), the sources, Bare (`bare.json`:
-   put in place at `<work>/bare/` if missing, only with a yes). One missing:
+   filesystem's root, no other mrepo there), the sources, Bare (one
+   installed on the PATH at `bare.json`'s major, the same version or newer;
+   else the pinned one, `bare.json`, put in place at `<work>/bare/`, only
+   with a yes; the one used recorded in `<work>/bare.json`). One missing:
    it says which and stops (exit 3), the request printed only.
 2. **The boot mrepo built** the first time into `<work>/mrepos/boot/` (from
    `mrepo/`; in the release, embedded).
@@ -31,7 +33,7 @@ command as typed, a GUID), each step's outcome logged in it:
    sources and store committed.
 4. **Its request**, completed, into its `request/execute`, and printed.
 5. **Its runtime started**, from its own `packages/`, by its directory, on
-   the Bare put in place (`<work>/bare/bin/bare
+   the Bare recorded (an installed one, or the one put in place: `<the Bare>
    <work>/mrepos/boot/packages/haiccing/base-package-runtime.bundle
    <work>/mrepos/boot`), as its own process; its status printed last. It
    moves the request to `request/done` first, then executes its preloaded

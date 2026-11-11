@@ -2,7 +2,8 @@
 // declared with their conditions in its package's config, checked when it
 // is deployed, before anything is written; a fix only with a yes.
 //   check(list, ctx)  list: [{ check, when?, fix?, ... }]; ctx: { work,
-//                     sources, bare: { version, integrity }, yes, ask }.
+//                     sources, bare: { version, integrity }, path?, yes,
+//                     ask }.
 //                     Each in order: { check, ok, value | missing, fixed?,
 //                     skipped? }; stops at the first that fails and is not
 //                     fixed. Resolves { ok, results }.
@@ -11,10 +12,13 @@
 //   work       the work folder writable, not the filesystem's root, no other mrepo there ({ name }: the
 //              one this deploys may be there already)
 //   sources    each reachable: a folder there; github: its host answering
-//   bare       Bare at <work>/bare/bin/bare, from the pinned tarball; fix: put
-//              in place from the sources (folder: <path>/holepunchto/<tarball>,
-//              by its organisation; github: npm's registry), checked against
-//              its sha512
+//   bare       the Bare recorded in <work>/bare.json, else the pinned one at
+//              <work>/bare/bin/bare, else one installed (ctx.path, a PATH:
+//              the first `bare` there at the pinned major, the same version
+//              or newer), recorded; fix: the pinned one put in place from the
+//              sources (folder: <path>/holepunchto/<tarball>, by its
+//              organisation; github: npm's registry), checked against its
+//              sha512
 //   docker     Docker Engine installed, running, rootful, native, the user in
 //              its group
 // Conditions (`when`): 'not-in-container' (no /.dockerenv, no container
@@ -95,7 +99,36 @@ async function fetchBare (sources, version) {
   return null
 }
 
-export const bareOf = work => join(work, 'bare', 'bin', 'bare')
+// The Bare an mrepo runs on, recorded in <work>/bare.json ({ bare, version,
+// installed }): one installed on the machine, or the pinned one put in place
+// at <work>/bare/bin/bare (also without a record, as before there was one).
+const placed = work => join(work, 'bare', 'bin', 'bare')
+const recordOf = work => { try { return JSON.parse(readFileSync(join(work, 'bare.json'), 'utf8')) } catch { return null } }
+const remember = (work, r) => { mkdirSync(work, { recursive: true }); writeFileSync(join(work, 'bare.json'), JSON.stringify(r, null, 2) + '\n'); return r }
+export const bareOf = work => recordOf(work)?.bare ?? placed(work)
+
+// An installed Bare is accepted at the pinned version's major, the same or
+// newer (the human, 2026-11-11): only its version can be asked, no sha512.
+export function acceptable (have, want) {
+  const [a, b] = [have, want].map(v => String(v).replace(/^v/, '').split('.').map(Number))
+  if (a.length < 3 || a.some(Number.isNaN) || a[0] !== b[0]) return false
+  for (let i = 1; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i]
+  return true
+}
+const versionOf = b => {
+  const r = run(b, ['--version'])
+  return r.status === 0 ? r.stdout.toString().trim().replace(/^v/, '') : null
+}
+// The first `bare` on the PATH at an acceptable version.
+function installed (path, want) {
+  for (const dir of String(path ?? '').split(':').filter(Boolean)) {
+    const b = join(dir, 'bare')
+    if (!existsSync(b)) continue
+    const version = versionOf(b)
+    if (version && acceptable(version, want)) return { bare: b, version }
+  }
+  return null
+}
 
 async function putBare ({ work, sources, bare }) {
   const got = await fetchBare(sources, bare.version)
@@ -115,7 +148,8 @@ async function putBare ({ work, sources, bare }) {
   writeFileSync(join(tmp, 'tarball.sha512'), bare.integrity + '\n')
   rmSync(dir, { recursive: true, force: true })
   renameSync(tmp, dir)
-  return { ok: true, value: { bare: bareOf(work), version: bare.version, from: got.from } }
+  remember(work, { bare: placed(work), version: bare.version, installed: false })
+  return { ok: true, value: { bare: placed(work), version: bare.version, from: got.from } }
 }
 
 const CHECKS = {
@@ -142,11 +176,24 @@ const CHECKS = {
     }
     return { ok: true, value: sources.map(s => s.kind === 'folder' ? `folder:${s.path}` : `github:${s.org}`) }
   },
-  bare (_, { work, bare }) {
-    const b = bareOf(work)
+  bare (_, { work, bare, path }) {
+    // 1. the one recorded, if it is an installed one still there at an acceptable version
+    const rec = recordOf(work)
+    if (rec?.installed && existsSync(rec.bare)) {
+      const version = versionOf(rec.bare)
+      if (version && acceptable(version, bare.version)) return { ok: true, value: { bare: rec.bare, version, installed: true } }
+    }
+    // 2. the pinned one, put in place here before
+    const b = placed(work)
     const pinned = join(work, 'bare', 'tarball.sha512')
-    if (existsSync(b) && existsSync(pinned) && readFileSync(pinned, 'utf8').trim() === bare.integrity) return { ok: true, value: { bare: b, version: bare.version } }
-    return { ok: false, missing: `Bare ${bare.version} at ${b}`, fix: 'put Bare in place' }
+    if (existsSync(b) && existsSync(pinned) && readFileSync(pinned, 'utf8').trim() === bare.integrity) {
+      if (rec?.bare !== b) remember(work, { bare: b, version: bare.version, installed: false })
+      return { ok: true, value: { bare: b, version: bare.version } }
+    }
+    // 3. one installed on the machine (searched only when given a PATH)
+    const found = installed(path, bare.version)
+    if (found) return { ok: true, value: remember(work, { ...found, installed: true }) }
+    return { ok: false, missing: `Bare ${bare.version} (or a newer ${bare.version.split('.')[0]}.x installed) at ${b}`, fix: 'put Bare in place' }
   },
   docker () {
     const info = run('docker', ['info', '--format', '{{json .}}'])

@@ -31,8 +31,11 @@ The mrepo boot protocol, the base variant: `deploy`, `teardown`,
   build. The install routine's first piece.
 - `lib/prerequisites.js`: an mrepo's prerequisites, checked before
   anything is written (`check(list, ctx)`): `platform`, `work`, `sources`,
-  `bare` (fixed, with a yes: the pinned Bare put in place from the sources,
-  a folder's `holepunchto/` or npm's registry, checked by its sha512),
+  `bare` (the one recorded in `<work>/bare.json`, else one installed on the
+  PATH at the pinned major, the same version or newer, recorded; fixed,
+  with a yes: the pinned Bare put in place from the sources, a folder's
+  `holepunchto/` or npm's registry, checked by its sha512; `bareOf(work)`
+  the one recorded),
   `docker` (installed, running, rootful, native, the user in its group); a
   condition each (`when: 'not-in-container'`). Stops at the first missing.
 - `index.js` exports them. `haiccing/base-package-boot`'s `protocol.js`

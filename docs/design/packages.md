@@ -203,8 +203,8 @@ executable, platform-specific** (`bare-build --standalone`: Bare built in,
 the bundle embedded, native libraries self-extracting; one a platform,
 `linux-x64` first). No prerequisite outside it. It checks the machine at
 the start of `run.js` (before anything is written), unpacks the boot mrepo,
-puts Bare in place **only if none is there** (pinned, checked: every later
-mrepo process runs on it), and starts the boot's runtime from the
+puts Bare in place **only if none is there** (pinned, checked; or an
+installed one used, below: every later mrepo process runs on it), and starts the boot's runtime from the
 repository's own `packages/` (`base-package-mrepo`), then exits. The other
 packages stay plain bundles. Tried (2026-11-11): a standalone of
 `base-package-boot/run.js` builds (104 MB) and loads all its modules,
@@ -213,9 +213,14 @@ native addons included; files beside the code are not there inside it
 module; its Bare (v1.35.0, `bare-build` 1.6.2) is not the repository's
 (v1.36.0). **The Bare version is the one provided** (the human,
 2026-11-11): what `bare-build` builds in when the boot is built is the Bare
-that release puts in place (pinned, checked), so the executable and every
-mrepo it starts run on one version; a newer `bare-build` moves it. No
-custom runtime.
+that release puts in place (pinned, checked); a newer `bare-build` moves
+it. No custom runtime. **An installed Bare first** (the human, 2026-11-11,
+replacing "one version"): the boot's check takes a Bare installed on the
+machine (the first `bare` on the PATH) at the pinned major, the same
+version or newer, and records it in `<work>/bare.json` (its path, its
+version; the mrepos started there run on it; only its version can be
+asked, no sha512); none there, the pinned one is put in place as before,
+with a yes. **Built** (2026-11-11).
 
 **Prerequisites** (agreed, the human, 2026-11-11): each mrepo checks its
 own when it is deployed, declared with their conditions in its package's
@@ -225,7 +230,7 @@ missing; the outcome recorded in the request.
 | Prerequisite | When | Whose |
 |---|---|---|
 | platform (`linux-x64`), the work folder (writable, no other mrepo there), the sources reachable | always | the boot, at the start of `run.js` |
-| Bare | always; put in place if missing | the boot |
+| Bare | always; an installed one (the pinned major, the same or newer) used, else the pinned one put in place | the boot |
 | Docker Engine (installed, running, rootful, native; the user in its group) | only where nodes run as containers, and not inside a container itself (`/.dockerenv`, `/proc/1/cgroup`) | the host |
 
 No longer needed: git (p2p-git), curl (fetching in Bare). In a container

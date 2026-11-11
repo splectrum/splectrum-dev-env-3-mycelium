@@ -1,9 +1,9 @@
 import test from 'brittle'
-import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, mkdirSync } from 'bare-fs'
+import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, mkdirSync, chmodSync } from 'bare-fs'
 import { join } from 'bare-path'
 import os, { tmpdir } from 'bare-os'
 import { spawnSync } from 'bare-subprocess'
-import { check, parseSource, inContainer, bareOf, BARE_ORG } from '../lib/prerequisites.js'
+import { check, parseSource, inContainer, bareOf, acceptable, BARE_ORG } from '../lib/prerequisites.js'
 
 // Bare's tarball for putting it in place: from this repository's node_modules
 // (the lockfile's pin), packed as npm publishes it, into a folder source.
@@ -61,6 +61,36 @@ test('bare: missing, not fixed without a yes; put in place from a folder source,
   } finally {
     rmSync(work, { recursive: true, force: true })
     rmSync(src, { recursive: true, force: true })
+  }
+})
+
+test('bare: an installed one on the PATH, at the pinned major, the same or newer; recorded, used next time', async (t) => {
+  const work = mkdtempSync(join(tmpdir(), 'pre-inst-'))
+  const bins = mkdtempSync(join(tmpdir(), 'pre-bins-'))
+  // a `bare` that only answers its version, one a folder
+  const fake = v => { const d = join(bins, v); mkdirSync(d); writeFileSync(join(d, 'bare'), `#!/bin/sh\necho v${v}\n`); chmodSync(join(d, 'bare'), 0o755); return d }
+  try {
+    t.ok(acceptable('1.36.0', '1.35.0') && acceptable('v1.35.0', '1.35.0') && acceptable('1.35.2', '1.35.0'), 'the same or newer: accepted')
+    t.absent(acceptable('1.24.2', '1.35.0') || acceptable('1.34.9', '1.35.0') || acceptable('2.0.0', '1.35.0') || acceptable('x', '1.35.0'), 'older, another major, no version: refused')
+    const [old, other, good] = [fake('1.24.2'), fake('2.1.0'), fake('1.40.1')]
+    const list = [{ check: 'bare', fix: true }]
+    const ctx = { work, sources: [], bare: BARE, ask: async () => false }
+    const none = await check(list, { ...ctx, path: [old, other].join(':') })
+    t.absent(none.ok, 'only an older one and another major: missing')
+    t.absent(existsSync(join(work, 'bare.json')), 'nothing recorded')
+    const found = await check(list, { ...ctx, path: [old, good, other].join(':') })
+    t.ok(found.ok && !found.results[0].fixed, 'a newer 1.x on the PATH: used, nothing put in place')
+    t.alike(found.results[0].value, { bare: join(good, 'bare'), version: '1.40.1', installed: true })
+    t.is(bareOf(work), join(good, 'bare'), 'recorded: the one the mrepo runs on')
+    t.absent(existsSync(join(work, 'bare')), 'no Bare of its own')
+    const again = await check(list, { ...ctx })
+    t.ok(again.ok && again.results[0].value.installed, 'next time: the recorded one, no PATH needed')
+    rmSync(good, { recursive: true, force: true })
+    const gone = await check(list, { ...ctx })
+    t.absent(gone.ok, 'the recorded one gone: missing again (and the fix offered)')
+  } finally {
+    rmSync(work, { recursive: true, force: true })
+    rmSync(bins, { recursive: true, force: true })
   }
 })
 

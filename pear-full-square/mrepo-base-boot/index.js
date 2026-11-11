@@ -11,4 +11,4 @@
 export { build } from './lib/build.js'
 export { deploy, teardown, redeploy } from './lib/deploy.js'
 export { place, fetch, structureOf, storeOf } from './lib/packages.js'
-export { check, parseSource, inContainer, bareOf, BARE_ORG, TARBALL } from './lib/prerequisites.js'
+export { check, parseSource, inContainer, bareOf, acceptable, BARE_ORG, TARBALL } from './lib/prerequisites.js'

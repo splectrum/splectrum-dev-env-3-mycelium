@@ -11,7 +11,7 @@ tar). Nothing is published: no GitHub release, no push of the build.
 >    yet: clone it first), check out `main` and pull.
 > 2. **Install the dependencies.** `sh tools/install.sh` (no Node.js or npm
 >    needed: it replays `package-lock.json` with curl and tar; this time it
->    adds `bare-build`, about 1 GB). Then check that both exist:
+>    adds `bare-build`, this platform's only, about 46 MB). Then check that both exist:
 >    `node_modules/bare-runtime-linux-x64/bin/bare` and
 >    `node_modules/.bin/bare-build`.
 > 3. **Build the release into the local sources.** From the clone's folder:

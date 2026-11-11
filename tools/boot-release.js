@@ -30,14 +30,17 @@ const dev = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const flag = (n, d) => process.argv.slice(2).find(a => a.startsWith(`--${n}=`))?.slice(n.length + 3) ?? d
 const out = resolve(flag('out', join(dev, 'sources')))
 const platform = `${os.platform()}-${os.arch()}`
-const bareBuild = join(dev, 'node_modules', '.bin', 'bare-build')
+// bare-build run with Bare, not its node shebang: no Node.js needed, and on
+// Bare its Android and AppImage builders fall back to unsupported (not installed)
+const bareBuild = join(dev, 'node_modules', 'bare-build', 'bin.js')
 const tool = (...a) => { const r = spawnSync(join(dev, 'tools', 'bare'), a, { stdio: 'inherit' }); if (r.status !== 0) throw new Error(`failed: ${a.join(' ')}`) }
 const sh = (cmd, a, opts = {}) => { const r = spawnSync(cmd, a, { stdio: ['ignore', 'pipe', 'inherit'], ...opts }); if (r.status !== 0) throw new Error(`failed: ${cmd} ${a.join(' ')}`); return r.stdout.toString().trim() }
+const build = a => sh(join(dev, 'tools', 'bare'), [bareBuild, ...a])
 const files = (dir, at = '') => readdirSync(join(dir, at)).sort().flatMap(n => {
   const p = at ? `${at}/${n}` : n
   return lstatSync(join(dir, p)).isDirectory() ? files(dir, p) : [p]
 })
-if (!existsSync(bareBuild)) { console.error('bare-build is missing: npm install --ignore-scripts'); process.exit(2) }
+if (!existsSync(bareBuild)) { console.error('bare-build is missing: sh tools/install.sh'); process.exit(2) }
 
 mkdirSync(out, { recursive: true })
 const tmp = join(out, '.stage')
@@ -47,7 +50,7 @@ rmSync(tmp, { recursive: true, force: true })
 mkdirSync(join(tmp, 'probe'), { recursive: true })
 writeFileSync(join(tmp, 'probe', 'package.json'), '{ "name": "probe", "type": "module" }\n')
 writeFileSync(join(tmp, 'probe', 'probe.js'), 'console.log(Bare.version)\n')
-sh(bareBuild, ['--standalone', '--base', join(tmp, 'probe'), '--out', join(tmp, 'probe-out'), join(tmp, 'probe', 'probe.js')])
+build(['--standalone', '--base', join(tmp, 'probe'), '--out', join(tmp, 'probe-out'), join(tmp, 'probe', 'probe.js')])
 const version = sh(join(tmp, 'probe-out', 'probe'), []).replace(/^v/, '')
 // Its tarball as npm's registry publishes it (curl: no npm needed).
 const meta = JSON.parse(sh('curl', ['-fsSL', '--retry', '3', `https://registry.npmjs.org/bare-runtime-${platform}/${version}`]))
@@ -74,7 +77,7 @@ writeFileSync(join(stage, 'mrepo-files.js'), `// The boot mrepo's structure, emb
 writeFileSync(join(stage, 'bare.json'), JSON.stringify({ description: 'The Bare the boot puts in place, pinned: the one built into it.', version, integrity }, null, 2) + '\n')
 
 // 4. The standalone executable.
-sh(bareBuild, ['--standalone', '--base', stage, '--out', join(tmp, 'boot-out'), join(stage, 'run.js')])
+build(['--standalone', '--base', stage, '--out', join(tmp, 'boot-out'), join(stage, 'run.js')])
 const exe = readdirSync(join(tmp, 'boot-out'))[0]
 const release = join(out, 'haiccing', `base-package-boot-${platform}`)
 mkdirSync(dirname(release), { recursive: true })
