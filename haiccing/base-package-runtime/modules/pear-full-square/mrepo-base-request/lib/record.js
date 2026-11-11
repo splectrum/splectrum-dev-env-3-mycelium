@@ -1,4 +1,4 @@
-// A record (docs/design/repositories.md, "Every message is a Kafka record"):
+// A record:
 // the base's minimum, { topic, timestamp, headers, value }; the headers left
 // empty for now (their use to be planned). The onion: a record's value may be
 // a record, wrapped. The core is the pre-filled form in a pre-addressed

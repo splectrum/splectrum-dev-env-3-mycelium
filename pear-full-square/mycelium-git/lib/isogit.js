@@ -22,9 +22,20 @@ export function isoStyleBackend (git, gitdir, { fs = nodeFs } = {}) {
 
     // --- Reading ---
 
+    // A branch listed while another process is writing its ref (written in
+    // place by the engine: for an instant unreadable) is resolved again,
+    // briefly; still not there, it was deleted meanwhile: not listed.
     async listBranches () {
       const names = (await git.listBranches(at)).sort()
-      return Promise.all(names.map(async n => [n, await git.resolveRef({ ...at, ref: `refs/heads/${n}` })]))
+      const resolved = async n => {
+        for (let i = 0; ; i++) {
+          try { return await git.resolveRef({ ...at, ref: `refs/heads/${n}` }) } catch (err) {
+            if (i >= 40) return null
+            await new Promise(resolve => setTimeout(resolve, 5))
+          }
+        }
+      }
+      return (await Promise.all(names.map(async n => [n, await resolved(n)]))).filter(([, oid]) => oid)
     },
 
     async readCommit (oid) {

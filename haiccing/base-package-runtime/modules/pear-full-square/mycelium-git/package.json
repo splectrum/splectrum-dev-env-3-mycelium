@@ -3,7 +3,10 @@
   "id": "7cadb8e9-88c5-4b56-8baf-5988072a0cc8",
   "description": "The repository rules over a backend contract",
   "type": "module",
-  "exports": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./test/*": "./test/*"
+  },
   "scripts": {
     "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
   },

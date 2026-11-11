@@ -1,6 +1,7 @@
 {
-  "description": "The package on its own, in a floating instance: its help extracts without problems.",
+  "description": "The package on its own, in a floating instance: its help extracts and its code checks without problems.",
   "tests": [
-    "help"
+    "help",
+    "code"
   ]
 }

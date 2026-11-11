@@ -7,7 +7,7 @@ import { existsSync, mkdtempSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { tmpdir } from 'bare-os'
 import { openStore } from 'p2p-store'
-import { contract } from '../../mycelium-git/test/contract.js'
+import { contract } from 'mycelium-git/test/contract.js'
 import { mrepos } from '../index.js'
 
 const open = []

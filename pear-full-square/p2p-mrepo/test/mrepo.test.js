@@ -5,7 +5,7 @@ import { tmpdir } from 'bare-os'
 import { spawnSync } from 'bare-subprocess'
 import { openStore } from 'p2p-store'
 import { replicator } from 'p2p-replicate'
-import { openRepo, writer, writeBundle, nativeBackend } from '../../mycelium-git/index.js'
+import { openRepo, writer, writeBundle, nativeBackend } from 'mycelium-git'
 import { mrepos } from '../index.js'
 
 // A command run to its end (Bare's bare-subprocess has no execFileSync): its

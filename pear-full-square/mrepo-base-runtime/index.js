@@ -1,6 +1,5 @@
 // mrepo-base-runtime: a running mycelium repository's runtime (the
-// framework: the process that runs its protocols, docs/design/repositories.md,
-// "A running repository"; structure.md, "One writer per store"), as a library
+// framework: the process that runs its protocols, the store's one writer), as a library
 // (runtime.js is its command line, base-package-mrepo's entry).
 //   run({ repo })           the runtime, in this process, for the mrepo at
 //                           an mrepo's directory (<work>/mrepos/<name>: the
@@ -133,7 +132,7 @@ export async function run ({ work: w, repo: given = null, every = 200, own = nul
   const repo = await open(at)
   const started = new Date().toISOString()
   // No log of its own: what happens to a request is in its document and the
-  // commits that moved it (docs/design/repositories.md, "No log").
+  // commits that moved it.
   const ctx = { work, dir, name: repo.name, backend: repo.backend, repo: openRepo(repo.backend), writer: writer(repo.backend), seen: {} }
   // The protocols its packages offer: each linked package with a protocol
   // entry, loaded from its bundle in the mrepo's packages/ (its dispatcher's

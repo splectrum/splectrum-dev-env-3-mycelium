@@ -1,5 +1,4 @@
-// The framework's generic actions, the base's (docs/design/repositories.md:
-// the rest and service protocols). Each takes the execution's context (exec:
+// The framework's generic actions, the base's. Each takes the execution's context (exec:
 // reads overlaid, writes to the execution branches, the runtime's context
 // read through exec.runtime) and the request's value, and returns its value
 // (or throws: refused).

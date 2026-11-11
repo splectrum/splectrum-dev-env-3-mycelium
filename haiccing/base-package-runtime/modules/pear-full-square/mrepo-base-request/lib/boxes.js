@@ -1,4 +1,4 @@
-// A repository's boxes, as layers (docs/design/repositories.md, "The boxes"):
+// A repository's boxes, as layers:
 // `inbox` and `outbox`, non-atomic (git on disk), a record a document,
 // <name>.json, at the layer's root; nothing removed (housekeeping later).
 // What arrives in the inbox is an envelope: its topic this repository's

@@ -6,7 +6,7 @@ import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
 import { layer, record, wrap, complete, guid, EXECUTE } from 'mrepo-base-request'
-import { bootedHost } from '../../mrepo-base-runtime/test/fixture.js'
+import { bootedHost } from 'mrepo-base-runtime/test/fixture.js'
 import { execute, executed, failed, ACTIONS } from '../index.js'
 
 // The runtime's context over a booted host, in this process.

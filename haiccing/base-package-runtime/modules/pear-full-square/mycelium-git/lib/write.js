@@ -12,9 +12,9 @@ const TREE = '040000'
 
 // First segments of layers, which start as orphans. execute and publish
 // branches are derived from another branch, not created as layers.
-// request, packages, runtime, inbox, outbox and help: phase 3's
-// (docs/design/repositories.md; help: the READMEs of its packages); pending and capability go when the code
-// using them is rebuilt.
+// request, packages, runtime, inbox, outbox and help: the mrepo's layers
+// (help: the READMEs of its packages); pending and capability go when the
+// code using them is rebuilt.
 const LAYERS = ['main', 'request', 'packages', 'runtime', 'inbox', 'outbox', 'help', 'pending', 'overlay', 'data', 'capability']
 // Every reserved first segment: a branch name starts with one.
 const RESERVED = [...LAYERS, 'execute', 'publish']

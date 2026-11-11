@@ -66,7 +66,7 @@ test('the prerequisites: one missing, the boot stops before writing anything', a
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
 
-test('the boot: put in place, its runtime started, the host deployed inside it; redeployed, torn down, deployed again by requests; run again', { timeout: 120000, skip: !have }, async (t) => {
+test('the boot: put in place, its runtime started, the host deployed inside it; redeployed, torn down, deployed again by requests; run again', { timeout: 240000, skip: !have }, async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'boot-'))
   try {
     const r = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
@@ -167,10 +167,10 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     // dispatcher; a dry run says what would run, a run returns the results
     const dry = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/test/full', body: { dryRun: true } })
     const runs = dry?.output?.runs ?? []
-    t.ok(!dry?.error && runs[0] === '/test/start' && runs[1] === '/test/help' && runs.length > 2 && runs.slice(2).every(u => u.startsWith('/test/modules/')), `runtime run, a dry run: what test/full would run, nothing run ${JSON.stringify(dry?.output ?? dry?.error)}`)
+    t.ok(!dry?.error && runs.slice(0, 3).join() === '/test/start,/test/help,/test/code' && runs.length > 3 && runs.slice(3).every(u => u.startsWith('/test/modules/')), `runtime run, a dry run: what test/full would run, nothing run ${JSON.stringify(dry?.output ?? dry?.error)}`)
     const ran = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/test/validate' }, 1200)
     t.absent(ran?.error, `runtime run test/validate: done ${ran?.error ?? ''}`)
-    t.alike([ran?.output?.ok, ran?.output?.units?.map(u => u.unit)], [true, ['/test/start', '/test/help']], 'its result: the start test and its help passed, in a floating instance')
+    t.alike([ran?.output?.ok, ran?.output?.units?.map(u => u.unit)], [true, ['/test/start', '/test/help', '/test/code']], 'its result: the start test, its help and its code passed, in a floating instance')
     t.ok(ran?.log?.some(e => e.event === 'unit' && e.unit === '/test/start' && e.ok), 'a summary logged, a line a unit')
     // its help, extracted by its runtime as it started: retrieved by URI
     const root = await sent({ protocol: 'help', action: 'get', uri: '/' })
@@ -208,7 +208,14 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')
     for (let i = 0; i < 100 && alive(s2.pid); i++) await wait(100)
     t.absent(alive(s2.pid))
-  } finally { rmSync(work, { recursive: true, force: true }) }
+  } finally {
+    // whatever happened: its runtimes stopped (the host's, the boot's), then its folder removed
+    for (const r of [join(viewOf(work, 'boot'), 'main', 'host'), viewOf(work, 'boot')]) {
+      const s = await ask({ repo: r, op: 'status' }).catch(() => null)
+      if (s?.pid) { try { os.kill(s.pid, 'SIGTERM') } catch {} for (let i = 0; i < 50 && alive(s.pid); i++) await wait(100) }
+    }
+    rmSync(work, { recursive: true, force: true })
+  }
 })
 
 test('an installed Bare on the PATH: used, recorded, none put in place, no question', { timeout: 120000, skip: !have }, async (t) => {

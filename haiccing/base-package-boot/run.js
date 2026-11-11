@@ -1,5 +1,4 @@
-// The boot: the boot mrepo, the root (docs/design/packages.md, "The boot
-// mrepo: the root"), put in place up to its runtime's start. The invocation
+// The boot: the boot mrepo, the root, put in place up to its runtime's start. The invocation
 // is a request from the start, a record (boot deploy /boot, the command as
 // typed, its key a GUID); each step's outcome logged in it:
 //   1. the prerequisites (prerequisites.json), before anything is written:

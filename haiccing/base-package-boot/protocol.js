@@ -1,5 +1,4 @@
-// base-package-boot's protocols (docs/design/packages.md, "Two roles, three
-// entry points"): the boot protocol, mounted by every mrepo that deploys
+// base-package-boot's protocols: the boot protocol, mounted by every mrepo that deploys
 // others. Linked into an mrepo, its configs are registered in the
 // protocols layer and its actions loaded by the runtime.
 //   protocols   the configs: each protocol's actions, the URIs, the service

@@ -160,6 +160,25 @@ repository no longer holding `modules/`, wrong), `releases.md` and
 
 ## Elsewhere
 
+- **Validation, for autonomy** (step 2, parts 23-25): every package's
+  `validate` checks its help (`/test/help`, the README rules) and its code
+  (`/test/code`, the code rules); `validate-in-situ` in a running mrepo.
+  Run before every commit: `tools/bare tools/help-extract.js` (and
+  `--files`), `tools/bare tools/code-check.js`, each package's set from its
+  bundle. Run the boot's test several times when the runtime or the
+  repository code changed: a race shows one run in a few.
+- **Waiting for the human**: the repository `pear-full-square/pkgm-base-check`
+  (description: "Module: the code rules, checked on a package's modules
+  and its own code."); then `sh tools/products.sh pkgm-base-check`.
+- **Open, p2p-git**: a ref is written in place (for an instant unreadable
+  to another process); to be written aside and renamed. `mycelium-git`'s
+  `listBranches` tolerates it meanwhile.
+- **Internal requests** (part 24): placed by the mrepo itself, straight to
+  the handler into pending (`admit`); the inbox waits until the mrepo's own
+  are done. The runtime's status (operational) starts there.
+- **Assembly options per package** (part 24): `assemble.omit` in a
+  package's `package.json`, a default in the root; try and see, its
+  `validate` the proof.
 - **`mrepo-base-help`**: built (step 2, part 24): the help protocol, the
   extraction, the validation; documentation packages marked `docs`.
 - **The local agent** builds, tests and publishes releases

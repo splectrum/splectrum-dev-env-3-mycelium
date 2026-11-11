@@ -1104,3 +1104,36 @@ writing the help layer through the execution context (`help` an execution
 target where the layer exists, in `mrepo-base-execute`); the runtime keeps
 no extraction call. The boot's test: the internal extraction in the boot
 mrepo's history, exact counts (71 asserts). All sets pass.
+
+## 25. Code validation; a race found (2026-11-11)
+
+The human: a code quality validation like the documentation's, for the
+AI's implementation autonomy.
+
+- **`pkgm-base-check`** (new module; its repository to be created by the
+  human): the code rules, `checkModule` and `checkPackage`
+  (`internal/rules`), and `validate/code.test.js`, the test every package
+  carrying it runs on itself. The rules, mechanical: **structure** (a
+  method directory has its `index.js` and `README.md`), **imports** (a
+  relative import stays in its module; another of our modules by name,
+  never into its files; a test may share another module's test helpers by
+  name, `<module>/test/<file>`), **transient** (no references to this
+  repository's `docs/`, `steps/`).
+- **`/test/code`** in every package's `validate` and `full` (the dispatcher
+  adds the unit where the package carries the module); `tools/code-check.js`
+  the same over the carried modules and the packages here.
+- **Brought in line**: 31 problems: the references in code comments
+  removed, cross-module relative imports by name, `mycelium-git` exporting
+  its `test/` helpers (the contract suite, shared with `p2p-mrepo`).
+- **A race found by running the sets repeatedly**: the boot test died one
+  run in three, reading the boot mrepo's repository while its runtime
+  committed: a branch listed, its ref for an instant unreadable (p2p-git
+  writes a ref in place). `mycelium-git`'s `listBranches` now resolves
+  again, briefly, and drops a branch only when it is gone. Open: p2p-git
+  to write refs atomically (written aside, renamed). The boot test stops
+  its runtimes whatever happened. Eight runs in a row pass.
+
+All sets pass: the documentation packages' `validate` (help, code), the
+runtime's and the boot's `full` (16 and 17 units); 156 READMEs in the help
+tree, 97 source READMEs, no problems; the code check, 14 modules, 4
+packages, no problems.

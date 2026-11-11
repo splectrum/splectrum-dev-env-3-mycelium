@@ -38,7 +38,8 @@
     "pear-full-square/splectral-p2p-actions",
     "pear-full-square/haicc-deployment",
     "pear-full-square/pkgm-base-manager",
-    "pear-full-square/haicc-base-cli"
+    "pear-full-square/haicc-base-cli",
+    "pear-full-square/pkgm-base-check"
   ],
   "dependencies": {
     "bare-bundle": "1.11.0",

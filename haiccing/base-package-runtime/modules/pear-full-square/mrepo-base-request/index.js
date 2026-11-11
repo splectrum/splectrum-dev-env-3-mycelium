@@ -1,6 +1,5 @@
 // mrepo-base-request: the request protocol, base variant
-// (docs/design/repositories.md, "A running repository": the protocols meet in
-// data, never by calls). One pass over its data states, given the runtime's
+//. One pass over its data states, given the runtime's
 // context ({ work, name, backend, repo, writer, seen }: read access to
 // the repository, the writer held by the runtime). Records are an onion
 // (lib/record.js): an envelope around the core, the pre-filled form; each

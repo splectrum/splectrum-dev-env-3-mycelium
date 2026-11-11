@@ -8,7 +8,7 @@ import { mkdtempSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { tmpdir } from 'bare-os'
 import { openRepo, pinned, writer } from '../index.js'
-import { sameName } from '../../mycelium-uri/index.js'
+import { sameName } from 'mycelium-uri'
 
 // A command run to its end (Bare's bare-subprocess has no execFileSync): its
 // output; a failure throws, with what it said.

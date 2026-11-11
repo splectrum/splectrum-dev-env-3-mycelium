@@ -2,7 +2,7 @@ import test from 'brittle'
 import { mkdtempSync, rmSync, readdirSync, writeFileSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { tmpdir } from 'bare-os'
-import * as json from '../../mycelium-value-json/index.js'
+import * as json from 'mycelium-value-json'
 import { documents, newName } from '../index.js'
 
 test('documents: written, listed in order, read, removed', (t) => {

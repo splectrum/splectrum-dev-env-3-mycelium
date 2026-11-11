@@ -30,7 +30,7 @@ import crypto from 'hypercore-crypto'
 import { createFs } from 'p2p-git/hyperdrive-fs'
 import { join } from 'bare-path'
 import fs from 'bare-fs'
-import { p2pgitBackend, nativeBackend, mixedBackend, transfer, readBundle } from '../mycelium-git/index.js'
+import { p2pgitBackend, nativeBackend, mixedBackend, transfer, readBundle } from 'mycelium-git'
 
 const MODULE = 'p2p-mrepo'
 const hex = b => b.toString('hex')

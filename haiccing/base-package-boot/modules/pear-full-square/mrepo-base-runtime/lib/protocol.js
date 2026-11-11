@@ -1,4 +1,4 @@
-// The runtime protocol (docs/design/repositories.md, "The runtime protocol"):
+// The runtime protocol:
 // the runtime's own, in every mrepo it runs. run:
 // an entry of a package the mrepo has linked, through that package's
 // dispatcher (its bundle in the mrepo's packages/, imported: nothing runs

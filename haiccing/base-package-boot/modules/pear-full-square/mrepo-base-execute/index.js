@@ -1,5 +1,5 @@
 // mrepo-base-execute: the execute protocol, base variant
-// (docs/design/repositories.md, "A running repository"). One pass over its
+//. One pass over its
 // data state, given the runtime's context ({ name, repo, writer, backend }):
 // a request in request/execute (an envelope around the core, the pre-filled
 // form), its form not yet completed:
