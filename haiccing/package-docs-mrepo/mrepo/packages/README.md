@@ -1,7 +1,7 @@
 # /packages
 
 The code the mrepo runs, as bundles. Replicated: committed, and copied
-out as files for Bare to run (`<work>/mrepos/<name>/packages/`).
+out as files for Bare to run (`<dir>/packages/`).
 
 ```
 /packages/<org>/<package>.bundle

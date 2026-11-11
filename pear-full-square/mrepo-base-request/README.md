@@ -18,7 +18,12 @@ setting.
   commit, `post(ctx, record, name)` (an input adding its commit: native git)
   or `post(ctx)` (the inbox folder's new files, the layer's working tree:
   the p2p host's and a `filesystem` mrepo's runtime); taken in when the
-  `inbox` head moves; answers committed into `outbox`; nothing removed.
+  `inbox` head moves; answers committed into `outbox`, then written into
+  the outbox folder (`outboxOf(dir)`, made at build, watchable from the
+  start); nothing removed. An mrepo by its directory: `inboxOf(dir)`.
+- **Checked** (`check`): against the type, the API and the service state;
+  an mrepo without `service` (no `/runtime/service.json`): no gate, the URI
+  canonical only.
 - **A layer's records** (`layer(ctx, branch)`): one JSON document a
   record, `<name>.json`, listed in the order they arrived (the commit
   chain). A layer's config, `layer.json` (committed with it when built from

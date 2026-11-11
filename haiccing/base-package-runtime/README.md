@@ -5,14 +5,16 @@ mrepo's store, runs its protocols (request and execute built in, the
 others from the packages linked in), and serves its local connection.
 
 ```sh
-bare <repo>/packages/haiccing/base-package-runtime.bundle <repo>
+bare <dir>/packages/haiccing/base-package-runtime.bundle <dir>
 ```
 
-The mrepo is the one the work folder's setting names (`<work>/mrepo.json`).
-Started from an mrepo's own `packages/`: by the boot's release for the boot
-mrepo, by a parent's `boot deploy` for a child. Stopped over its local
-connection (`<work>/runtime.sock`), by SIGTERM or SIGINT, or by itself once
-shut down.
+The mrepo at `<dir>` (on the filesystem storage), started from its own
+`packages/` (its pinned runtime): by the boot for the boot mrepo, by a
+parent's `boot deploy` for a child. It loads the protocols its linked
+packages offer. Stopped over its local connection (`<dir>/runtime.sock`;
+a short path in the temporary folder when that is too long), by SIGTERM or
+SIGINT; with `service`, by itself once shut down. (`--work=<folder>`: the
+mrepo a work folder's setting names, as the p2p host.)
 
 ## The package
 

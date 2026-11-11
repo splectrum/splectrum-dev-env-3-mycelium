@@ -17,7 +17,7 @@ hands over a form completed elsewhere the same way (the boot's own request). Run
 
 The action's context (`exec`): `read`, `select` (overlaid: a target read
 from its execution branch), `put`, `remove` (collected), `runtime` (the
-runtime's context, read only: its name, its work folder). Two contexts:
+runtime's context, read only: its name, its work folder, its directory). Two contexts:
 local, the action's: `commit()` (the writes so far committed to the
 execution branches; later reads see them), `discard()` (the uncommitted writes
 dropped), `rollback()` (the last local commit undone), `reset()` (everything of this execution

@@ -17,7 +17,9 @@ holds is what the mrepo offers; anything else is refused.
 
 An application adds its own (`haicc`, `dispatch`). A protocol comes with
 the package that implements it: linking the package registers its
-protocols here (their configs, from its `protocol.js`), as global ones.
+protocols here (their configs, from its `protocol.js`), as global ones;
+the runtime loads the actions from the package's bundle (its dispatcher,
+`main.js`: imported, nothing runs; its `protocol` entry).
 
 - **Global**: at the layer's root, for the whole mrepo.
 - **Local**: at the path of a `main` section; available there and below
