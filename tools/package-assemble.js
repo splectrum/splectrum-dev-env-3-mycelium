@@ -63,6 +63,29 @@ const record = set.third.map(t => {
   return { name: t, version: pj.version, license: pj.license || e.license || null, resolved: e.resolved || null, integrity: e.integrity || null }
 })
 writeFileSync(join(out, 'third-party.json'), JSON.stringify({ platform: platform(), modules: record }, null, 2) + '\n')
+// Its README, linking down to each of ours (READMEs cascade:
+// haiccing/package-docs-template).
+const row = p => {
+  const d = (readJson(join(out, p, 'package.json')).description || '').replace(/\|/g, '\\|')
+  return existsSync(join(out, p, 'README.md')) ? `| [${p}/](${p}/) | ${d} |` : `| \`${p}/\` | ${d} |`
+}
+writeFileSync(join(out, 'README.md'), [
+  '# modules/',
+  '',
+  'The package\'s code, assembled from `package.json`\'s `modules`, all the way',
+  'down (`tools/package-assemble.js` in the development repository): never',
+  'edited by hand. Each of ours carries its own tests, run by the package\'s',
+  'generic modules test (`/test/modules`).',
+  '',
+  '| ours | |',
+  '|---|---|',
+  ...[...set.ours].sort().map(row),
+  '',
+  `The third-party code: \`node_modules/\`, ${record.length} modules for ${platform()}, each`,
+  'with its version, licence and source in [third-party.json](third-party.json).',
+  'Our modules find each other by name through `node_modules/` (links).',
+  ''
+].join('\n'))
 // Its dispatcher and test runner, from what it now has (tools/lib/dispatcher.js).
 writeDispatcher(pkg)
 console.log(JSON.stringify({ ours: set.ours, third: set.third.length, unresolved: set.missing.map(m => `${m.from}: ${m.name}`) }))

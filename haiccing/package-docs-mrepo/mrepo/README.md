@@ -18,6 +18,19 @@ branches), a runtime executing the requests posted to it.
 /execute/<target>          execution branches
 ```
 
+Each layer, its README:
+
+| | |
+|---|---|
+| [main/](main/) | the mrepo's data |
+| [runtime/](runtime/) | the runtime's data |
+| [packages/](packages/) | the code it runs |
+| [protocols/](protocols/) | its external API |
+| [inbox/](inbox/) | records posted to it |
+| [outbox/](outbox/) | records it sends |
+| [request/](request/) | the request layers: pending, executing, done |
+| [execute/](execute/) | the execution branches |
+
 ## The rules
 
 - Every path starts with its layer, from the root: `/main/notes/a.json`.

@@ -1,0 +1,31 @@
+# boot/
+
+The boot, as the package runs it (`bare run.js --work=<folder>`), end to
+end, in a temporary work folder removed after. Entry: `run.js`; the tests:
+`boot.test.js`. Everything from the package's own `modules/`.
+
+1. **A prerequisite missing**: a source folder that is not there, then
+   Bare missing without `--yes`; each time the boot stops before writing
+   anything, exit 3, its request (`boot deploy /boot`, the command as
+   typed) completed with what is missing.
+2. **The whole lifecycle** (needs `SOURCES`):
+   - the boot: prerequisites, the pinned Bare put in place (no Bare on the
+     PATH, `--yes`), the boot mrepo built, its packages placed and linked,
+     its request handed over, its runtime started;
+   - the preloaded `boot deploy /host`: the host built inside it
+     (`main/host/`), its runtime running, its record at `main/host.json`;
+     the records followed, the request history in `request/done`, the
+     outbox;
+   - requests posted to the boot mrepo's inbox: `boot redeploy /host` (the
+     old runtime stopped, a new one), `boot teardown /host` (its runtime
+     ended, its folder and record gone), `boot deploy /host` again;
+   - the runtime protocol: `runtime run` on the runtime package, a dry run
+     of `test/full` (what it would run), a run of `test/validate` (passed,
+     in a floating instance, a line a unit in its log), `/run` refused;
+   - both runtimes stopped; the boot run again: already built, nothing
+     committed, its runtime started again, the host not redeployed.
+3. **An installed Bare** on the PATH: used and recorded, none put in
+   place, no question asked, its runtime started on it; run again without
+   it on the PATH: the recorded one used.
+
+Leaves nothing running.

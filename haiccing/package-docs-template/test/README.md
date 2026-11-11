@@ -12,6 +12,13 @@ test/
   <name>/         a test: a structure unit, its entry run.js
 ```
 
+| | |
+|---|---|
+| [name/](name/) | one test, and its README: what it checks |
+
+A package's `test/README.md` lists its sets and links to each test's
+README.
+
 ## The targets
 
 | target | runs |
