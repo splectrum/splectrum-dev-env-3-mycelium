@@ -138,6 +138,15 @@ missing; the outcome recorded in the request.
 No longer needed: git (p2p-git), curl (fetching in Bare). In a container
 the host runs no nodes (the HAICC platform alone).
 
+**A prerequisite with a local option has it in the sources** (the human,
+2026-11-11): what it can be fixed from is kept in a source, by its
+organisation, so a machine without network can be set up from files
+(`sources/` here, gitignored: `haiccing/`, `holepunchto/` for Bare's
+tarball, `addons/` shared). Built for Bare. Next, with the host's
+prerequisites: the nodes' container base image (`docker save`, loaded with
+`docker load` when missing; e.g. `library/<image>-<tag>.tar`). Docker
+Engine itself has none: a system install, only checked.
+
 **Built** (2026-11-10, the first piece): the boot mrepo's structure,
 `haiccing/base-package-boot/mrepo/` (type `boot`, initialised already, its
 API in `runtime/`; preloaded `service start /`), built into a standalone
