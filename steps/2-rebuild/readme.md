@@ -626,6 +626,20 @@ the overlay and the clean-up to come. `base-package-boot` starts from it
 and the runtime (`modules`), `run.js` imports it. Its tests (5), the
 runtime's (6) and the boot's `validate` pass.
 
+The boot protocol's actions (the human: `protocol.js` added to the package
+on its own; wiring into the runtime later): `mrepo-base-boot`'s
+`lib/deploy.js`, `deploy` (the child's definition, `/main/<name>/mrepo/` in
+the parent, built into `<work>/mrepos/<name>/`, linked into the parent's
+`main` as `/main/<name>.json`), `teardown` (removed, unlinked), `redeploy`
+(both, in one execution: `deploy` skips its "deployed already" check
+there, reads not yet seeing the queued removal); `build` takes `setting:
+false` for a child (the work folder's `mrepo.json` is the parent's).
+`base-package-boot/protocol.js`: the configs (`protocols.boot`: actions,
+URIs, states, package) and the actions. Tested (`deploy.test.js`). Open:
+the runtime's context gives no `work` yet (`exec.runtime.work`); one
+setting a work folder, so one mrepo run a work folder: each mrepo its own
+setting (`<work>/mrepos/<name>/mrepo.json`?), to settle.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
