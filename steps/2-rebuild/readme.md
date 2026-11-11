@@ -713,6 +713,16 @@ repository's folder: `sources/haiccing/base-package-boot-linux-x64
 (`prompt-local.md`) rewritten for it: update, install, build, check once,
 report; nothing published.
 
+The human's try (the human): `tools/haicc-try.sh`, copied to `~` by the
+local agent: the release run from `~`, its work folder `~/haicc-try`
+(its record kept as `boot-output.json`), a pause to inspect (`press any
+key to clean up`), then removed (also on Ctrl-C). Found on the way: the
+script reported `tee`'s exit code, not the boot's (fixed); the boot's
+question went to stdout, the record's stream (now stderr); the boot did not
+end after a terminal answer, its input kept it alive (released, and the
+boot ends explicitly when done). Tried under a pseudo-terminal: asked,
+answered, inspected, cleaned up.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

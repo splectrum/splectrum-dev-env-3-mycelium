@@ -51,9 +51,10 @@ const args = process.argv.slice(script ? 2 : 1)
 const value = flag => args.filter(a => a.startsWith(`--${flag}=`)).map(a => a.slice(flag.length + 3))
 const work = resolve(value('work')[0] ?? '.')
 const sources = (value('sources').length ? value('sources') : ['github:haiccing']).map(parseSource)
-// A question on a terminal, answered y or n; none without a terminal.
+// A question on a terminal (on stderr: stdout is the record), answered y or n;
+// none without a terminal.
 const ask = process.stdin.isTTY
-  ? q => new Promise(resolve => { process.stdout.write(`${q} [y/N] `); process.stdin.once('data', d => { process.stdin.pause(); resolve(/^y/i.test(d.toString().trim())) }) })
+  ? q => new Promise(resolve => { process.stderr.write(`${q} [y/N] `); process.stdin.once('data', d => { process.stdin.pause(); process.stdin.destroy(); resolve(/^y/i.test(d.toString().trim())) }) })
   : null
 
 // The request: the invocation, as typed (the entry's name, its arguments).
@@ -105,3 +106,5 @@ const completed = done({ ok: true, value: { outcomes, next: `${bareOf(work)} ${r
 const repo = await open(work)
 try { await executed({ backend: repo.backend, writer: writer(repo.backend) }, core.key, wrap(`/${EXECUTE}`, completed)) } finally { await repo.close() }
 console.log(JSON.stringify(completed))
+// Done: ended here (nothing left open to keep it alive, a terminal's input included).
+process.exit(0)

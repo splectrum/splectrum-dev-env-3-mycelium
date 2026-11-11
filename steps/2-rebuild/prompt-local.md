@@ -32,8 +32,18 @@ tar). Nothing is published: no GitHub release, no push of the build.
 >    lists the steps `prerequisites`, `built`, `packages`, and `next`, the
 >    command that would start the runtime (not started by the boot). Exit
 >    code 0. Then remove `/tmp/boot-check`.
-> 5. **Tell the human** that the release is ready: the path of
+> 5. **Put the try script in the home folder**: copy
+>    `tools/haicc-try.sh` to `~/haicc-try.sh` (executable). It runs the
+>    release from `~` with `~/haicc-try` as its work folder, saves the
+>    printed record there as `boot-output.json`, lists what was left, stops
+>    on `press any key to clean up`, then removes `~/haicc-try` (also on
+>    Ctrl-C). It finds the clone at `~/splectrum-dev-env-3-mycelium`; if
+>    yours is elsewhere, tell the human to run it as
+>    `HAICC_DEV=<clone> ~/haicc-try.sh`.
+> 6. **Tell the human** that the release is ready: the path of
 >    `sources/haiccing/base-package-boot-linux-x64`, the Bare version (from
->    its `.json`), and the output of step 4, or what failed and how.
+>    its `.json`), the output of step 4 (or what failed and how), and the
+>    command to try it: `~/haicc-try.sh` (it asks before putting Bare in
+>    place; `~/haicc-try.sh --yes` does not ask).
 >
 > Nothing to commit. Do not change the code: if something fails, report it.
