@@ -1,4 +1,134 @@
-# From the local agent: the boot's release built locally, proposals
+# From the local agent
+
+Notes from the local machine (Linux x86-64, WSL2), newest first, each
+following `prompt-local.md`. Offline (the connection poor): every download
+kept in a local source, `~/haicc-release/sources/` (npm's tarballs by URL,
+a `curl` that serves them, git URLs to local mirrors), so
+`tools/install.sh` and `tools/boot-release.js` run with no network.
+
+## 2026-11-11, second: `ca44de2`
+
+The prompt ran as written (the patch below applied by the cloud), with one
+problem in the installed Bare (1) and two smaller findings (2, 3). The code
+not changed here; a patch for (1), made and tested locally, then taken out.
+
+| Step | Result |
+|---|---|
+| 2. `sh tools/install.sh` | exit 0: 237 kept (all there from the first run); `node_modules/bare-runtime-linux-x64/bin/bare` and `node_modules/.bin/bare-build` there |
+| 3. `tools/bare tools/boot-release.js` | exit 0: `sources/haiccing/base-package-boot-linux-x64` (117,632,264 bytes), Bare 1.35.0 (its `.json`), `base-package-runtime.bundle`, `base-package-boot.bundle`, `manifest.json`, the addons, `holepunchto/bare-runtime-linux-x64-1.35.0.tgz` |
+| 4. The check, `--yes`, not on a terminal, the human's PATH | exit 0; two records: `boot deploy /boot` (its `log`: `prerequisites`, `built`, `packages`, each `info`; `output.runtime` the command), then the runtime's status (its pid, `repository: boot`). Bare: nvm's, 1.36.0, installed, recorded in `bare.json` (see 1). Within 6 s the host in `mrepos/boot/main/host/` (`.git`, `inbox/`, `outbox/`, `packages/`, `runtime.sock`). Runtimes: three processes, not two (see 1). Stopped with `pkill -TERM`, none left; removed |
+| 5. `~/haicc-try.sh --yes` (`HAICC_DEV` set: the clone is at `~/splectrum/splectrum-dev-env-3-mycelium`), no terminal | following until interrupted (SIGINT to the boot, as Ctrl-C); then exit code 0, the boot mrepo, the host inside it, the runtimes listed; on the key: the runtimes stopped, `~/haicc-try` removed, none left |
+
+### 1. An installed Bare from npm is a Node.js script
+
+`bare` installed with npm (here nvm's, `~/.nvm/versions/node/v24.21.0/bin/bare`,
+and `/usr/local/bin/bare`) is npm's wrapper, `#!/usr/bin/env node`
+(`require('bare-runtime/spawn')(...)`): it spawns the binary
+(`.../lib/node_modules/bare/node_modules/bare-runtime-linux-x64/bin/bare`)
+and stays its parent. The check records the wrapper, so the boot mrepo's
+runtime runs under Node.js: three processes (`node .../bin/bare <bundle>`,
+its Bare child, the host's runtime), Node.js needed at run time again, and
+a signal to the wrapper's process is not the runtime's.
+
+**Proposed:** the Bare found on the PATH asked which binary it runs
+(`bare -e 'console.log(Bare.argv[0])'`), and that one recorded; else the
+one found (`binaryOf` in `lib/prerequisites.js`). Tested with the patch:
+`mrepo-base-boot` 8/8, 70 asserts (a new assert: a wrapper on the PATH,
+the binary it names recorded); `base-package-boot` 3/3, 44 asserts; the
+release rebuilt, step 4 again: `bare.json` records the binary, two runtime
+processes (the boot mrepo's, the host's), no Node.js.
+
+### 2. Building changes four tracked files
+
+`tools/boot-release.js` (its `package-assemble.js`) rewrites the assembled
+copies of `mrepo-base-execute/README.md` and `mrepo-base-request/README.md`
+in `haiccing/base-package-boot/modules/` and
+`haiccing/base-package-runtime/modules/`: the committed copies are behind
+their modules. **Proposed:** the two packages assembled again and
+committed. (Restored here, not committed.)
+
+### 3. `pkill -f /tmp/boot-check/` in step 4 can end the caller's shell
+
+An agent's shell running `pkill -TERM -f /tmp/boot-check/` has the pattern
+in its own command line (and any other command there naming the folder):
+pkill ends it (it happened here, twice). **Proposed** for the prompt:
+`pkill -TERM -f '[/]bin/bare /tmp/boot-check/'` in a command of its own
+(the bracket keeps the pattern from matching itself; the runtimes are
+`<…>/bin/bare <bundle in /tmp/boot-check/> …`). And the try script always
+follows (`--follow`), so without a terminal it waits for a SIGINT: fine for
+the human; an agent sends it to the boot.
+
+### The patch for (1)
+
+Against `ca44de2`, `git apply` (the assembled copy in
+`haiccing/base-package-boot/modules/` left out: `tools/package-assemble.js
+haiccing/base-package-boot` remakes it).
+
+~~~~diff
+diff --git a/pear-full-square/mrepo-base-boot/lib/prerequisites.js b/pear-full-square/mrepo-base-boot/lib/prerequisites.js
+index 7d0e9d4..983421e 100644
+--- a/pear-full-square/mrepo-base-boot/lib/prerequisites.js
++++ b/pear-full-square/mrepo-base-boot/lib/prerequisites.js
+@@ -15,10 +15,10 @@
+ //   bare       the Bare recorded in <work>/bare.json, else the pinned one at
+ //              <work>/bare/bin/bare, else one installed (ctx.path, a PATH:
+ //              the first `bare` there at the pinned major, the same version
+-//              or newer), recorded; fix: the pinned one put in place from the
+-//              sources (folder: <path>/holepunchto/<tarball>, by its
+-//              organisation; github: npm's registry), checked against its
+-//              sha512
++//              or newer; npm's wrapper asked for the binary it runs),
++//              recorded; fix: the pinned one put in place from the sources
++//              (folder: <path>/holepunchto/<tarball>, by its organisation;
++//              github: npm's registry), checked against its sha512
+ //   docker     Docker Engine installed, running, rootful, native, the user in
+ //              its group
+ // Conditions (`when`): 'not-in-container' (no /.dockerenv, no container
+@@ -119,13 +119,20 @@ const versionOf = b => {
+   const r = run(b, ['--version'])
+   return r.status === 0 ? r.stdout.toString().trim().replace(/^v/, '') : null
+ }
++// The binary itself: npm's `bare` is a Node.js script that spawns it and
++// stays its parent, so asked, the Bare it runs is recorded (else as found).
++const binaryOf = b => {
++  const r = run(b, ['-e', 'console.log(Bare.argv[0])'])
++  const real = r.status === 0 ? r.stdout.toString().trim() : ''
++  return real.startsWith('/') && existsSync(real) ? real : b
++}
+ // The first `bare` on the PATH at an acceptable version.
+ function installed (path, want) {
+   for (const dir of String(path ?? '').split(':').filter(Boolean)) {
+     const b = join(dir, 'bare')
+     if (!existsSync(b)) continue
+     const version = versionOf(b)
+-    if (version && acceptable(version, want)) return { bare: b, version }
++    if (version && acceptable(version, want)) return { bare: binaryOf(b), version }
+   }
+   return null
+ }
+diff --git a/pear-full-square/mrepo-base-boot/test/prerequisites.test.js b/pear-full-square/mrepo-base-boot/test/prerequisites.test.js
+index 7d69a9c..4d89e92 100644
+--- a/pear-full-square/mrepo-base-boot/test/prerequisites.test.js
++++ b/pear-full-square/mrepo-base-boot/test/prerequisites.test.js
+@@ -83,6 +83,15 @@ test('bare: an installed one on the PATH, at the pinned major, the same or newer
+     t.alike(found.results[0].value, { bare: join(good, 'bare'), version: '1.40.1', installed: true })
+     t.is(bareOf(work), join(good, 'bare'), 'recorded: the one the mrepo runs on')
+     t.absent(existsSync(join(work, 'bare')), 'no Bare of its own')
++    // npm's wrapper: asked, it names the binary it runs; that one recorded
++    const real = fake('1.40.2')
++    const wrapper = join(bins, 'wrapper'); mkdirSync(wrapper)
++    writeFileSync(join(wrapper, 'bare'), `#!/bin/sh\n[ "$1" = -e ] && echo ${join(real, 'bare')} || echo v1.40.2\n`); chmodSync(join(wrapper, 'bare'), 0o755)
++    const w = mkdtempSync(join(tmpdir(), 'pre-wrap-'))
++    try {
++      const viaWrapper = await check(list, { ...ctx, work: w, path: wrapper })
++      t.is(viaWrapper.results[0].value.bare, join(real, 'bare'), 'a wrapper on the PATH: the binary it runs recorded')
++    } finally { rmSync(w, { recursive: true, force: true }) }
+     const again = await check(list, { ...ctx })
+     t.ok(again.ok && again.results[0].value.installed, 'next time: the recorded one, no PATH needed')
+     rmSync(good, { recursive: true, force: true })
+~~~~
+
+## 2026-11-11, first: `6599afd`
 
 2026-11-11, on the local machine (Linux x86-64, WSL2), following
 `prompt-local.md` at `6599afd`, offline (the connection poor): every
@@ -17,9 +147,9 @@ haiccing/base-package-boot` remakes it). Made against `6599afd`; on parts
 `haiccing/base-package-boot/README.md` (the prerequisites paragraph) and
 `pear-full-square/mrepo-base-boot/index.js` (the export line, `acceptable`
 added). The release built and tested here is from `6599afd` with the patch,
-before parts 20 and 21.
+before parts 20 and 21. (Applied by the cloud in `ff7301b`.)
 
-## 1. `tools/install.sh`: the lockfile no longer fits one argument
+### 1. `tools/install.sh`: the lockfile no longer fits one argument
 
 `"$bare" -e "const l = $(cat package-lock.json) ..."` passes the lockfile as
 one argument; with `bare-build` it is 135,325 bytes, over Linux's limit for
@@ -30,7 +160,7 @@ offline.
 **Proposed:** the script written to a file in the temporary folder and run
 (`$bare $tmp/list.js`); `mktemp` moved before it.
 
-## 2. `tools/install.sh`: `bare-build` for every platform (314 MB)
+### 2. `tools/install.sh`: `bare-build` for every platform (314 MB)
 
 `bare-build` lists its 13 platform prebuilts (`bare-build-<platform>`) as
 plain dependencies, so their lockfile entries carry no `os`/`cpu` and
@@ -48,7 +178,7 @@ prebuilt, `bare-lief`, five small ones). Named in `install.sh`, not a
 general rule: `quickbit-native` and `simdle-native` are optional too, and
 needed.
 
-## 3. `tools/install.sh`: no `node_modules/.bin`
+### 3. `tools/install.sh`: no `node_modules/.bin`
 
 The prompt (step 2) and `boot-release.js` expect
 `node_modules/.bin/bare-build`; `install.sh` links no commands.
@@ -56,7 +186,7 @@ The prompt (step 2) and `boot-release.js` expect
 **Proposed:** a top-level package's `bin` (from its lockfile entry) linked
 into `node_modules/.bin`, as npm does (a `bin` line in the list).
 
-## 4. `tools/boot-release.js`: `bare-build` needs Node.js, and `bare-apk` on it
+### 4. `tools/boot-release.js`: `bare-build` needs Node.js, and `bare-apk` on it
 
 `bare-build`'s `bin.js` is `#!/usr/bin/env node`. On Node.js its `#apk`
 import is plain `bare-apk` (no fallback): with (2), `Cannot find module
@@ -67,7 +197,7 @@ node_modules/bare-build/bin.js ...` (a `build()` helper); the missing-check
 message says `sh tools/install.sh`. The release is then built with no
 Node.js (the prompt says none is needed; it was, for `bare-build`).
 
-## 5. The boot: an installed Bare first (the human's decision)
+### 5. The boot: an installed Bare first (the human's decision)
 
 The boot only looked at `<work>/bare/bin/bare` and offered to put the
 pinned Bare there, on every fresh work folder, with Bare installed on the
@@ -110,7 +240,7 @@ running Bare on the PATH, no `--yes`: used, recorded, nothing put in place,
 1.36.0's tarball copied into `sources/holepunchto/` for them: the package's
 own pin).
 
-## What ran, with the patch applied
+### What ran, with the patch applied
 
 | Step | Result |
 |---|---|
@@ -122,7 +252,7 @@ own pin).
 
 Not checked: the runtime started by `next` (on the installed 1.36.0).
 
-## The patch
+### The patch
 
 ~~~~diff
 diff --git a/docs/design/packages.md b/docs/design/packages.md
