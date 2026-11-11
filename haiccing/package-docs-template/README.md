@@ -12,6 +12,7 @@ is for.
 | part | the unit then |
 |---|---|
 | `run.js` | can be executed on its own: `bare run.js [arguments]` |
+| `main.js` | its bundle's dispatcher, written when the bundle is made: run as the program, `run.js` runs; imported, nothing runs and `run`, `deploy`, `protocol` are offered |
 | `deploy.js` | brings structure beyond its protocols: its part of the mrepo and its requirements, to the parent's `boot deploy` |
 | `protocol.js` | provides protocols: their configs and actions; linked into an mrepo, its protocols are registered, the actions loaded by the runtime |
 | `modules/`, `package.json` | carries its own dependencies |
@@ -64,20 +65,24 @@ from them ([modules/](modules/)).
 
 ## Running
 
-A package is released as one bundle and run with Bare:
+A package is released as one bundle, its main the dispatcher (`main.js`),
+and run with Bare:
 
 ```sh
-bare <package>.bundle --work=<folder>
+bare <package>.bundle [arguments]
 ```
 
-From its folder, the same: `bare run.js --work=<folder>`.
+From its folder, the same: `bare run.js [arguments]`. Imported, a bundle
+runs nothing: a runtime takes a protocol from it (`protocol()`), a deploy
+its structure (`mrepo/`, read from the bundle).
 
 The boot is the exception: released as a standalone executable, one per
-platform, Bare built in, so nothing is needed before it. It puts Bare in
-place for the other packages, only if none is there.
+platform, Bare built in, so nothing is needed before it. It uses an
+installed Bare at its pinned major (the same version or newer), else puts
+its own in place, then starts the boot mrepo's runtime.
 
 ```sh
-./base-package-boot --work=<folder>
+./base-package-boot --work=<folder> --sources=folder:<sources> [--yes]
 ```
 
 Written from [splectrum/splectrum-dev-env-3-mycelium](https://github.com/splectrum/splectrum-dev-env-3-mycelium).
