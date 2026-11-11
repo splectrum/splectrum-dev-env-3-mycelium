@@ -29,6 +29,9 @@ Its `layer.json` lists the packages and where they come from:
   Never edited in place.
 - **Each linked individually**, the bundle and each addon: the mrepo runs
   only the packages registered for it, at the versions it pins.
+- **What a child is made of**: the target package's
+  `mrepo/packages/layer.json`, in order; each package's `mrepo/` part laid
+  in, a later file replacing an earlier one.
 - **Put in place by `boot deploy`** (the parent's; for the initial boot
   mrepo, by its release, before it runs). Changing them: a `redeploy`.
 - **The runtime is started from here**, by the mrepo's directory:

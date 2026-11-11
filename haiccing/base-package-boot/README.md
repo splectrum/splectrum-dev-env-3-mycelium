@@ -32,8 +32,11 @@ command as typed, a GUID), each step's outcome logged in it:
    `next`: the command that starts its runtime. The runtime is not started
    by the boot (for now): `<work>/bare/bin/bare
    <work>/mrepos/boot/packages/haiccing/base-package-runtime.bundle
-   --work=<work>`. Started, it moves the request to `request/done` first,
-   then runs the preloaded `service start /`.
+   <work>/mrepos/boot`. Started, it moves the request to `request/done`
+   first, then executes its preloaded `boot deploy /host` (the runtime the
+   target, for now): the host built inside it, `main/host/`, its runtime
+   started. The boot mrepo has no `service`: its packages are the runtime
+   and the boot protocol.
 
 ## The package
 
