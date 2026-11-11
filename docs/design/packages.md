@@ -72,6 +72,13 @@ for what it contributes; no copies between them:
   `exec.select`), so a protocol package carries its own logic only. Native
   addons are shared by hash anyway. Self-contained still: the runtime
   package, and a standalone release (the boot's).
+- **Two roles, three entry points** (the human, 2026-11-11), each
+  optional, at the package's top: `deploy.js`, deployment only (the
+  package's part of the structure, `mrepo/`, and its requirements, read by
+  the parent's `boot deploy`); `protocol.js`, its protocols' actions
+  (loaded by the mrepo's runtime, named by each protocol's config); `run.js`,
+  self-contained execution (run by Bare: the runtime package, a test, the
+  boot's standalone release). One bundle a package, one hash.
 - **Deploying is the boot protocol's `deploy`**, executed by the parent
   (the host: `boot deploy /host`, run by the boot mrepo): the
   application's requirements resolved into an order (runtime, boot, mrepo,
