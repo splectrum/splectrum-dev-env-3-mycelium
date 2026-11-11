@@ -5,20 +5,6 @@ has it, and its README says what the layer holds. Documentation only, not
 a definition. An mrepo is a repository that runs: its data in layers (git
 branches), a runtime executing the requests posted to it.
 
-```
-/main                      the mrepo's data
-/runtime                   the runtime's data (the service state, where it has service)
-/packages                  the code it runs
-/protocols                 its external API, one config a protocol
-/help                      its documentation, extracted from its packages
-/inbox                     records posted to it
-/outbox                    records it sends: the completed forms
-/request/pending/default   requests waiting
-/request/execute           the request executing
-/request/done              requests done: its history
-/execute/<target>          execution branches
-```
-
 Each layer, its README:
 
 | | |

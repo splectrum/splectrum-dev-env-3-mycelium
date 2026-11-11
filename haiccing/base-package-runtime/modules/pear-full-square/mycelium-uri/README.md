@@ -1,12 +1,16 @@
 # mycelium-uri
 
-Our URIs: parse, validate, split at known prefixes. Generic: no git, no
-dependencies.
+Our URIs: parse, validate, and split at known prefixes.
 
-A URI is absolute and `/`-separated, with no scheme, query or fragment. A
-segment is a name of lowercase `a-z`, `0-9` and `-`, with optional
-`.`-separated extensions of the same characters (`request.md`). At this
-level a leaf is an object, and its name includes its extension.
+Generic: no git, no dependencies. A URI is absolute and `/`-separated,
+without scheme, query or fragment; its canonical form is lowercase.
+
+| | |
+|---|---|
+| [lib/](lib/) | its parts, a file each |
+| [test/](test/) | its tests, what each checks |
+
+## Design
 
 URIs are case-insensitive, and the canonical form is lowercase. Inside our
 repositories every name is lowercase, files included. External content may
@@ -45,13 +49,6 @@ functions work on valid values and don't check again.
 The functions are pure: their result depends only on their arguments. A
 run records the invocation of the unit they are part of, and a rerun
 reproduces every call inside it.
-
-## The folders
-
-| | |
-|---|---|
-| [lib/](lib/) | its parts, a file each |
-| [test/](test/) | its tests, what each checks |
 
 ## Tests
 

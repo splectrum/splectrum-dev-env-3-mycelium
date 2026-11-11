@@ -53,6 +53,36 @@ is for.
   `modules/<org>/<module>/` brings its own (linked from `modules/`'s,
   written when the modules are assembled).
 
+## READMEs
+
+Every README is read by people and extracted into an mrepo's help layer,
+where `runtime help` serves it at three levels. Its shape:
+
+```markdown
+# <name>
+
+<one-liner>
+
+<summary, then the links table>
+
+## <section>
+```
+
+1. **One-liner**: the first paragraph, one sentence of at most 120
+   characters, saying what the item is. No parentheses, no references.
+2. **Summary**: everything up to the first `##` heading, at most 100
+   words: what it does and how it is used, then the table of links to the
+   folders below. Everything else goes into sections.
+3. **Self-contained**: no references to the development repository
+   (`docs/`, `steps/`). A README stands on its own or links within its
+   package.
+4. **Every README has a one-liner**, lists of tests included.
+5. **Section titles are short, stable nouns** ("Usage", "API", "Tests",
+   "Design"), at most three words, or a file's name, so a section can be
+   asked for by name.
+
+`tools/help-extract.js` in the development repository checks them.
+
 ## package.json
 
 ```json

@@ -1,5 +1,7 @@
 # test/
 
+The tests of mrepo-base-request, a section per file, each test by its name.
+
 ## `boxes.test.js`
 
 - post on p2p-git and on native: a record committed into the inbox layer; the folder's new files committed; nothing removed

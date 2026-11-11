@@ -1,5 +1,7 @@
 # test/
 
+The tests of mrepo-base-boot, a section per file, each test by its name.
+
 ## `build.test.js`
 
 - the boot mrepo: built from its folder, the same twice

@@ -12,6 +12,8 @@ always matches the packages actually linked.
 /help/index.json                         { "<uri>": { title, oneliner, links } }
 ```
 
+## Usage
+
 - **Read with `runtime help <uri>`**, body `{ level, section }`: the
   README documenting that URI, with each link's one-liner. Levels:
   `oneliner`, `summary` (the default), `detail`.

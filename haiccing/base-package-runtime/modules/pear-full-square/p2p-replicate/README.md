@@ -1,7 +1,15 @@
 # p2p-replicate
 
-Replication for the p2p layer: moving data between stores, over any
-stream, with its accounting. One of the p2p series.
+Replication for the p2p layer: data moved between stores over any stream,
+with its accounting.
+
+One of the p2p series.
+
+| | |
+|---|---|
+| [test/](test/) | its tests, what each checks |
+
+## Usage
 
 ```js
 import { replicator } from 'p2p-replicate'
@@ -24,9 +32,3 @@ rep.metrics()
 (db, blobs) and peer: blocks and bytes uploaded and downloaded.
 
 `npm test`: 1 test.
-
-## The folders
-
-| | |
-|---|---|
-| [test/](test/) | its tests, what each checks |

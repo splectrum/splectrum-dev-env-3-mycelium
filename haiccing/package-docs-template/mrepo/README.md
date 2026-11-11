@@ -1,7 +1,8 @@
 # mrepo/
 
-An mrepo's definition, laid out by layers as its repository will hold
-them, with the same URIs: `mrepo/main/…` is `/main/…`.
+An mrepo's definition, laid out by layers as its repository will hold them.
+
+The URIs are the same: `mrepo/main/…` is `/main/…`.
 
 ```
 mrepo/
@@ -14,6 +15,8 @@ mrepo/
   request/execute/          layer.json  the request executing
   request/done/             layer.json  requests done
 ```
+
+## Leaves
 
 A leaf is a folder holding a `layer.json`; the folders above it only
 group. A leaf's files are committed with it, `layer.json` too, so no

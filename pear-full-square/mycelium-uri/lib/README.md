@@ -1,6 +1,6 @@
 # lib/
 
-mycelium-uri's parts, imported by its `index.js` (its API, in the README above).
+The parts of mycelium-uri, a file each, imported by its `index.js`.
 
 | file | |
 |---|---|

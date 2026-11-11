@@ -5,16 +5,19 @@
 // The packages: by default the boot mrepo's list (base-package-boot's
 // mrepo/packages/layer.json), from sources/ here. The out folder: the help
 // tree (its READMEs at their help URIs, index.json) and report.json.
-// Each README checked:
-//   oneliner      none; longer than 160 characters; not one sentence
-//   summary       longer than 150 words
+// Each README checked against the rules (haiccing/package-docs-template,
+// "READMEs"):
+//   oneliner      none; over 120 characters; with parentheses; not one sentence
+//   summary       over 100 words
+//   sections      a title over three words, or with punctuation
+//   transient     a reference to the development repository (docs/, steps/)
 //   links         a relative link that resolves to nothing in the bundle
 //   cascade       a folder below with a README, not linked from it
 //   reached       not reached from the root (/) by the index's links
-//   transient     a reference to docs/ (the development repository's: not
-//                 there in an mrepo)
+// --files: the same checks on the development repository's own READMEs
+// (the four haiccing packages, the carried modules), by file.
 import process from 'bare-process'
-import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'bare-fs'
+import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, readdirSync, statSync } from 'bare-fs'
 import { join, resolve, dirname, posix } from 'bare-path'
 import { fileURLToPath } from 'bare-url'
 import Bundle from 'bare-bundle'
@@ -27,6 +30,37 @@ const sources = resolve(flag('sources', join(dev, 'sources')))
 const out = resolve(flag('out', join(dev, 'sources', 'help')))
 let list = args.filter(a => !a.startsWith('--'))
 if (!list.length) list = JSON.parse(readFileSync(join(dev, 'haiccing', 'base-package-boot', 'mrepo', 'packages', 'layer.json'))).packages
+
+// The rules on one README's text: [[check, detail]...].
+function rules (text) {
+  const r = parse(text)
+  const out = []
+  if (!r.oneliner) out.push(['oneliner', 'none'])
+  else {
+    if (r.oneliner.length > 120) out.push(['oneliner', `${r.oneliner.length} characters`])
+    if (/[()]/.test(r.oneliner)) out.push(['oneliner', 'parentheses'])
+    if (!/[.]$/.test(r.oneliner)) out.push(['oneliner', `not one sentence: "${r.oneliner.slice(0, 60)}"`])
+  }
+  // the summary's words, its links table not counted
+  const words = r.summary.split('\n').filter(l => !l.trim().startsWith('|')).join(' ').split(/\s+/).filter(Boolean).length
+  if (words > 100) out.push(['summary', `${words} words`])
+  for (const s of r.sections) if (!/^`?[\w.-]+`?$/.test(s.title) && (s.title.split(/\s+/).length > 3 || /[:;,.()`]/.test(s.title))) out.push(['sections', s.title]) // a file's name is one
+  const transient = text.match(/(?<![\w/-])(docs\/(design|guides|rules|readme)|steps\/\d)[\w./-]*/gi) ?? []
+  if (transient.length) out.push(['transient', [...new Set(transient)].join(', ')])
+  return out
+}
+
+if (args.includes('--files')) {
+  const roots = ['haiccing/base-package-boot', 'haiccing/base-package-runtime', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template',
+    ...readdirSync(join(dev, 'haiccing', 'base-package-boot', 'modules', 'pear-full-square')).map(m => `pear-full-square/${m}`)]
+  const found = []
+  const walk = d => { for (const n of readdirSync(join(dev, d)).sort()) { const p = `${d}/${n}`; if (n === 'node_modules' || n === 'modules' || n === '.git') continue; if (statSync(join(dev, p)).isDirectory()) walk(p); else if (n === 'README.md') found.push(p) } }
+  for (const r of roots) walk(r)
+  let n = 0
+  for (const f of found) for (const [check, detail] of rules(readFileSync(join(dev, f), 'utf8'))) { n++; console.log(`${f}\t${check}\t${detail}`) }
+  console.log(`${found.length} READMEs, ${n} problems`)
+  process.exit(n ? 1 : 0)
+}
 
 const problems = []
 const report = (uri, check, detail) => problems.push({ uri, check, detail })
@@ -51,15 +85,7 @@ const index = JSON.parse(files['/index.json'].toString())
 
 for (const [uri, e] of Object.entries(index)) {
   const r = parse(files[uri === '/' ? '/README.md' : `${uri}/README.md`].toString())
-  if (!r.oneliner) report(uri, 'oneliner', 'none')
-  else {
-    if (r.oneliner.length > 160) report(uri, 'oneliner', `${r.oneliner.length} characters`)
-    if (!/[.]$/.test(r.oneliner)) report(uri, 'oneliner', `not one sentence: "${r.oneliner.slice(0, 60)}"`)
-  }
-  const transient = (files[uri === '/' ? '/README.md' : `${uri}/README.md`].toString().match(/docs\/(design|guides)\/[a-z-]+\.md/g) ?? [])
-  if (transient.length) report(uri, 'transient', [...new Set(transient)].join(', '))
-  const words = r.summary.split(/\s+/).filter(Boolean).length
-  if (words > 150) report(uri, 'summary', `${words} words`)
+  for (const [check, detail] of rules(files[uri === '/' ? '/README.md' : `${uri}/README.md`].toString())) report(uri, check, detail)
   // cascade: the nearest READMEs below it, each linked
   for (const below of Object.keys(index)) {
     if (below === uri || !below.startsWith(uri === '/' ? '/' : uri + '/')) continue

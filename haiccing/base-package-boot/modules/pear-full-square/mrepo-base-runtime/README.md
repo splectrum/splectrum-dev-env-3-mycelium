@@ -1,14 +1,21 @@
 # mrepo-base-runtime
 
-A running mycelium repository's runtime, always on: the framework that runs
-the repository's protocols (request, execute: `docs/design/repositories.md`).
-No log: a request's document and the commits that moved it hold what
-happened to it.
-It holds the store as its single writer, keeps the required watchers
-running, serves the local connection, and restarts what stops. The base
-variant: a simple implementation. Packaged as `haiccing/base-package-mrepo`,
-installed by HAICC's boot into the host's packages. Built step by step
-(phase 3, step 2).
+The mrepo runtime: the always-on process that runs an mrepo's protocols.
+
+It holds the mrepo's store as its single writer, serves its local connection
+(`status`, `stop`), and fires the protocols in turn over their data states.
+Before the mrepo is operational, it extracts its packages' READMEs into the
+help layer. Its own protocol, `runtime`, is built in: `help` and `run`.
+Other protocols come from the linked packages. It is started from the
+mrepo's own packages: `bare
+<dir>/packages/haiccing/base-package-runtime.bundle <dir>`.
+
+| | |
+|---|---|
+| [lib/](lib/) | its parts, a file each |
+| [test/](test/) | its tests, what each checks |
+
+## Design
 
 - `index.js`: the library; `runtime.js`: the command line, the package's
   entry (`start --work=<folder>`, `version`).
@@ -45,13 +52,6 @@ installed by HAICC's boot into the host's packages. Built step by step
   (booted, nothing waiting) the runtime ends; a request posted later starts
   it again (HAICC's input does).
 - `test/fixture.js`: a booted host, for the tests.
-
-## The folders
-
-| | |
-|---|---|
-| [lib/](lib/) | its parts, a file each |
-| [test/](test/) | its tests, what each checks |
 
 ## Tests
 

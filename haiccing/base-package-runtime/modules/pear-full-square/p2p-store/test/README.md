@@ -1,5 +1,7 @@
 # test/
 
+The tests of p2p-store, a section per file, each test by its name.
+
 ## `store.test.js`
 
 - own drives: the same name gives the same drive, another name another

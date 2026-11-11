@@ -1,9 +1,10 @@
 # modules/
 
-The package's code, assembled from `package.json`'s `modules`, all the way
-down (`tools/package-assemble.js` in the development repository): never
+The package's code: our modules and the third-party code they use.
+
+Assembled from the modules `package.json` names, all the way down; never
 edited by hand. Each of ours carries its own tests, run by the package's
-generic modules test (`/test/modules`).
+modules test, `/test/modules`.
 
 | ours | |
 |---|---|

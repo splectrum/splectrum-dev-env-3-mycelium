@@ -10,6 +10,8 @@ holds is what the mrepo offers; anything else is refused.
 /protocols/<section>/...    local: shadows /main/<section>
 ```
 
+## Protocols
+
 | protocol | actions | from |
 |---|---|---|
 | `service` | `initialise`, `start`, `stop`, `shutdown`, `pause`, `resume`, `run` | every mrepo: `base-package-mrepo` (the runtime runs protocols; its own, `runtime`, built in) |

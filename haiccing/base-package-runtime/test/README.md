@@ -1,5 +1,7 @@
 # test/
 
+The runtime package's tests: its sets and its one test, `start`.
+
 | set | tests |
 |---|---|
 | `validate` | `start` |

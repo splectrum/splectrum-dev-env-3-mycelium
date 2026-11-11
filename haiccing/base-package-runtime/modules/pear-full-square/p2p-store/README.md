@@ -1,9 +1,15 @@
 # p2p-store
 
-Local storage for the p2p layer: one Corestore and the resources in it
-(Hyperdrives). No peer is needed. One of the p2p series (`p2p-store`,
-`p2p-dht`, `p2p-connect`, `p2p-replicate`, `p2p-channel`, `p2p-git`),
-composed by the application; no module of the series knows another.
+Local storage for the p2p layer: one Corestore and the Hyperdrives in it.
+
+No peer is needed. One of the p2p series, composed by the application: no
+module of the series knows another.
+
+| | |
+|---|---|
+| [test/](test/) | its tests, what each checks |
+
+## Usage
 
 ```js
 import { openStore } from 'p2p-store'
@@ -35,9 +41,3 @@ await store.close()
 Metrics: `resources()`.
 
 `npm test`: 5 tests.
-
-## The folders
-
-| | |
-|---|---|
-| [test/](test/) | its tests, what each checks |

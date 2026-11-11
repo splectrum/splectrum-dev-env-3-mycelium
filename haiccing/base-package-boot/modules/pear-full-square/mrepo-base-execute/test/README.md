@@ -1,5 +1,7 @@
 # test/
 
+The tests of mrepo-base-execute, a section per file, each test by its name.
+
 ## `execute.test.js`
 
 - execute: execution branches from their targets, the record completed, merged back into each target
