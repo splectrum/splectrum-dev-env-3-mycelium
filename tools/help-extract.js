@@ -1,7 +1,7 @@
 // The help layer as the runtime extracts it, from bundles, into a folder to
 // browse, with its problems: the documentation checked against the rules
 // (haiccing/package-docs-template, "READMEs"). The extraction and the rules
-// are the runtime's (mrepo-base-runtime, lib/help.js): the same here.
+// are mrepo-base-help's: the same here.
 //   tools/bare tools/help-extract.js [<org>/<package>...] [--sources=<folder>] [--out=<folder>]
 //   tools/bare tools/help-extract.js --files
 // The packages: by default the boot mrepo's list (base-package-boot's
@@ -14,14 +14,14 @@ import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, readdirSync
 import { join, resolve, dirname } from 'bare-path'
 import { fileURLToPath } from 'bare-url'
 import Bundle from 'bare-bundle'
-import { check, extract } from '../pear-full-square/mrepo-base-runtime/lib/help.js'
+import { check, extract } from '../pear-full-square/mrepo-base-help/index.js'
 
 const dev = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
 const flag = (n, d) => args.find(a => a.startsWith(`--${n}=`))?.slice(n.length + 3) ?? d
 
 if (args.includes('--files')) {
-  const roots = ['haiccing/base-package-boot', 'haiccing/base-package-runtime', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template',
+  const roots = ['pear-full-square/mrepo-base-help', 'haiccing/base-package-boot', 'haiccing/base-package-runtime', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template',
     ...readdirSync(join(dev, 'haiccing', 'base-package-boot', 'modules', 'pear-full-square')).map(m => `pear-full-square/${m}`)]
   const found = []
   const walk = d => { for (const n of readdirSync(join(dev, d)).sort()) { const p = `${d}/${n}`; if (n === 'node_modules' || n === 'modules' || n === '.git') continue; if (statSync(join(dev, p)).isDirectory()) walk(p); else if (n === 'README.md') found.push(p) } }

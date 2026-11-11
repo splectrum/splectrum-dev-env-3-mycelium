@@ -26,11 +26,11 @@ function unitsOf (folder) {
       if (existsSync(join(test, n, 'run.js'))) units[`/test/${n}`] = [`./test/${n}/run.js`]
     }
   }
-  // The help tests, every package that carries the runtime: its help
+  // The help tests, every package that carries mrepo-base-help: its help
   // extracted from its own files (/test/help), or as a running mrepo's
   // runtime extracted it (/test/help-in-situ: MREPO, PACKAGE).
-  const validate = join(folder, 'modules', 'pear-full-square', 'mrepo-base-runtime', 'validate')
-  for (const n of ['help', 'help-in-situ']) if (existsSync(join(validate, `${n}.test.js`))) units[`/test/${n}`] = [`./modules/pear-full-square/mrepo-base-runtime/validate/${n}.test.js`]
+  const validate = join(folder, 'modules', 'pear-full-square', 'mrepo-base-help', 'validate')
+  for (const n of ['help', 'help-in-situ']) if (existsSync(join(validate, `${n}.test.js`))) units[`/test/${n}`] = [`./modules/pear-full-square/mrepo-base-help/validate/${n}.test.js`]
   const modules = join(folder, 'modules')
   if (existsSync(modules)) {
     for (const org of readdirSync(modules).filter(n => n !== 'node_modules' && statSync(join(modules, n)).isDirectory()).sort()) {
@@ -217,8 +217,8 @@ console.log(JSON.stringify(r))
 process.exit(r.ok ? 0 : 1)
 `
 
-// A documentation package: no entry point, nothing to run (its test/ and
-// example/, if any, are documentation too); its
+// A package with nothing to dispatch: no entry point, no modules to run its
+// tests with; its
 // files read from its bundle (its READMEs, into an mrepo's help layer).
 const DOCS = [
   '// A documentation package\'s main (generated: tools/lib/dispatcher.js): no',
@@ -231,7 +231,7 @@ const DOCS = [
 ].join('\n')
 
 export function writeDispatcher (folder) {
-  if (!ENTRIES.some(e => existsSync(join(folder, `${e}.js`)))) {
+  if (!ENTRIES.some(e => existsSync(join(folder, `${e}.js`))) && !existsSync(join(folder, 'modules', 'node_modules'))) {
     writeFileSync(join(folder, 'main.js'), DOCS)
     return
   }

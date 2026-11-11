@@ -88,7 +88,9 @@ export async function bundlePackage ({ folder, out, org = 'haiccing' }) {
   const file = `${org}/${repo}.bundle`
   writeFileSync(join(out, file), bytes)
   const commit = spawnSync('git', ['-C', dev, 'rev-parse', 'HEAD'], { stdio: ['ignore', 'pipe', 'ignore'] }).stdout?.toString().trim() || null
-  const entry = { file, id: bundle.id, sha256: sha256(bytes), bytes: bytes.length, main: bundle.main, entries, addons: [...new Set(addons)].sort(), commit, bare: Bare.version }
+  // docs: a documentation package (its package.json's docs): no structure laid in
+  const docs = JSON.parse(readFileSync(join(folder, 'package.json'), 'utf8')).docs === true
+  const entry = { file, id: bundle.id, sha256: sha256(bytes), bytes: bytes.length, main: bundle.main, entries, docs, addons: [...new Set(addons)].sort(), commit, bare: Bare.version }
   const mf = join(out, org, 'manifest.json')
   const manifest = existsSync(mf) ? readJson(mf) : { packages: {} }
   manifest.packages[`${org}/${repo}`] = entry

@@ -28,15 +28,16 @@ is for.
 | [test/](test/) | tests, a folder each, and the sets |
 | [name/](name/) | a further unit |
 | [example/](example/) | examples, a folder each |
-| [modules/](modules/) | a unit's dependencies |
+| [modules/](modules/) | its dependencies, assembled: the help module its tests use |
 
 ## The rules
 
 - One structure, many purposes: a definition, documentation in place,
   examples, tests.
 - A package depends only on packages.
-- A package with no entry point is documentation: it runs nothing and
-  brings no structure; its READMEs go to the help layer.
+- A documentation package is marked `"docs": true` in its `package.json`:
+  it brings no structure at deploy; its READMEs go to the help layer. Its
+  dispatcher exposes its tests.
 - Entry points, each optional: `run.js` (executed on its own),
   `deploy.js` (deployment only), `protocol.js` (protocol actions).
 - A collection folder (`test/`, `example/`) holds units, a folder each;
@@ -56,7 +57,7 @@ is for.
 ## READMEs
 
 Every README is read by people and extracted into an mrepo's help layer,
-where `runtime help` serves it at three levels. Its shape:
+where `help get` serves it at three levels. Its shape:
 
 ```markdown
 # <name>
@@ -83,6 +84,40 @@ where `runtime help` serves it at three levels. Its shape:
 
 `tools/help-extract.js` in the development repository checks them.
 
+## Modules
+
+A unit's dependencies, with the `package.json` listing what it starts
+from. Assembled from those modules, all the way down; never edited by
+hand.
+
+```
+modules/
+  <org>/<module>/      ours, copied whole
+  node_modules/        the third-party code, and links to ours by name
+  third-party.json     each third-party module: version, licence, where from
+```
+
+The unit's code reaches it by relative path:
+`./modules/<org>/<module>/index.js`. Our modules find each other by name,
+through `modules/node_modules/`.
+
+In a package, `modules/README.md` is generated when the modules are
+assembled: it links to each of ours.
+
+## Methods
+
+Inside one of our modules, a documented method is a directory: its
+`index.js` and its `README.md`, under one of two folders.
+
+- `external/`: the methods mounted as protocol actions, `(exec, form)`.
+- `internal/`: the methods called by code, never requested.
+
+Only the methods that matter are documented. Smaller ones live in the
+method they belong to, listed in its README under "Also exported"; a
+helper with nothing to document is a plain file. A method's README: the
+one-liner, the summary, then `Signature`, `Body` for an action, `Returns`,
+`Errors`, as they apply. The module's `index.js` exports its methods.
+
 ## package.json
 
 ```json
@@ -99,7 +134,7 @@ where `runtime help` serves it at three levels. Its shape:
 ```
 
 `modules`: our modules the unit starts from; what they use is worked out
-from them ([modules/](modules/)).
+from them ("Modules", above).
 
 ## Running
 

@@ -10,6 +10,7 @@ modules test, `/test/modules`.
 |---|---|
 | [pear-full-square/mrepo-base-boot/](pear-full-square/mrepo-base-boot/) | Module: the mrepo boot protocol (deploy, teardown, redeploy) and the install routine. |
 | [pear-full-square/mrepo-base-execute/](pear-full-square/mrepo-base-execute/) | Module: the mrepo execute protocol, an action run in execution branches, committed or rolled back. |
+| [pear-full-square/mrepo-base-help/](pear-full-square/mrepo-base-help/) | Module: mrepo help, the READMEs of an mrepo's packages extracted, checked against the rules and retrieved by URI. |
 | [pear-full-square/mrepo-base-request/](pear-full-square/mrepo-base-request/) | Module: the mrepo request protocol, a request from the inbox through pending, execute and done. |
 | [pear-full-square/mrepo-base-runtime/](pear-full-square/mrepo-base-runtime/) | Module: the mrepo runtime, the engine running an mrepo's protocols. |
 | [pear-full-square/mycelium-container-document/](pear-full-square/mycelium-container-document/) | A storage container: one value per file, written atomically, in the encoding it is given |

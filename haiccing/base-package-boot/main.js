@@ -16,12 +16,13 @@ const ENTRIES = {
 // carried module's unit tests.
 const UNITS = {
   "/test/boot": () => Promise.all([import("./test/boot/run.js")]),
-  "/test/help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-runtime/validate/help.test.js")]),
-  "/test/help-in-situ": () => Promise.all([import("./modules/pear-full-square/mrepo-base-runtime/validate/help-in-situ.test.js")]),
+  "/test/help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/validate/help.test.js")]),
+  "/test/help-in-situ": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/validate/help-in-situ.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-boot": () => Promise.all([import("./modules/pear-full-square/mrepo-base-boot/test/build.test.js"), import("./modules/pear-full-square/mrepo-base-boot/test/deploy.test.js"), import("./modules/pear-full-square/mrepo-base-boot/test/prerequisites.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-execute": () => Promise.all([import("./modules/pear-full-square/mrepo-base-execute/test/execute.test.js")]),
+  "/test/modules/pear-full-square/mrepo-base-help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/test/help.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-request": () => Promise.all([import("./modules/pear-full-square/mrepo-base-request/test/boxes.test.js"), import("./modules/pear-full-square/mrepo-base-request/test/check.test.js")]),
-  "/test/modules/pear-full-square/mrepo-base-runtime": () => Promise.all([import("./modules/pear-full-square/mrepo-base-runtime/test/cycle.test.js"), import("./modules/pear-full-square/mrepo-base-runtime/test/help.test.js"), import("./modules/pear-full-square/mrepo-base-runtime/test/runtime.test.js")]),
+  "/test/modules/pear-full-square/mrepo-base-runtime": () => Promise.all([import("./modules/pear-full-square/mrepo-base-runtime/test/cycle.test.js"), import("./modules/pear-full-square/mrepo-base-runtime/test/runtime.test.js")]),
   "/test/modules/pear-full-square/mycelium-container-document": () => Promise.all([import("./modules/pear-full-square/mycelium-container-document/test/documents.test.js")]),
   "/test/modules/pear-full-square/mycelium-git": () => Promise.all([import("./modules/pear-full-square/mycelium-git/test/bundle.test.js"), import("./modules/pear-full-square/mycelium-git/test/engines.test.js"), import("./modules/pear-full-square/mycelium-git/test/hyperdrive.test.js"), import("./modules/pear-full-square/mycelium-git/test/isogit.test.js"), import("./modules/pear-full-square/mycelium-git/test/mixed.test.js"), import("./modules/pear-full-square/mycelium-git/test/native.test.js"), import("./modules/pear-full-square/mycelium-git/test/p2pgit.test.js"), import("./modules/pear-full-square/mycelium-git/test/split.test.js")]),
   "/test/modules/pear-full-square/mycelium-uri": () => Promise.all([import("./modules/pear-full-square/mycelium-uri/test/names.test.js"), import("./modules/pear-full-square/mycelium-uri/test/uri.test.js")]),

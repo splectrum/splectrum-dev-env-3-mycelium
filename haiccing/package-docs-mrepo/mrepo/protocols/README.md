@@ -14,9 +14,10 @@ holds is what the mrepo offers; anything else is refused.
 
 | protocol | actions | from |
 |---|---|---|
-| `service` | `initialise`, `start`, `stop`, `shutdown`, `pause`, `resume`, `run` | every mrepo: `base-package-mrepo` (the runtime runs protocols; its own, `runtime`, built in) |
+| `service` | `initialise`, `start`, `stop`, `shutdown`, `pause`, `resume`, `run` | every mrepo: `base-package-mrepo` (the runtime runs the protocols; its own package offers `runtime` and `help`) |
 | `boot` | `deploy`, `teardown`, `redeploy` (teardown, then deploy): executed by the parent | `base-package-boot`, linked into an mrepo that deploys others |
-| `runtime` | `help`: the help layer read by URI (body `{ level, section }`); `run`: a linked package's entry by path, `/packages/<org>/<package><target>`, its tests above all (body `{ dryRun }`), the result the output | built into the runtime (`base-package-runtime`): every mrepo, no config needed |
+| `runtime` | `run`: a linked package's entry by path, `/packages/<org>/<package><target>`, its tests above all (body `{ dryRun }`), the result the output | `base-package-runtime`: every mrepo |
+| `help` | `get`: the help layer read by URI (body `{ level, section }`) | `base-package-runtime`, with `mrepo-base-help`: every mrepo |
 
 An application adds its own (`haicc`, `dispatch`). A protocol comes with
 the package that implements it: linking the package registers its

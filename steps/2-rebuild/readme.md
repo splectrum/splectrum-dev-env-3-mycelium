@@ -1042,3 +1042,38 @@ plain file. `mrepo-base-boot`: `external/` deploy, teardown, redeploy;
 `internal/` build, place (storeOf), fetch (structureOf, put, parseSource),
 check (inContainer, acceptable, bareOf), `child.js`. The rule in
 `package-docs-template`, `modules/`, "Methods".
+
+## 24. mrepo-base-help, the help protocol (2026-11-11)
+
+The human: the help code in a module of its own (`pear-full-square/
+mrepo-base-help`, created by the human), and help its own protocol rather
+than the runtime's. The documentation packages get a dispatcher exposing
+their tests.
+
+- **`mrepo-base-help`**: `external/get` (`help get <uri>`, the retrieval),
+  `internal/extract` (`extract`, `extractInto`, `parse`, `check`; a
+  heading inside a code block is no section), `validate/` (the two tests
+  every package carrying it runs on itself), `test/`.
+- **The help protocol mounted by `base-package-runtime`**: its new
+  `protocol.js` offers `runtime` (run) and `help` (get); its `run.js`
+  passes them to the runtime (`run({ own })`), and `protocolsOf` skips its
+  bundle, the program already running. The runtime imports only the
+  extractor, run before the mrepo is operational.
+- **The in-situ test needs no repository access**: `runtime run` hands it
+  the mrepo's help as extracted (`HELP`, a file, with `MREPO` and
+  `PACKAGE`).
+- **Documentation packages** marked `"docs": true` (recorded in the bundle's
+  manifest; deploy lays in no structure for them), carrying
+  `mrepo-base-help`: a dispatcher, `validate` (`help`) and
+  `validate-in-situ` (`help-in-situ`). The template's modules documentation
+  moved into its root README ("Modules", "Methods"): a package's
+  `modules/README.md` is generated.
+- **Aliases carried only when imported** (`tools/package-assemble.js`): the
+  Node built-in aliases only when carried third-party code imports them by
+  that name. A documentation package: 81 third-party, 26 MB, brittle's
+  (the runtime's: 198, 62 MB).
+
+Tested: the module's tests (help 5/5, runtime 6/6, boot 9/9); the
+documentation packages' `validate`; the boot's integration test runs all
+four packages' `validate-in-situ` in the running boot mrepo (70 asserts);
+both `full` sets pass; the help tree, 132 READMEs, no problems.
