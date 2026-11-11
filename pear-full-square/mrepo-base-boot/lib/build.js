@@ -8,7 +8,8 @@
 //                                     files as one commit, layer.json with
 //                                     them), the inbox layer's files also its
 //                                     working tree (<work>/mrepos/<name>/inbox);
-//                                     <work>/mrepo.json written. time (seconds):
+//                                     <work>/mrepo.json written (setting: false,
+//                                     not: a child's, the folder its parent's). time (seconds):
 //                                     every commit's, so the same folder builds
 //                                     the same repository. Resolves
 //                                     { name, layers: { layer: commit } }.
@@ -36,7 +37,7 @@ function files (dir, rel = '') {
   })
 }
 
-export async function build ({ from, work, name, time = Math.floor(Date.now() / 1000) }) {
+export async function build ({ from, work, name, time = Math.floor(Date.now() / 1000), setting = true }) {
   const gitdir = gitdirOf(work, name)
   if (existsSync(gitdir)) throw new Error(`exists: ${gitdir}`)
   mkdirSync(gitdir, { recursive: true })
@@ -57,6 +58,6 @@ export async function build ({ from, work, name, time = Math.floor(Date.now() / 
     mkdirSync(inbox, { recursive: true })
     for (const f of files(join(from, 'inbox'))) copyFileSync(join(from, 'inbox', f), join(inbox, f))
   }
-  writeFileSync(join(work, SETTING), JSON.stringify({ storage: 'filesystem', name }) + '\n')
+  if (setting) writeFileSync(join(work, SETTING), JSON.stringify({ storage: 'filesystem', name }) + '\n')
   return { name, layers }
 }
