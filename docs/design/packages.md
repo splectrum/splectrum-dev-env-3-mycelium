@@ -118,7 +118,11 @@ packages stay plain bundles. Tried (2026-11-11): a standalone of
 native addons included; files beside the code are not there inside it
 (`import.meta.url` is `bare:/app.bundle/…`), so `mrepo/` travels as a
 module; its Bare (v1.35.0, `bare-build` 1.6.2) is not the repository's
-(v1.36.0).
+(v1.36.0). **The Bare version is the one provided** (the human,
+2026-11-11): what `bare-build` builds in when the boot is built is the Bare
+that release puts in place (pinned, checked), so the executable and every
+mrepo it starts run on one version; a newer `bare-build` moves it. No
+custom runtime.
 
 **Built** (2026-11-10, the first piece): the boot mrepo's structure,
 `haiccing/base-package-boot/mrepo/` (type `boot`, initialised already, its
