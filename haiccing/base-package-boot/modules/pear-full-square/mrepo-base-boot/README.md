@@ -11,6 +11,13 @@ The mrepo boot protocol, the base variant: `deploy`, `teardown`,
   its link out of `main`), `redeploy` (teardown, committed locally with
   `exec.commit()`, then deploy). The child named by the URI's one part
   (`/host`); the work folder from the context (`exec.runtime.work`).
+- `lib/packages.js`: packages put in place (`place({ work, name, sources,
+  list })`): each listed package from the sources (a folder by
+  organisation: `<org>/<repo>.bundle`, `<org>/manifest.json`, `addons/`),
+  checked by its sha256, into the work folder's store (`<work>/packages/`,
+  once), hard linked into the mrepo's `packages/` (a copy across disks),
+  the list and hashes committed into its `packages` layer (`/manifest.json`;
+  unchanged: no commit).
 - `lib/build.js`: an mrepo built from its structure (`build({ from, work,
   name, time, setting })`): a folder laid out by layers, a `layer.json` at each leaf,
   written as a standalone repository on the filesystem, one orphan branch a

@@ -1,32 +1,39 @@
 # Prompt for the local agent
 
-Give this to Claude Code on the local machine (Linux x86-64; git, curl;
-`gh` logged in with push access to github.com/haiccing):
+Give this to Claude Code on the local machine (Linux x86-64; git, curl,
+tar). Nothing is published: no GitHub release, no push of the build.
 
-> Build, test and publish the next release of the rebuilt HAICC platform
-> (requests flowing: the host's repository runs, every `haicc` command is a
-> request).
+> Build the release of `base-package-boot` into the local sources, with its
+> prerequisites, so the human can run it from the command line.
 >
-> 1. In your clone of https://github.com/splectrum/splectrum-dev-env-3-mycelium,
->    check out `main`, pull, and run `sh tools/install.sh` (no Node.js
->    needed). (No clone yet: clone it first.)
-> 2. The publisher's key is `~/haicc-publisher/publisher.secret` (made for
->    the first release). Keep it on this machine only; never commit or print
->    it. If it is missing, stop and tell me: do not make a new one.
-> 3. Build, test and publish:
->    `sh tools/publish.sh ~/haicc-release --key-dir="$HOME/haicc-publisher" --push`.
->    It writes the packages (signed), builds `haicc-setup.sh`, tests it in a
->    fresh folder with Node.js off the PATH (the boot, then the cycle:
->    `start /`, a `put` into main and its `get`, `get /`, `stop /`,
->    `shutdown /`; the runtime ending), and only if that passes publishes it
->    as the latest release of `haiccing/base-package-boot`.
-> 4. Test the published release as a user would, in a new folder, Node.js
->    off the PATH, by `steps/2-rebuild/handover-local.md`, section 5.
-> 5. Record it in `steps/2-rebuild/local-run.md` (a new section, below the
->    first release's): the commit, the release tag, the commands, each result
->    (paste the answers), how long the setup took, and anything found (for
->    the implementer, not fixed there). Commit it on `execute/main`, merge it
->    into `main` (a plain merge: `main` changes only by merges from
->    `execute/*`, `rules.md`), push both. Then tell me the result.
+> 1. **Update the clone.** In your clone of
+>    https://github.com/splectrum/splectrum-dev-env-3-mycelium (no clone
+>    yet: clone it first), check out `main` and pull.
+> 2. **Install the dependencies.** `sh tools/install.sh` (no Node.js or npm
+>    needed: it replays `package-lock.json` with curl and tar; this time it
+>    adds `bare-build`, about 1 GB). Then check that both exist:
+>    `node_modules/bare-runtime-linux-x64/bin/bare` and
+>    `node_modules/.bin/bare-build`.
+> 3. **Build the release into the local sources.** From the clone's folder:
+>    `tools/bare tools/boot-release.js`. It writes into `sources/`
+>    (gitignored, never committed):
+>    - `sources/haiccing/base-package-boot-linux-x64`: the release, a
+>      standalone executable (Bare built in); beside it its `.json` (the
+>      platform, the Bare version, the commit, how to run it);
+>    - `sources/haiccing/base-package-runtime.bundle` and
+>      `sources/haiccing/manifest.json`: the package the boot mrepo lists;
+>    - `sources/addons/<sha256>`: its native addons;
+>    - `sources/holepunchto/bare-runtime-linux-x64-<version>.tgz`: the
+>      prerequisite Bare, the version built into the executable, fetched
+>      from npm's registry with curl and pinned by its sha512.
+> 4. **Check it once**, from the clone's folder, in a fresh work folder:
+>    `sources/haiccing/base-package-boot-linux-x64 --work=/tmp/boot-check --sources=folder:sources --yes`.
+>    It prints one record, the request `boot deploy /boot`: its `output`
+>    lists the steps `prerequisites`, `built`, `packages`, and `next`, the
+>    command that would start the runtime (not started by the boot). Exit
+>    code 0. Then remove `/tmp/boot-check`.
+> 5. **Tell the human** that the release is ready: the path of
+>    `sources/haiccing/base-package-boot-linux-x64`, the Bare version (from
+>    its `.json`), and the output of step 4, or what failed and how.
 >
-> Background, if needed: `steps/2-rebuild/handover-local.md`.
+> Nothing to commit. Do not change the code: if something fails, report it.
