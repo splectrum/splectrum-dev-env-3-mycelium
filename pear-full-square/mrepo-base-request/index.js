@@ -58,6 +58,12 @@ export async function runtimeData ({ repo }) {
 // extracted, is.
 export function check (value, { service, api }, { state = true } = {}) {
   if (!value || typeof value !== 'object') return 'not a request'
+  // An mrepo without the service protocol (no /runtime/service.json: the
+  // boot mrepo): no type, no state gate (the runtime's status: a direction).
+  if (!service) {
+    try { if (canonical(value.uri ?? '') !== value.uri) return `not canonical: ${value.uri}` } catch (err) { return err.message }
+    return null
+  }
   if (value.api !== service.type) return `misdelivered: api ${value.api}, this repository is of type ${service.type}`
   let uri
   try { uri = canonical(value.uri ?? '') } catch (err) { return err.message }

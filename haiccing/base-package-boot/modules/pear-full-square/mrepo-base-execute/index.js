@@ -65,6 +65,7 @@ export async function failed (ctx, why) {
 const runtimeView = ctx => Object.freeze({
   name: ctx.name,
   work: ctx.work ?? null,
+  dir: ctx.dir ?? null,
   branches: async () => (await ctx.backend.listBranches()).map(([b]) => b),
   select: uri => ctx.repo.select(uri),
   read: uri => ctx.repo.read(uri)

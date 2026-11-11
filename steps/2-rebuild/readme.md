@@ -739,6 +739,33 @@ The boot's `next`: `bare <boot>/packages/haiccing/base-package-runtime.bundle
 <boot>`. Tested: a child deployed with the real runtime bundle, its inbox
 answering, torn down; the packages' tests; the release rebuilt and tried.
 
+## 21. Toward `boot deploy /host` in the boot mrepo (2026-11-11)
+
+The human: the boot mrepo has no `service` (the runtime and `boot` only),
+its preloaded request `boot deploy /host` with the target package; the
+target's `mrepo/packages/layer.json` the ordered list; children inside their
+parent (`boot/main/host/`); forward-only URIs, outside through a mapping.
+Built so far:
+
+- A package bundle's main is its dispatcher (`main.js`, written by
+  `tools/package-bundle.js`): run as the program, `run`/`deploy`/`protocol`
+  offered on import (a bundle loads only through its main; once loaded, its
+  modules import by path: tried). The manifest records each bundle's entry
+  points; `place()` carries them into the packages layer.
+- No gate without `service` (`mrepo-base-request`'s `check`); the runtime
+  ends by itself only with a `service` (unchanged).
+- The runtime loads the protocols its linked packages offer
+  (`protocolsOf`: each package with a `protocol` entry, imported from the
+  mrepo's `packages/`), beside the framework's actions.
+- The runtime works from its mrepo's own directory (`dir`: its `.git`, its
+  inbox folder, its packages; `exec.runtime.dir`), not from a work folder's
+  layout.
+
+Next: the runtime package's `mrepo/` structure; the boot mrepo's first-boot
+structure (no `service`, `packages` the runtime and boot, the preloaded
+`boot deploy /host`); `deploy` from the target's list, the child inside its
+parent, the store through the packages manifest.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

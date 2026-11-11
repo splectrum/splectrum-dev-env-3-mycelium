@@ -11,7 +11,7 @@
 //                                 bundle names each /../../addons/<sha256>
 //                                 (two levels up from the bundle file)
 //   <out>/<org>/manifest.json     each bundle: its file, its id, its sha256,
-//                                 its size, its main, its addons, the commit it
+//                                 its size, its main, its entry points, its addons, the commit it
 //                                 was made from, the Bare it was made on
 // Unsigned for now. The package's modules/ assembled first
 // (tools/package-assemble.js).
@@ -106,7 +106,7 @@ export async function bundlePackage ({ folder, out, org = 'haiccing' }) {
   const file = `${org}/${repo}.bundle`
   writeFileSync(join(out, file), bytes)
   const commit = spawnSync('git', ['-C', dev, 'rev-parse', 'HEAD'], { stdio: ['ignore', 'pipe', 'ignore'] }).stdout?.toString().trim() || null
-  const entry = { file, id: bundle.id, sha256: sha256(bytes), bytes: bytes.length, main: bundle.main, addons: [...new Set(addons)].sort(), commit, bare: Bare.version }
+  const entry = { file, id: bundle.id, sha256: sha256(bytes), bytes: bytes.length, main: bundle.main, entries, addons: [...new Set(addons)].sort(), commit, bare: Bare.version }
   const mf = join(out, org, 'manifest.json')
   const manifest = existsSync(mf) ? readJson(mf) : { packages: {} }
   manifest.packages[`${org}/${repo}`] = entry

@@ -22,6 +22,8 @@ import { layer, AUTHOR, CONFIG } from './layer.js'
 export const INBOX = '/inbox'
 export const OUTBOX = '/outbox'
 export const inboxFolder = (work, name = setting(work).name) => documents(join(viewOf(work, name), 'inbox'), json)
+// An mrepo's own inbox folder, by its directory.
+export const inboxOf = dir => documents(join(dir, 'inbox'), json)
 
 // A layer made when first needed (an orphan branch, under the layer rules).
 export async function ensure ({ backend, writer }, branch) {
@@ -33,7 +35,7 @@ export async function post (ctx, rec = null, name = rec?.key ?? guid()) {
   const box = layer(ctx, 'inbox')
   const have = new Set(await box.list())
   const fresh = rec ? (have.has(name) ? [] : [[name, rec]]) : (() => {
-    const folder = inboxFolder(ctx.work, ctx.name)
+    const folder = ctx.dir ? inboxOf(ctx.dir) : inboxFolder(ctx.work, ctx.name)
     return folder.list().filter(n => n !== CONFIG && !have.has(n)).map(n => [n, folder.read(n)])
   })()
   // A commit lost to another writer of the inbox (compare-and-swap) is made

@@ -7,7 +7,7 @@
 //              <path>/<org>/<repo>.bundle, <path>/<org>/manifest.json,
 //              <path>/addons/<sha256>)
 //     list     ['<org>/<repo>', ...]
-//   -> { packages: { '<org>/<repo>': { sha256, id, addons } } }, or throws
+//   -> { packages: { '<org>/<repo>': { sha256, id, entries, addons } } }, or throws
 // The layer's manifest: { packages, sources } (the sources used: a child's
 // deploy sources from them).
 // The store: <work>/packages/<org>/<repo>.bundle, <work>/packages/addons/<sha256>;
@@ -70,7 +70,7 @@ export async function place ({ work, name, sources, list }) {
     // Into the mrepo: the bundle and its addons, linked from the store.
     put(join(store, file), join(mine, file))
     for (const a of entry.addons) put(join(store, 'addons', a), join(mine, 'addons', a))
-    packages[pkg] = { sha256: entry.sha256, id: entry.id, addons: entry.addons }
+    packages[pkg] = { sha256: entry.sha256, id: entry.id, entries: entry.entries ?? [], addons: entry.addons }
   }
   // The packages layer: the list and the hashes, not the bytes.
   // (unchanged: no commit)

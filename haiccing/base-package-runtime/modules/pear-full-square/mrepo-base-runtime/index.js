@@ -50,7 +50,8 @@ import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
 import { nativeBackend, p2pgitBackend } from 'mycelium-git'
 import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
-import { execute, failed } from 'mrepo-base-execute'
+import { execute, failed, ACTIONS } from 'mrepo-base-execute'
+import { pathToFileURL } from 'bare-url'
 import pkg from './package.json' with { type: 'json' }
 
 export { INBOX, OUTBOX, inboxFolder, viewOf, gitdirOf, setting }
@@ -66,20 +67,26 @@ export const bundleOf = work => join(viewOf(work, setting(work).name), 'packages
 // <work>/runtime.sock).
 export function whereOf (at) {
   const { work, repo } = typeof at === 'string' ? { work: at } : at
-  if (repo) return { work: dirname(dirname(repo)), name: basename(repo), storage: 'filesystem', socket: join(repo, SOCKET) }
-  return { work, ...setting(work), socket: join(work, SOCKET) }
+  // dir: the mrepo's own folder (its .git, inbox, packages, its children
+  // under main/); work: where its store and Bare are reached (the work
+  // folder; for an mrepo by its directory, the parent of mrepos/ when it is
+  // <work>/mrepos/<name>, else none: reached through its packages manifest)
+  if (repo) return { dir: repo, work: basename(dirname(repo)) === 'mrepos' ? dirname(dirname(repo)) : null, name: basename(repo), storage: 'filesystem', socket: join(repo, SOCKET) }
+  const s = setting(work)
+  return { dir: viewOf(work, s.name), work, ...s, socket: join(work, SOCKET) }
 }
 
 // The repository, opened: { name, id, key, backend, close }. at: the work
 // folder, or { repo } (an mrepo's directory).
 export async function open (at) {
-  const { work, storage, name } = whereOf(at)
+  const { dir, storage, name } = whereOf(at)
+  const work = whereOf(at).work
   if (storage === 'git') {
-    const backend = nativeBackend(gitdirOf(work, name))
+    const backend = nativeBackend(join(dir, '.git'))
     return { name, id: null, key: null, storage, backend, close: async () => {} }
   }
   if (storage === 'filesystem') {
-    const backend = p2pgitBackend(gitdirOf(work, name), { fs })
+    const backend = p2pgitBackend(join(dir, '.git'), { fs })
     return { name, id: null, key: null, storage, backend, close: async () => {} }
   }
   const store = await openStore({ storage: join(work, 'store') })
@@ -89,14 +96,33 @@ export async function open (at) {
 
 const socketOf = at => whereOf(at).socket
 
-export async function run ({ work: w, repo: dir = null, every = 200 }) {
-  const at = dir ? { repo: dir } : { work: w }
-  const { work } = whereOf(at)
+// The actions the mrepo's linked packages offer (their protocol entry), by
+// protocol: from its packages layer's list, each bundle in its packages/.
+export async function protocolsOf (repo, folder) {
+  const listed = await repo.read('/packages/manifest.json').then(b => JSON.parse(b.toString()).packages || {}, () => ({}))
+  const actions = {}
+  for (const [pkg, p] of Object.entries(listed)) {
+    if (!(p.entries || []).includes('protocol')) continue
+    const bundle = join(folder, `${pkg}.bundle`)
+    if (!existsSync(bundle)) throw new Error(`a linked package missing: ${bundle}`)
+    const offered = await (await import(pathToFileURL(bundle).href)).protocol()
+    for (const [protocol, fns] of Object.entries(offered.actions || {})) actions[protocol] = { ...actions[protocol], ...fns }
+  }
+  return actions
+}
+
+export async function run ({ work: w, repo: given = null, every = 200 }) {
+  const at = given ? { repo: given } : { work: w }
+  const { work, dir } = whereOf(at)
   const repo = await open(at)
   const started = new Date().toISOString()
   // No log of its own: what happens to a request is in its document and the
   // commits that moved it (docs/design/repositories.md, "No log").
-  const ctx = { work, name: repo.name, backend: repo.backend, repo: openRepo(repo.backend), writer: writer(repo.backend), seen: {} }
+  const ctx = { work, dir, name: repo.name, backend: repo.backend, repo: openRepo(repo.backend), writer: writer(repo.backend), seen: {} }
+  // The protocols its packages offer: each linked package with a protocol
+  // entry, loaded from its bundle in the mrepo's packages/ (its dispatcher:
+  // imported, nothing runs), its actions beside the framework's.
+  const actions = { ...ACTIONS, ...await protocolsOf(ctx.repo, join(dir, 'packages')) }
   const status = () => ({ ok: true, pid: process.pid, started, repository: { name: repo.name, storage: repo.storage, id: repo.id, key: repo.key }, version })
   let stopping = null
   let stopped = false
@@ -138,7 +164,7 @@ export async function run ({ work: w, repo: dir = null, every = 200 }) {
     try {
       if (repo.storage !== 'git') await post(ctx)
       await request(ctx)
-      await execute(ctx)
+      await execute(ctx, { actions })
       await request(ctx)
         // Booted (shut down, or never initialised) and nothing waiting: the
       // runtime ends; a request posted later starts it again.
