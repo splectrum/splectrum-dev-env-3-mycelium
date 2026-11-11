@@ -535,6 +535,26 @@ Next: `service boot /host` (the boot's action: the host installed from
 the mrepo and haicc bundles and linked into `main`); then the boot's
 bundle.
 
+## 15. Packages, sourcing and protocols: discussed (2026-11-11)
+
+With the human, for the boot's bundle:
+
+- **The bundle call unpacks and starts**: `bare base-package-boot.bundle`
+  builds the boot mrepo and starts its runtime as its own process from the
+  package in the repository (`packages/`), then exits.
+- **The `packages` leaf lists what to put in place**, hard links from a
+  store (`<work>/packages/`), as before (`bare.md`); the boot mrepo needs
+  only the common package, `base-package-mrepo` (not the boot's own).
+  Sourcing: an ordered list, `github haiccing` the default, a local
+  `folder` given (`--sources=`), each bundle checked against the signed
+  manifest. Open: whether the layer commits the bytes or the list and
+  hashes only; on GitHub, release assets or files.
+- **Protocols configured, a layer of their own** (`repositories.md`, "The
+  external API"): every mrepo has `boot` (`deploy`, `teardown`) and
+  `service`; an application adds its own; global at the layer's root,
+  local later shadowing `main`, adding to those above, a same-named one
+  overriding.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
