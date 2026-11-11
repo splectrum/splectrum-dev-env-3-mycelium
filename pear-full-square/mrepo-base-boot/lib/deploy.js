@@ -7,16 +7,20 @@
 //                             the parent (its structure, by layers), built
 //                             into <work>/mrepos/<name>/; linked into the
 //                             parent's main: /main/<name>.json
-//   teardown(exec, { uri })   the child removed (<work>/mrepos/<name>/), its
-//                             link out of main
+//   teardown(exec, { uri })   the child's runtime stopped, the child removed
+//                             (<work>/mrepos/<name>/), its link out of main
 //   redeploy(exec, form)      teardown, committed locally (exec.commit()), then deploy
 // Not yet: the requirements resolved into packages and overlaid, the
-// clean-up, the child started.
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'bare-fs'
+// clean-up; what is done outside the repository (a runtime started, a folder
+// removed) is not undone by a reset.
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'bare-fs'
 import { join, dirname } from 'bare-path'
-import { tmpdir } from 'bare-os'
+import os, { tmpdir } from 'bare-os'
 import { viewOf } from 'mrepo-base-request'
 import { build } from './build.js'
+import { place } from './packages.js'
+import { start, ask } from 'mrepo-base-runtime'
+import { parseSource } from './prerequisites.js'
 
 function child (exec, uri) {
   const name = uri.slice(1)
@@ -54,7 +58,25 @@ export async function deploy (exec, { uri }) {
       writeFileSync(join(tmp, f), await exec.read(`${from}/${f}`))
     }
     const { layers } = await build({ from: tmp, work: c.work, name: c.name, setting: false })
-    const link = { name: c.name, mrepo: c.view, storage: 'filesystem', layers }
+    // Its packages put in place, each mrepo on the versions it lists: from
+    // the work folder's store, else the sources the parent's were placed
+    // from (its packages layer's manifest).
+    let placed = null
+    if (existsSync(join(tmp, 'packages', 'layer.json'))) {
+      const list = JSON.parse(readFileSync(join(tmp, 'packages', 'layer.json'), 'utf8')).packages || []
+      const mine = await exec.read('/packages/manifest.json').then(b => JSON.parse(b.toString()), () => ({}))
+      const sources = (mine.sources || []).map(parseSource)
+      if (list.length) placed = (await place({ work: c.work, name: c.name, sources, list })).packages
+    }
+    const link = { name: c.name, mrepo: c.view, storage: 'filesystem', layers, packages: placed ? Object.keys(placed) : [] }
+    // Its runtime started, from its own packages/ (its pinned runtime), by
+    // its directory: its inbox operational. Not when it has no runtime.
+    const runtime = join(c.view, 'packages', 'haiccing', 'base-package-runtime.bundle')
+    if (existsSync(runtime)) {
+      const s = await start({ repo: c.view, bundle: runtime })
+      if (!s) throw new Error(`its runtime did not start: ${c.view}`)
+      link.runtime = { pid: s.pid }
+    }
     exec.put(c.link, Buffer.from(JSON.stringify(link, null, 2) + '\n'))
     return { deployed: uri, ...link }
   } finally { rmSync(tmp, { recursive: true, force: true }) }
@@ -63,6 +85,15 @@ export async function deploy (exec, { uri }) {
 export async function teardown (exec, { uri }) {
   const c = child(exec, uri)
   if (!(await there(exec, c.link))) throw new Error(`not deployed: ${uri}`)
+  // Its runtime stopped first (when it runs), waited for until its process
+  // has ended (not only until it stops answering).
+  const was = await ask({ repo: c.view, op: 'status' })
+  if (was) {
+    await ask({ repo: c.view, op: 'stop' })
+    const alive = () => { try { os.kill(was.pid, 0); return true } catch { return false } }
+    for (let i = 0; i < 100 && alive(); i++) await new Promise(resolve => setTimeout(resolve, 100))
+    if (alive()) throw new Error(`its runtime did not stop: pid ${was.pid}`)
+  }
   rmSync(c.view, { recursive: true, force: true })
   exec.remove(c.link)
   return { tornDown: uri }

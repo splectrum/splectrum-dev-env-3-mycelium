@@ -2,6 +2,11 @@
 // framework: the process that runs its protocols, docs/design/repositories.md,
 // "A running repository"; structure.md, "One writer per store"), as a library
 // (runtime.js is its command line, base-package-mrepo's entry).
+//   run({ repo })           the runtime, in this process, for the mrepo at
+//                           an mrepo's directory (<work>/mrepos/<name>: the
+//                           filesystem storage; its socket <repo>/runtime.sock:
+//                           several in one work folder). ask, start, open take
+//                           { repo } the same way.
 //   run({ work })           the runtime, in this process: its repository
 //                           opened by the setting beside it (<work>/mrepo.json,
 //                           mrepo-base-request's `setting`): on native git
@@ -39,7 +44,7 @@ import process from 'bare-process'
 import Pipe from 'bare-pipe'
 import { spawnSync } from 'bare-subprocess'
 import fs, { existsSync, rmSync } from 'bare-fs'
-import { join } from 'bare-path'
+import { join, dirname, basename } from 'bare-path'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
@@ -55,9 +60,20 @@ export const HOST = 'host'
 export const SOCKET = 'runtime.sock'
 export const bundleOf = work => join(viewOf(work, setting(work).name), 'packages', 'haiccing', 'base-package-mrepo.bundle')
 
-// The repository, opened by its setting: { name, id, key, backend, close }.
-export async function open (work) {
-  const { storage, name } = setting(work)
+// Which repository: by an mrepo's directory (repo: <work>/mrepos/<name>,
+// on the filesystem storage, its socket inside it: several in one work
+// folder), or by the work folder's setting (<work>/mrepo.json; its socket
+// <work>/runtime.sock).
+export function whereOf (at) {
+  const { work, repo } = typeof at === 'string' ? { work: at } : at
+  if (repo) return { work: dirname(dirname(repo)), name: basename(repo), storage: 'filesystem', socket: join(repo, SOCKET) }
+  return { work, ...setting(work), socket: join(work, SOCKET) }
+}
+
+// The repository, opened: { name, id, key, backend, close }. at: the work
+// folder, or { repo } (an mrepo's directory).
+export async function open (at) {
+  const { work, storage, name } = whereOf(at)
   if (storage === 'git') {
     const backend = nativeBackend(gitdirOf(work, name))
     return { name, id: null, key: null, storage, backend, close: async () => {} }
@@ -71,10 +87,12 @@ export async function open (work) {
   return { name: repo.name, id: repo.id, key: repo.key, storage, backend: repo.backend, close: () => store.close() }
 }
 
-const socketOf = work => join(work, SOCKET)
+const socketOf = at => whereOf(at).socket
 
-export async function run ({ work, every = 200 }) {
-  const repo = await open(work)
+export async function run ({ work: w, repo: dir = null, every = 200 }) {
+  const at = dir ? { repo: dir } : { work: w }
+  const { work } = whereOf(at)
+  const repo = await open(at)
   const started = new Date().toISOString()
   // No log of its own: what happens to a request is in its document and the
   // commits that moved it (docs/design/repositories.md, "No log").
@@ -91,10 +109,10 @@ export async function run ({ work, every = 200 }) {
     while (busy) await new Promise(resolve => setTimeout(resolve, 20))
     await repo.close()
     // The socket last (the store's lock itself is released as the process ends).
-    rmSync(socketOf(work), { force: true })
+    rmSync(socketOf(at), { force: true })
     stopped = true
   })())
-  rmSync(socketOf(work), { force: true }) // a socket left by a runtime that ended without stopping: the store's lock says none runs now
+  rmSync(socketOf(at), { force: true }) // a socket left by a runtime that ended without stopping: the store's lock says none runs now
   server = Pipe.createServer(pipe => {
     let buf = ''
     pipe.on('data', chunk => {
@@ -111,7 +129,7 @@ export async function run ({ work, every = 200 }) {
     })
     pipe.on('error', () => {})
   })
-  server.listen({ path: socketOf(work), ownerOnly: true })
+  server.listen({ path: socketOf(at), ownerOnly: true })
   // The poller: the protocols fired in turn, one pass each, never two at once.
   let busy = false
   const poller = setInterval(async () => {
@@ -140,14 +158,15 @@ export async function run ({ work, every = 200 }) {
   await new Promise(resolve => { const t = setInterval(() => { if (stopped) { clearInterval(t); resolve() } }, 100) })
 }
 
-export function ask ({ work, op, timeout = 5000 }) {
+export function ask ({ work, repo = null, op, timeout = 5000 }) {
+  const at = repo ? { repo } : { work }
   return new Promise(resolve => {
-    if (!existsSync(socketOf(work))) return resolve(null)
+    if (!existsSync(socketOf(at))) return resolve(null)
     let buf = ''
     let done = false
     const finish = v => { if (done) return; done = true; clearTimeout(t); pipe.destroy(); resolve(v) }
     const t = setTimeout(() => finish(null), timeout)
-    const pipe = new Pipe(socketOf(work))
+    const pipe = new Pipe(socketOf(at))
     pipe.on('data', chunk => {
       buf += chunk.toString()
       const i = buf.indexOf('\n')
@@ -159,18 +178,21 @@ export function ask ({ work, op, timeout = 5000 }) {
   })
 }
 
-export async function start ({ work, bare = process.execPath, bundle = bundleOf(work), wait = 10000 }) {
-  const already = await ask({ work, op: 'status' })
+// start({ repo, bundle }): an mrepo's runtime by its directory, from a
+// runtime package's bundle (its entry takes the directory).
+export async function start ({ work, repo = null, bare = process.execPath, bundle = repo ? join(repo, 'packages', 'haiccing', 'base-package-runtime.bundle') : bundleOf(work), wait = 10000 }) {
+  const args = repo ? [bundle, repo] : [bundle, 'start', `--work=${work}`]
+  const already = await ask({ work, repo, op: 'status' })
   if (already) return already
   // Started by the shell, in the background (its own session where setsid is
   // there), the shell ending at once: the runtime is not this process's
   // child, so this process ending leaves it running (bare-subprocess sends
   // SIGTERM to its own children still running when it exits).
-  const r = spawnSync('sh', ['-c', 'if command -v setsid >/dev/null 2>&1; then setsid "$@" </dev/null >/dev/null 2>&1 & else "$@" </dev/null >/dev/null 2>&1 & fi', 'sh', bare, bundle, 'start', `--work=${work}`], { stdio: 'ignore' })
+  const r = spawnSync('sh', ['-c', 'if command -v setsid >/dev/null 2>&1; then setsid "$@" </dev/null >/dev/null 2>&1 & else "$@" </dev/null >/dev/null 2>&1 & fi', 'sh', bare, ...args], { stdio: 'ignore' })
   if (r.status !== 0) return null
   for (const end = Date.now() + wait; Date.now() < end;) {
     await new Promise(resolve => setTimeout(resolve, 200))
-    const s = await ask({ work, op: 'status', timeout: 1000 })
+    const s = await ask({ work, repo, op: 'status', timeout: 1000 })
     if (s) return s
   }
   return null

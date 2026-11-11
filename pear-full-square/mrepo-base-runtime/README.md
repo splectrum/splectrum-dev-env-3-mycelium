@@ -12,6 +12,11 @@ installed by HAICC's boot into the host's packages. Built step by step
 
 - `index.js`: the library; `runtime.js`: the command line, the package's
   entry (`start --work=<folder>`, `version`).
+- An mrepo by its directory (`run({ repo })`, as `ask`, `start`, `open`):
+  `<work>/mrepos/<name>`, on the filesystem storage, its socket
+  `<repo>/runtime.sock` (several mrepos in one work folder); started from
+  its own `packages/` (`start({ repo })`: `bare <repo>/packages/haiccing/
+  base-package-runtime.bundle <repo>`).
 - Its repository opened by the setting beside it (`<work>/mrepo.json`):
   `git`, a standalone repository on native git (`<work>/mrepos/<name>/.git`,
   bare); `filesystem`, p2p-git's hybrid with every layer on the filesystem (the same

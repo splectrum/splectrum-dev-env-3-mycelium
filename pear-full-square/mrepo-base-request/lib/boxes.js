@@ -11,7 +11,7 @@
 //                            folder is the inbox layer's working tree
 //                            (<work>/mrepos/<name>/inbox/: on the p2p host,
 //                            many inputs add files, the runtime commits)
-//   inboxFolder(work)        that folder, a documents container (JSON)
+//   inboxFolder(work, name)  that folder (name: the setting's by default), a documents container (JSON)
 import { join } from 'bare-path'
 import { documents } from 'mycelium-container-document'
 import { guid } from './record.js'
@@ -21,7 +21,7 @@ import { layer, AUTHOR, CONFIG } from './layer.js'
 
 export const INBOX = '/inbox'
 export const OUTBOX = '/outbox'
-export const inboxFolder = work => documents(join(viewOf(work, setting(work).name), 'inbox'), json)
+export const inboxFolder = (work, name = setting(work).name) => documents(join(viewOf(work, name), 'inbox'), json)
 
 // A layer made when first needed (an orphan branch, under the layer rules).
 export async function ensure ({ backend, writer }, branch) {
@@ -33,7 +33,7 @@ export async function post (ctx, rec = null, name = rec?.key ?? guid()) {
   const box = layer(ctx, 'inbox')
   const have = new Set(await box.list())
   const fresh = rec ? (have.has(name) ? [] : [[name, rec]]) : (() => {
-    const folder = inboxFolder(ctx.work)
+    const folder = inboxFolder(ctx.work, ctx.name)
     return folder.list().filter(n => n !== CONFIG && !have.has(n)).map(n => [n, folder.read(n)])
   })()
   // A commit lost to another writer of the inbox (compare-and-swap) is made

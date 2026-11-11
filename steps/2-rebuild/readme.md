@@ -723,6 +723,22 @@ end after a terminal answer, its input kept it alive (released, and the
 boot ends explicitly when done). Tried under a pseudo-terminal: asked,
 answered, inspected, cleaned up.
 
+## 20. Deploy starts the child's runtime (2026-11-11)
+
+The human: each package hard linked individually (the mrepo runs only what
+is registered for it); deploy does the linking always (cheap, at deploy
+only) and ends with the child's runtime started, from its own `packages/`,
+by its directory. The runtime addressed by an mrepo's directory
+(`mrepo-base-runtime`: `run`/`ask`/`start`/`open` take `{ repo }`; its socket
+in the directory; `inboxFolder(work, name)` in `mrepo-base-request`);
+`base-package-runtime`'s entry takes the directory. `mrepo-base-boot`:
+`deploy` puts the child's packages in place (from the store, else the
+sources the parent's packages layer records) and starts its runtime;
+`teardown` stops it (until its process has ended) before removing it.
+The boot's `next`: `bare <boot>/packages/haiccing/base-package-runtime.bundle
+<boot>`. Tested: a child deployed with the real runtime bundle, its inbox
+answering, torn down; the packages' tests; the release rebuilt and tried.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

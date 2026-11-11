@@ -8,6 +8,8 @@
 //              <path>/addons/<sha256>)
 //     list     ['<org>/<repo>', ...]
 //   -> { packages: { '<org>/<repo>': { sha256, id, addons } } }, or throws
+// The layer's manifest: { packages, sources } (the sources used: a child's
+// deploy sources from them).
 // The store: <work>/packages/<org>/<repo>.bundle, <work>/packages/addons/<sha256>;
 // the mrepo's: <work>/mrepos/<name>/packages/ (the same layout: a bundle
 // finds its addons two levels up). A hard link where the store and the
@@ -73,7 +75,9 @@ export async function place ({ work, name, sources, list }) {
   // The packages layer: the list and the hashes, not the bytes.
   // (unchanged: no commit)
   const backend = p2pgitBackend(gitdirOf(work, name), { fs })
-  const now = Buffer.from(JSON.stringify({ packages }, null, 2) + '\n')
+  // (with the sources they came from: a child's deploy sources from them too)
+  const from = sources.map(x => x.kind === 'folder' ? `folder:${x.path}` : `github:${x.org}`)
+  const now = Buffer.from(JSON.stringify({ packages, sources: from }, null, 2) + '\n')
   const was = await openRepo(backend).read('/packages/manifest.json').catch(() => null)
   if (!was || !was.equals(now)) {
     const c = await writer(backend).change('packages')

@@ -71,7 +71,7 @@ test('the boot: put in place up to the runtime; the runtime started from its pac
     t.alike(out.outcomes.map(o => o.step), ['prerequisites', 'built', 'packages'], 'its outcomes logged in its request')
     t.ok(out.outcomes[0].results.find(c => c.check === 'bare').fixed, 'Bare put in place')
     t.is(readFileSync(join(work, 'bare', 'tarball.sha512'), 'utf8').trim(), bare.integrity, 'as pinned')
-    t.absent(existsSync(join(work, 'runtime.sock')), 'the runtime not started')
+    t.absent(existsSync(join(viewOf(work, 'boot'), 'runtime.sock')), 'the runtime not started')
 
     // the packages: in the store once, hard linked into the boot mrepo
     const store = join(work, 'packages', 'haiccing', 'base-package-runtime.bundle')
@@ -86,17 +86,17 @@ test('the boot: put in place up to the runtime; the runtime started from its pac
     t.ok((await repo.select('/request/execute/*')).some(([p]) => !p.endsWith('layer.json')), 'its request in request/execute')
 
     // the runtime, as printed (next): from the boot mrepo's own packages, on the Bare put in place
-    t.is(out.next, `${join(work, 'bare', 'bin', 'bare')} ${mine} --work=${work}`)
-    const child = spawn(join(work, 'bare', 'bin', 'bare'), [mine, `--work=${work}`], { stdio: 'ignore' })
+    t.is(out.next, `${join(work, 'bare', 'bin', 'bare')} ${mine} ${viewOf(work, 'boot')}`)
+    const child = spawn(join(work, 'bare', 'bin', 'bare'), [mine, viewOf(work, 'boot')], { stdio: 'ignore' })
     let s = null
-    for (let i = 0; i < 100 && !s; i++) { s = await ask({ work, op: 'status' }); if (!s) await wait(100) }
+    for (let i = 0; i < 100 && !s; i++) { s = await ask({ repo: viewOf(work, 'boot'), op: 'status' }); if (!s) await wait(100) }
     t.alike(s?.repository, { name: 'boot', storage: 'filesystem', id: null, key: null }, 'the runtime: running the boot mrepo')
     t.alike((await send(work, { protocol: 'rest', action: 'get', uri: '/runtime/service.json' })).output, { state: 'started', type: 'boot', package: 'haiccing/base-package-boot' }, 'started by its preloaded request')
     const history = []
     const backend = p2pgitBackend(gitdirOf(work, 'boot'), { fs })
     for (const n of await layer({ repo, backend }, 'request/done').arrived()) history.push((await repo.read(`/request/done/${n}.json`).then(b => JSON.parse(b.toString()))).value.value)
     t.alike(history.map(f => `${f.protocol} ${f.action}`).slice(0, 2), ['boot deploy', 'service start'], 'the history: its deploy first, then the preloaded start')
-    t.ok((await ask({ work, op: 'stop' }))?.stopping, 'stopped')
+    t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped')
     for (let i = 0; i < 100 && alive(child.pid); i++) await wait(100)
     t.absent(alive(child.pid))
 
