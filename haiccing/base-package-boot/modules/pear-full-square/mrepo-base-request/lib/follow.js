@@ -7,7 +7,10 @@
 //   follow({ dir, name, every, print })   dir: the mrepo's folder; name: its
 //                                         URI part (/boot); print: a line
 //                                         out (console.log by default)
-//   -> { stop, pass }                     pass(): one round, now
+//   -> { stop, pass, settled }            pass(): one round, now; settled():
+//                                         every request done (none pending or
+//                                         executing in any of them, at least one
+//                                         done)
 // What is there when it starts is printed first (the history so far).
 import fs, { existsSync, readdirSync } from 'bare-fs'
 import { join } from 'bare-path'
@@ -54,6 +57,22 @@ export function follow ({ dir, name, every = 200, print = line => console.log(li
       }
     } finally { busy = false }
   }
+  // Settled: nothing pending or executing anywhere, something done.
+  async function settled () {
+    let done = 0
+    for (const [d] of mrepos(dir, `/${name}`)) {
+      const ctx = opened.get(d)
+      if (!ctx) return false
+      const heads = Object.fromEntries(await ctx.backend.listBranches().catch(() => []))
+      for (const l of LAYERS) {
+        if (!heads[l]) continue
+        const n = (await layer(ctx, l).list()).length
+        if (l === 'request/done') done += n
+        else if (n) return false
+      }
+    }
+    return done > 0
+  }
   const timer = setInterval(() => { pass().catch(() => {}) }, every)
-  return { pass, stop: () => clearInterval(timer) }
+  return { pass, settled, stop: () => clearInterval(timer) }
 }

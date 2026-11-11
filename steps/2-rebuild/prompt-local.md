@@ -29,38 +29,28 @@ its note is committed.
 >    - `sources/holepunchto/bare-runtime-linux-x64-<version>.tgz`: the
 >      prerequisite Bare, the version built into the executable, fetched
 >      from npm's registry with curl and pinned by its sha512.
-> 4. **Check it once**, from the clone's folder, in a fresh work folder:
->    `sources/haiccing/base-package-boot-linux-x64 --work=/tmp/boot-check --sources=folder:sources --yes`.
->    (Not on a terminal, it does not follow the records: add `--no-follow`
->    if your shell is one.) It prints the request `boot deploy /boot` (its
->    `log` lists the steps `prerequisites`, `built`, `packages`, each with
->    its level), then the status of the boot mrepo's runtime, which it
->    starts. Exit code 0. If a Bare is installed on the PATH at the pinned
->    major (the same version or newer), it is used and recorded in
->    `/tmp/boot-check/bare.json`; else the pinned one is put in place.
->    Within a few seconds that runtime deploys the host inside the boot
->    mrepo: `/tmp/boot-check/mrepos/boot/main/host/` appears (with `.git`,
->    `inbox/`, `outbox/`, `packages/`), and two runtime processes run
->    (`pgrep -af '[/]bin/bare /tmp/boot-check/'`). Then stop them,
->    `pkill -TERM -f '[/]bin/bare /tmp/boot-check/'`, in a command of its own
->    (the bracket keeps the pattern from matching your own shell; wait until
->    `pgrep -f '[/]bin/bare /tmp/boot-check/'` finds none), and remove
->    `/tmp/boot-check`.
-> 5. **Put the try script in the home folder**: copy
->    `tools/haicc-try.sh` to `~/haicc-try.sh` (executable). It runs the
->    release from `~` with `~/haicc-try` as its work folder, saves the
->    records there as `boot-output.jsonl` (they follow in the terminal, one
->    a line, until Ctrl-C), shows the boot mrepo, the
->    host inside it and their runtimes, stops on `press any key to clean
->    up`, then stops the runtimes and removes `~/haicc-try` (also on
->    Ctrl-C). It finds the clone at `~/splectrum-dev-env-3-mycelium`; if
->    yours is elsewhere, tell the human to run it as
->    `HAICC_DEV=<clone> ~/haicc-try.sh`.
+> 4. **Check it once, with the try test**, from the clone's folder:
+>    `HAICC_DEV="$PWD" HOME=/tmp/boot-check-home sh tools/haicc-try.sh --yes`
+>    (make `/tmp/boot-check-home` first; remove it after). It is a test
+>    that ends by itself: the boot run in `<HOME>/haicc-try`, its records
+>    followed one a line until every request is done (the boot's
+>    `boot deploy /boot`, then its runtime's preloaded `boot deploy /host`:
+>    the host built inside it, `mrepos/boot/main/host/`, its runtime
+>    started), what was left shown, the runtimes stopped, the folder
+>    removed. Exit code 0 and `== passed: every request done`; not in time:
+>    exit 4. If a Bare is installed on the PATH at the pinned major (the
+>    same version or newer), it is used (the binary it runs recorded);
+>    else the pinned one is put in place.
+> 5. **Put the try test in the home folder**: copy `tools/haicc-try.sh` to
+>    `~/haicc-try.sh` (executable). It finds the clone at
+>    `~/splectrum-dev-env-3-mycelium`; if yours is elsewhere, tell the human
+>    to run it as `HAICC_DEV=<clone> ~/haicc-try.sh`.
 > 6. **Tell the human** that the release is ready: the path of
 >    `sources/haiccing/base-package-boot-linux-x64`, the Bare version (from
 >    its `.json`), the output of step 4 (or what failed and how), and the
->    command to try it: `~/haicc-try.sh` (it asks before putting Bare in
->    place; `~/haicc-try.sh --yes` does not ask).
+>    command to try it: `~/haicc-try.sh` (it ends by itself, its exit code
+>    passed or failed; it asks before putting Bare in place, `--yes` does
+>    not; `--pause` waits for a key before cleaning up, to inspect).
 >
 > 7. **Write a note back**: what ran, each result, anything that did not
 >    run as written and why (with a proposal and a patch if you have one,

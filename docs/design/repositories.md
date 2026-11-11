@@ -482,7 +482,9 @@ history:
   one compact line a record, its envelope's topic the full path
   (`/boot/main/host/request/done`): `follow` (`mrepo-base-request`); the
   boot follows after starting its runtime, on a terminal or with
-  `--follow`, until Ctrl-C.
+  `--follow`, until Ctrl-C; with `--until-done`, until every request is
+  done (the human: a test ends by itself once its actions are complete,
+  its runtimes stopped).
 - **Open**: a request's own history in its document (the events of its
   journey, in the envelope or the completed form), when step by step
   logging is wanted; the runtime's own events (started, stopped) dropped
