@@ -1,8 +1,7 @@
-# base-package-example
+# example/
 
-An example package: an mrepo holding one document, a further unit
-(`notes/`), one test.
+Examples, a folder each, each a structure unit as the package is. Optional.
 
-```sh
-bare run.js --work=<folder>
-```
+| | |
+|---|---|
+| [hello/](hello/) | a whole small package: an mrepo holding one document, a further unit, one test |

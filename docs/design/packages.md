@@ -28,8 +28,8 @@ models a structure of mrepos and how it is built and installed.
   test/run.js        a set run, each test its own process: bare test/run.js
                      [<set>], validate by default
   <name>/            a further unit: another mrepo (dispatch, terminal, a node), by its URI part name
-  example/           optional: an example, in the same structure (no other
-                     package named as one)
+  example/<name>/    optional: examples, a folder each, each a structure unit (no
+                     other package named as one)
 modules/             once, at the package's top, shared by its units: its code, ours
                      copied whole (<org>/<module>/), the third-party code (node_modules/)
 ```
