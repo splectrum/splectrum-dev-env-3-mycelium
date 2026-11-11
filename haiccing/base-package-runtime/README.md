@@ -35,4 +35,12 @@ mrepo a work folder's setting names, as the p2p host.)
   `SOURCES`: a sources folder, for the tests that need one. See
   `haiccing/package-docs-template`, `test/README.md`.
 
+## The folders
+
+| | |
+|---|---|
+| [mrepo/](mrepo/) | its part of the structure, by layers |
+| [test/](test/) | its tests and sets |
+| [modules/](modules/) | its code, assembled: ours and the third-party code |
+
 Written from [splectrum/splectrum-dev-env-3-mycelium](https://github.com/splectrum/splectrum-dev-env-3-mycelium).

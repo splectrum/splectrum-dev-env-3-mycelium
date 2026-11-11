@@ -44,6 +44,12 @@ is for.
 - What a person reads is what the repository will hold: expanded folders,
   carried in the package's bundle and read from it by path.
 - `modules/` is assembled, never edited by hand.
+- **READMEs cascade**: a unit's README links to the README of each folder
+  below it, and each of those to theirs, so from the top every folder is
+  reached. The exceptions: no README inside a layer of `mrepo/` (it would
+  be committed into it; `mrepo/`'s own README covers its layers), and
+  `modules/<org>/<module>/` brings its own (linked from `modules/`'s,
+  written when the modules are assembled).
 
 ## package.json
 

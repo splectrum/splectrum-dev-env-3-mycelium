@@ -896,6 +896,16 @@ runtime package's `full`, a run of its `validate` (passed, in a floating
 instance, inside the running boot mrepo) and a refused `/run`. Both
 packages' `full` sets from their bundles: passed, nothing left running.
 
+Documentation where it is used (the human: READMEs with the tests, and
+cascading links, from the root down): each package's `mrepo/`, `test/`
+and each test (`test/boot/`, `test/start/`) has its README; the root links
+down to them, each to the folders below. `modules/README.md` is written by
+`tools/package-assemble.js` (the folder is rewritten each time), linking
+to each of ours. No README inside a layer (it would be committed into it):
+`mrepo/`'s covers its layers. The rule in `package-docs-template`; its
+example and `package-docs-mrepo` cascade too. Checked by crawling the links
+from each root: every folder reached, none broken.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
