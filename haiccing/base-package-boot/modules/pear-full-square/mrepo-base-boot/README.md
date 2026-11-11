@@ -6,18 +6,24 @@ The mrepo boot protocol, the base variant: `deploy`, `teardown`,
 
 - `lib/deploy.js`: the actions, each `(exec, form)` in the execution
   context: `deploy` (the child's definition, `/main/<name>/mrepo/` in the
-  parent, built into `<work>/mrepos/<name>/` and linked into the parent's
-  `main` as `/main/<name>.json`), `teardown` (the child's folder removed,
-  its link out of `main`), `redeploy` (teardown, committed locally with
-  `exec.commit()`, then deploy). The child named by the URI's one part
-  (`/host`); the work folder from the context (`exec.runtime.work`).
+  parent, built into `<work>/mrepos/<name>/`; its packages put in place, the
+  list its `packages` layer holds, from the store or the sources the
+  parent's came from; linked into the parent's `main` as
+  `/main/<name>.json`; its runtime started from its own `packages/`, by its
+  directory), `teardown` (its runtime stopped, waited for until its process
+  ended; its folder removed; its link out of `main`), `redeploy` (teardown,
+  committed locally with `exec.commit()`, then deploy). The child named by
+  the URI's one part (`/host`); the work folder from the context
+  (`exec.runtime.work`).
 - `lib/packages.js`: packages put in place (`place({ work, name, sources,
   list })`): each listed package from the sources (a folder by
   organisation: `<org>/<repo>.bundle`, `<org>/manifest.json`, `addons/`),
   checked by its sha256, into the work folder's store (`<work>/packages/`,
   once), hard linked into the mrepo's `packages/` (a copy across disks),
-  the list and hashes committed into its `packages` layer (`/manifest.json`;
-  unchanged: no commit).
+  the list and hashes committed into its `packages` layer (`/manifest.json`,
+  with the sources used: a child's deploy sources from them; unchanged: no
+  commit). Each package linked individually: the mrepo runs only what is
+  registered for it.
 - `lib/build.js`: an mrepo built from its structure (`build({ from, work,
   name, time, setting })`): a folder laid out by layers, a `layer.json` at each leaf,
   written as a standalone repository on the filesystem, one orphan branch a
@@ -35,8 +41,8 @@ The mrepo boot protocol, the base variant: `deploy`, `teardown`,
 - `index.js` exports them. `haiccing/base-package-boot`'s `protocol.js`
   offers the actions and their configs.
 - Not yet: the requirements resolved into packages and overlaid, the
-  clean-up, the child started; what an action does outside the repository
-  (a child's folder) is not undone by a reset.
+  clean-up; what an action does outside the repository (a runtime started,
+  a child's folder removed) is not undone by a reset.
 
 ## Tests
 
