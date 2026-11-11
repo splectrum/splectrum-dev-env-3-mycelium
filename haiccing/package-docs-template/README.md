@@ -11,7 +11,9 @@ is for.
 
 | part | the unit then |
 |---|---|
-| `run.js` | can be executed: `bare run.js [arguments]` |
+| `run.js` | can be executed on its own: `bare run.js [arguments]` |
+| `deploy.js` | can be deployed: gives its part of the structure and its requirements to the parent's `boot deploy` |
+| `protocol.js` | provides protocols: their actions, loaded by the runtime |
 | `modules/`, `package.json` | carries its own dependencies |
 | `mrepo/` | comes with an mrepo, by layers |
 | `test/` | has tests and test sets |
@@ -32,7 +34,8 @@ is for.
 - One structure, many purposes: a definition, documentation in place,
   examples, tests.
 - A package depends only on packages.
-- A unit's entry is `run.js`.
+- Entry points, each optional: `run.js` (executed on its own),
+  `deploy.js` (deployment only), `protocol.js` (protocol actions).
 - A collection folder (`test/`, `example/`) holds units, a folder each;
   it is not a unit itself.
 - Examples in `example/<name>/`, never a reference to another package.
