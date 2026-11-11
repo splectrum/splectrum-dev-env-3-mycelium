@@ -1089,3 +1089,18 @@ with it `bare-inspector`, `bare-ws`, `bare-https`, `bare-tls`,
 `bare-crypto`. A documentation package: 63 third-party, 5.7 MB (was 26);
 the runtime package 48 MB (was 62); the boot keeps `bare-tls` (its GitHub
 source). All sets pass.
+
+Internal requests (the human: validation belongs in the transfer from the
+inbox to pending; internal requests submit straight to that handler): one
+way into pending, `admit(ctx, core, { origin })` in `mrepo-base-request`,
+for the inbox's records and the mrepo's own (`internal(ctx, form)`),
+validated by origin; an internal request marked by the handler (the check
+then exempts it from the API and the state), one from the inbox claiming
+it refused. The inbox never judges: while the mrepo is not operational
+(`ctx.intake` false) its records wait. The runtime, as it starts, places
+`help extract /` (where it has a help layer), takes the inbox in once its
+own requests are done. `help extract` an action of `mrepo-base-help`,
+writing the help layer through the execution context (`help` an execution
+target where the layer exists, in `mrepo-base-execute`); the runtime keeps
+no extraction call. The boot's test: the internal extraction in the boot
+mrepo's history, exact counts (71 asserts). All sets pass.

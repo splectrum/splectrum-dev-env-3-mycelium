@@ -108,13 +108,14 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     // (moved to request/done on the runtime's next pass)
     let history = []
     const backend = p2pgitBackend(gitdirOf(work, 'boot'), { fs })
-    for (let i = 0; i < 100 && history.length < 2; i++) {
+    for (let i = 0; i < 300 && history.length < 3; i++) {
       history = []
       for (const n of await layer({ repo, backend }, 'request/done').arrived()) history.push((await repo.read(`/request/done/${n}.json`).then(b => JSON.parse(b.toString()))).value.value)
-      if (history.length < 2) await wait(100)
+      if (history.length < 3) await wait(100)
     }
-    t.alike(history.map(f => `${f.protocol} ${f.action} ${f.uri}`), ['boot deploy /boot', 'boot deploy /host'], 'the history: the boot\'s deploy, then the host\'s')
+    t.alike(history.map(f => `${f.protocol} ${f.action} ${f.uri}${f.internal ? ' (internal)' : ''}`), ['boot deploy /boot', 'boot deploy /host', 'help extract / (internal)'], 'the history: the boot\'s deploy, the host\'s (preloaded), its help extracted (internal, placed by its runtime as it started)')
     t.absent(history[1].error, 'the host\'s deploy done')
+    t.ok(!history[2].error && history[2].output?.readmes > 0, `its help extracted before it took requests in ${JSON.stringify(history[2].output ?? history[2].error)}`)
     // followed: every record of the boot mrepo's request layers and its child's, one line each
     const lines = []
     const f = follow({ dir: viewOf(work, 'boot'), name: 'boot', print: l => lines.push(l) })
@@ -200,8 +201,8 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
     const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
     let n = 0
-    for (let i = 0; i < 100 && (n = await records('done')) < 16; i++) await wait(100)
-    t.is(n, 16, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs, the three helps, the four in-situ validations among them)')
+    for (let i = 0; i < 100 && (n = await records('done')) < 18; i++) await wait(100)
+    t.is(n, 18, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs, the three helps, the four in-situ validations, the two help extractions (internal, one a start) among them)')
     t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
     const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
     t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')

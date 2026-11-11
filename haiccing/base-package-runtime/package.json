@@ -6,7 +6,8 @@
   "type": "module",
   "main": "main.js",
   "modules": [
-    "pear-full-square/mrepo-base-runtime"
+    "pear-full-square/mrepo-base-runtime",
+    "pear-full-square/mrepo-base-help"
   ],
   "scripts": {
     "test": "bare test/run.js"

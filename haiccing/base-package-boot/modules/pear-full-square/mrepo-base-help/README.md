@@ -2,9 +2,10 @@
 
 Mrepo help: the READMEs of an mrepo's packages extracted, checked against the rules and retrieved by URI.
 
-The runtime runs the extraction before the mrepo is operational: every
-README of its linked packages, at the URI it documents, with a generated
-index and the problems found. The `help` protocol reads it. Every package
+The `help` protocol's `extract` writes it: every README of the mrepo's
+linked packages, at the URI it documents, with a generated index and the
+problems found; an internal request the runtime places as the mrepo
+starts. `get` reads it. Every package
 carrying the module validates its own help with the tests in `validate/`.
 
 | | |

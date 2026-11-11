@@ -59,3 +59,10 @@ test('a record: topic, key, timestamp, headers (empty), value; the onion; a form
   t.alike(core.value.output, undefined, 'the core itself not changed')
   t.alike(complete(core, { ok: false, error: 'x' }).value.error, 'x')
 })
+
+test('check: an internal request, the mrepo\'s own: no API, no state; its URI canonical only', (t) => {
+  t.is(check({ protocol: 'help', action: 'extract', uri: '/', internal: true }, at('initialised')), null, 'before it is started, not offered: allowed')
+  t.is(check({ protocol: 'help', action: 'extract', uri: '/', internal: true }, { service: null, api: null }), null, 'without service too')
+  t.ok(/not canonical/.test(check({ protocol: 'help', action: 'extract', uri: '/A', internal: true }, at('started'))), 'its URI still checked')
+  t.ok(check({ protocol: 'help', action: 'extract', uri: '/' }, at('initialised')), 'unmarked: the gates apply')
+})

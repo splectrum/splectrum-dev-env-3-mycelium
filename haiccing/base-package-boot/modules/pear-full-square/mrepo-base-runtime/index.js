@@ -51,10 +51,9 @@ import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
 import { nativeBackend, p2pgitBackend } from 'mycelium-git'
-import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
+import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, internal, PENDING, EXECUTE, DONE } from 'mrepo-base-request'
 import { execute, failed, ACTIONS } from 'mrepo-base-execute'
 export { run as runtimeRun } from './lib/protocol.js'
-import { extractInto } from 'mrepo-base-help'
 import { pathToFileURL } from 'bare-url'
 import pkg from './package.json' with { type: 'json' }
 
@@ -141,9 +140,14 @@ export async function run ({ work: w, repo: given = null, every = 200, own = nul
   // run('/protocol')), its actions beside the framework's.
   // and its own package's (base-package-runtime: runtime run, help get)
   const actions = { ...ACTIONS, ...(own?.actions ?? {}), ...await protocolsOf(ctx.repo, join(dir, 'packages'), own?.pkg) }
-  // Its help, before it is operational: the READMEs of its packages
-  // extracted into its help layer (mrepo-base-help).
-  await extractInto({ repo: ctx.repo, writer: ctx.writer, dir })
+  // Before it is operational, its own requests: internal, straight to the
+  // handler (its help extracted, where it has a help layer and its packages
+  // offer the help protocol); the inbox not taken in until they are done.
+  const starting = []
+  if ((await repo.backend.listBranches()).some(([b]) => b === 'help') && actions.help?.extract) {
+    starting.push((await internal(ctx, { protocol: 'help', action: 'extract', uri: '/' })).name)
+  }
+  ctx.intake = !starting.length
   const status = () => ({ ok: true, pid: process.pid, started, repository: { name: repo.name, storage: repo.storage, id: repo.id, key: repo.key }, version })
   let stopping = null
   let stopped = false
@@ -184,6 +188,8 @@ export async function run ({ work: w, repo: given = null, every = 200, own = nul
     busy = true
     try {
       if (repo.storage !== 'git') await post(ctx)
+      // operational once its own requests are done: the inbox taken in
+      if (!ctx.intake) ctx.intake = (await Promise.all(starting.map(n => layer(ctx, DONE).read(n).then(() => true, () => false)))).every(Boolean)
       await request(ctx)
       await execute(ctx, { actions })
       await request(ctx)
