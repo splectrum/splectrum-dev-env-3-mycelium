@@ -1,7 +1,7 @@
 {
   "name": "mrepo-base-runtime",
   "version": "0.1.0",
-  "description": "A running mycelium repository's runtime, always on: the framework running its protocols; it holds the store as its single writer, keeps the required watchers running, serves the local connection, restarts what stops",
+  "description": "Module: the mrepo runtime, the engine running an mrepo's protocols.",
   "type": "module",
   "main": "index.js",
   "scripts": {
