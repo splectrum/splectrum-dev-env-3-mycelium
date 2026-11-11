@@ -761,10 +761,23 @@ Built so far:
   inbox folder, its packages; `exec.runtime.dir`), not from a work folder's
   layout.
 
-Next: the runtime package's `mrepo/` structure; the boot mrepo's first-boot
-structure (no `service`, `packages` the runtime and boot, the preloaded
-`boot deploy /host`); `deploy` from the target's list, the child inside its
-parent, the store through the packages manifest.
+Then, built: `base-package-runtime/mrepo/` (the runtime's part: `main`,
+`runtime`, the boxes, the request layers, `packages` listing the runtime);
+the boot mrepo's first-boot structure (no `service`, `packages` the runtime
+and boot, the preloaded `boot deploy /host` with the runtime as target);
+`mrepo-base-boot`: `fetch`, `structureOf` (a package's `mrepo/` from its
+bundle), `place({ dir, store, ... })` (its manifest records the store and
+the sources: the mapping); `deploy` from the target's list, the child built
+inside its parent (`build({ dir })`), its record at the node, its runtime
+started; the release bundles the boot package too. Found: a Unix socket's
+path is limited (about 107 bytes), nested children exceed it: a short path
+in the temporary folder, by the directory's hash, when too long; the
+runtime-only child needs `main` (the execute protocol works through it):
+in the runtime's structure. Tested: the deploy (a target's list, the order,
+redeploy, teardown; the real runtime started, its inbox answering, stopped);
+the boot package (its runtime started from `next`: the host deployed inside
+it, running; the history the boot's deploy then the host's); the release
+standalone, end to end.
 
 ## The product repositories: updated (2026-11-10)
 
