@@ -583,6 +583,12 @@ With the human, for the boot's bundle:
   Direct HTTPS from Bare fails in this container (its proxy's
   certificate): sourcing over the network not tried here.
 
+The local source (the human): `sources/` at the root, gitignored, by
+organisation: `haiccing/` (the packages as Bare bundles, their manifest),
+`holepunchto/` (the pinned Bare's tarball: the boot finds it there),
+`addons/` (by hash, shared, where a bundle at `<org>/` looks for them).
+Used as `--sources=folder:sources`.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

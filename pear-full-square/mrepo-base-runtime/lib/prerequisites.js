@@ -12,8 +12,9 @@
 //              one this deploys may be there already)
 //   sources    each reachable: a folder there; github: its host answering
 //   bare       Bare at <work>/bare/bin/bare, from the pinned tarball; fix: put
-//              in place from the sources (folder: <path>/<tarball>; github:
-//              npm's registry), checked against its sha512
+//              in place from the sources (folder: <path>/holepunchto/<tarball>,
+//              by its organisation; github: npm's registry), checked against
+//              its sha512
 //   docker     Docker Engine installed, running, rootful, native, the user in
 //              its group
 // Conditions (`when`): 'not-in-container' (no /.dockerenv, no container
@@ -55,7 +56,8 @@ const get = (host, path) => new Promise((resolve, reject) => {
 const run = (cmd, args) => { try { return spawnSync(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] }) } catch { return { status: -1, stdout: Buffer.alloc(0) } } }
 
 // Bare's tarball, as npm publishes it: its name, and its sha512 checked.
-const TARBALL = v => `bare-runtime-${os.platform()}-${os.arch()}-${v}.tgz`
+export const BARE_ORG = 'holepunchto'
+export const TARBALL = v => `bare-runtime-${os.platform()}-${os.arch()}-${v}.tgz`
 const sha512 = bytes => crypto.createHash('sha512').update(bytes).digest('base64')
 const sriOk = (bytes, integrity) => integrity === `sha512-${sha512(bytes)}`
 
@@ -80,7 +82,7 @@ const gunzip = bytes => new Promise((resolve, reject) => zlib.gunzip(bytes, (err
 async function fetchBare (sources, version) {
   for (const s of sources) {
     if (s.kind === 'folder') {
-      const f = join(s.path, TARBALL(version))
+      const f = join(s.path, BARE_ORG, TARBALL(version))
       if (existsSync(f)) return { from: f, bytes: readFileSync(f) }
     } else {
       const name = `bare-runtime-${os.platform()}-${os.arch()}`
