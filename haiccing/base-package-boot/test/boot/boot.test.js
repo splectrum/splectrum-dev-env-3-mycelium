@@ -66,7 +66,7 @@ test('the prerequisites: one missing, the boot stops before writing anything', a
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
 
-test('the boot: put in place, its runtime started, the host deployed inside it; run again', { timeout: 120000, skip: !have }, async (t) => {
+test('the boot: put in place, its runtime started, the host deployed inside it, redeployed by a request; run again', { timeout: 120000, skip: !have }, async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'boot-'))
   try {
     const r = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
@@ -124,9 +124,26 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     const topics = lines.map(l => JSON.parse(l).topic)
     t.ok(topics.includes('/boot/request/done'), 'the boot mrepo\'s, its topic the full path')
     t.ok(topics.every(x => x.startsWith('/boot/')), 'from the root')
-    for (const r of [host, viewOf(work, 'boot')]) t.ok((await ask({ repo: r, op: 'stop' }))?.stopping, `stopped: ${r.endsWith('host') ? 'the host' : 'the boot'}`)
-    for (let i = 0; i < 100 && (alive(child.pid) || alive(h.pid)); i++) await wait(100)
-    t.absent(alive(child.pid) || alive(h.pid), 'both processes ended')
+    // redeploy, sent to the running boot mrepo through its inbox folder: the
+    // host's runtime stopped, the host rebuilt, its runtime started again
+    const core = record('/test', { api: 'boot', protocol: 'boot', action: 'redeploy', uri: '/host' }, guid())
+    writeFileSync(join(viewOf(work, 'boot'), 'inbox', `${core.key}.json`), JSON.stringify(wrap('/boot/inbox', core)))
+    let redone = null
+    for (let i = 0; i < 300 && !redone; i++) { redone = await repo.read(`/request/done/${core.key}.json`).then(b => JSON.parse(b.toString()).value.value, () => null); if (!redone) await wait(100) }
+    t.ok(redone, 'boot redeploy /host: done')
+    t.absent(redone?.error, `without an error ${redone?.error ?? ''}`)
+    t.alike([redone?.output.tornDown, redone?.output.deployed, redone?.output.package], ['/host', '/host', 'haiccing/base-package-runtime'], 'torn down and deployed again, its type as recorded')
+    t.ok(redone?.log?.some(e => e.event === 'runtime stopped' && e.pid === h.pid), `the old runtime stopped, how logged: ${redone?.log?.find(e => e.event === 'runtime stopped')?.how}`)
+    t.absent(alive(h.pid), 'the old host runtime\'s process ended')
+    const h2 = await ask({ repo: host, op: 'status' })
+    t.ok(h2 && h2.pid !== h.pid, 'a new host runtime running')
+    let node2 = null
+    for (let i = 0; i < 100 && node2?.runtime?.pid !== h2?.pid; i++) { node2 = await repo.read('/main/host.json').then(b => JSON.parse(b.toString()), () => null); if (node2?.runtime?.pid !== h2?.pid) await wait(100) }
+    t.is(node2?.runtime?.pid, h2?.pid, 'its record at the node updated')
+
+    for (const r of [viewOf(work, 'boot'), host]) t.ok((await ask({ repo: r, op: 'stop' }))?.stopping, `stopped: ${r.endsWith('host') ? 'the host' : 'the boot'}`)
+    for (let i = 0; i < 100 && (alive(child.pid) || alive(h2.pid)); i++) await wait(100)
+    t.absent(alive(child.pid) || alive(h2.pid), 'both processes ended')
 
     // run again: already built, the packages unchanged; its runtime started again
     const again = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
@@ -136,8 +153,8 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
     const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
     let n = 0
-    for (let i = 0; i < 100 && (n = await records('done')) < 3; i++) await wait(100)
-    t.is(n, 3, 'its runtime again: the second deploy done; the host\'s not repeated')
+    for (let i = 0; i < 100 && (n = await records('done')) < 4; i++) await wait(100)
+    t.is(n, 4, 'its runtime again: the second deploy done; the host\'s not repeated (the redeploy among them)')
     t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
     const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
     t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')

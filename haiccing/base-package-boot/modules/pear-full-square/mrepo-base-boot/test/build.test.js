@@ -1,6 +1,6 @@
 import test from 'brittle'
 import { spawnSync } from 'bare-subprocess'
-import { mkdtempSync, rmSync, existsSync, readFileSync } from 'bare-fs'
+import { mkdtempSync, rmSync, existsSync, readFileSync, mkdirSync, writeFileSync } from 'bare-fs'
 import { join, dirname } from 'bare-path'
 import { tmpdir } from 'bare-os'
 import { fileURLToPath } from 'bare-url'
@@ -10,9 +10,16 @@ import { build } from '../lib/build.js'
 import { send } from 'mrepo-base-runtime/test/fixture.js'
 
 const here = join(dirname(fileURLToPath(import.meta.url)), '..')
-// The boot mrepo's structure, as base-package-boot holds it.
-const BOOT = join(here, '..', '..', 'haiccing', 'base-package-boot', 'mrepo')
 const PRELOADED = '7b0c1f4e-2d3a-4c5b-9e6f-0a1b2c3d4e5f'
+// A boot mrepo's structure, written here (the module's tests stand on their
+// own): its layers, a layer.json each, a preloaded boot deploy /host.
+const BOOT = mkdtempSync(join(tmpdir(), 'boot-structure-'))
+for (const l of ['main', 'runtime', 'inbox', 'outbox', 'packages', 'request/pending/default', 'request/execute', 'request/done']) {
+  mkdirSync(join(BOOT, l), { recursive: true })
+  writeFileSync(join(BOOT, l, 'layer.json'), JSON.stringify({ mode: l.startsWith('request') || l.endsWith('box') ? 'non-atomic' : 'atomic', description: l }))
+}
+const preloaded = { api: 'boot', protocol: 'boot', action: 'deploy', uri: '/host', body: { package: 'haiccing/base-package-runtime' } }
+writeFileSync(join(BOOT, 'request', 'pending', 'default', `${PRELOADED}.json`), JSON.stringify({ topic: '/request/pending/default', key: PRELOADED, timestamp: '2026-11-11T00:00:00.000Z', headers: {}, value: { topic: null, key: PRELOADED, timestamp: '2026-11-11T00:00:00.000Z', headers: {}, value: preloaded } }))
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
 const req = (protocol, action, uri) => ({ api: 'boot', protocol, action, uri })
@@ -61,3 +68,5 @@ test('the boot mrepo running, without its packages: no service gate; its preload
     rmSync(work, { recursive: true, force: true })
   }
 })
+
+test('the structure written for the tests removed', () => rmSync(BOOT, { recursive: true, force: true }))

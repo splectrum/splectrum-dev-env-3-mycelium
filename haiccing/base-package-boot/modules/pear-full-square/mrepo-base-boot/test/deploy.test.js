@@ -12,6 +12,7 @@ import { openRepo, writer, p2pgitBackend } from 'mycelium-git'
 import { record, wrap, guid } from 'mrepo-base-request'
 import { ask } from 'mrepo-base-runtime'
 import { spawn, spawnSync } from 'bare-subprocess'
+import process from 'bare-process'
 import { build, deploy, teardown, redeploy, place, parseSource } from '../index.js'
 
 const lj = (dir, mode) => { mkdirSync(dir, { recursive: true }); writeFileSync(join(dir, 'layer.json'), JSON.stringify({ mode, description: 'test' })) }
@@ -121,7 +122,8 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
 
 // The runtime's bundle as the development repository's sources hold it
 // (tools/package-bundle.js); the test skipped without.
-const SOURCES = join(import.meta.dirname ?? new URL('.', import.meta.url).pathname, '..', '..', '..', 'sources')
+// (SOURCES: a sources folder given, as a package's tests pass theirs)
+const SOURCES = process.env.SOURCES || join(import.meta.dirname ?? new URL('.', import.meta.url).pathname, '..', '..', '..', 'sources')
 const haveRuntime = existsSync(join(SOURCES, 'haiccing', 'base-package-runtime.bundle'))
 
 test('deploy the runtime: the child\'s runtime started from its own packages, its inbox answering; teardown stops it', { timeout: 60000, skip: !haveRuntime }, async (t) => {
