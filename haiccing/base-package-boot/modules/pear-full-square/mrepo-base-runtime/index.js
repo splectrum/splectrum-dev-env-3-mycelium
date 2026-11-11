@@ -54,6 +54,8 @@ import { nativeBackend, p2pgitBackend } from 'mycelium-git'
 import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, PENDING, EXECUTE } from 'mrepo-base-request'
 import { execute, failed, ACTIONS } from 'mrepo-base-execute'
 import { ACTIONS as RUNTIME_ACTIONS } from './lib/protocol.js'
+import { extractInto } from './lib/help.js'
+export { parse as parseReadme, extract as extractHelp } from './lib/help.js'
 import { pathToFileURL } from 'bare-url'
 import pkg from './package.json' with { type: 'json' }
 
@@ -136,8 +138,11 @@ export async function run ({ work: w, repo: given = null, every = 200 }) {
   // The protocols its packages offer: each linked package with a protocol
   // entry, loaded from its bundle in the mrepo's packages/ (its dispatcher's
   // run('/protocol')), its actions beside the framework's.
-  // and its own, built in: the runtime protocol (lib/protocol.js)
+  // and its own, built in: the runtime protocol (lib/protocol.js: run, help)
   const actions = { ...ACTIONS, ...RUNTIME_ACTIONS, ...await protocolsOf(ctx.repo, join(dir, 'packages')) }
+  // Its help, before it is operational: the READMEs of its packages
+  // extracted into its help layer (lib/help.js).
+  await extractInto({ repo: ctx.repo, writer: ctx.writer, dir })
   const status = () => ({ ok: true, pid: process.pid, started, repository: { name: repo.name, storage: repo.storage, id: repo.id, key: repo.key }, version })
   let stopping = null
   let stopped = false

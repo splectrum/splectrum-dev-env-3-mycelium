@@ -10,6 +10,7 @@ branches), a runtime executing the requests posted to it.
 /runtime                   the runtime's data (the service state, where it has service)
 /packages                  the code it runs
 /protocols                 its external API, one config a protocol
+/help                      its documentation, extracted from its packages
 /inbox                     records posted to it
 /outbox                    records it sends: the completed forms
 /request/pending/default   requests waiting
@@ -26,6 +27,7 @@ Each layer, its README:
 | [runtime/](runtime/) | the runtime's data |
 | [packages/](packages/) | the code it runs |
 | [protocols/](protocols/) | its external API |
+| [help/](help/) | its documentation |
 | [inbox/](inbox/) | records posted to it |
 | [outbox/](outbox/) | records it sends |
 | [request/](request/) | the request layers: pending, executing, done |
@@ -46,7 +48,7 @@ Each layer has a mode, in its `layer.json`:
 
 | mode | written | layers |
 |---|---|---|
-| atomic | one commit at a time, by the runtime | `main`, `runtime`, `protocols` |
+| atomic | one commit at a time, by the runtime | `main`, `runtime`, `protocols`, `help` |
 | replicated | as atomic, also copied out as files | `packages` |
 | non-atomic | its own writers, in parallel | `inbox`, `outbox`, `request/*`, `execute/*` |
 

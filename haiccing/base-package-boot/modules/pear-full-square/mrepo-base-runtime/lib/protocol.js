@@ -1,5 +1,6 @@
 // The runtime protocol (docs/design/repositories.md, "The runtime protocol"):
-// the runtime's own, built in, in every mrepo it runs. Its one action, run:
+// the runtime's own, built in, in every mrepo it runs. help: the mrepo's
+// help layer retrieved (lib/help.js). run:
 // an entry of a package the mrepo has linked, through that package's
 // dispatcher (its bundle in the mrepo's packages/, imported: nothing runs
 // but what is asked).
@@ -13,6 +14,7 @@
 import { existsSync } from 'bare-fs'
 import { join } from 'bare-path'
 import { pathToFileURL } from 'bare-url'
+import { help } from './help.js'
 
 export const PROTOCOL = 'runtime'
 
@@ -40,4 +42,4 @@ async function run (exec, { uri, body }) {
   return r
 }
 
-export const ACTIONS = { [PROTOCOL]: { run } }
+export const ACTIONS = { [PROTOCOL]: { run, help } }

@@ -16,6 +16,9 @@ installed by HAICC's boot into the host's packages. Built step by step
   in its `packages` layer with a `protocol` entry, imported from its
   `packages/` (the bundle's dispatcher, `run('/protocol')`: nothing else
   runs on import), its actions beside the framework's.
+- Its help, before it is operational (`lib/help.js`): the READMEs of its
+  linked packages extracted into its `help` layer, with a generated index;
+  read with `runtime help <uri>` (body `{ level, section }`).
 - Its own protocol, built in (`lib/protocol.js`): `runtime run
   /packages/<org>/<package><target>`, body `{ dryRun }`: a linked package's
   entry through its dispatcher, its tests above all (a floating instance of

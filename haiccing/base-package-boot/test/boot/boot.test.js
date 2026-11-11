@@ -24,7 +24,7 @@ const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' })
 const bare = JSON.parse(readFileSync(join(pkg, 'bare.json')))
 const SOURCES = resolve(process.env.SOURCES || join(pkg, '..', '..', 'sources'))
 const have = existsSync(join(SOURCES, 'holepunchto', `bare-runtime-${os.platform()}-${os.arch()}-${bare.version}.tgz`)) &&
-  existsSync(join(SOURCES, 'haiccing', 'base-package-runtime.bundle')) && existsSync(join(SOURCES, 'haiccing', 'base-package-boot.bundle'))
+  ['base-package-runtime', 'base-package-boot', 'package-docs-mrepo', 'package-docs-template'].every(p => existsSync(join(SOURCES, 'haiccing', `${p}.bundle`)))
 
 // The PATH without any `bare` on it: the machine's own Bare not found.
 const NO_BARE = String(process.env.PATH ?? '').split(':').filter(d => d && !existsSync(join(d, 'bare'))).join(':')
@@ -86,7 +86,7 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.is(statSync(store).ino, statSync(mine).ino, 'hard linked: one file')
     const repo = openRepo(p2pgitBackend(gitdirOf(work, 'boot'), { fs }))
     const listed = JSON.parse((await repo.read('/packages/manifest.json')).toString()).packages
-    t.alike(Object.keys(listed), ['haiccing/base-package-runtime', 'haiccing/base-package-boot'], 'the packages layer: the list (the runtime, the boot protocol)')
+    t.alike(Object.keys(listed), ['haiccing/base-package-runtime', 'haiccing/base-package-boot', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template'], 'the packages layer: the list (the runtime, the boot protocol, the documentation packages)')
     t.is(listed['haiccing/base-package-runtime'].sha256, logged[2].packages['haiccing/base-package-runtime'].sha256, 'and the hashes')
     t.absent((await repo.select('/packages/haiccing')).length, 'not the bytes')
     // the runtime: from the boot mrepo's own packages, on the Bare put in place
@@ -104,7 +104,7 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     // (its record merged into main when the action ends, after the host is up)
     let node = null
     for (let i = 0; i < 100 && !node; i++) { node = await repo.read('/main/host.json').then(b => JSON.parse(b.toString()), () => null); if (!node) await wait(100) }
-    t.alike([node.package, node.packages], ['haiccing/base-package-runtime', ['haiccing/base-package-runtime']], 'its type recorded at the node')
+    t.alike([node.package, node.packages], ['haiccing/base-package-runtime', ['haiccing/base-package-runtime', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template']], 'its type recorded at the node, the packages it is made of')
     // (moved to request/done on the runtime's next pass)
     let history = []
     const backend = p2pgitBackend(gitdirOf(work, 'boot'), { fs })
@@ -171,6 +171,15 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.absent(ran?.error, `runtime run test/validate: done ${ran?.error ?? ''}`)
     t.alike([ran?.output?.ok, ran?.output?.units?.map(u => u.unit)], [true, ['/test/start']], 'its result: the start test passed, in a floating instance')
     t.ok(ran?.log?.some(e => e.event === 'unit' && e.unit === '/test/start' && e.ok), 'a summary logged, a line a unit')
+    // its help, extracted by its runtime as it started: retrieved by URI
+    const root = await sent({ protocol: 'runtime', action: 'help', uri: '/' })
+    t.ok(!root?.error && root?.output?.oneliner && root.output.links.some(l => l.uri === '/packages'), `runtime help /: the mrepo's, its links with their one-liners ${root?.error ?? ''}`)
+    const pk = await sent({ protocol: 'runtime', action: 'help', uri: '/packages', body: { level: 'oneliner' } })
+    t.alike(['haiccing/base-package-runtime', 'haiccing/base-package-boot', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template'].map(p => pk?.output?.links?.some(l => l.uri === `/packages/${p}`)), [true, true, true, true], 'runtime help /packages: each package it links')
+    const tb = await sent({ protocol: 'runtime', action: 'help', uri: '/packages/haiccing/base-package-boot/test/boot', body: { level: 'detail' } })
+    t.ok(!tb?.error && tb?.output?.title === 'boot/' && tb.output.summary, `runtime help on this very test: its README ${tb?.error ?? ''}`)
+    const hostHelp = await openRepo(p2pgitBackend(join(host, '.git'), { fs })).read('/help/index.json').then(b => JSON.parse(b.toString()), () => null)
+    t.ok(hostHelp?.['/packages/haiccing/base-package-runtime'], 'the host\'s help: extracted by its own runtime, from its own packages')
     const refused = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/run' })
     t.ok(/not run here/.test(refused?.error ?? ''), 'a package\'s program: not run in the runtime')
 
@@ -186,8 +195,8 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
     const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
     let n = 0
-    for (let i = 0; i < 100 && (n = await records('done')) < 9; i++) await wait(100)
-    t.is(n, 9, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs among them)')
+    for (let i = 0; i < 100 && (n = await records('done')) < 12; i++) await wait(100)
+    t.is(n, 12, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs, the three helps among them)')
     t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
     const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
     t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')

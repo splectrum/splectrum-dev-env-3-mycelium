@@ -62,6 +62,8 @@ tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', 'base-pack
 tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', 'base-package-boot'))
 tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-runtime'), `--out=${out}`)
 tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-boot'), `--out=${out}`)
+tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'package-docs-mrepo'), `--out=${out}`)
+tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'package-docs-template'), `--out=${out}`)
 
 // 2. Bare's tarball, as npm publishes it, by its organisation.
 // (kept when there: npm's tarball, the same bytes)

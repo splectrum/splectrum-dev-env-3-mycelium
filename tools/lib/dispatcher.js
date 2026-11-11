@@ -209,7 +209,24 @@ console.log(JSON.stringify(r))
 process.exit(r.ok ? 0 : 1)
 `
 
+// A documentation package: no entry point, nothing to run (its test/ and
+// example/, if any, are documentation too); its
+// files read from its bundle (its READMEs, into an mrepo's help layer).
+const DOCS = [
+  '// A documentation package\'s main (generated: tools/lib/dispatcher.js): no',
+  '// entry point, nothing to run; its files are read from its bundle.',
+  'export async function run (target = \'/run\', { dryRun = false } = {}) {',
+  "  if (target === '/' && dryRun) return []",
+  '  throw new Error(`no such entry: ${target} (a documentation package: nothing to run)`)',
+  '}',
+  ''
+].join('\n')
+
 export function writeDispatcher (folder) {
+  if (!ENTRIES.some(e => existsSync(join(folder, `${e}.js`)))) {
+    writeFileSync(join(folder, 'main.js'), DOCS)
+    return
+  }
   writeFileSync(join(folder, 'main.js'), main(folder))
   mkdirSync(join(folder, 'test'), { recursive: true })
   writeFileSync(join(folder, 'test', 'run.js'), RUNNER)
