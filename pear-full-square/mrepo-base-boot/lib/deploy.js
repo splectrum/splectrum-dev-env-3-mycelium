@@ -9,7 +9,7 @@
 //                             parent's main: /main/<name>.json
 //   teardown(exec, { uri })   the child removed (<work>/mrepos/<name>/), its
 //                             link out of main
-//   redeploy(exec, form)      teardown, then deploy
+//   redeploy(exec, form)      teardown, committed (exec.commit()), then deploy
 // Not yet: the requirements resolved into packages and overlaid, the
 // clean-up, the child started.
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'bare-fs'
@@ -38,10 +38,9 @@ async function filesOf (exec, uri) {
   return out
 }
 
-export async function deploy (exec, { uri }, { again = false } = {}) {
+export async function deploy (exec, { uri }) {
   const c = child(exec, uri)
-  // (redeploy: its teardown's removal of the link not yet visible to reads)
-  if (!again && await there(exec, c.link)) throw new Error(`deployed already: ${uri}`)
+  if (await there(exec, c.link)) throw new Error(`deployed already: ${uri}`)
   if (existsSync(c.view)) throw new Error(`in the way: ${c.view}`)
   const from = `/main/${c.name}/mrepo`
   const files = await filesOf(exec, from)
@@ -69,7 +68,9 @@ export async function teardown (exec, { uri }) {
   return { tornDown: uri }
 }
 
+// Teardown committed (a checkpoint of the execution), then deploy.
 export async function redeploy (exec, form) {
   const down = await teardown(exec, form)
-  return { ...down, ...(await deploy(exec, form, { again: true })) }
+  await exec.commit('torn down')
+  return { ...down, ...(await deploy(exec, form)) }
 }
