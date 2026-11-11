@@ -1,34 +1,9 @@
 {
   "platform": "linux-x64",
+  "omitted": [
+    "bare-cov"
+  ],
   "modules": [
-    {
-      "name": "@jridgewell/resolve-uri",
-      "version": "3.1.2",
-      "license": "MIT",
-      "resolved": "https://registry.npmjs.org/@jridgewell/resolve-uri/-/resolve-uri-3.1.2.tgz",
-      "integrity": "sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw=="
-    },
-    {
-      "name": "@jridgewell/sourcemap-codec",
-      "version": "1.6.0",
-      "license": "MIT",
-      "resolved": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.6.0.tgz",
-      "integrity": "sha512-T7jf+5zgsZHwNJ4lvQ7/aezbyk0nNX+zJVWpmHA7VYsEx7a7qr5Rg5IbtJFqkgze5Y2sruq1RUY8Q837Od7iFw=="
-    },
-    {
-      "name": "@jridgewell/trace-mapping",
-      "version": "0.3.31",
-      "license": "MIT",
-      "resolved": "https://registry.npmjs.org/@jridgewell/trace-mapping/-/trace-mapping-0.3.31.tgz",
-      "integrity": "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="
-    },
-    {
-      "name": "@types/istanbul-lib-coverage",
-      "version": "2.0.6",
-      "license": "MIT",
-      "resolved": "https://registry.npmjs.org/@types/istanbul-lib-coverage/-/istanbul-lib-coverage-2.0.6.tgz",
-      "integrity": "sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w=="
-    },
     {
       "name": "b4a",
       "version": "1.9.0",
@@ -84,20 +59,6 @@
       "license": "Apache-2.0",
       "resolved": "https://registry.npmjs.org/bare-channel/-/bare-channel-5.3.0.tgz",
       "integrity": "sha512-W42Pkl/IjfkIVObQnixidRThST6ZcqY0u6AMTLb2+Jc/enBVsXPxzmyhEDoQjNNYi4WBGkOG7YHR4X46Ah9xfA=="
-    },
-    {
-      "name": "bare-cov",
-      "version": "1.2.3",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-cov/-/bare-cov-1.2.3.tgz",
-      "integrity": "sha512-M9XAEUxk3KKMMD2g8WwbrR0grc25RhkS95XnW6+PksSQdN1C43gYSOa0fQeun5Vo6rvTv501FEYyERKA43EzWg=="
-    },
-    {
-      "name": "bare-crypto",
-      "version": "1.15.4",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-crypto/-/bare-crypto-1.15.4.tgz",
-      "integrity": "sha512-4luuiLnxIJvM7ZyyW6pXbaaGoQDZcIkfcVZrPzJ3oIpdi2UIP37dROmzBWqI2lnrzfKoQlKWM8ryHmyG2svViw=="
     },
     {
       "name": "bare-debug-log",
@@ -156,27 +117,6 @@
       "integrity": "sha512-ePu0axonbewvuUv9TFqjfvnZTaw+mL4JNx1q79dw8T3DIQEjqHs+pXyj92ghepa8K14KLtX3GdUuAVB+faaGDw=="
     },
     {
-      "name": "bare-http-parser",
-      "version": "2.1.4",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-http-parser/-/bare-http-parser-2.1.4.tgz",
-      "integrity": "sha512-6CRjxqMdrEoKKBCS6FbdZUuVsRtyqq18BUae9l9N5okSV75S9lUAF9f5aFSKTNybBS/hcnlxFNocdpXbd2Ohaw=="
-    },
-    {
-      "name": "bare-http1",
-      "version": "4.6.3",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-http1/-/bare-http1-4.6.3.tgz",
-      "integrity": "sha512-ZkQgU73JWPyjSKOWHeB2EV1HABokjbuwXLbqnsAfmVpy6Ox3Pq4y+A4+A3r15E2HrcybYDz3TCnRBIgUfTn3zw=="
-    },
-    {
-      "name": "bare-https",
-      "version": "3.1.0",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-https/-/bare-https-3.1.0.tgz",
-      "integrity": "sha512-HNAS0q7CBAXGDFRy/xaYJEsAaVcvyDRXKU1b/KxS/zdcfBWsQVB0TntSzz3IlqZ5ZWHiaOOrMYAO/oIDgpTLkQ=="
-    },
-    {
       "name": "bare-inspect",
       "version": "3.1.10",
       "license": "Apache-2.0",
@@ -184,25 +124,11 @@
       "integrity": "sha512-Qu01XZNTIT2/bS9k7c6A3OXuAzBnWwDCejGri76BUltdFqVe6Et/IxVOSSbcDpreSSWwqQ5pAu/bxFE6hPDWRQ=="
     },
     {
-      "name": "bare-inspector",
-      "version": "6.1.0",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-inspector/-/bare-inspector-6.1.0.tgz",
-      "integrity": "sha512-PRxmZ4gF+K3TLzGubgRFvzdECybTCSKackgNsAdd4e7SdvICxMkGj+p5iX7bSKYSmgDnxgCR+2Z6UXmWykKhvw=="
-    },
-    {
       "name": "bare-mime",
       "version": "1.0.0",
       "license": "Apache-2.0",
       "resolved": "https://registry.npmjs.org/bare-mime/-/bare-mime-1.0.0.tgz",
       "integrity": "sha512-lUOswzBkfqham4zjLDueKOd4Qj3gS56BiZ3q2f0g0adoFhF+HFNupvTUfZBWoicl7fWJ7Hp2RUZjmkY47dxxOQ=="
-    },
-    {
-      "name": "bare-module",
-      "version": "6.4.0",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-module/-/bare-module-6.4.0.tgz",
-      "integrity": "sha512-Yn4V5g5EqGQL4LYUOmt7fjKzj2JPWyJOqE3lPoeZwfUH5rk4CKUfZj6JhDwbzhBYCqqmUgjgQ5aY8cihAPILLA=="
     },
     {
       "name": "bare-module-lexer",
@@ -224,13 +150,6 @@
       "license": "Apache-2.0",
       "resolved": "https://registry.npmjs.org/bare-module-traverse/-/bare-module-traverse-2.7.4.tgz",
       "integrity": "sha512-K+r/K4TzcqS+WbaoVsif1S2Mm5CgWXhpOVGJ3xObhCZQm+KmDMW2tk3nI9VftbqCg5m32PxHy55Gnqaw5MCo0w=="
-    },
-    {
-      "name": "bare-net",
-      "version": "2.3.3",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-net/-/bare-net-2.3.3.tgz",
-      "integrity": "sha512-q1noXFJKn+eNi6vXYv2Y+5FTnn+o7qpli4m2lUZTdK8cBjVs2zGaykuzTUIa29v70eOsQI9OAIyYwN3ODHtFaQ=="
     },
     {
       "name": "bare-os",
@@ -331,13 +250,6 @@
       "integrity": "sha512-WkLdv7BRdGlChAdM3rLPgM2/1kRHk2dlDyf1Jedfc2LbUjzY6kjJ2W5IHB0DfVjY0r+XdfpCk4PomcpINeBW6w=="
     },
     {
-      "name": "bare-tls",
-      "version": "3.2.0",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-tls/-/bare-tls-3.2.0.tgz",
-      "integrity": "sha512-aPdeROdlokqfaPhrLCxsdURV2pvxOfsM7zkWBaTXwUWLZyFSTXZyIJTiPamcMLdF9L7NtUzZ/CWvT4yj7HAhUw=="
-    },
-    {
       "name": "bare-tty",
       "version": "5.2.2",
       "license": "Apache-2.0",
@@ -352,13 +264,6 @@
       "integrity": "sha512-6anDbVGruQLK8m6zxlCPNkUuxXnzChT1aOmJbFRjEGn8MWZqviFP6vGi9NAnG8aRXyRAfXIGLlBJwYGa4Ylcug=="
     },
     {
-      "name": "bare-type-stripper",
-      "version": "0.1.7",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-type-stripper/-/bare-type-stripper-0.1.7.tgz",
-      "integrity": "sha512-kiYTY1PqJnCQmaGT4Q23gskKCTtxqinPdA0SKMO80rjyLMdZhkT+mALf+/UryvovV6ysXtYXGSNPZR4wFhCI/g=="
-    },
-    {
       "name": "bare-url",
       "version": "2.5.6",
       "license": "Apache-2.0",
@@ -371,20 +276,6 @@
       "license": "Apache-2.0",
       "resolved": "https://registry.npmjs.org/bare-utils/-/bare-utils-1.6.1.tgz",
       "integrity": "sha512-k3yAod0yDg/qctLnbhefmtwdufkzbpDFqmcympxenmRwGk7euZ0ll6gha2bC6rM230G5XS5BHyzcHyYSuXcfzQ=="
-    },
-    {
-      "name": "bare-v8-to-istanbul",
-      "version": "1.0.4",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-v8-to-istanbul/-/bare-v8-to-istanbul-1.0.4.tgz",
-      "integrity": "sha512-aYdse9SdVep4NT18jyMehBShfZgvyQ36Tm+oha2nQIHGcxvdBk0xZLbcYsDPzCTqGdJ5SfXa3VvZUSWyoa3L4w=="
-    },
-    {
-      "name": "bare-ws",
-      "version": "3.2.0",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-ws/-/bare-ws-3.2.0.tgz",
-      "integrity": "sha512-9PPJX5JrhuObWZGyhYCrQ1DbhjY1BLVALkZF56r0SYnfyN18ok84yUETcQ377aC2W6w8IqBewjQ1GlovtiXA1Q=="
     },
     {
       "name": "brittle",
@@ -406,13 +297,6 @@
       "license": "Apache-2.0",
       "resolved": "https://registry.npmjs.org/compact-encoding/-/compact-encoding-3.5.2.tgz",
       "integrity": "sha512-rgGcWdfxyuLwJHMUXI0OrYGpJe3VN4RZyovbxWVlxPYIsUZutOTfP3shmDyDi/iaybwcxMsTJDDuxQa4xRG0RQ=="
-    },
-    {
-      "name": "convert-source-map",
-      "version": "2.0.0",
-      "license": "MIT",
-      "resolved": "https://registry.npmjs.org/convert-source-map/-/convert-source-map-2.0.0.tgz",
-      "integrity": "sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg=="
     },
     {
       "name": "error-stack-parser",
@@ -553,13 +437,6 @@
       "license": "Apache-2.0",
       "resolved": "https://registry.npmjs.org/bare-node-util/-/bare-node-util-1.0.0.tgz",
       "integrity": "sha512-as4V8zYrS0dMw5RI77qqRtEmngb68drxK2BJszxRFqmKWMc5x7izlHy9cG+Z8CmVefPSb191Fy3gpm8VHFtmpw=="
-    },
-    {
-      "name": "v8-to-istanbul",
-      "version": "9.3.0",
-      "license": "ISC",
-      "resolved": "https://registry.npmjs.org/v8-to-istanbul/-/v8-to-istanbul-9.3.0.tgz",
-      "integrity": "sha512-kiGUalWN+rgBJ/1OHZsBtU4rXZOfj/7rKQxULKlIzwzQSvMJUUNgPwJEEh7gU6xEVxC0ahoOBvN2YI8GH6FNgA=="
     },
     {
       "name": "which-runtime",

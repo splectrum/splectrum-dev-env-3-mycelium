@@ -1077,3 +1077,15 @@ Tested: the module's tests (help 5/5, runtime 6/6, boot 9/9); the
 documentation packages' `validate`; the boot's integration test runs all
 four packages' `validate-in-situ` in the running boot mrepo (70 asserts);
 both `full` sets pass; the help tree, 132 READMEs, no problems.
+
+Assembly options per package (the human: self-contained packages allow
+try and see, each package's validate the proof): `assemble` in the root
+`package.json` the default, a package's own replacing it; `omit`, third-party
+code not carried, nor what only it brings (`closure`'s `omit`, in
+`pkgm-base-manager`), recorded in `third-party.json` (`omitted`), a stub
+in its place (resolved when the bundle is linked; used, it throws). The
+default omits `bare-cov`, brittle's coverage, loaded only on demand, and
+with it `bare-inspector`, `bare-ws`, `bare-https`, `bare-tls`,
+`bare-crypto`. A documentation package: 63 third-party, 5.7 MB (was 26);
+the runtime package 48 MB (was 62); the boot keeps `bare-tls` (its GitHub
+source). All sets pass.

@@ -69,5 +69,10 @@
   },
   "devDependencies": {
     "bare-build": "1.6.2"
+  },
+  "assemble": {
+    "omit": [
+      "bare-cov"
+    ]
   }
 }

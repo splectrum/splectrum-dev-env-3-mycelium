@@ -22,6 +22,6 @@ modules test, `/test/modules`.
 | [pear-full-square/p2p-replicate/](pear-full-square/p2p-replicate/) | Replication for the p2p layer: a store over any stream, accounting per peer and resource, holding a resource whole |
 | [pear-full-square/p2p-store/](pear-full-square/p2p-store/) | Local storage for the p2p layer: a Corestore and its resources, no peer needed |
 
-The third-party code: `node_modules/`, 199 modules for linux-x64, each
+The third-party code: `node_modules/`, 187 modules for linux-x64, each
 with its version, licence and source in [third-party.json](third-party.json).
 Our modules find each other by name through `node_modules/` (links).
