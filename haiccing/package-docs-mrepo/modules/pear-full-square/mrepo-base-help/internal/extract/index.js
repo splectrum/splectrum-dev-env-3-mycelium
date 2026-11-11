@@ -1,9 +1,7 @@
-// extract: an mrepo's help layer from its packages' READMEs, as the
-// runtime runs it before the mrepo is operational (README.md beside it).
+// extract: an mrepo's help layer from its packages' READMEs, the files to
+// write (README.md beside it; the action, external/extract, writes them).
 // Also parse (a README's levels) and check (the README rules).
-import { posix, join } from 'bare-path'
-import { readFileSync, existsSync } from 'bare-fs'
-import Bundle from 'bare-bundle'
+import { posix } from 'bare-path'
 
 // The first sentence: up to the first full stop followed by a space or the
 // end, outside code spans (`package.json`).
@@ -132,38 +130,3 @@ export function extract (packages) {
   return out
 }
 
-const author = { name: 'mrepo-help', email: 'mrepo-help@localhost' }
-const LAYER = { mode: 'atomic', description: 'Help: the READMEs of the packages the mrepo links, at the URIs they document, and their index (extracted by the runtime as it starts).' }
-
-export async function extractInto ({ repo, writer, dir }) {
-  const listed = await repo.read('/packages/manifest.json').then(b => JSON.parse(b.toString()).packages || {}, () => null)
-  if (!listed) return { readmes: 0, changed: false } // no packages: no help
-  const present = Object.keys(listed).filter(pkg => existsSync(join(dir, 'packages', `${pkg}.bundle`)))
-  if (!present.length) return { readmes: 0, changed: false } // no bundles here: no help
-  const files = extract(present.map(pkg => {
-    const b = Bundle.from(readFileSync(join(dir, 'packages', `${pkg}.bundle`)))
-    const readmes = {}
-    for (const k of Object.keys(b.files)) if (k.endsWith('/README.md')) readmes[k] = b.read(k)
-    let help = null
-    try { help = JSON.parse(b.read('/package.json').toString()).help ?? null } catch {}
-    return { pkg, files: readmes, help, paths: Object.keys(b.files) }
-  }))
-  const readmes = Object.keys(files).filter(p => p.endsWith('README.md')).length
-  const old = await repo.read('/help/index.json').then(x => JSON.parse(x.toString()), () => null)
-  if (!(await repo.read('/help/layer.json').then(() => true, () => false))) {
-    if (!old) await writer.createLayer('help', 'Create help', { author })
-    files['/layer.json'] = Buffer.from(JSON.stringify(LAYER, null, 2) + '\n')
-  }
-  const c = await writer.change('help')
-  let changed = false
-  for (const [p, bytes] of Object.entries(files)) {
-    const was = await repo.read(`/help${p}`).catch(() => null)
-    if (!was || !was.equals(bytes)) { await c.put(p, bytes); changed = true }
-  }
-  for (const u of Object.keys(old ?? {})) {
-    const p = u === '/' ? '/README.md' : `${u}/README.md`
-    if (!files[p]) { await c.remove(p); changed = true }
-  }
-  if (changed) await c.commit(`Help extracted: ${Object.keys(listed).join(', ')}`, { author })
-  return { readmes, changed, problems: JSON.parse(files['/problems.json'].toString()).length }
-}

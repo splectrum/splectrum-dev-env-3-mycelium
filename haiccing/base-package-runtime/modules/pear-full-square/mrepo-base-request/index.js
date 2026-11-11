@@ -59,6 +59,12 @@ export async function runtimeData ({ repo }) {
 // extracted, is.
 export function check (value, { service, api }, { state = true } = {}) {
   if (!value || typeof value !== 'object') return 'not a request'
+  // An internal request (the mrepo's own, placed straight into pending): no
+  // API, no state gate; its URI canonical only.
+  if (value.internal === true) {
+    try { if (canonical(value.uri ?? '') !== value.uri) return `not canonical: ${value.uri}` } catch (err) { return err.message }
+    return null
+  }
   // An mrepo without the service protocol (no /runtime/service.json: the
   // boot mrepo): no type, no state gate (the runtime's status: a direction).
   if (!service) {
@@ -103,6 +109,45 @@ const branches = async ctx => Object.fromEntries(await ctx.backend.listBranches(
 // The inbox's records not yet taken in, in the order they arrived (its commit
 // chain): in no request layer (every one taken in ends in request/done, a
 // refused one too).
+// The way into pending, the one handler every request passes: validated by
+// where it comes from, then queued; or refused (its form completed with the
+// error, in request/done, sent back). The inbox itself never judges.
+//   origin 'inbox'      the external checks: addressed here, the API, the
+//                       state as known now; a form that claims to be internal
+//                       is refused (internal is where a request comes from)
+//   origin 'internal'   the mrepo's own (its runtime's, an action's):
+//                       trusted, its URI canonical only; marked internal, so
+//                       the check as it executes exempts it from the API and
+//                       the state
+// -> { name, queued, refused }
+export async function admit (ctx, core, { origin, name = core?.key ?? guid() }) {
+  let why = null
+  let form = core?.value
+  try {
+    if (origin === 'internal') {
+      form = { ...form, internal: true }
+      why = check(form, await runtimeData(ctx))
+    } else if (form && typeof form === 'object' && 'internal' in form) {
+      why = 'not internal: a request from the inbox (internal is where a request comes from, not what it says)'
+    } else {
+      why = check(form, await runtimeData(ctx), { state: false })
+    }
+  } catch (err) { why = `runtime: ${err.message}` }
+  if (why) {
+    const refused = complete(core ?? record(null, null, name), { ok: false, error: why })
+    await layer(ctx, DONE).put(name, wrap(`/${DONE}`, refused), `Refused ${name}`)
+    await sendBack(ctx, name, refused)
+    return { name, refused: why }
+  }
+  const queued = { ...core, value: form }
+  await layer(ctx, PENDING).put(name, wrap(`/${PENDING}`, queued), `${origin === 'internal' ? 'Internal' : 'Request'} ${name}: ${form.protocol} ${form.action} ${form.uri}`)
+  return { name, queued: true }
+}
+
+// An internal request: the mrepo's own, submitted straight to the handler.
+// Its topic null: nobody waits for it. -> admit's result
+export const internal = (ctx, form, name = guid()) => admit(ctx, record(null, form, name), { origin: 'internal', name })
+
 export async function untaken (ctx) {
   const b = await branches(ctx)
   if (!b.inbox) return []
@@ -117,28 +162,24 @@ export async function request (ctx) {
   const execute = layer(ctx, EXECUTE)
   const done = layer(ctx, DONE)
 
-  // The inbox taken in, when its head has moved.
+  // The inbox taken in, when its head has moved, each record through the
+  // handler (admit); not while the mrepo is not operational yet (ctx.intake
+  // false: its internal requests first; the records wait in the inbox).
   const head = (await branches(ctx)).inbox
-  if (head && head !== ctx.seen.inbox) {
+  if (head && head !== ctx.seen.inbox && ctx.intake !== false) {
     const box = layer(ctx, 'inbox')
     const here = `/${ctx.name}${INBOX}`
     for (const name of await untaken(ctx)) {
       let envelope = null
-      let why
-      try {
-        envelope = await box.read(name)
-        why = envelope.topic !== here ? `misdelivered: for ${envelope.topic}, this is ${here}` : check(envelope.value?.value, await runtimeData(ctx), { state: false })
-      } catch (err) { why = `runtime: ${err.message}` } // the error in the request it happened to
-      const core = envelope?.value
-      if (why) {
-        const refused = complete(core ?? record(null, null, envelope?.key ?? name), { ok: false, error: why })
-        const into = wrap(`/${DONE}`, refused)
-        await done.put(name, into, `Refused ${name}`)
+      try { envelope = await box.read(name) } catch {}
+      // misdelivered: the envelope's, before its content is looked at
+      if (envelope && envelope.topic !== here) {
+        const refused = complete(envelope.value ?? record(null, null, name), { ok: false, error: `misdelivered: for ${envelope.topic}, this is ${here}` })
+        await done.put(name, wrap(`/${DONE}`, refused), `Refused ${name}`)
         await sendBack(ctx, name, refused)
-      } else {
-        const into = wrap(`/${PENDING}`, core)
-        await pending.put(name, into, `Request ${name}: ${core.value.protocol} ${core.value.action} ${core.value.uri}`)
+        continue
       }
+      await admit(ctx, envelope?.value ?? null, { origin: 'inbox', name })
     }
     ctx.seen.inbox = head
   }

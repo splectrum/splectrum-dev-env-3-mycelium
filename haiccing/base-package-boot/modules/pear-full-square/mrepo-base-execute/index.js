@@ -29,7 +29,8 @@ import { layer, wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runt
 import { ACTIONS } from './lib/actions.js'
 
 export { ACTIONS }
-export const TARGETS = ['main', 'runtime']
+// The targets an action writes, those the mrepo has: main, runtime, help.
+export const TARGETS = ['main', 'runtime', 'help']
 
 const heads = async backend => Object.fromEntries(await backend.listBranches())
 
@@ -78,7 +79,9 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
     const core = (await requests.read(name)).value
     if (isComplete(core)) continue
     const form = core.value
-    for (const t of [...TARGETS, EXECUTE]) await sync(w, backend, t)
+    const present = await heads(backend)
+    const targets = TARGETS.filter(t => present[t])
+    for (const t of [...targets, EXECUTE]) await sync(w, backend, t)
     // The action's context: reads overlaid (a target read from its execution
     // branch), writes collected per target. Two contexts: local, the
     // action's (exec.commit(): the writes so far committed to the execution
@@ -92,7 +95,7 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
     const edits = new Map()
     const branchOf = uri => {
       const [, first] = uri.split('/')
-      return TARGETS.includes(first) ? first : null
+      return targets.includes(first) ? first : null
     }
     const inside = uri => uri.slice(uri.indexOf('/', 1) < 0 ? uri.length : uri.indexOf('/', 1)) || '/'
     const { protocol, action } = form
@@ -116,7 +119,7 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
     const back = async to => {
       edits.clear()
       const now = await heads(backend)
-      for (const t of TARGETS) if (now[`execute/${t}`] !== to[`execute/${t}`]) await backend.updateBranch(`execute/${t}`, to[`execute/${t}`], now[`execute/${t}`])
+      for (const t of targets) if (now[`execute/${t}`] !== to[`execute/${t}`]) await backend.updateBranch(`execute/${t}`, to[`execute/${t}`], now[`execute/${t}`])
     }
     const rollbackAll = () => { commits.length = 0; return back(start) }
     // The heads before each local commit: what a rollback goes back to.
@@ -161,7 +164,7 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
     // Merged back, main first: each execution branch that moved.
     if (result.ok) {
       const now = await heads(backend)
-      for (const t of TARGETS) if (now[`execute/${t}`] !== start[`execute/${t}`]) await w.merge(`execute/${t}`, t, `Merge ${message}`, { author: AUTHOR })
+      for (const t of targets) if (now[`execute/${t}`] !== start[`execute/${t}`]) await w.merge(`execute/${t}`, t, `Merge ${message}`, { author: AUTHOR })
     }
     // The form completed, in its envelope, through its own execution branch.
     await executed(ctx, name, wrap(`/${EXECUTE}`, complete(core, result, entries)))
