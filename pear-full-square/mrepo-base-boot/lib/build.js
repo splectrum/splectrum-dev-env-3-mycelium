@@ -8,8 +8,9 @@
 //                                     written at <work>/mrepos/<name>/.git, one
 //                                     layer per leaf (an orphan branch, its
 //                                     files as one commit, layer.json with
-//                                     them), the inbox layer's files also its
-//                                     working tree (<work>/mrepos/<name>/inbox);
+//                                     them), the inbox's and the outbox's files
+//                                     also their working folders (<view>/inbox,
+//                                     <view>/outbox);
 //                                     <work>/mrepo.json written (setting: false,
 //                                     not: a child's, the folder its parent's). time (seconds):
 //                                     every commit's, so the same folder builds
@@ -56,11 +57,14 @@ export async function build ({ from, work = null, name = null, dir = null, time 
     for (const f of files(join(from, l))) await c.put(`/${f}`, readFileSync(join(from, l, f)))
     layers[l] = await c.commit(`Built ${l}`, at)
   }
-  // The inbox's working tree: its files, as committed.
-  if (layers.inbox) {
-    const inbox = join(view, 'inbox')
-    mkdirSync(inbox, { recursive: true })
-    for (const f of files(join(from, 'inbox'))) copyFileSync(join(from, 'inbox', f), join(inbox, f))
+  // The boxes' working folders, their files as committed: the inbox (input
+  // through the filesystem), the outbox (output: there before any record,
+  // so a subscriber can watch it from the start).
+  for (const box of ['inbox', 'outbox']) {
+    if (!layers[box]) continue
+    const folder = join(view, box)
+    mkdirSync(folder, { recursive: true })
+    for (const f of files(join(from, box))) copyFileSync(join(from, box, f), join(folder, f))
   }
   if (setting && work && !dir) writeFileSync(join(work, SETTING), JSON.stringify({ storage: 'filesystem', name }) + '\n')
   return { name: name ?? view.split('/').pop(), dir: view, layers }

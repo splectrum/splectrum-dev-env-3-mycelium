@@ -377,6 +377,33 @@ nothing removed (housekeeping later).
   answer while the runtime writes) may find a ref missing for a moment: it
   reads again. The runtime's own reads and writes are sequential.
 
+**Agreed** (the human, 2026-11-11): **the boxes' folders, the mrepos in
+view.**
+
+- **A folder only where the filesystem is a way in or out**: the inbox
+  (input) and the outbox (output) have working folders, made when the mrepo
+  is built (the outbox's there before any record, so it can be watched);
+  `packages/` is files for Bare. Every other layer is read from the
+  repository: no folder. Request and execute layers are always on the
+  filesystem (`.git`), whatever the storage. **Built.**
+- **Writing creates the path**: a record written whole, renamed into place,
+  its folder made if missing. **Built** (`mycelium-container-document`).
+- **Two ways in, one watched**: the runtime commits the inbox folder's new
+  files into the `inbox` layer, then reacts to that layer's head (a writer
+  committing directly meets it there). Both polled each pass for now.
+  **Built.**
+- **The outbox written twice, git first**: a completed form committed into
+  the `outbox` layer, then the same record written into the outbox folder.
+  **Built.**
+- **A subscription is pulled by the inbox's owner**: its runtime copies the
+  new records of the outboxes it follows into its own inbox folder (every
+  inbox has one writer, its owner). To build.
+- **An mrepo in view needs no subscription**: a child, forward from its
+  parent (the host at `boot/main/host/`), is written to directly: the
+  parent puts records into the child's inbox folder, and follows the
+  child's outbox folder for the answers (the child cannot reach back up).
+  To build.
+
 **Agreed** (the human, 2026-11-10): **routing by subscription, through a
 dispatcher.** Replaces the dispatcher inside the request protocol, the input
 writing into a repository's inbox and reading its outbox (built for now).

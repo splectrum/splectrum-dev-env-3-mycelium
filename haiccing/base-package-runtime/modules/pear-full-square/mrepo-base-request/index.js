@@ -26,12 +26,12 @@
 // A record keeps its name through its moves; a restart finishes a move half
 // done (in both: the old place cleared). The boxes (lib/boxes.js) are layers.
 import { validate as canonical } from 'mycelium-uri'
-import { post, ensure, inboxFolder, INBOX, OUTBOX } from './lib/boxes.js'
+import { post, ensure, inboxFolder, outboxOf, INBOX, OUTBOX } from './lib/boxes.js'
 import { record, wrap, guid, complete, isComplete } from './lib/record.js'
 import { layer, AUTHOR } from './lib/layer.js'
 import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
 
-export { post, ensure, inboxFolder, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
+export { post, ensure, inboxFolder, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'
@@ -91,6 +91,10 @@ async function sendBack (ctx, name, core) {
   await ensure(ctx, 'outbox')
   const envelope = wrap(OUTBOX, core)
   await layer(ctx, 'outbox').put(name, envelope, `Output ${name}`)
+  // Then its working folder: the record, for a subscriber watching it (git
+  // first: the folder follows the record). Written whole, renamed into
+  // place; the folder made if missing.
+  if (ctx.dir) outboxOf(ctx.dir).write(name, envelope)
 }
 
 const branches = async ctx => Object.fromEntries(await ctx.backend.listBranches())
