@@ -7,6 +7,7 @@
     "pear-full-square/mrepo-base-runtime",
     "pear-full-square/mrepo-base-request",
     "pear-full-square/mrepo-base-execute",
+    "pear-full-square/mrepo-base-boot",
     "pear-full-square/mycelium-container-document",
     "pear-full-square/mycelium-value-json",
     "pear-full-square/mycelium-topic",

@@ -5,9 +5,9 @@ import { join, dirname } from 'bare-path'
 import { tmpdir } from 'bare-os'
 import { fileURLToPath } from 'bare-url'
 import { openRepo } from 'mycelium-git'
-import { start, ask, open } from '../index.js'
+import { start, ask, open } from 'mrepo-base-runtime'
 import { build } from '../lib/build.js'
-import { send } from './fixture.js'
+import { send } from 'mrepo-base-runtime/test/fixture.js'
 
 const here = join(dirname(fileURLToPath(import.meta.url)), '..')
 // The boot mrepo's structure, as base-package-boot holds it.
@@ -42,7 +42,7 @@ test('the boot mrepo running: its preloaded start, a request answered, stopped',
   const work = mkdtempSync(join(tmpdir(), 'boot-'))
   try {
     await build({ from: BOOT, work, name: 'boot' })
-    const s = await start({ work, bundle: join(here, 'runtime.js') })
+    const s = await start({ work, bundle: join(here, '..', 'mrepo-base-runtime', 'runtime.js') })
     t.ok(s?.pid, 'the runtime started')
     t.is(s.repository.storage, 'filesystem')
     t.is(s.repository.name, 'boot')
