@@ -1,7 +1,8 @@
 # Prompt for the local agent
 
 Give this to Claude Code on the local machine (Linux x86-64; git, curl,
-tar). Nothing is published: no GitHub release, no push of the build.
+tar). Nothing is published: no GitHub release, no push of the build; only
+its note is committed.
 
 > Build the release of `base-package-boot` into the local sources, with its
 > prerequisites, so the human can run it from the command line.
@@ -20,20 +21,27 @@ tar). Nothing is published: no GitHub release, no push of the build.
 >    - `sources/haiccing/base-package-boot-linux-x64`: the release, a
 >      standalone executable (Bare built in); beside it its `.json` (the
 >      platform, the Bare version, the commit, how to run it);
->    - `sources/haiccing/base-package-runtime.bundle` and
->      `sources/haiccing/manifest.json`: the package the boot mrepo lists;
+>    - `sources/haiccing/base-package-runtime.bundle`,
+>      `sources/haiccing/base-package-boot.bundle` and
+>      `sources/haiccing/manifest.json`: the packages the boot mrepo lists
+>      (the runtime, the boot protocol);
 >    - `sources/addons/<sha256>`: its native addons;
 >    - `sources/holepunchto/bare-runtime-linux-x64-<version>.tgz`: the
 >      prerequisite Bare, the version built into the executable, fetched
 >      from npm's registry with curl and pinned by its sha512.
 > 4. **Check it once**, from the clone's folder, in a fresh work folder:
 >    `sources/haiccing/base-package-boot-linux-x64 --work=/tmp/boot-check --sources=folder:sources --yes`.
->    It prints the request `boot deploy /boot` (its `output` lists the steps
->    `prerequisites`, `built`, `packages`), then the status of the boot
->    mrepo's runtime, which it starts. Exit code 0. Within a few seconds that
->    runtime deploys the host inside the boot mrepo:
->    `/tmp/boot-check/mrepos/boot/main/host/` appears, and two runtime
->    processes run (`pgrep -af /tmp/boot-check/`). Then stop them,
+>    (Not on a terminal, it does not follow the records: add `--no-follow`
+>    if your shell is one.) It prints the request `boot deploy /boot` (its
+>    `log` lists the steps `prerequisites`, `built`, `packages`, each with
+>    its level), then the status of the boot mrepo's runtime, which it
+>    starts. Exit code 0. If a Bare is installed on the PATH at the pinned
+>    major (the same version or newer), it is used and recorded in
+>    `/tmp/boot-check/bare.json`; else the pinned one is put in place.
+>    Within a few seconds that runtime deploys the host inside the boot
+>    mrepo: `/tmp/boot-check/mrepos/boot/main/host/` appears (with `.git`,
+>    `inbox/`, `outbox/`, `packages/`), and two runtime processes run
+>    (`pgrep -af /tmp/boot-check/`). Then stop them,
 >    `pkill -TERM -f /tmp/boot-check/` (wait until `pgrep` finds none), and
 >    remove `/tmp/boot-check`.
 > 5. **Put the try script in the home folder**: copy
@@ -52,4 +60,10 @@ tar). Nothing is published: no GitHub release, no push of the build.
 >    command to try it: `~/haicc-try.sh` (it asks before putting Bare in
 >    place; `~/haicc-try.sh --yes` does not ask).
 >
-> Nothing to commit. Do not change the code: if something fails, report it.
+> 7. **Write a note back**: what ran, each result, anything that did not
+>    run as written and why (with a proposal and a patch if you have one,
+>    as before), in `steps/2-rebuild/local-note.md`: a new section at the
+>    top, dated, naming the commit you tested. Commit only that file on
+>    `execute/main`, merge it into `main` (a plain merge), push both.
+>
+> Do not change the code: report, and propose.
