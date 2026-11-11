@@ -31,7 +31,9 @@ command as typed, a GUID), each step's outcome logged in it:
    `<work>/packages/`, checked against their manifest, each hard linked
    individually into `<work>/mrepos/boot/packages/`; the list, hashes,
    sources and store committed.
-4. **Its request**, completed, into its `request/execute`, and printed.
+4. **Its request**, completed (each step an entry in its `log`, at or
+   above `--level`, `info` by default), into its `request/execute`, and
+   printed.
 5. **Its runtime started**, from its own `packages/`, by its directory, on
    the Bare recorded (an installed one, or the one put in place: `<the Bare>
    <work>/mrepos/boot/packages/haiccing/base-package-runtime.bundle
@@ -41,6 +43,10 @@ command as typed, a GUID), each step's outcome logged in it:
    inside it, `main/host/`, its runtime started. The boot mrepo has no
    `service`: its packages are the runtime and the boot protocol; its
    runtime runs until stopped (SIGTERM, or `stop` on its socket).
+6. **Followed** on a terminal, or with `--follow` (`--no-follow`: not):
+   every record as it moves through the request layers, the boot mrepo's
+   and the host's, one compact line a record, until Ctrl-C (the runtimes
+   keep running).
 
 ## The package
 

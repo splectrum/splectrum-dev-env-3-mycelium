@@ -14,7 +14,7 @@ import { join, dirname, resolve } from '../../modules/node_modules/bare-path/ind
 import os, { tmpdir } from '../../modules/node_modules/bare-os/index.js'
 import { fileURLToPath } from '../../modules/node_modules/bare-url/index.js'
 import { openRepo, p2pgitBackend } from '../../modules/pear-full-square/mycelium-git/index.js'
-import { record, wrap, guid, layer } from '../../modules/pear-full-square/mrepo-base-request/index.js'
+import { record, wrap, guid, layer, follow } from '../../modules/pear-full-square/mrepo-base-request/index.js'
 import { ask, gitdirOf, viewOf } from '../../modules/pear-full-square/mrepo-base-runtime/index.js'
 
 const pkg = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
@@ -72,10 +72,11 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     const r = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
     t.is(r.code, 0, `done ${r.err}`)
     const out = r.lines.find(l => l.value).value.output
+    const logged = r.lines.find(l => l.value).value.log
     const started = r.lines.at(-1).runtime
     t.is(started?.repository, 'boot', 'its runtime started by the boot (its status printed last)')
-    t.alike(out.outcomes.map(o => o.step), ['prerequisites', 'built', 'packages'], 'its outcomes logged in its request')
-    t.ok(out.outcomes[0].results.find(c => c.check === 'bare').fixed, 'Bare put in place')
+    t.alike(logged.map(e => [e.level, e.event]), [['info', 'prerequisites'], ['info', 'built'], ['info', 'packages']], 'its steps logged in its request, with their level')
+    t.ok(logged[0].results.find(c => c.check === 'bare').fixed, 'Bare put in place')
     t.is(readFileSync(join(work, 'bare', 'tarball.sha512'), 'utf8').trim(), bare.integrity, 'as pinned')
 
     // the packages: in the store once, hard linked into the boot mrepo
@@ -86,7 +87,7 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     const repo = openRepo(p2pgitBackend(gitdirOf(work, 'boot'), { fs }))
     const listed = JSON.parse((await repo.read('/packages/manifest.json')).toString()).packages
     t.alike(Object.keys(listed), ['haiccing/base-package-runtime', 'haiccing/base-package-boot'], 'the packages layer: the list (the runtime, the boot protocol)')
-    t.is(listed['haiccing/base-package-runtime'].sha256, out.outcomes[2].packages['haiccing/base-package-runtime'].sha256, 'and the hashes')
+    t.is(listed['haiccing/base-package-runtime'].sha256, logged[2].packages['haiccing/base-package-runtime'].sha256, 'and the hashes')
     t.absent((await repo.select('/packages/haiccing')).length, 'not the bytes')
     // the runtime: from the boot mrepo's own packages, on the Bare put in place
     t.is(out.runtime, `${join(work, 'bare', 'bin', 'bare')} ${mine} ${viewOf(work, 'boot')}`, 'its command recorded')
@@ -114,6 +115,15 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     }
     t.alike(history.map(f => `${f.protocol} ${f.action} ${f.uri}`), ['boot deploy /boot', 'boot deploy /host'], 'the history: the boot\'s deploy, then the host\'s')
     t.absent(history[1].error, 'the host\'s deploy done')
+    // followed: every record of the boot mrepo's request layers and its child's, one line each
+    const lines = []
+    const f = follow({ dir: viewOf(work, 'boot'), name: 'boot', print: l => lines.push(l) })
+    await f.pass()
+    f.stop()
+    t.ok(lines.every(l => !l.includes('\n') && JSON.parse(l).key), 'one compact record a line')
+    const topics = lines.map(l => JSON.parse(l).topic)
+    t.ok(topics.includes('/boot/request/done'), 'the boot mrepo\'s, its topic the full path')
+    t.ok(topics.every(x => x.startsWith('/boot/')), 'from the root')
     for (const r of [host, viewOf(work, 'boot')]) t.ok((await ask({ repo: r, op: 'stop' }))?.stopping, `stopped: ${r.endsWith('host') ? 'the host' : 'the boot'}`)
     for (let i = 0; i < 100 && (alive(child.pid) || alive(h.pid)); i++) await wait(100)
     t.absent(alive(child.pid) || alive(h.pid), 'both processes ended')
@@ -121,7 +131,7 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     // run again: already built, the packages unchanged; its runtime started again
     const again = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
     t.is(again.code, 0)
-    const o2 = again.lines.find(l => l.value).value.output.outcomes
+    const o2 = again.lines.find(l => l.value).value.log
     t.ok(o2[1].already, 'already built')
     t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
     const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
@@ -145,7 +155,7 @@ test('an installed Bare on the PATH: used, recorded, none put in place, no quest
     const r = boot(work, [`--sources=folder:${SOURCES}`], [bin, NO_BARE].join(':'))
     t.is(r.code, 0, `done without --yes ${r.err}`)
     const out = r.lines.find(l => l.value).value.output
-    const b = out.outcomes[0].results.find(c => c.check === 'bare')
+    const b = r.lines.find(l => l.value).value.log[0].results.find(c => c.check === 'bare')
     t.ok(b.value.installed && !b.fixed, 'the installed one: used')
     t.is(b.value.bare, join(bin, 'bare'))
     t.absent(existsSync(join(work, 'bare')), 'no Bare put in place')

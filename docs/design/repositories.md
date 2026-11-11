@@ -471,6 +471,18 @@ history:
   start), an error failing to be recorded.
 - **What a terminal shows** is the completed form, the end of execution;
   no step by step output.
+- **A request's log, with levels** (the human, 2026-11-11; **built**): a
+  log function, `log(level, event, data)`, in the execution context
+  (`exec.log`) and in the boot; its entries (`{ level, event, time, ...data
+  }`) kept in the request's own record, the completed form's `log`, at or
+  above a threshold (`error`, `warn`, `info`, `debug`; `info` by default; an
+  mrepo's in `/runtime/log.json`, the boot's `--level`).
+- **Followed in the terminal** (the human; **built**): every record as it
+  moves through the request layers of an mrepo and its children in view,
+  one compact line a record, its envelope's topic the full path
+  (`/boot/main/host/request/done`): `follow` (`mrepo-base-request`); the
+  boot follows after starting its runtime, on a terminal or with
+  `--follow`, until Ctrl-C.
 - **Open**: a request's own history in its document (the events of its
   journey, in the envelope or the completed form), when step by step
   logging is wanted; the runtime's own events (started, stopped) dropped

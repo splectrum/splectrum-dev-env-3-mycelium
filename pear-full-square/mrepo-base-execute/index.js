@@ -25,7 +25,7 @@
 // completed ([]: none was executing).
 // The base's actions are the framework's generic ones (lib/actions.js); a
 // type's own come later, read from its package.
-import { layer, wrap, complete, isComplete, AUTHOR, EXECUTE, check, runtimeData } from 'mrepo-base-request'
+import { layer, wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runtimeData } from 'mrepo-base-request'
 import { ACTIONS } from './lib/actions.js'
 
 export { ACTIONS }
@@ -97,6 +97,10 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
     const inside = uri => uri.slice(uri.indexOf('/', 1) < 0 ? uri.length : uri.indexOf('/', 1)) || '/'
     const { protocol, action } = form
     const message = `${name}: ${protocol} ${action} ${form.uri}`
+    // Its log: entries into the request's own record, at or above the
+    // mrepo's threshold (/runtime/log.json's level, else info).
+    const threshold = await repo.read('/runtime/log.json').then(b => JSON.parse(b.toString()).level, () => 'info')
+    const { log, entries } = logger(threshold)
     const flush = async (what = message) => {
       for (const [b, list] of edits) {
         const c = await w.change(`execute/${b}`)
@@ -135,7 +139,10 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       rollback: () => commits.length ? back(commits.pop()) : back(start),
       // Everything of this execution ditched, its local commits too: back to
       // where it started; the action goes on.
-      reset: () => rollbackAll()
+      reset: () => rollbackAll(),
+      // An entry in the request's log: log(level, event, data), level one of
+      // error, warn, info, debug; kept at or above the threshold.
+      log
     })
     let result
     try {
@@ -157,6 +164,6 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       for (const t of TARGETS) if (now[`execute/${t}`] !== start[`execute/${t}`]) await w.merge(`execute/${t}`, t, `Merge ${message}`, { author: AUTHOR })
     }
     // The form completed, in its envelope, through its own execution branch.
-    await executed(ctx, name, wrap(`/${EXECUTE}`, complete(core, result)))
+    await executed(ctx, name, wrap(`/${EXECUTE}`, complete(core, result, entries)))
   }
 }

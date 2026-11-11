@@ -23,5 +23,19 @@ export const guid = () => {
 export const record = (topic, value, key = null) => ({ topic, key, timestamp: new Date().toISOString(), headers: {}, value })
 // An envelope around a record: its key the record's.
 export const wrap = (topic, inner) => record(topic, inner, inner?.key ?? null)
-export const complete = (core, result) => ({ ...core, value: { ...core.value, ...(result.ok ? { output: result.value } : { error: result.error }) } })
+// Completed: its output (or the error that stopped it), and its log when
+// there is one (the entries kept: a request is its own record).
+export const complete = (core, result, log = []) => ({ ...core, value: { ...core.value, ...(result.ok ? { output: result.value } : { error: result.error }), ...(log.length ? { log } : {}) } })
+// Log levels, most severe first; an entry kept when at or above the threshold.
+export const LEVELS = ['error', 'warn', 'info', 'debug']
+export function logger (threshold = 'info', now = () => new Date().toISOString()) {
+  const max = LEVELS.indexOf(threshold) < 0 ? LEVELS.indexOf('info') : LEVELS.indexOf(threshold)
+  const entries = []
+  const log = (level, event, data = {}) => {
+    const i = LEVELS.indexOf(level)
+    if (i < 0) throw new Error(`not a log level: ${level} (${LEVELS.join(', ')})`)
+    if (i <= max) entries.push({ level, event, time: now(), ...data })
+  }
+  return { log, entries }
+}
 export const isComplete = core => Boolean(core?.value) && ('output' in core.value || 'error' in core.value)
