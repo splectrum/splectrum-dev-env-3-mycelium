@@ -24,6 +24,8 @@ export const OUTBOX = '/outbox'
 export const inboxFolder = (work, name = setting(work).name) => documents(join(viewOf(work, name), 'inbox'), json)
 // An mrepo's own inbox folder, by its directory.
 export const inboxOf = dir => documents(join(dir, 'inbox'), json)
+// Its outbox folder: the outbox layer's records, written after each commit.
+export const outboxOf = dir => documents(join(dir, 'outbox'), json)
 
 // A layer made when first needed (an orphan branch, under the layer rules).
 export async function ensure ({ backend, writer }, branch) {

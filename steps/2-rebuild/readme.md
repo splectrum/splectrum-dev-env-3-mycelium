@@ -801,6 +801,14 @@ stopped at the end, the boot's before the host's, its stop waiting for a
 deploy in progress). Tested: `mrepo-base-boot` 8/8; the boot package 3/3,
 nothing left running; the release through the try script.
 
+The boxes' folders (the human): a working folder only where the
+filesystem is a way in or out; writing makes the path; the inbox folder
+committed then the layer's head watched; the outbox folder made at build
+(watchable from the start) and written after each commit (built: `build`,
+`outboxOf` in `mrepo-base-request`); a subscription pulled by the inbox's
+owner; a child in view written to directly by its parent, its outbox
+followed by it (`repositories.md`, "The boxes' folders"). Tested.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

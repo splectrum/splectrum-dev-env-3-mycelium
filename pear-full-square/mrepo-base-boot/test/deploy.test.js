@@ -132,6 +132,9 @@ test('deploy the runtime: the child\'s runtime started from its own packages, it
     let back = null
     for (let i = 0; i < 100 && !back; i++) { back = await child.read(`/outbox/${core.key}.json`).then(json, () => null); if (!back) await new Promise(resolve => setTimeout(resolve, 100)) }
     t.ok(back?.value.value.output, 'its inbox operational: a request answered (no service: no gate)')
+    let inFolder = null
+    for (let i = 0; i < 50 && !inFolder; i++) { inFolder = existsSync(join(host, 'outbox', `${core.key}.json`)) ? JSON.parse(readFileSync(join(host, 'outbox', `${core.key}.json`))) : null; if (!inFolder) await new Promise(resolve => setTimeout(resolve, 100)) }
+    t.alike(inFolder?.value.value, back.value.value, 'and in its outbox folder, as committed (for a subscriber)')
     await teardown(exec, { uri: '/host' })
     await commit()
     t.is(await ask({ repo: host, op: 'status' }), null, 'teardown: its runtime stopped')

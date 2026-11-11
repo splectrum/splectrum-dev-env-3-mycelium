@@ -27,6 +27,7 @@ test('the boot mrepo: built from its folder, the same twice', async (t) => {
     t.alike(one.layers, two.layers, 'the same folder, the same commits')
     t.alike(JSON.parse(readFileSync(join(a, 'mrepo.json'))), { storage: 'filesystem', name: 'boot' }, 'the setting: every layer on the filesystem')
     t.ok(existsSync(join(a, 'mrepos', 'boot', 'inbox', 'layer.json')), 'the inbox\'s working tree')
+    t.ok(existsSync(join(a, 'mrepos', 'boot', 'outbox', 'layer.json')), 'the outbox\'s working folder, there before any record')
     const r = await open(a)
     const repo = openRepo(r.backend)
     t.is(JSON.parse((await repo.read('/runtime/layer.json')).toString()).mode, 'atomic', 'layer.json committed with its layer')
