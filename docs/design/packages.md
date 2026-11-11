@@ -8,12 +8,10 @@ Status marks: **built** (in the code, tested), **agreed** (decided, not built).
 structure and its package writer removed, 2026-11-11). A package
 models a structure of mrepos and how it is built and installed.
 
-- **A package depends only on packages**, never on a module elsewhere.
-  `base-package-mrepo` holds what every base mrepo has in common (the
-  runtime, the protocols, the fixed layers); a type's package (the type
-  `haicc`: `base-package-haicc`) customises it with an external API and the
-  structure of `main`, including where child mrepos are linked in. Its
-  manifest lists the packages its mrepos require.
+- **A package depends only on packages**, never on a module elsewhere
+  (below, "The packages of an mrepo"): the runtime, boot, mrepo and an
+  application each contribute their part; an application's manifest lists
+  the packages it requires.
 - **A structure unit, the same at every level** (recursive: a package, an
   mrepo inside it, a test, an example), each part optional, a part present
   giving the unit what it is for: `run.js` executable, `modules/` (with
@@ -53,6 +51,37 @@ models a structure of mrepos and how it is built and installed.
 - **Expanded folders, for readability**: what a person reads is what the
   repository will hold; a bundle (`bare-bundle`: its files listed by path,
   read by path) carries them, opaque, and they are copied out of it.
+
+## The packages of an mrepo: the runtime and what plugs into it
+
+**Agreed** (the human, 2026-11-11). An mrepo links several packages, each
+for what it contributes; no copies between them:
+
+| Package | Contributes |
+|---|---|
+| `base-package-runtime` | the engine and the entry point (the bundle Bare runs): the process, the store, the internal protocols (request, execute); its parts of the structure (`runtime/`, the boxes, `request/*`). No external protocol |
+| `base-package-boot` | the `boot` protocol (`deploy`, `teardown`, `redeploy`): in an mrepo that deploys others |
+| `base-package-mrepo` | the `service` protocol |
+| an application (`base-package-haicc`) | `main`, its own protocol |
+
+- **A package requires packages instead of copying them**: the application
+  declares what it requires (the runtime, boot, mrepo); the runtime loads a
+  protocol's package from `packages/` (its bundle, by path) and calls its
+  actions. A protocol's actions import no framework code: they get what
+  they need through the execution context (`exec.read`, `exec.put`,
+  `exec.select`), so a protocol package carries its own logic only. Native
+  addons are shared by hash anyway. Self-contained still: the runtime
+  package, and a standalone release (the boot's).
+- **Deploying is the boot protocol's `deploy`**, executed by the parent
+  (the host: `boot deploy /host`, run by the boot mrepo): the
+  application's requirements resolved into an order (runtime, boot, mrepo,
+  the application), each sourced and checked, their `mrepo/` parts
+  overlaid in that order, built, linked into `packages/`, cleaned up. No
+  install code in a package; what is the application's own runs inside the
+  new mrepo (its preloaded `service initialise`).
+- Each component's part of the structure lives with it (the human): a
+  module or package carries an `mrepo/` folder with its part, laid out by
+  layers; the mrepo is their overlay.
 
 ## Installing an mrepo from its structure
 
