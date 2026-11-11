@@ -1,24 +1,31 @@
-// Packages put in place, a boot activity (docs/design/packages.md: "Packages
+// Packages put in place, a boot activity (docs/design/packages.md, "Packages
 // put in place are a boot activity"): each package an mrepo lists, sourced
-// into the work folder's store once, checked, hard linked into the mrepo's
-// packages/, its list and hashes committed into the packages layer.
-//   place({ work, name, sources, list })
+// into the work folder's store once, checked, hard linked individually into
+// the mrepo's packages/ (it runs only what is registered for it), the list
+// committed into its packages layer.
+//   fetch({ store, sources, pkg })      the package in the store (from the
+//                                       sources when not there yet), checked:
+//                                       its manifest entry
+//   structureOf({ store, pkg })         its mrepo/ part, read from its bundle:
+//                                       { '<path inside mrepo/>': bytes }
+//   place({ dir, store, sources, list }) each listed package fetched and linked
+//                                       into <dir>/packages/; the packages
+//                                       layer's manifest committed: { packages,
+//                                       sources, store } (store: the mapping a
+//                                       deploying runtime reaches the store by)
 //     sources  [{ kind: 'folder', path }] (a source by organisation:
 //              <path>/<org>/<repo>.bundle, <path>/<org>/manifest.json,
 //              <path>/addons/<sha256>)
-//     list     ['<org>/<repo>', ...]
-//   -> { packages: { '<org>/<repo>': { sha256, id, entries, addons } } }, or throws
-// The layer's manifest: { packages, sources } (the sources used: a child's
-// deploy sources from them).
-// The store: <work>/packages/<org>/<repo>.bundle, <work>/packages/addons/<sha256>;
-// the mrepo's: <work>/mrepos/<name>/packages/ (the same layout: a bundle
-// finds its addons two levels up). A hard link where the store and the
-// mrepo share a disk, else a copy. The packages layer: /manifest.json.
-import fs, { existsSync, readFileSync, mkdirSync, linkSync, copyFileSync, rmSync } from 'bare-fs'
+//   -> { packages: { '<org>/<repo>': { sha256, id, entries, addons } }, committed }
+// The store: <work>/packages/<org>/<repo>.bundle (and its manifest entry
+// beside it, <repo>.json), <work>/packages/addons/<sha256>; an mrepo's
+// packages/ the same layout (a bundle finds its addons two levels up). A
+// hard link where they share a disk, else a copy.
+import fs, { existsSync, readFileSync, mkdirSync, linkSync, copyFileSync, rmSync, writeFileSync } from 'bare-fs'
 import { join, dirname } from 'bare-path'
 import crypto from 'bare-crypto'
+import Bundle from 'bare-bundle'
 import { p2pgitBackend, writer, openRepo } from 'mycelium-git'
-import { gitdirOf, viewOf } from 'mrepo-base-request'
 
 const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
 const author = { name: 'mrepo-boot', email: 'mrepo-boot@localhost' }
@@ -44,45 +51,52 @@ function find (sources, pkg) {
   return null
 }
 
-export async function place ({ work, name, sources, list }) {
-  const store = storeOf(work)
-  const mine = join(viewOf(work, name), 'packages')
+export function fetch ({ store, sources, pkg }) {
+  const file = join(store, `${pkg}.bundle`)
+  const known = join(store, `${pkg}.json`)
+  if (existsSync(file) && existsSync(known)) return JSON.parse(readFileSync(known, 'utf8'))
+  const found = find(sources, pkg)
+  if (!found) throw new Error(`not in the store nor the sources: ${pkg}`)
+  const { entry } = found
+  if (sha256(readFileSync(join(found.source, entry.file))) !== entry.sha256) throw new Error(`not as its manifest says (sha256): ${pkg}`)
+  for (const a of entry.addons) {
+    if (existsSync(join(store, 'addons', a))) continue
+    if (sha256(readFileSync(join(found.source, 'addons', a))) !== a) throw new Error(`an addon not as named (sha256): ${a}`)
+    put(join(found.source, 'addons', a), join(store, 'addons', a))
+  }
+  put(join(found.source, entry.file), file)
+  writeFileSync(known, JSON.stringify(entry, null, 2) + '\n')
+  return entry
+}
+
+export function structureOf ({ store, pkg }) {
+  const bundle = Bundle.from(readFileSync(join(store, `${pkg}.bundle`)))
+  const out = {}
+  for (const key of Object.keys(bundle.files)) if (key.startsWith('/mrepo/')) out[key.slice('/mrepo/'.length)] = bundle.read(key)
+  return out
+}
+
+export async function place ({ dir, store, sources, list }) {
+  const mine = join(dir, 'packages')
   const packages = {}
   for (const pkg of list) {
-    const file = `${pkg}.bundle`
-    let entry
-    if (existsSync(join(store, file)) && existsSync(join(store, `${pkg}.json`))) {
-      entry = JSON.parse(readFileSync(join(store, `${pkg}.json`), 'utf8'))
-    } else {
-      const found = find(sources, pkg)
-      if (!found) throw new Error(`not in the sources: ${pkg}`)
-      entry = found.entry
-      const bytes = readFileSync(join(found.source, entry.file))
-      if (sha256(bytes) !== entry.sha256) throw new Error(`not as its manifest says (sha256): ${pkg}`)
-      for (const a of entry.addons) {
-        const ab = readFileSync(join(found.source, 'addons', a))
-        if (sha256(ab) !== a) throw new Error(`an addon not as named (sha256): ${a}`)
-        if (!existsSync(join(store, 'addons', a))) put(join(found.source, 'addons', a), join(store, 'addons', a))
-      }
-      put(join(found.source, entry.file), join(store, file))
-      fs.writeFileSync(join(store, `${pkg}.json`), JSON.stringify(entry, null, 2) + '\n')
-    }
-    // Into the mrepo: the bundle and its addons, linked from the store.
-    put(join(store, file), join(mine, file))
+    const entry = fetch({ store, sources, pkg })
+    // Into the mrepo, each individually: the bundle and each of its addons.
+    put(join(store, `${pkg}.bundle`), join(mine, `${pkg}.bundle`))
     for (const a of entry.addons) put(join(store, 'addons', a), join(mine, 'addons', a))
     packages[pkg] = { sha256: entry.sha256, id: entry.id, entries: entry.entries ?? [], addons: entry.addons }
   }
-  // The packages layer: the list and the hashes, not the bytes.
-  // (unchanged: no commit)
-  const backend = p2pgitBackend(gitdirOf(work, name), { fs })
-  // (with the sources they came from: a child's deploy sources from them too)
+  // The packages layer: the list and the hashes (not the bytes), the sources
+  // used and the store (unchanged: no commit).
+  const backend = p2pgitBackend(join(dir, '.git'), { fs })
   const from = sources.map(x => x.kind === 'folder' ? `folder:${x.path}` : `github:${x.org}`)
-  const now = Buffer.from(JSON.stringify({ packages, sources: from }, null, 2) + '\n')
+  const now = Buffer.from(JSON.stringify({ packages, sources: from, store }, null, 2) + '\n')
   const was = await openRepo(backend).read('/packages/manifest.json').catch(() => null)
-  if (!was || !was.equals(now)) {
+  const committed = !was || !was.equals(now)
+  if (committed) {
     const c = await writer(backend).change('packages')
     await c.put('/manifest.json', now)
     await c.commit(`Packages in place: ${list.join(', ')}`, { author })
   }
-  return { packages, committed: !was || !was.equals(now) }
+  return { packages, committed }
 }

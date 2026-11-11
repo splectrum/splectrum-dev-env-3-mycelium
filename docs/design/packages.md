@@ -94,7 +94,19 @@ for what it contributes; no copies between them:
   initial boot mrepo by the release, a prerequisite step (as Bare), from
   the bundles it carries. Changing an mrepo's packages is a `redeploy`: no
   packages protocol.
-- **Forward only, for URIs** (the human, 2026-11-11): a URI, as
+- **Deploy targets a package** (the human, 2026-11-11; **built**): `boot
+  deploy /<name>` names its target in the body (`{ package }`); the
+  target's `mrepo/packages/layer.json` lists, in order, the packages the
+  child is made of (for the HAICC platform, `base-package-haicc`'s; for a
+  test, the runtime alone: an mrepo with a runtime and no protocols); each
+  package's `mrepo/` part, read from its bundle, laid in in that order (a
+  later file replaces). The child lives inside its parent,
+  `<parent>/main/<name>/`; its type recorded at the node, `/main/<name>.json`.
+  Only a package with a deploy part brings structure (`base-package-boot`
+  brings none: its protocol only). The boot mrepo's first-boot structure has
+  no `service` (not service managed): its packages the runtime and boot, its
+  preloaded request `boot deploy /host`.
+ (the human, 2026-11-11): a URI, as
   `mycelium-xpath` navigates it, goes only forward from where it starts (no
   `..`); reaching outside takes a mapping, resolved under the hood
   (`repositories.md`, "Roots, boundaries, mappings"): the work folder's

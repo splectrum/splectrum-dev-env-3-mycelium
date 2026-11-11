@@ -2,7 +2,9 @@
 // mrepo from its structure"): a folder laid out by layers, a layer.json at
 // each leaf, written as a standalone repository on disk, p2p-git's hybrid
 // with every layer on the filesystem (the setting's `filesystem` storage).
-//   build({ from, work, name, time })  from: the mrepo/ folder; the repository
+//   build({ from, work, name, dir, time })  from: the mrepo/ folder; the repository
+//                                     (dir: written there instead, a child
+//                                     inside its parent; no setting written)
 //                                     written at <work>/mrepos/<name>/.git, one
 //                                     layer per leaf (an orphan branch, its
 //                                     files as one commit, layer.json with
@@ -37,8 +39,10 @@ function files (dir, rel = '') {
   })
 }
 
-export async function build ({ from, work, name, time = Math.floor(Date.now() / 1000), setting = true }) {
-  const gitdir = gitdirOf(work, name)
+export async function build ({ from, work = null, name = null, dir = null, time = Math.floor(Date.now() / 1000), setting = true }) {
+  // where: <dir> (a child inside its parent), else <work>/mrepos/<name>
+  const view = dir ?? viewOf(work, name)
+  const gitdir = join(view, '.git')
   if (existsSync(gitdir)) throw new Error(`exists: ${gitdir}`)
   mkdirSync(gitdir, { recursive: true })
   const backend = p2pgitBackend(gitdir, { fs })
@@ -54,10 +58,10 @@ export async function build ({ from, work, name, time = Math.floor(Date.now() / 
   }
   // The inbox's working tree: its files, as committed.
   if (layers.inbox) {
-    const inbox = join(viewOf(work, name), 'inbox')
+    const inbox = join(view, 'inbox')
     mkdirSync(inbox, { recursive: true })
     for (const f of files(join(from, 'inbox'))) copyFileSync(join(from, 'inbox', f), join(inbox, f))
   }
-  if (setting) writeFileSync(join(work, SETTING), JSON.stringify({ storage: 'filesystem', name }) + '\n')
-  return { name, layers }
+  if (setting && work && !dir) writeFileSync(join(work, SETTING), JSON.stringify({ storage: 'filesystem', name }) + '\n')
+  return { name: name ?? view.split('/').pop(), dir: view, layers }
 }

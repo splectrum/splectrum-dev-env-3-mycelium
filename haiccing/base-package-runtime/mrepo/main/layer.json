@@ -1,0 +1,4 @@
+{
+  "mode": "atomic",
+  "description": "The mrepo's data (every mrepo has it; an application lays in its own)."
+}

@@ -1,7 +1,8 @@
 {
   "mode": "replicated",
-  "description": "The packages the boot mrepo runs on: their list and hashes; the bundles in the work folder's store, hard linked into packages/.",
+  "description": "The packages the boot mrepo runs on: the runtime and the boot protocol (no service: the boot mrepo is not service managed).",
   "packages": [
-    "haiccing/base-package-runtime"
+    "haiccing/base-package-runtime",
+    "haiccing/base-package-boot"
   ]
 }
