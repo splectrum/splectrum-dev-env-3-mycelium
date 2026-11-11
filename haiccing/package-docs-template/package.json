@@ -4,5 +4,12 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "main": "main.js"
+  "main": "main.js",
+  "docs": true,
+  "modules": [
+    "pear-full-square/mrepo-base-help"
+  ],
+  "scripts": {
+    "test": "bare test/run.js"
+  }
 }

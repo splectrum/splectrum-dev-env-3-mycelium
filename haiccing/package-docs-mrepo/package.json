@@ -5,5 +5,12 @@
   "license": "MIT",
   "type": "module",
   "main": "main.js",
-  "help": "mrepo"
+  "help": "mrepo",
+  "docs": true,
+  "modules": [
+    "pear-full-square/mrepo-base-help"
+  ],
+  "scripts": {
+    "test": "bare test/run.js"
+  }
 }

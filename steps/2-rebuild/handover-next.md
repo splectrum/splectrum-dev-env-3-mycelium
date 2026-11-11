@@ -160,13 +160,8 @@ repository no longer holding `modules/`, wrong), `releases.md` and
 
 ## Elsewhere
 
-- **`mrepo-base-help`** (agreed; its repository created by the human): the
-  help code (parse, extract, the rules, the two validation tests) as a
-  small module of its own, carried by the runtime and by the documentation
-  packages; the documentation packages get a dispatcher exposing only their
-  tests (more as needed); documentation marked in `package.json`
-  (`"docs": true`) instead of by having no entry point.
-
+- **`mrepo-base-help`**: built (step 2, part 24): the help protocol, the
+  extraction, the validation; documentation packages marked `docs`.
 - **The local agent** builds, tests and publishes releases
   (`prompt-local.md`, `handover-local.md`); it was busy with a release when
   this was written: its record will be in `local-run.md`.

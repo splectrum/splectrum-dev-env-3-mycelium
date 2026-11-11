@@ -1,4 +1,6 @@
 {
   "description": "Every test.",
-  "tests": ["name"]
+  "tests": [
+    "help"
+  ]
 }

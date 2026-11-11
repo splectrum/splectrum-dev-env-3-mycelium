@@ -28,7 +28,8 @@ The same record, without `deployed`, is written at `/main/<name>.json`.
 
 ## Design
 
-- A package with no entry point is documentation: it brings no structure.
+- A documentation package, marked `docs` in its manifest entry, brings no
+  structure.
   READMEs are never laid in.
 - The packages are linked individually into the child's `packages/`.
 - The runtime is started from the child's own packages, by its directory.

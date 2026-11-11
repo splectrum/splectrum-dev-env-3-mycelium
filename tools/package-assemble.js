@@ -12,7 +12,7 @@
 //   tools/bare tools/package-assemble.js <package folder>
 import process from 'bare-process'
 import os from 'bare-os'
-import { readFileSync, writeFileSync, existsSync, mkdirSync, symlinkSync, chmodSync, rmSync } from 'bare-fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, symlinkSync, chmodSync, rmSync, readdirSync, statSync } from 'bare-fs'
 import { join, dirname, resolve, relative } from 'bare-path'
 import { fileURLToPath } from 'bare-url'
 import { closure } from '../pear-full-square/pkgm-base-manager/lib/closure.js'
@@ -38,10 +38,36 @@ for (const f of readJson(join(dev, 'package.json')).workspaces || []) {
   ours.set(readJson(join(dev, f, 'package.json')).name || f.split('/')[1], { path: f, dir: join(dev, f) })
 }
 // brittle (the package's tests run on it) and this repository's aliases for
-// Node's built-ins (third-party code imports them by those names).
+// Node's built-ins (third-party code imports them by those names: carried
+// only when it does, below).
 const root = readJson(join(dev, 'package.json'))
 const aliases = Object.entries(root.dependencies || {}).filter(([, v]) => String(v).startsWith('npm:')).map(([k]) => k)
-const set = closure({ ours, third: join(dev, 'node_modules'), start, also: ['brittle', ...aliases] })
+// An alias only when carried third-party code imports it by that name: the
+// closure again with those, until nothing new is imported.
+const SPEC = /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)(['"])([^'"\n]+)\1/g
+function jsFiles (dir) {
+  const out = []
+  for (const n of readdirSync(dir)) {
+    if (n === 'node_modules' || n === 'test' || n === '.bin') continue
+    const p = join(dir, n)
+    const s = statSync(p)
+    if (s.isDirectory()) out.push(...jsFiles(p)); else if (/\.(c|m)?js$/.test(n)) out.push(p)
+  }
+  return out
+}
+const imported = third => {
+  const found = new Set()
+  for (const t of third) for (const f of jsFiles(join(dev, 'node_modules', t))) for (const [, , spec] of readFileSync(f, 'utf8').matchAll(SPEC)) if (aliases.includes(spec.split('/')[0])) found.add(spec.split('/')[0])
+  return [...found]
+}
+let also = ['brittle']
+let set = closure({ ours, third: join(dev, 'node_modules'), start, also })
+for (;;) {
+  const more = imported(set.third).filter(a => !also.includes(a))
+  if (!more.length) break
+  also = [...also, ...more]
+  set = closure({ ours, third: join(dev, 'node_modules'), start, also })
+}
 
 const out = join(pkg, 'modules')
 rmSync(out, { recursive: true, force: true })

@@ -27,7 +27,7 @@ its manifest records each one's hash and entry points.
 - **What a child is made of**: the target package's
   `mrepo/packages/layer.json`, in order. Each package's `mrepo/` part is
   laid in, a later file replacing an earlier one.
-- **Documentation packages** have no entry point: they bring no structure,
+- **Documentation packages**, marked `docs` in their `package.json`, bring no structure,
   only READMEs, which the runtime extracts into the help layer.
 - **Put in place by `boot deploy`**, the parent's, and for the initial
   boot mrepo by its release before it runs. Changing them is a `redeploy`.

@@ -28,7 +28,7 @@ function source (dir, packages) {
     for (const [p, v] of Object.entries(files)) b.write(`/mrepo/${p}`, Buffer.from(typeof v === 'string' ? v : JSON.stringify(v)))
     const bytes = b.toBuffer()
     writeFileSync(join(dir, `${pkg}.bundle`), bytes)
-    manifest.packages[pkg] = { file: `${pkg}.bundle`, id: pkg, sha256: sha256(bytes), entries: ['deploy'], addons: [] } // a package that brings structure (none: documentation)
+    manifest.packages[pkg] = { file: `${pkg}.bundle`, id: pkg, sha256: sha256(bytes), entries: [], addons: [] }
   }
   writeFileSync(join(dir, 'haiccing', 'manifest.json'), JSON.stringify(manifest))
 }

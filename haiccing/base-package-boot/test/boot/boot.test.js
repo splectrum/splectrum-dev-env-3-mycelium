@@ -172,16 +172,16 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.alike([ran?.output?.ok, ran?.output?.units?.map(u => u.unit)], [true, ['/test/start', '/test/help']], 'its result: the start test and its help passed, in a floating instance')
     t.ok(ran?.log?.some(e => e.event === 'unit' && e.unit === '/test/start' && e.ok), 'a summary logged, a line a unit')
     // its help, extracted by its runtime as it started: retrieved by URI
-    const root = await sent({ protocol: 'runtime', action: 'help', uri: '/' })
-    t.ok(!root?.error && root?.output?.oneliner && root.output.links.some(l => l.uri === '/packages'), `runtime help /: the mrepo's, its links with their one-liners ${root?.error ?? ''}`)
-    const pk = await sent({ protocol: 'runtime', action: 'help', uri: '/packages', body: { level: 'oneliner' } })
-    t.alike(['haiccing/base-package-runtime', 'haiccing/base-package-boot', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template'].map(p => pk?.output?.links?.some(l => l.uri === `/packages/${p}`)), [true, true, true, true], 'runtime help /packages: each package it links')
-    const tb = await sent({ protocol: 'runtime', action: 'help', uri: '/packages/haiccing/base-package-boot/test/boot', body: { level: 'detail' } })
-    t.ok(!tb?.error && tb?.output?.title === 'boot/' && tb.output.summary, `runtime help on this very test: its README ${tb?.error ?? ''}`)
+    const root = await sent({ protocol: 'help', action: 'get', uri: '/' })
+    t.ok(!root?.error && root?.output?.oneliner && root.output.links.some(l => l.uri === '/packages'), `help get /: the mrepo's, its links with their one-liners ${root?.error ?? ''}`)
+    const pk = await sent({ protocol: 'help', action: 'get', uri: '/packages', body: { level: 'oneliner' } })
+    t.alike(['haiccing/base-package-runtime', 'haiccing/base-package-boot', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template'].map(p => pk?.output?.links?.some(l => l.uri === `/packages/${p}`)), [true, true, true, true], 'help get /packages: each package it links')
+    const tb = await sent({ protocol: 'help', action: 'get', uri: '/packages/haiccing/base-package-boot/test/boot', body: { level: 'detail' } })
+    t.ok(!tb?.error && tb?.output?.title === 'boot/' && tb.output.summary, `help get on this very test: its README ${tb?.error ?? ''}`)
     const hostHelp = await openRepo(p2pgitBackend(join(host, '.git'), { fs })).read('/help/index.json').then(b => JSON.parse(b.toString()), () => null)
     t.ok(hostHelp?.['/packages/haiccing/base-package-runtime'], 'the host\'s help: extracted by its own runtime, from its own packages')
     // each package checks, in situ, what this mrepo's runtime made of its help
-    for (const p of ['base-package-boot', 'base-package-runtime']) {
+    for (const p of ['base-package-boot', 'base-package-runtime', 'package-docs-mrepo', 'package-docs-template']) {
       const v = await sent({ protocol: 'runtime', action: 'run', uri: `/packages/haiccing/${p}/test/validate-in-situ` }, 1200)
       t.alike([v?.error, v?.output?.ok, v?.output?.units?.[0]?.asserts], [undefined, true, { passed: 3, total: 3 }], `${p}: validate-in-situ, its help in this mrepo ${v?.error ?? JSON.stringify(v?.output?.units?.[0]?.failures ?? '')}`)
     }
@@ -200,8 +200,8 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
     const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
     let n = 0
-    for (let i = 0; i < 100 && (n = await records('done')) < 14; i++) await wait(100)
-    t.is(n, 14, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs, the three helps, the two in-situ validations among them)')
+    for (let i = 0; i < 100 && (n = await records('done')) < 16; i++) await wait(100)
+    t.is(n, 16, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs, the three helps, the four in-situ validations among them)')
     t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
     const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
     t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')

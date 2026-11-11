@@ -5,7 +5,8 @@ The mrepo runtime: the always-on process that runs an mrepo's protocols.
 It holds the mrepo's store as its single writer, serves its local connection
 (`status`, `stop`), and fires the protocols in turn over their data states.
 Before the mrepo is operational, it extracts its packages' READMEs into the
-help layer. Its own protocol, `runtime`, is built in: `help` and `run`.
+help layer, with `mrepo-base-help`. Its own package offers the `runtime`
+and `help` protocols.
 Other protocols come from the linked packages. It is started from the
 mrepo's own packages: `bare
 <dir>/packages/haiccing/base-package-runtime.bundle <dir>`.
@@ -14,7 +15,6 @@ mrepo's own packages: `bare
 |---|---|
 | [lib/](lib/) | its parts, a file each |
 | [test/](test/) | its tests, what each checks |
-| [validate/](validate/) | the tests every package carrying it runs on itself |
 
 ## Design
 
@@ -24,10 +24,12 @@ mrepo's own packages: `bare
   in its `packages` layer with a `protocol` entry, imported from its
   `packages/` (the bundle's dispatcher, `run('/protocol')`: nothing else
   runs on import), its actions beside the framework's.
-- Its help, before it is operational (`lib/help.js`): the READMEs of its
-  linked packages extracted into its `help` layer, with a generated index;
-  read with `runtime help <uri>` (body `{ level, section }`).
-- Its own protocol, built in (`lib/protocol.js`): `runtime run
+- Its help, before it is operational: the READMEs of its linked packages
+  extracted into its `help` layer by `mrepo-base-help`; read with `help get
+  <uri>`.
+- Its own package's protocols, passed in by its `run.js` (`run({ own })`;
+  its bundle not imported again): `runtime run`, from `lib/protocol.js`,
+  and `help get`, from `mrepo-base-help`. `runtime run
   /packages/<org>/<package><target>`, body `{ dryRun }`: a linked package's
   entry through its dispatcher, its tests above all (a floating instance of
   the package, each unit its own process); the result the request's output,
