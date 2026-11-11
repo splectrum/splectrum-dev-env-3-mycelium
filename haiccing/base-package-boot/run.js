@@ -3,8 +3,10 @@
 // is a request from the start, a record (boot deploy /boot, the command as
 // typed, its key a GUID); each step's outcome logged in it:
 //   1. the prerequisites (prerequisites.json), before anything is written:
-//      the platform, the work folder, the sources, Bare (bare.json: put in
-//      place if missing, only with a yes); a missing one stops it (exit 3),
+//      the platform, the work folder, the sources, Bare (one installed on
+//      the PATH at bare.json's major, the same version or newer; else the
+//      pinned one, bare.json, put in place, only with a yes; the one used
+//      recorded in <work>/bare.json); a missing one stops it (exit 3),
 //      the request printed only (no mrepo to hold it);
 //   2. the boot mrepo built from its structure into <work>/mrepos/boot/ the
 //      first time (mrepo/: in the release, the module mrepo-files.js);
@@ -70,7 +72,7 @@ const core = record(null, { api: NAME, protocol: 'boot', action: 'deploy', uri: 
 const outcomes = []
 const done = result => complete(core, result)
 
-const pre = await check(prerequisites.prerequisites, { work, name: NAME, sources, bare, yes: args.includes('--yes'), ask })
+const pre = await check(prerequisites.prerequisites, { work, name: NAME, sources, bare, path: process.env.PATH, yes: args.includes('--yes'), ask })
 outcomes.push({ step: 'prerequisites', ok: pre.ok, results: pre.results })
 if (!pre.ok) {
   // No mrepo to hold it: printed only.

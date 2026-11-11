@@ -6,7 +6,10 @@
 # turns the lockfile into a list, and the shell installs it: each package
 # from the registry fetched with curl, checked against its sha512, unpacked
 # with tar into its lockfile path; the git dependency fetched at its commit;
-# workspaces linked; other platforms' optional packages skipped; a package
+# workspaces linked; other platforms' optional packages skipped, and of
+# bare-build only this platform's prebuilt, no Android or AppImage builder
+# (the releases are --standalone: about 46 MB instead of 314); the top-level
+# packages' commands linked into node_modules/.bin; a package
 # already there at its version kept. npm is needed only to change the
 # dependencies (resolve versions, write a new package-lock.json).
 #   sh tools/install.sh
@@ -20,18 +23,28 @@ sri=$(printf '%s\n' "$entry" | sed -n 's/.*"integrity": "\(.*\)".*/\1/p' | head 
 ensure_bare "$url" "$sri" "$dev/node_modules/bare-runtime-linux-x64"
 bare=$dev/node_modules/bare-runtime-linux-x64/bin/bare
 
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
 # The lockfile as a list, one package a line: kind path url-or-target sri version.
-list=$("$bare" -e "
-const l = $(cat "$dev/package-lock.json")
+# A script file, not -e: the lockfile is larger than one argument may be.
+{ printf 'const l = '; cat "$dev/package-lock.json"; cat <<'EOF'
 for (const [path, e] of Object.entries(l.packages)) {
   if (!path.startsWith('node_modules/')) continue
   if (e.link) { console.log(['link', path, e.resolved].join(' ')); continue }
   if ((e.os && !e.os.includes(Bare.platform)) || (e.cpu && !e.cpu.includes(Bare.arch))) continue
+  // bare-build: only this platform's prebuilt (its other platforms' are plain
+  // dependencies, unmarked); no Android or AppImage builder (--standalone only)
+  const name = path.slice(path.lastIndexOf('node_modules/') + 13)
+  if (/^bare-build-/.test(name) && name !== 'bare-build-' + Bare.platform + '-' + Bare.arch) continue
+  if (name === 'bare-apk' || name === 'bare-app-image') continue
   console.log([String(e.resolved).startsWith('git+') ? 'git' : 'tar', path, e.resolved, e.integrity || '-', e.version].join(' '))
-}")
-
-tmp=$(mktemp -d)
-trap 'rm -rf "$tmp"' EXIT
+  // a top-level package's commands, linked into node_modules/.bin as npm does
+  if (path === 'node_modules/' + name) for (const [cmd, file] of Object.entries(e.bin || {})) console.log(['bin', 'node_modules/.bin/' + cmd, path + '/' + file].join(' '))
+}
+EOF
+} > "$tmp/list.js"
+list=$("$bare" "$tmp/list.js")
 fetched=0; kept=0; linked=0
 hex () { printf '%s' "${1#*-}" | base64 -d | od -An -v -tx1 | tr -d ' \n'; }
 printf '%s\n' "$list" | {
@@ -43,6 +56,10 @@ printf '%s\n' "$list" | {
         if [ "$(readlink "$dest" 2>/dev/null || true)" != "$target" ]; then
           mkdir -p "$(dirname "$dest")"; rm -rf "$dest"; ln -s "$target" "$dest"; linked=$((linked + 1))
         fi ;;
+      bin)
+        target=$(realpath -m --relative-to="$(dirname "$dest")" "$dev/$src")
+        mkdir -p "$(dirname "$dest")"; chmod +x "$dev/$src" 2>/dev/null || true
+        [ "$(readlink "$dest" 2>/dev/null || true)" = "$target" ] || { rm -f "$dest"; ln -s "$target" "$dest"; } ;;
       git)
         repo=${src#git+}; commit=${repo##*#}; repo=${repo%#*}
         repo=$(printf '%s' "$repo" | sed 's#^ssh://git@github.com/#https://github.com/#')

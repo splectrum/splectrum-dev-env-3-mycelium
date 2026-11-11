@@ -26,9 +26,12 @@ const SOURCES = resolve(process.env.SOURCES || join(pkg, '..', '..', 'sources'))
 const have = existsSync(join(SOURCES, 'holepunchto', `bare-runtime-${os.platform()}-${os.arch()}-${bare.version}.tgz`)) &&
   existsSync(join(SOURCES, 'haiccing', 'base-package-runtime.bundle')) && existsSync(join(SOURCES, 'haiccing', 'base-package-boot.bundle'))
 
-// A run of the boot: its exit code and what it printed (one record a line).
-function boot (work, extra) {
-  const r = spawnSync(os.execPath(), [join(pkg, 'run.js'), `--work=${work}`, ...extra], { stdio: ['ignore', 'pipe', 'pipe'] })
+// The PATH without any `bare` on it: the machine's own Bare not found.
+const NO_BARE = String(process.env.PATH ?? '').split(':').filter(d => d && !existsSync(join(d, 'bare'))).join(':')
+// A run of the boot: its exit code and what it printed (one record a line);
+// its PATH NO_BARE unless given.
+function boot (work, extra, path = NO_BARE) {
+  const r = spawnSync(os.execPath(), [join(pkg, 'run.js'), `--work=${work}`, ...extra], { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, PATH: path } })
   return { code: r.status, lines: r.stdout.toString().split('\n').filter(Boolean).map(l => JSON.parse(l)), err: r.stderr.toString() }
 }
 // A request posted to the boot's inbox (its folder), its completed form read
@@ -131,4 +134,34 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     for (let i = 0; i < 100 && alive(s2.pid); i++) await wait(100)
     t.absent(alive(s2.pid))
   } finally { rmSync(work, { recursive: true, force: true }) }
+})
+
+test('an installed Bare on the PATH: used, recorded, none put in place, no question', { timeout: 120000, skip: !have }, async (t) => {
+  const work = mkdtempSync(join(tmpdir(), 'boot-inst-'))
+  const bin = mkdtempSync(join(tmpdir(), 'boot-bin-'))
+  try {
+    // the Bare running this test, installed as `bare` (the pinned version, or newer)
+    fs.symlinkSync(os.execPath(), join(bin, 'bare'))
+    const r = boot(work, [`--sources=folder:${SOURCES}`], [bin, NO_BARE].join(':'))
+    t.is(r.code, 0, `done without --yes ${r.err}`)
+    const out = r.lines.find(l => l.value).value.output
+    const b = out.outcomes[0].results.find(c => c.check === 'bare')
+    t.ok(b.value.installed && !b.fixed, 'the installed one: used')
+    t.is(b.value.bare, join(bin, 'bare'))
+    t.absent(existsSync(join(work, 'bare')), 'no Bare put in place')
+    t.is(JSON.parse(readFileSync(join(work, 'bare.json'))).bare, join(bin, 'bare'), 'recorded in the work folder')
+    t.ok(out.runtime.startsWith(`${join(bin, 'bare')} `), 'its runtime started on it')
+    t.is(boot(work, [`--sources=folder:${SOURCES}`]).code, 0, 'run again: the recorded one, without it on the PATH')
+  } finally {
+    // the runtimes the boot started: the boot's first (its stop waits for a
+    // deploy in progress, which starts the host), then the host's; waited for
+    for (const r of [viewOf(work, 'boot'), join(viewOf(work, 'boot'), 'main', 'host')]) {
+      const s = await ask({ repo: r, op: 'status' })
+      if (!s) continue
+      await ask({ repo: r, op: 'stop' })
+      for (let i = 0; i < 100 && alive(s.pid); i++) await wait(100)
+    }
+    rmSync(work, { recursive: true, force: true })
+    rmSync(bin, { recursive: true, force: true })
+  }
 })

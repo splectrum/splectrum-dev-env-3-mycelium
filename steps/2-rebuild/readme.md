@@ -789,6 +789,18 @@ Tested: the boot package (the runtime started by the boot, the host
 deployed, both stopped; run again: its runtime again, the second deploy
 done, the host's not repeated); the release through the try script.
 
+The local agent's note (`local-note.md`): the release built and tested
+locally, offline; five proposals with a patch, applied here (two conflicts
+resolved, keeping both sides): `tools/install.sh` (the lockfile written to
+a file, it no longer fits one argument; `bare-build` for this platform only;
+`node_modules/.bin` linked), `tools/boot-release.js` (`bare-build` run on
+Bare), and the human's decision: the boot first uses an installed Bare at
+the pinned major, the same version or newer, recorded in `<work>/bare.json`
+(`acceptable`). Its new test adapted (the runtime now started by the boot:
+stopped at the end, the boot's before the host's, its stop waiting for a
+deploy in progress). Tested: `mrepo-base-boot` 8/8; the boot package 3/3,
+nothing left running; the release through the try script.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
