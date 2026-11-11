@@ -24,6 +24,12 @@ installed by HAICC's boot into the host's packages. Built step by step
   one of the layer's records); the inbox's files its working tree;
   `<work>/mrepo.json` set to `filesystem`. A fixed `time`: the same commits every
   build. The first piece of the install routine.
+- `lib/prerequisites.js`: an mrepo's prerequisites, checked before
+  anything is written (`check(list, ctx)`): `platform`, `work`, `sources`,
+  `bare` (fixed, with a yes: the pinned Bare put in place from the sources,
+  a folder or npm's registry, checked by its sha512), `docker` (installed,
+  running, rootful, native, the user in its group); a condition each
+  (`when: 'not-in-container'`). Stops at the first missing.
 - One poller fires the protocols in turn over their data states: on the
   p2p host (and on `filesystem`) the inbox folder's new files committed, the request protocol (`mrepo-base-request`), the
   execute protocol (`mrepo-base-execute`). Once the service is shut down

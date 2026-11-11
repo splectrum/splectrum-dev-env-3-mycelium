@@ -415,6 +415,13 @@
       "integrity": "sha512-9PPJX5JrhuObWZGyhYCrQ1DbhjY1BLVALkZF56r0SYnfyN18ok84yUETcQ377aC2W6w8IqBewjQ1GlovtiXA1Q=="
     },
     {
+      "name": "bare-zlib",
+      "version": "1.4.1",
+      "license": "Apache-2.0",
+      "resolved": "https://registry.npmjs.org/bare-zlib/-/bare-zlib-1.4.1.tgz",
+      "integrity": "sha512-CsnQl+XyLaUecB9/OUpjqmemung10M7J2UNXz+6NAVrZAI3HC9c5Kxw34aI0jaU9+gb2yUCD31hOrtPZlnE3bA=="
+    },
+    {
       "name": "base64-js",
       "version": "1.5.1",
       "license": "MIT",
