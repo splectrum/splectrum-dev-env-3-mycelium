@@ -650,7 +650,8 @@ and by a rollback). Open: a rollback covers the repository only, not what
 an action did outside it (teardown's folder removed).
 
 Then the commit model (the human): two contexts. Local, the action's:
-`exec.commit()`, `exec.rollback()` (to the last local commit), `exec.reset()`
+`exec.commit()`, `exec.discard()` (the uncommitted writes),
+`exec.rollback()` (the last local commit), `exec.reset()`
 (all of it, back to the start), for building up changes and handling
 errors; the action goes on. Global, the runtime's, never the action's: the
 merge back at the end of the invoked action, a failure resetting. Tested.

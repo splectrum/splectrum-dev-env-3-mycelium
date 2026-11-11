@@ -81,9 +81,9 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
     // The action's context: reads overlaid (a target read from its execution
     // branch), writes collected per target. Two contexts: local, the
     // action's (exec.commit(): the writes so far committed to the execution
-    // branches, later reads see them; exec.rollback(): the writes since the
-    // last local commit discarded; exec.reset(): all of it ditched, back to
-    // the start), for building up its changes and handling its errors; global, the runtime's, not the action's: when the action
+    // branches, later reads see them; exec.discard(): the uncommitted writes
+    // dropped; exec.rollback(): the last local commit undone; exec.reset():
+    // all of it ditched, back to the start), for building up its changes and handling its errors; global, the runtime's, not the action's: when the action
     // ends, its writes committed and the execution branches merged back into
     // their targets, once; a failure rolls back globally (the execution
     // branches reset to where they started, nothing merged).
@@ -107,11 +107,15 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
     // Back to the start: the writes not committed discarded, each execution
     // branch reset to where this execution started (a failure; or the
     // action's exec.reset()).
-    const rollbackAll = async () => {
+    // The execution branches set back to given heads.
+    const back = async to => {
       edits.clear()
       const now = await heads(backend)
-      for (const t of TARGETS) if (now[`execute/${t}`] !== start[`execute/${t}`]) await backend.updateBranch(`execute/${t}`, start[`execute/${t}`], now[`execute/${t}`])
+      for (const t of TARGETS) if (now[`execute/${t}`] !== to[`execute/${t}`]) await backend.updateBranch(`execute/${t}`, to[`execute/${t}`], now[`execute/${t}`])
     }
+    const rollbackAll = () => { commits.length = 0; return back(start) }
+    // The heads before each local commit: what a rollback goes back to.
+    const commits = []
     const exec = Object.freeze({
       runtime: runtimeView(ctx),
       // A URI as the execution sees it: /main/x read from execute/main.
@@ -122,10 +126,12 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       remove (uri) { const b = branchOf(uri); if (!b) throw new Error(`not writable here: ${uri}`); (edits.get(b) ?? edits.set(b, []).get(b)).push(['remove', inside(uri)]) },
       // The local commit: the writes so far committed to the execution
       // branches (later reads see them).
-      commit: (what = null) => flush(what ? `${message}: ${what}` : message),
-      // The local rollback: the writes since the last local commit discarded;
-      // the action goes on.
-      rollback: () => { edits.clear() },
+      commit: async (what = null) => { commits.push(await heads(backend)); return flush(what ? `${message}: ${what}` : message) },
+      // The uncommitted writes dropped.
+      discard: () => { edits.clear() },
+      // The last local commit undone (and what is not committed): back to the
+      // commit before it.
+      rollback: () => commits.length ? back(commits.pop()) : back(start),
       // Everything of this execution ditched, its local commits too: back to
       // where it started; the action goes on.
       reset: () => rollbackAll()

@@ -100,22 +100,28 @@ test('local commit and rollback in an action; the global commit at its end, a fa
       t.alike(seen, { work, read: '1' }, 'after a local commit, reads see it; the work folder in the context')
       t.ok(await at(ctx.repo, '/main/done.json'), 'merged at the end')
       t.absent(await at(ctx.repo, '/main/step.json'), 'with what followed the local commit')
-      // the local rollback: back to the last local commit; the action goes on
+      // discard: the uncommitted writes; rollback: the last local commit
       const back = { ...ACTIONS, rest: { ...ACTIONS.rest, put: async exec => {
         exec.put('/main/committed.json', Buffer.from('3'))
         await exec.commit()
-        exec.put('/main/also.json', Buffer.from('4'))
-        exec.rollback()
-        const after = { committed: (await exec.select('/main/committed.json')).length, also: (await exec.select('/main/also.json')).length }
-        exec.put('/main/kept.json', Buffer.from('5'))
+        exec.put('/main/dropped.json', Buffer.from('4'))
+        exec.discard()
+        exec.put('/main/undone.json', Buffer.from('5'))
+        await exec.commit()
+        await exec.rollback()
+        const n = async p => (await exec.select(p)).length
+        const after = { committed: await n('/main/committed.json'), dropped: await n('/main/dropped.json'), undone: await n('/main/undone.json') }
+        exec.put('/main/kept.json', Buffer.from('6'))
         return after
       } } }
       const name = guid()
       await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { api: 'haicc', protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name)))
       await execute(ctx, { actions: back })
-      t.alike((await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value.output, { committed: 1, also: 0 }, 'local rollback: back to the last local commit')
-      t.ok(await at(ctx.repo, '/main/committed.json'), 'what was committed locally: merged')
-      t.absent(await at(ctx.repo, '/main/also.json'), 'what was rolled back: not')
+      t.alike((await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value.output, { committed: 1, dropped: 0, undone: 0 }, 'discard dropped the uncommitted; rollback undid the last commit, not the one before')
+      t.ok(await at(ctx.repo, '/main/committed.json'), 'merged: what stayed committed')
+      t.absent(await at(ctx.repo, '/main/dropped.json'))
+      t.absent(await at(ctx.repo, '/main/undone.json'))
+      t.ok(await at(ctx.repo, '/main/kept.json'))
       // reset: everything of the execution ditched, local commits too
       const ditch = { ...ACTIONS, rest: { ...ACTIONS.rest, put: async exec => {
         exec.put('/main/first.json', Buffer.from('6'))
