@@ -264,6 +264,9 @@ host B's node gets its code by replication and extraction
 
 ### Bundles: a package's runnable form
 
+> The package writer named here is removed (2026-11-11); bundles are
+> rebuilt with the new packages (`packages.md`).
+
 **Built** (the package writer, `tools/package-writer`, by `bare-pack`;
 probed first). The probe (2026-11-08, the installed `bare-bundle`): a two-module
 bundle built by hand runs directly (`bare app.bundle`), no folder, nothing
@@ -338,6 +341,11 @@ cold boot's shell; the package folder lives in the package repository, the
 source and where tests run.
 
 ### Packages as bundles, published as releases
+
+> **Partly removed** (2026-11-11): phase 2's package writer
+> (`tools/package-writer`), its setup (`tools/setup/`) and release
+> (`tools/publish.sh`) are gone; packages and the boot's release are being
+> rebuilt (`packages.md`). What follows on them is history, until then.
 
 > **Being redesigned** (2026-11-10): `packages.md`, "What a package is" on.
 > Wrong here: the package repository holds the package whole (its

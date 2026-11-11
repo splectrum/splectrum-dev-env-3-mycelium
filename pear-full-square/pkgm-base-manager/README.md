@@ -2,7 +2,7 @@
 
 The package manager. It works only from packages made (making them is the
 development environment's, the other side of the airgap: the package
-writer, `tools/package-writer` in the development repository): a swarm's
+writer, phase 2's, removed; its closure, tree and signing used by `tools/package-assemble.js` and `tools/keygen.js`): a swarm's
 codebase assembled from its package into the master's package repository,
 and a package's tests, bottom up. On Bare (Bare's own modules): no npm, no git.
 

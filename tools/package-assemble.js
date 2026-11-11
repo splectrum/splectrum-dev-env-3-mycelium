@@ -1,7 +1,7 @@
 // A package's modules assembled into its folder (docs/design/packages.md,
 // "What a package is": modules/ once, at the package's top): from the
 // modules its package.json names (`modules`), what they run on, all the way
-// down (the package writer's closure):
+// down (pkgm-base-manager's closure):
 //   <package>/modules/<org>/<module>/   ours, copied whole (committed here)
 //   <package>/modules/node_modules/     the third-party code, links to ours by
 //                                       name (not committed here: node_modules
@@ -17,7 +17,6 @@ import { join, dirname, resolve, relative } from 'bare-path'
 import { fileURLToPath } from 'bare-url'
 import { closure } from '../pear-full-square/pkgm-base-manager/lib/closure.js'
 import { copy } from '../pear-full-square/pkgm-base-manager/lib/tree.js'
-import { oursOf } from './package-writer/index.js'
 
 const dev = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const readJson = f => JSON.parse(readFileSync(f, 'utf8'))
@@ -31,7 +30,12 @@ const [folder] = process.argv.slice(2)
 if (!folder) { console.error('usage: package-assemble.js <package folder>'); process.exit(2) }
 const pkg = resolve(folder)
 const start = readJson(join(pkg, 'package.json')).modules || []
-const ours = oursOf(dev, { packages: {} })
+// Our modules, by the name they are imported by: this repository's workspaces.
+const ours = new Map()
+for (const f of readJson(join(dev, 'package.json')).workspaces || []) {
+  if (!existsSync(join(dev, f, 'package.json'))) continue
+  ours.set(readJson(join(dev, f, 'package.json')).name || f.split('/')[1], { path: f, dir: join(dev, f) })
+}
 // brittle (the package's tests run on it) and this repository's aliases for
 // Node's built-ins (third-party code imports them by those names).
 const root = readJson(join(dev, 'package.json'))
