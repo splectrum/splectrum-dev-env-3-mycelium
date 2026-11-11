@@ -1,6 +1,7 @@
 # example/
 
-Examples, a folder each, each a structure unit as the package is. Optional.
+Examples, a folder each, each a structure unit. A collection: not a
+unit itself.
 
 | | |
 |---|---|

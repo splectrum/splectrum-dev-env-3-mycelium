@@ -15,8 +15,11 @@ models a structure of mrepos and how it is built and installed.
   structure of `main`, including where child mrepos are linked in. Its
   manifest lists the packages its mrepos require.
 - **A structure unit, the same at every level** (recursive: a package, an
-  mrepo inside it, a test), each part optional; no install code of its own
-  (below, "The boot mrepo"):
+  mrepo inside it, a test, an example), each part optional, a part present
+  giving the unit what it is for: `run.js` executable, `modules/` (with
+  `package.json`) its own dependencies, `mrepo/` an mrepo; no install code
+  of its own (below, "The boot mrepo"). `test/` and `example/` are
+  collections, a unit a folder, not units themselves:
 
 ```
 <unit>/
@@ -30,8 +33,8 @@ models a structure of mrepos and how it is built and installed.
   <name>/            a further unit: another mrepo (dispatch, terminal, a node), by its URI part name
   example/<name>/    optional: examples, a folder each, each a structure unit (no
                      other package named as one)
-modules/             once, at the package's top, shared by its units: its code, ours
-                     copied whole (<org>/<module>/), the third-party code (node_modules/)
+  modules/           its dependencies, where it has its own: ours copied whole
+                     (<org>/<module>/), the third-party code (node_modules/)
 ```
 
 - **`mrepo/` is laid out by layers**, as the repository will hold them,

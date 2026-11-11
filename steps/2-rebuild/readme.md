@@ -524,7 +524,10 @@ The package structure documented outside this repository (the human):
 short: "The haiccing package structure, documented."), written from
 `haiccing/package-docs-template/` here: a README at each level (`mrepo/`,
 `test/`, `test/<name>/`, a further unit, `modules/`), example files
-(`layer.json`, the sets), the rules; no other package named: `example/`, a whole package in the same structure (the human).
+(`layer.json`, the sets), the rules; no other package named: `example/`, a whole package in the same structure (the human). Then (the human): a structure unit is what its
+parts make it, each optional (`run.js` executable, `modules/` its own
+dependencies at any level, `mrepo/` an mrepo); `test/` and `example/`
+collections, a unit a folder, not units themselves (`example/hello/`).
 Only what is agreed. In a real package no README inside a layer (it would
 be committed into it): `layer.json` says what the layer is for.
 
