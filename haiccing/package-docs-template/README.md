@@ -69,4 +69,12 @@ bare <package>.bundle --work=<folder>
 
 From its folder, the same: `bare run.js --work=<folder>`.
 
+The boot is the exception: released as a standalone executable, one per
+platform, Bare built in, so nothing is needed before it. It puts Bare in
+place for the other packages, only if none is there.
+
+```sh
+./base-package-boot --work=<folder>
+```
+
 Written from [splectrum/splectrum-dev-env-3-mycelium](https://github.com/splectrum/splectrum-dev-env-3-mycelium).
