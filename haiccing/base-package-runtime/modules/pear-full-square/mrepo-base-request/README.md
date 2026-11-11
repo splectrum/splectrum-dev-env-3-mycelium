@@ -25,7 +25,8 @@ setting.
   levels `error`, `warn`, `info`, `debug`; the entries into the completed
   form, `complete(core, result, entries)`); `follow({ dir, name })` prints
   each record as it arrives in an mrepo's request layers and its children's
-  in view, one compact line a record, its topic the full path.
+  in view, one compact line a record, its topic the full path; `settled()`:
+  every request done (none pending or executing in any of them).
 - **Checked** (`check`): against the type, the API and the service state;
   an mrepo without `service` (no `/runtime/service.json`): no gate, the URI
   canonical only.

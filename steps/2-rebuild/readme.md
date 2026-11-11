@@ -845,6 +845,15 @@ running boot mrepo's inbox (the old runtime stopped, a new one running,
 the node's record updated). Both packages' `full` sets pass (12 and 11
 modules), nothing left running.
 
+A test ends by itself (the human, from the local agent's note: the try
+script looked hung): `follow`'s `settled()` (nothing pending or executing,
+something done); the boot's `--until-done[=<seconds>]` (exit 0 when every
+request is done, 4 when not in time); `~/haicc-try.sh` a test: the boot run
+until done, what was left shown, the runtimes stopped, the folder removed,
+its exit code passed or failed (`--pause` to inspect first); the local
+agent's check runs the same test. Tried without a terminal: passed, ended,
+nothing left.
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from

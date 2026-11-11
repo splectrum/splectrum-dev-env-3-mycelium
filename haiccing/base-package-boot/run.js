@@ -32,6 +32,8 @@
 //     --level     its log's threshold: error, warn, info (default), debug
 //     --follow    the records followed after the runtime starts (the default
 //                 on a terminal; --no-follow: not), until Ctrl-C
+//     --until-done[=<seconds>]  followed until every request is done, then
+//                 exit 0 (not in time: exit 4; 60 s by default)
 // Our modules from the package's own modules/ (no node_modules above them here).
 import process from './modules/node_modules/bare-process/index.js'
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync, rmSync, readFileSync } from './modules/node_modules/bare-fs/index.js'
@@ -128,7 +130,24 @@ if (!status) { console.error(`boot: its runtime did not start: ${runtime}`); pro
 // record as it moves through the request layers, the boot mrepo's and its
 // children's in view, one compact line a record, until Ctrl-C (the runtimes
 // keep running).
-if (args.includes('--follow') || (process.stdout.isTTY && !args.includes('--no-follow'))) {
+// With --until-done[=<seconds>] instead: followed until every request is
+// done (none pending or executing in the boot mrepo or its children, its
+// own done), then exits 0; the time limit (60 s by default) passed first:
+// exit 4. The runtimes keep running either way.
+const until = args.find(a => a === '--until-done' || a.startsWith('--until-done='))
+if (until) {
+  const limit = Number(until.split('=')[1] ?? 60) * 1000
+  const f = follow({ dir: viewOf(work, NAME), name: NAME })
+  const end = Date.now() + limit
+  let settled = false
+  while (!settled && Date.now() < end) {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    await f.pass().catch(() => {})
+    settled = await f.settled().catch(() => false)
+  }
+  f.stop()
+  if (!settled) { console.error(`boot: not every request done in ${limit / 1000} s`); process.exit(4) }
+} else if (args.includes('--follow') || (process.stdout.isTTY && !args.includes('--no-follow'))) {
   const f = follow({ dir: viewOf(work, NAME), name: NAME })
   await new Promise(resolve => process.once('SIGINT', resolve))
   f.stop()

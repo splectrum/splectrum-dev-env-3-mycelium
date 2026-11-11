@@ -43,7 +43,10 @@ command as typed, a GUID), each step's outcome logged in it:
    inside it, `main/host/`, its runtime started. The boot mrepo has no
    `service`: its packages are the runtime and the boot protocol; its
    runtime runs until stopped (SIGTERM, or `stop` on its socket).
-6. **Followed** on a terminal, or with `--follow` (`--no-follow`: not):
+6. **Followed** with `--until-done[=<seconds>]` until every request is
+   done (none pending or executing in the boot mrepo or the host; then
+   exit 0, not in time exit 4), or on a terminal, or with `--follow`
+   (`--no-follow`: not):
    every record as it moves through the request layers, the boot mrepo's
    and the host's, one compact line a record, until Ctrl-C (the runtimes
    keep running).
