@@ -158,7 +158,12 @@ sources only and carries no HTTPS addons (`bare-tls`, `bare-tcp`,
 executable too, run before the boot or by it). Likewise each package
 carries only the addons of what it imports: the p2p storage's
 (`rocksdb-native` and others, about 10 MB) and the swarm's (`udx-native`,
-`sodium-native`) with the packages that use them, not the boot.
+`sodium-native`) with the packages that use them, not the boot. And,
+once a swarm runs, **a sources swarm** (the human, 2026-11-11): a source
+kind of its own (`swarm:<key>`), an mrepo whose `packages` layer (laid out
+as a source) is replicated, a package fetched from any peer that has it,
+checked by the same signed manifest. The boot unchanged either way: it
+reads a filled sources folder.
 
 **Built** (2026-11-10, the first piece): the boot mrepo's structure,
 `haiccing/base-package-boot/mrepo/` (type `boot`, initialised already, its
