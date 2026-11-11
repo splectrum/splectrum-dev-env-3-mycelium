@@ -78,7 +78,13 @@ for what it contributes; no copies between them:
   the parent's `boot deploy`); `protocol.js`, its protocols' actions
   (loaded by the mrepo's runtime, named by each protocol's config); `run.js`,
   self-contained execution (run by Bare: the runtime package, a test, the
-  boot's standalone release). One bundle a package, one hash.
+  boot's standalone release). One bundle a package, one hash. Its main,
+  `main.js`, is the package's dispatcher (the human, 2026-11-11; **built**,
+  written by `tools/package-bundle.js` from the entry points it has): started
+  as the program (`bare <package>.bundle ...`), `run.js` runs; imported,
+  nothing runs and `run`, `deploy`, `protocol` are offered (a bundle is
+  loaded only through its main: once loaded, its modules can be imported by
+  path).
 - **Packages put in place are a boot activity** (the human, 2026-11-11):
   the store, `<work>/packages/<org>/<package>.bundle` (and
   `<work>/packages/addons/<sha256>`), holds each package an mrepo
