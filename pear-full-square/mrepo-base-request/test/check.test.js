@@ -60,9 +60,12 @@ test('a record: topic, key, timestamp, headers (empty), value; the onion; a form
   t.alike(complete(core, { ok: false, error: 'x' }).value.error, 'x')
 })
 
-test('check: an internal request, the mrepo\'s own: no API, no state; its URI canonical only', (t) => {
-  t.is(check({ protocol: 'help', action: 'extract', uri: '/', internal: true }, at('initialised')), null, 'before it is started, not offered: allowed')
-  t.is(check({ protocol: 'help', action: 'extract', uri: '/', internal: true }, { service: null, api: null }), null, 'without service too')
-  t.ok(/not canonical/.test(check({ protocol: 'help', action: 'extract', uri: '/A', internal: true }, at('started'))), 'its URI still checked')
-  t.ok(check({ protocol: 'help', action: 'extract', uri: '/' }, at('initialised')), 'unmarked: the gates apply')
+test('check: an internal request, the mrepo\'s own: no API, not waiting for started; the service\'s actions still by its state', (t) => {
+  const extract = { protocol: 'help', action: 'extract', uri: '/' }
+  t.is(check(extract, at('initialised'), { internal: true }), null, 'before it is started, not offered: allowed')
+  t.is(check(extract, { service: null, api: null }, { internal: true }), null, 'without service too')
+  t.ok(/not canonical/.test(check({ ...extract, uri: '/A' }, at('started'), { internal: true })), 'its URI still checked')
+  t.ok(check(extract, at('initialised')), 'not internal: the gates apply')
+  t.ok(/not now: service initialise/.test(check({ protocol: 'service', action: 'initialise', uri: '/' }, at('initialised'), { internal: true })), 'a service action: its state machine, internal or not')
+  t.is(check({ protocol: 'service', action: 'start', uri: '/' }, at('initialised'), { internal: true }), null, 'and allowed when its state allows')
 })

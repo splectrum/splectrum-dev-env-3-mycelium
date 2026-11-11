@@ -167,14 +167,12 @@ repository no longer holding `modules/`, wrong), `releases.md` and
   `--files`), `tools/bare tools/code-check.js`, each package's set from its
   bundle. Run the boot's test several times when the runtime or the
   repository code changed: a race shows one run in a few.
-- **Waiting for the human**: the repository `pear-full-square/pkgm-base-check`
-  (description: "Module: the code rules, checked on a package's modules
-  and its own code."); then `sh tools/products.sh pkgm-base-check`.
 - **Open, p2p-git**: a ref is written in place (for an instant unreadable
   to another process); to be written aside and renamed. `mycelium-git`'s
   `listBranches` tolerates it meanwhile.
 - **Internal requests** (part 24): placed by the mrepo itself, straight to
-  the handler into pending (`admit`); the inbox waits until the mrepo's own
+  the handler into pending (`admit`), no mark: internal is having no
+  record in the inbox (`isInternal`); the inbox waits until the mrepo's own
   are done. The runtime's status (operational) starts there.
 - **Assembly options per package** (part 24): `assemble.omit` in a
   package's `package.json`, a default in the root; try and see, its

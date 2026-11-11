@@ -113,7 +113,8 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
       for (const n of await layer({ repo, backend }, 'request/done').arrived()) history.push((await repo.read(`/request/done/${n}.json`).then(b => JSON.parse(b.toString()))).value.value)
       if (history.length < 3) await wait(100)
     }
-    t.alike(history.map(f => `${f.protocol} ${f.action} ${f.uri}${f.internal ? ' (internal)' : ''}`), ['boot deploy /boot', 'boot deploy /host', 'help extract / (internal)'], 'the history: the boot\'s deploy, the host\'s (preloaded), its help extracted (internal, placed by its runtime as it started)')
+    t.alike(history.map(f => `${f.protocol} ${f.action} ${f.uri}`), ['boot deploy /boot', 'boot deploy /host', 'help extract /'], 'the history: the boot\'s deploy, the host\'s (preloaded), its help extracted (placed by its runtime as it started)')
+    t.alike(await repo.select('/inbox/*').then(r => r.filter(([p]) => !p.endsWith('layer.json')).length, () => 0), 0, 'all three internal: none of them in the inbox')
     t.absent(history[1].error, 'the host\'s deploy done')
     t.ok(!history[2].error && history[2].output?.readmes > 0, `its help extracted before it took requests in ${JSON.stringify(history[2].output ?? history[2].error)}`)
     // followed: every record of the boot mrepo's request layers and its child's, one line each

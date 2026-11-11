@@ -14,15 +14,17 @@ An error goes into the request it happened to.
 ## Internal requests
 
 A request comes from the inbox, or from the mrepo itself. Either way it
-passes one handler into `pending/default`, which validates it by where it
-comes from.
+passes one handler into `pending/default`; the inbox itself checks nothing.
 
-- **From the inbox**: addressed to this mrepo, offered by its API. A form
-  that claims to be internal is refused: internal is where a request comes
-  from, not what it says.
+- **From the inbox**: the handler validates it: addressed to this mrepo,
+  offered by its API.
 - **Internal**: placed by the mrepo's runtime or by an action, straight to
-  the handler, never through the inbox. Marked internal by the handler, so
-  it is exempt from the API and the service state as it executes.
-- **Before the mrepo is operational**, the runtime takes no requests from
-  the inbox: its own come first, such as `help extract /`. The inbox's
-  records wait; none is refused for it.
+  the handler, never through the inbox. It carries no mark: a request is
+  internal when the inbox, which keeps its history, has no record of it. A
+  preloaded request is internal too.
+- **As it executes**, an internal request needs no API and does not wait
+  for the service to be started. The service's own actions stay under its
+  state machine, whoever asks.
+- **Before the mrepo is operational**, the runtime takes nothing from the
+  inbox: its own requests come first, such as `help extract /`. The
+  inbox's records wait.
