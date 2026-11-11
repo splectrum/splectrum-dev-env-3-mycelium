@@ -25,6 +25,14 @@ and `structure.md` (what holds now: built, agreed, open).
   `pending/default`, `capability/*`): behind in structure, not to be
   migrated; the new model is for mycelium repositories.
 - **The headers stay empty** until their use is planned with the human.
+- **READMEs cascade** (`rules.md`; every organisation but `splectrum`):
+  whenever a repository or folder comes into the work, bring it to the
+  rule first (its README linking down to every folder's; `lib/` and
+  `test/` documented). Done: the two packages, the two docs repositories,
+  the 12 modules the packages carry. Not yet: the other pear-full-square
+  modules, `splectral/`, `bare-for-pear/`, haiccing's `base-demo-*`,
+  `base-swarm-three-nodes`, `base-package-haicc`. Check with a crawl of the
+  links from the root (every folder reached, none broken).
 - **A test waits for a runtime's process to end** (signal 0, `kill -0`), not
   only for it to stop answering.
 

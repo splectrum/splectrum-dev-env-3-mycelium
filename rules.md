@@ -162,7 +162,8 @@ Scope: branch names and repository folders, wherever XPath is used.
   folder below it, and each of those to theirs, so from the root every
   folder is reached. Not inside a layer of an `mrepo/` structure (it would
   be committed into the layer): `mrepo/`'s own README covers its layers
-  (`haiccing/package-docs-template`).
+  (`haiccing/package-docs-template`). A repository not yet so is brought
+  to it when it comes into the work.
 - URIs are case-insensitive. A URI coming in is validated into its
   canonical, lowercase form and selected; external content keeps its own
   case, and the requester gets the object as stored. That lookup is the
