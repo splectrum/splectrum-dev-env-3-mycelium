@@ -559,7 +559,10 @@ With the human, for the boot's bundle:
   `haiccing/package-docs-mrepo/` here: a folder a layer, its README what
   the layer holds; the top README the modes, the storage, a request, the
   install. Descriptions (the human): lead with the type of package, so the
-  right one is found in the organisation's list ("Docs package: ...").
+  right one is found in the organisation's list ("Docs package: ..."). Then
+  (the human): the layers inside `mrepo/`, documentation in place, not a
+  definition (no `layer.json`); siblings later (`example/` with actual
+  configs, compliance tests).
 
 ## The product repositories: updated (2026-11-10)
 
