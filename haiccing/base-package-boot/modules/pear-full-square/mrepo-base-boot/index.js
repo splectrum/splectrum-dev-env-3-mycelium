@@ -1,14 +1,16 @@
-// mrepo-base-boot: the mrepo boot protocol (docs/design/repositories.md,
-// "The external API": deploy, teardown, redeploy, executed by the parent),
-// carried by base-package-boot and linked into every mrepo that deploys
-// others: its actions, the install routine's first piece, the prerequisite
-// checks.
-//   build({ from, work, name, time })   an mrepo built from its structure (lib/build.js)
-//   check(list, ctx)                    the prerequisites checked, a fix only with a yes (lib/prerequisites.js)
-//   deploy, teardown, redeploy          the boot protocol's actions (lib/deploy.js)
-//   place({ dir, store, sources, list }) packages put in place: the store, links, the layer (lib/packages.js)
-//   fetch, structureOf                  a package into the store; its mrepo/ part, from its bundle
-export { build } from './lib/build.js'
-export { deploy, teardown, redeploy } from './lib/deploy.js'
-export { place, fetch, structureOf, storeOf } from './lib/packages.js'
-export { check, parseSource, inContainer, bareOf, acceptable, BARE_ORG, TARBALL } from './lib/prerequisites.js'
+// mrepo-base-boot: its methods, a directory each (README.md beside each).
+//   external/   the boot protocol's actions: deploy, teardown, redeploy
+//   internal/   the install routine and what the actions use
+export { deploy } from './external/deploy/index.js'
+export { teardown } from './external/teardown/index.js'
+export { redeploy } from './external/redeploy/index.js'
+export { build } from './internal/build/index.js'
+export { place } from './internal/place/index.js'
+export { fetch } from './internal/fetch/index.js'
+export { structureOf } from './internal/structure-of/index.js'
+export { storeOf } from './internal/store-of/index.js'
+export { check, BARE_ORG, TARBALL } from './internal/check/index.js'
+export { parseSource } from './internal/parse-source/index.js'
+export { inContainer } from './internal/in-container/index.js'
+export { bareOf } from './internal/bare-of/index.js'
+export { acceptable } from './internal/acceptable/index.js'

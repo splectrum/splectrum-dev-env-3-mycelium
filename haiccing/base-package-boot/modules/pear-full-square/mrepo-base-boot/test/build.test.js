@@ -6,7 +6,7 @@ import { tmpdir } from 'bare-os'
 import { fileURLToPath } from 'bare-url'
 import { openRepo } from 'mycelium-git'
 import { start, ask, open } from 'mrepo-base-runtime'
-import { build } from '../lib/build.js'
+import { build } from '../index.js'
 import { send } from 'mrepo-base-runtime/test/fixture.js'
 
 const here = join(dirname(fileURLToPath(import.meta.url)), '..')

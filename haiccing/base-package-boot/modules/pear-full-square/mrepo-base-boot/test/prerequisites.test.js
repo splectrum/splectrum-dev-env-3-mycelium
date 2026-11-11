@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, mkdirSync
 import { join } from 'bare-path'
 import os, { tmpdir } from 'bare-os'
 import { spawnSync } from 'bare-subprocess'
-import { check, parseSource, inContainer, bareOf, acceptable, BARE_ORG } from '../lib/prerequisites.js'
+import { check, parseSource, inContainer, bareOf, acceptable, BARE_ORG } from '../index.js'
 
 // Bare's tarball for putting it in place: the version running this test, as
 // npm publishes it (npm view: its sha512; npm pack: the tarball), into a
