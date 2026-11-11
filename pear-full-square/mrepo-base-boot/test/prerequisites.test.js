@@ -29,6 +29,7 @@ test('platform, work, sources', async (t) => {
     const gone = await check([{ check: 'sources' }], { work, sources: [parseSource('folder:/nowhere/at/all')] })
     t.absent(gone.ok, 'a source folder missing: refused')
     t.exception(() => parseSource('ftp:x'), /not a source/)
+    t.absent((await check([{ check: 'work' }], { work: '/', name: 'boot' })).ok, 'the filesystem\'s root: refused')
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
 

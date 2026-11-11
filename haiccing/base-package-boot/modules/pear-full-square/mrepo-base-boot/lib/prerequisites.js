@@ -8,7 +8,7 @@
 //                     fixed. Resolves { ok, results }.
 // The checks:
 //   platform   { platforms: ['linux-x64'] }   this machine's
-//   work       the work folder writable, no other mrepo there ({ name }: the
+//   work       the work folder writable, not the filesystem's root, no other mrepo there ({ name }: the
 //              one this deploys may be there already)
 //   sources    each reachable: a folder there; github: its host answering
 //   bare       Bare at <work>/bare/bin/bare, from the pinned tarball; fix: put
@@ -20,7 +20,7 @@
 // Conditions (`when`): 'not-in-container' (no /.dockerenv, no container
 // runtime in /proc/1/cgroup).
 import { existsSync, readFileSync, writeFileSync, mkdirSync, accessSync, rmSync, renameSync, chmodSync, constants } from 'bare-fs'
-import { join, dirname } from 'bare-path'
+import { join, dirname, resolve } from 'bare-path'
 import os from 'bare-os'
 import crypto from 'bare-crypto'
 import zlib from 'bare-zlib'
@@ -124,6 +124,7 @@ const CHECKS = {
     return platforms.includes(p) ? { ok: true, value: p } : { ok: false, missing: `a platform of ${platforms.join(', ')} (this is ${p})` }
   },
   work (_, { work, name }) {
+    if (resolve(work) === resolve('/')) return { ok: false, missing: 'a work folder other than the filesystem\'s root' }
     try { mkdirSync(work, { recursive: true }); accessSync(work, constants.W_OK) } catch { return { ok: false, missing: `a writable work folder: ${work}` } }
     const f = join(work, 'mrepo.json')
     if (existsSync(f)) {

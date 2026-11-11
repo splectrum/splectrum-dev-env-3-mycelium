@@ -6,6 +6,8 @@
 //   build({ from, work, name, time })   an mrepo built from its structure (lib/build.js)
 //   check(list, ctx)                    the prerequisites checked, a fix only with a yes (lib/prerequisites.js)
 //   deploy, teardown, redeploy          the boot protocol's actions (lib/deploy.js)
+//   place({ work, name, sources, list }) packages put in place: the store, links, the layer (lib/packages.js)
 export { build } from './lib/build.js'
 export { deploy, teardown, redeploy } from './lib/deploy.js'
+export { place, storeOf } from './lib/packages.js'
 export { check, parseSource, inContainer, bareOf, BARE_ORG, TARBALL } from './lib/prerequisites.js'

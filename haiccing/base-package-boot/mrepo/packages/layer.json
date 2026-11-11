@@ -1,0 +1,7 @@
+{
+  "mode": "replicated",
+  "description": "The packages the boot mrepo runs on: their list and hashes; the bundles in the work folder's store, hard linked into packages/.",
+  "packages": [
+    "haiccing/base-package-runtime"
+  ]
+}

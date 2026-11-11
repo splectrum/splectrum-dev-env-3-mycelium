@@ -14,3 +14,13 @@ hands over a form completed elsewhere the same way (the boot's own request). Run
 ## Tests
 
 - `npm test`: the unit tests
+
+The action's context (`exec`): `read`, `select` (overlaid: a target read
+from its execution branch), `put`, `remove` (collected), `runtime` (the
+runtime's context, read only: its name, its work folder). Two contexts:
+local, the action's: `commit()` (the writes so far committed to the
+execution branches; later reads see them), `discard()` (the uncommitted writes
+dropped), `rollback()` (the last local commit undone), `reset()` (everything of this execution
+ditched, back to the start), the action going on; global, the runtime's,
+not the action's: when the action ends, its writes committed and the
+execution branches merged back, once; a failure resets.

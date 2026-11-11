@@ -65,5 +65,8 @@
     "process": "npm:bare-node-process@1.0.1",
     "url": "npm:bare-node-url@1.0.1",
     "util": "npm:bare-node-util@1.0.0"
+  },
+  "devDependencies": {
+    "bare-build": "1.6.2"
   }
 }

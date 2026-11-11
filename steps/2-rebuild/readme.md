@@ -675,6 +675,33 @@ bundle; from a store layout (`<work>/packages/haiccing/`, `addons/` two up)
 on the Bare unpacked from `sources/holepunchto/`, it loads, its addons
 included.
 
+## 19. The boot's release, up to the runtime's start (2026-11-11)
+
+The human: the base-package-boot release, not starting the runtime, for a
+local test. `mrepo-base-boot`'s `lib/packages.js` (`place`: sourced,
+checked, into the store, hard linked, the list and hashes committed); the
+boot mrepo's `packages` leaf lists `haiccing/base-package-runtime`;
+`run.js`: prerequisites, built, packages in place, its request into
+`request/execute`, printed with `next` (the runtime's command), exit;
+the mrepo from the embedded `mrepo-files.js` in the release.
+`tools/boot-release.js` (`release/`, gitignored): the Bare built into a
+standalone (asked of a probe: 1.35.0 with `bare-build` 1.6.2), its tarball
+fetched and pinned; the runtime's bundle into `release/sources/`; the boot
+package staged (its mrepo embedded, its `bare.json` the built-in Bare) and
+built standalone (118 MB). `bare-build` 1.6.2 a dev dependency. Tested:
+the package's test (prerequisites; put in place; the runtime started from
+`next`, the history deploy then start; run again: already built, nothing
+committed); the release from outside the repository, a clean environment:
+in place, the runtime started from `next` on Bare 1.35.0, stopped.
+
+Found: a standalone executable's arguments start right after it (no
+script): `run.js` took the first for the script and fell back to the
+current folder, `/`, and wrote its mrepo there; fixed (the arguments by
+whether a script is there), and the work folder may not be the
+filesystem's root (a prerequisite). Its leftovers at `/` in this container
+(`/bare`, `/mrepos`, `/packages`, `/mrepo.json`) could not be removed by me
+(a safety check).
+
 ## The product repositories: updated (2026-11-10)
 
 The modules changed in this phase so far, each folder's history split from
