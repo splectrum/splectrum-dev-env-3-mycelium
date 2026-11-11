@@ -88,6 +88,12 @@ for what it contributes; no copies between them:
   initial boot mrepo by the release, a prerequisite step (as Bare), from
   the bundles it carries. Changing an mrepo's packages is a `redeploy`: no
   packages protocol.
+- **Construction may reach the work folder's store** (the human,
+  2026-11-11): a running mrepo sees only forward (its own folder and below,
+  no `../`); `deploy` is construction, not running, and links from
+  `<work>/packages/` into the child's `packages/`. Children live inside
+  their parent (the host at `boot/main/host/`), so the parent reaches a
+  child's inbox folder directly. No second store.
 - **Each package hard linked individually** (the human, 2026-11-11): its
   bundle and each of its addons, into the mrepo's `packages/`, so the mrepo
   runs only the packages registered for it, at the versions its layer pins,
