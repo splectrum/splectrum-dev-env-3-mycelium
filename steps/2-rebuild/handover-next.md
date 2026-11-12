@@ -18,6 +18,9 @@ built is in the packages: `haiccing/package-docs-template` and
   merge, a message file: `git merge --no-ff -F <file>`) and push both at
   once; then the product repositories (`sh tools/products.sh <module>...`,
   from `main`).
+- **The lock file by hand**: a module added or removed is written into
+  `package.json` (workspaces) and `package-lock.json` (its workspace entry,
+  its link entry) directly, its link made in `node_modules/`; no npm run.
 - **Bare only**: npm only to change dependencies (`npm install
   --ignore-scripts`; then `chmod +x node_modules/bare-runtime-linux-x64/bin/bare`,
   npm drops its exec bit). The repo's Bare:

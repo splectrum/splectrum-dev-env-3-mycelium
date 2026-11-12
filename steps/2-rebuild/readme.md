@@ -1185,3 +1185,9 @@ integrity of a package's mrepo side. In `pkgm-base-check`
 Generic units in every package now: `modules`, `help`, `code`, `mrepo`,
 and in situ `help-in-situ`, `mrepo-in-situ`. All sets pass (the runtime's
 `full` 17 units, the boot's 18, its test 72 asserts).
+
+The lock file by hand (the human: minimal or no npm runs): the removed
+modules' workspace and link entries out of `package-lock.json`, the two
+new modules in (`mrepo-base-help`, `pkgm-base-check`), its workspaces as
+`package.json`'s; the dangling links out of `node_modules/`. The packages
+assemble to the same; the sets pass.
