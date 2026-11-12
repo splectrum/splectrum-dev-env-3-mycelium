@@ -2,7 +2,7 @@
 # given URL, checked against its sha512 (the lockfile's SRI form,
 # sha512-<base64>), unpacked into a folder; a Bare already there and from
 # that same tarball (its recorded hash) is kept. Downloads with curl (in
-# the shell: docs/rules.md 26). POSIX sh, coreutils only; sourced by
+# the shell: the rule: Bare only). POSIX sh, coreutils only; sourced by
 # tools/install.sh and copied into the setup's header.
 #   ensure_bare <url> <sha512-SRI> <folder>     -> <folder>/bin/bare, executable
 ensure_bare () {

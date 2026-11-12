@@ -1,6 +1,5 @@
 // The code rules (pkgm-base-check) on this repository's code: the modules the
-// haiccing packages carry and the packages' own code (not the tools: they
-// live here, where docs/ is). One line a
+// haiccing packages carry and the packages' own code. One line a
 // problem; exit 1 when there is one.
 //   tools/bare tools/code-check.js
 import process from 'bare-process'

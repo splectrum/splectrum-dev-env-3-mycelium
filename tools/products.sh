@@ -9,7 +9,7 @@
 # parents the product's head and the split, its tree the split's with the
 # product's LICENSE kept; pushed to the product's main (a fast-forward of
 # it). A first merge from this repository joins the histories. One line a
-# module: its split, the product's commit. Glue only (docs/rules.md 30).
+# module: its split, the product's commit. Glue only.
 set -eu
 dev=$(cd "$(dirname "$0")/.." && pwd)
 cd "$dev"

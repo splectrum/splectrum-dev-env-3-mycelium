@@ -1,5 +1,5 @@
 // The boot's release, for this platform, built into the local sources
-// (sources/ here, gitignored; docs/design/packages.md, "The boot mrepo: the
+// (sources/ here, gitignored; haiccing/base-package-boot's README: "The boot mrepo: the
 // root"), with what it needs beside it:
 //   sources/haiccing/base-package-boot-<platform>   the release: a standalone
 //                                           executable (bare-build --standalone:

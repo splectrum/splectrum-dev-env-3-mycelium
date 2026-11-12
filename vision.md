@@ -1,5 +1,8 @@
 # Vision
 
+References here to `docs/` and `notes/` point into this repository's
+history: those folders were removed on 2026-11-11.
+
 Status: **directions, not settled** (2026-10-30; taken from phase 2,
 2026-11-07, where parts were agreed with the human and say so). Kept so
 decisions take them into account, and added to every seed for

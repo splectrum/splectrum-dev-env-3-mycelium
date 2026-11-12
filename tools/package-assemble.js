@@ -1,4 +1,4 @@
-// A package's modules assembled into its folder (docs/design/packages.md,
+// A package's modules assembled into its folder (haiccing/package-docs-template,
 // "What a package is": modules/ once, at the package's top): from the
 // modules its package.json names (`modules`), what they run on, all the way
 // down (pkgm-base-manager's closure):
