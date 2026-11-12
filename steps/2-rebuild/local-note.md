@@ -6,6 +6,67 @@ kept in a local source, `~/haicc-release/sources/` (npm's tarballs by URL,
 a `curl` that serves them, git URLs to local mirrors), so
 `tools/install.sh` and `tools/boot-release.js` run with no network.
 
+## 2026-11-12: `31501e6`
+
+The prompt ran, with one stop in step 3 (1): on this clone
+`tools/boot-release.js` failed until the three packages it bundles but
+does not assemble were assembled by hand (`tools/package-assemble.js`, its
+output gitignored; no code changed). Then everything as written. The code
+not changed here; a patch for (1), tested on a fresh checkout, then taken
+out.
+
+| Step | Result |
+|---|---|
+| 2. `sh tools/install.sh` | exit 0: 237 kept, 3 linked, nothing to fetch; both files there |
+| 3. `tools/bare tools/boot-release.js` | exit 134: `package-bundle.js haiccing/base-package-service`: `Cannot find module './modules/node_modules/bare-os/index.js'` (see 1) |
+| 3, after `tools/package-assemble.js` for `base-package-service`, `package-docs-mrepo`, `package-docs-template` | exit 0: the release (117,644,552 bytes), Bare 1.35.0, the five bundles (`base-package-runtime`, `-boot`, `-service`, `package-docs-mrepo`, `-template`) and `manifest.json`; no tracked file changed |
+| 4. `HAICC_DEV="$PWD" HOME=/tmp/boot-check-home sh tools/haicc-try.sh --yes`, not on a terminal | exit 0, `== passed: every request done`, about a minute, ended by itself: 18 records; the boot mrepo and the host inside it (`.git`, `inbox`, `outbox`, `packages`, `runtime.sock`); two runtimes, on the binary nvm's npm `bare` runs (recorded, no Node.js wrapper); stopped, the folder removed, none left |
+| 5. `tools/haicc-try.sh` to `~/haicc-try.sh` | done (`HAICC_DEV` needed: the clone is at `~/splectrum/splectrum-dev-env-3-mycelium`) |
+
+### 1. `boot-release.js` bundles three packages it does not assemble
+
+Step 1 of `boot-release.js` assembles `base-package-runtime` and
+`base-package-boot`, then bundles those two and `base-package-service`,
+`package-docs-mrepo` and `package-docs-template`. A package's
+`modules/node_modules/` is gitignored (`node_modules/`), made only by
+`package-assemble.js`: in a clone where those three were never assembled
+(any fresh clone, this one), bundling `base-package-service` stops on its
+first third-party import. Where it was assembled before (the cloud's
+checkout, by its tests), it passes, with whatever was assembled then.
+
+**Proposed:** every package assembled right before it is bundled, one list
+(the patch). Tested: a fresh worktree of `31501e6` (no
+`haiccing/*/modules/node_modules` at all), the patch applied: exit 0, the
+five bundles and the release.
+
+~~~~diff
+diff --git a/tools/boot-release.js b/tools/boot-release.js
+index c613bdf..3369849 100644
+--- a/tools/boot-release.js
++++ b/tools/boot-release.js
+@@ -57,14 +57,12 @@ const meta = JSON.parse(sh('curl', ['-fsSL', '--retry', '3', `https://registry.n
+ const integrity = meta.dist.integrity
+ console.log(JSON.stringify({ bare: version, integrity }))
+ 
+-// 1. The packages: modules assembled; the runtime's bundle into the sources.
+-tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', 'base-package-runtime'))
+-tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', 'base-package-boot'))
+-tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-runtime'), `--out=${out}`)
+-tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-boot'), `--out=${out}`)
+-tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-service'), `--out=${out}`)
+-tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'package-docs-mrepo'), `--out=${out}`)
+-tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'package-docs-template'), `--out=${out}`)
++// 1. The packages: each assembled (its modules/, node_modules included:
++// gitignored, so not there in a fresh clone), then bundled into the sources.
++for (const p of ['base-package-runtime', 'base-package-boot', 'base-package-service', 'package-docs-mrepo', 'package-docs-template']) {
++  tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', p))
++  tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', p), `--out=${out}`)
++}
+ 
+ // 2. Bare's tarball, as npm publishes it, by its organisation.
+ // (kept when there: npm's tarball, the same bytes)
+~~~~
+
 ## 2026-11-11, second: `ca44de2`
 
 The prompt ran as written (the patch below applied by the cloud), with one
