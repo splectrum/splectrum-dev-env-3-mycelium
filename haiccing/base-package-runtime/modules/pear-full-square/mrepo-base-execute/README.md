@@ -3,9 +3,9 @@
 The mrepo execute protocol: it runs the request in `request/execute` and
 merges its changes back.
 
-An action runs in execution branches made from their targets, inside an
-execution context: it reads the targets overlaid and writes only the
-execution branches. It may commit locally as it goes. When it ends, each
+An action runs on the request's own execution branches,
+`execute/<key>/<target>`, inside an execution context: it reads the targets
+overlaid and writes only those branches. It may commit locally as it goes. When it ends, each
 branch is merged back into its target; a failure resets instead. The runtime,
 `mrepo-base-runtime`, runs it, with the actions the mrepo's packages offer.
 
@@ -15,6 +15,19 @@ branch is merged back into its target; a failure resets instead. The runtime,
 | [test/](test/) | its tests, what each checks |
 
 ## Design
+
+- **Request branches**: a request is processed on its own,
+  `execute/<key>/<target>`. Its branch of `request/execute` holds its
+  principal, begun there by the request protocol, and only ever adds; the
+  others are made as the request first writes a target. Merged back and
+  removed at its end, discarded on a failure. No history kept in them.
+- **A wrapped remote command** (`lib/remote.js`): a request whose URI leads
+  into a child mrepo (`/main/<name>/...`, its record at `/main/<name>.json`)
+  is passed on whole to the child's inbox folder. Its processing ends: what
+  it waits for (`remote`) is added to its principal. A request branch not
+  being processed has a waiting principal. Once the request protocol has
+  added the child's response to the branch, the principal is returned with
+  it here.
 
 The mrepo execute protocol, base variant: a request in `request/execute`
 executed in execution

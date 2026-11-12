@@ -25,8 +25,16 @@ export function isoStyleBackend (git, gitdir, { fs = nodeFs } = {}) {
     // A branch listed while another process is writing its ref (written in
     // place by the engine: for an instant unreadable) is resolved again,
     // briefly; still not there, it was deleted meanwhile: not listed.
+    // The engine lists nothing when its walk of the refs is disturbed (a
+    // branch removed by another process meanwhile: a request branch, made
+    // and removed with every request): an empty listing is asked for again,
+    // briefly; a repository with no branch at all is rare (a new one).
     async listBranches () {
-      const names = (await git.listBranches(at)).sort()
+      let names = []
+      for (let i = 0; i < 10 && !names.length; i++) {
+        if (i) await new Promise(resolve => setTimeout(resolve, 5))
+        names = (await git.listBranches(at)).sort()
+      }
       const resolved = async n => {
         for (let i = 0; ; i++) {
           try { return await git.resolveRef({ ...at, ref: `refs/heads/${n}` }) } catch (err) {

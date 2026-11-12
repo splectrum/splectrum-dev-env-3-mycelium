@@ -6,7 +6,7 @@ The requests, as they move. Non-atomic. A request is one document,
 | layer | |
 |---|---|
 | `pending/default` | waiting, in the order they arrived; a preloaded request here runs first |
-| `execute` | the one executing |
+| `execute` | a completed request, merged in from its own branch, on its way to `done` |
 | `done` | each finished request, refused ones too, in the order done: the history |
 
 An error goes into the request it happened to.
@@ -28,3 +28,34 @@ passes one handler into `pending/default`; the inbox itself checks nothing.
 - **Before the mrepo is operational**, the runtime takes nothing from the
   inbox: its own requests come first, such as `help extract /`. The
   inbox's records wait.
+
+## Wrapped remote command
+
+A request whose URI leads into another mrepo is not executed where it
+arrived. It is passed on whole, and that mrepo's response becomes its
+result.
+
+- **Where a URI leads**: `/main/<name>/<rest>` enters the child linked at
+  `/main/<name>`; inside it the URI is `/<rest>`. A child may pass it on
+  again: a request can travel through several mrepos.
+- **Passed on**: a child request, the same protocol, action and body, is
+  delivered to the other mrepo's inbox. On the same node that is direct: a
+  file dropped into its inbox folder. Another node needs dispatch, which is
+  not built.
+- **Waiting**: the request's processing ends there. Its principal, on
+  its own branch, now says which child it waits for. The mrepo goes on
+  with its other requests.
+- **The response** is collected from the child's outbox folder and comes
+  in through `pending/default` like any request of the mrepo's own. At the
+  front of the queue it is not begun as a request: it is added to the
+  principal's branch, and the principal is returned with it. Both move on
+  to `done`; the response is not sent anywhere else.
+- **Checked by the mrepo that executes it**: the one passing it on asks
+  only that the URI is canonical.
+
+```json
+{ "protocol": "help", "action": "get", "uri": "/main/host/packages",
+  "remote": { "at": "/main/host", "uri": "/packages", "key": "…" },
+  "output": { } }
+```
+

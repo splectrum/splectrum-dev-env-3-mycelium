@@ -24,14 +24,16 @@
 //                                 when its core names where it is to arrive
 // A record keeps its name through its moves; a restart finishes a move half
 // done (in both: the old place cleared). The boxes (lib/boxes.js) are layers.
+import { existsSync, readFileSync } from 'bare-fs'
+import { join } from 'bare-path'
 import { validate as canonical } from 'mycelium-uri'
-import { post, ensure, inboxFolder, outboxOf, INBOX, OUTBOX } from './lib/boxes.js'
+import { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX } from './lib/boxes.js'
 import { record, wrap, guid, complete, isComplete, logger, LEVELS } from './lib/record.js'
 import { layer, AUTHOR } from './lib/layer.js'
 import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
 
 export { follow } from './lib/follow.js'
-export { post, ensure, inboxFolder, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
+export { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'
@@ -148,7 +150,42 @@ export async function untaken (ctx) {
   if (!b.inbox) return []
   const taken = new Set()
   for (const l of [PENDING, EXECUTE, DONE]) if (b[l]) for (const n of await layer(ctx, l).list()) taken.add(n)
+  for (const p of await principals(ctx)) taken.add(p.id) // being processed, or waiting, on its own branch
   return (await layer(ctx, 'inbox').arrived()).filter(n => !taken.has(n))
+}
+
+// A request's own branch of request/execute: execute/<key>/request/execute.
+// The request is processed there, never in request/execute itself, and the
+// branch only ever adds: its principal, what it waits for, a child's
+// response, its completion; then it is merged into request/execute and
+// removed (no history kept in the execute branches: request/done has it).
+export const requestBranch = id => `execute/${id}/${EXECUTE}`
+
+// The request branches here, each with its principal (the request the branch
+// is named after): { id, branch, core, waits (the child's key it waits for,
+// its command passed on), response (the child's completed form, once added) }.
+// A branch not being processed has a waiting principal: waits, no response.
+export async function principals (ctx) {
+  const out = []
+  for (const [b] of await ctx.backend.listBranches()) {
+    const id = b.match(/^execute\/([^/]+)\/request\/execute$/)?.[1]
+    if (!id) continue
+    const read = n => ctx.repo.read(`/${b}/${n}.json`).then(x => JSON.parse(x.toString()), () => null)
+    const core = (await read(id))?.value
+    if (!core) continue
+    const waits = core.value?.remote?.key ?? null
+    out.push({ id, branch: b, core, waits, response: waits ? (await read(waits))?.value ?? null : null })
+  }
+  return out
+}
+
+// A request begun: its branch made from request/execute, its principal added.
+export async function begin (ctx, name, core) {
+  const branch = requestBranch(name)
+  if (!(await branches(ctx))[branch]) await ctx.writer.createExecution(EXECUTE, name)
+  const c = await ctx.writer.change(branch)
+  await c.put(`/${name}.json`, Buffer.from(JSON.stringify(wrap(`/${EXECUTE}`, core)) + '\n'))
+  await c.commit(`Execute ${name}`, { author: AUTHOR })
 }
 
 export async function request (ctx) {
@@ -156,6 +193,22 @@ export async function request (ctx) {
   const pending = layer(ctx, PENDING)
   const execute = layer(ctx, EXECUTE)
   const done = layer(ctx, DONE)
+
+  // The waiting principals' responses collected: each child's completed
+  // form, from its outbox folder (a child in view: main/<name>/), through
+  // the handler into pending, as the mrepo's own.
+  const all = await principals(ctx)
+  if (ctx.dir) {
+    const queuedNow = await pending.list()
+    for (const p of all) {
+      if (!p.waits || p.response || queuedNow.includes(p.waits)) continue
+      const { at } = p.core.value.remote
+      const file = join(ctx.dir, at.slice(1), 'outbox', `${p.waits}.json`)
+      if (!existsSync(file)) continue
+      const back = JSON.parse(readFileSync(file, 'utf8')).value
+      if (back?.key === p.waits && isComplete(back)) await admit(ctx, back, { origin: 'internal', name: p.waits })
+    }
+  }
 
   // The inbox taken in, when its head has moved, each record through the
   // handler (admit); not while the mrepo is not operational yet (ctx.intake
@@ -186,19 +239,42 @@ export async function request (ctx) {
     const into = wrap(`/${DONE}`, core)
     await done.put(name, into, `Done ${name}`)
     await execute.remove(name, `Done ${name}: out of execute`)
-    await sendBack(ctx, name, core)
+    // a child's response, merged in with its principal: kept in done, not
+    // sent on (it arrived where it was addressed: a request's branch here)
+    if (!(typeof core.topic === 'string' && core.topic.startsWith(`/${ctx.name}/execute/`))) await sendBack(ctx, name, core)
   }
 
-  // The next pending request into execute (a move half done finished first).
-  // The queue in the order requests arrived in it: its commit chain.
-  const executing = await execute.list()
+  // The next pending request begun on its own branch (a move half done
+  // finished first). The queue in the order requests arrived in it: its
+  // commit chain. One at a time: not while a request is being processed (a
+  // branch whose principal is not waiting) or a completed one is still in
+  // request/execute.
+  const now = await principals(ctx)
   const queued = await pending.arrived()
-  for (const name of queued.filter(n => executing.includes(n))) await pending.remove(name, `${name}: in execute`)
-  const next = queued.find(n => !executing.includes(n))
-  if (!executing.length && next) {
+  for (const name of queued.filter(n => now.some(p => p.id === n))) await pending.remove(name, `${name}: on its branch`)
+  const busy = now.some(p => !p.waits || p.response) || (await execute.list()).length > 0
+  const next = queued.find(n => !now.some(p => p.id === n))
+  if (!busy && next) {
     const core = (await pending.read(next)).value
-    const into = wrap(`/${EXECUTE}`, core)
-    await execute.put(next, into, `Execute ${next}`)
-    await pending.remove(next, `${next}: in execute`)
+    // A response to a principal waiting here (its core addressed to that
+    // request's branch, /<mrepo>/execute/<key>): not begun as a request:
+    // added to that branch, a record of its own beside the principal; the
+    // execute protocol then returns the principal with it.
+    const id = isComplete(core) && typeof core.topic === 'string' && core.topic.startsWith(`/${ctx.name}/execute/`) ? core.topic.slice(`/${ctx.name}/execute/`.length) : null
+    if (id !== null) {
+      const p = now.find(x => x.id === id)
+      if (p?.waits === core.key) {
+        const c = await ctx.writer.change(p.branch)
+        await c.put(`/${core.key}.json`, Buffer.from(JSON.stringify(wrap(`/${EXECUTE}`, core)) + '\n'))
+        await c.commit(`${id}: the response of ${core.key}`, { author: AUTHOR })
+      } else {
+        // nobody waits for it here: kept, in done
+        await done.put(next, wrap(`/${DONE}`, core), `Stray response ${next}`)
+      }
+      await pending.remove(next, `${next}: a response${p ? ` for ${id}` : ''}`)
+      return
+    }
+    await begin(ctx, next, core)
+    await pending.remove(next, `${next}: on its branch`)
   }
 }
