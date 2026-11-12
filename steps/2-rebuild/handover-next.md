@@ -1,6 +1,6 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-12, part 29). Read `CLAUDE.md`
+Kept current by the cloud session (last: 2026-11-12, part 30). Read `CLAUDE.md`
 first (what is here, how to validate), then this, then `readme.md` here
 (each part's record; the latest parts last). The documentation of what is
 built is in the packages: `haiccing/package-docs-template` and
@@ -84,13 +84,20 @@ Not built yet, and the platform is not deployed until the first two are
    protocols, those `gated` in their config (the human); the others stay
    open. Still open from it: the runtime's status beyond "not yet
    operational".
-2. **The mrepo application**, and what `haicc` is. Settled with the human
-   (part 29): `haicc` is not a protocol; it would only offer a swarm
-   centred access structure, which an mrepo application whose `main` holds
-   that structure makes redundant. To design: the mrepo application, what
-   brings a selection of protocols and a `main` structure together (today
-   a target package's `mrepo/packages/layer.json` lists the packages). The
-   boot's preloaded `boot deploy /host` then targets it.
+2. **haicc, and the mrepo application.** What haicc is (the human, part
+   30): its concern is deployment, global across swarms, and the cross
+   swarm bridges. On the host's Linux side an app (downloads of sources
+   and third-party components, install from scratch); on the swarm side a
+   specific mrepo, the only one on a host or node with the boot protocol.
+   It only connects directly with local mrepos (the folder inbox). The
+   host's haicc mrepo takes from the terminal and connects to the swarm
+   nodes' haicc mrepos on the host, which proxy to the haicc mrepo of the
+   node in its container: commands are issued on the host, internally a
+   web of haicc mrepos. Only one haicc mrepo actively manages a host or a
+   node. To design with the human: how this maps onto what is built (the
+   boot mrepo, `base-package-boot`, the placeholder `/host`), and the
+   mrepo application, what brings a `main` structure and a selection of
+   protocols together.
    **XPath in the mrepo**: built for the base as the wrapped remote
    command (a URI leading into a child is passed on whole; request
    branches; the principal waits on its branch; the response returned).
