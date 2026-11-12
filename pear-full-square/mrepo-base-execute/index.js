@@ -1,32 +1,41 @@
-// mrepo-base-execute: the execute protocol, base variant
-//. One pass over its
+// mrepo-base-execute: the execute protocol, base variant. One pass over its
 // data state, given the runtime's context ({ name, repo, writer, backend }):
-// a request in request/execute (an envelope around the core, the pre-filled
-// form), its form not yet completed:
-//   1. its execution branches made from their targets, or brought up to them:
-//      execute/main from main, execute/runtime from runtime,
-//      execute/request/execute from request/execute
-//   2. checked again against the runtime's data as it is now (the service
+// a request on its own branch of request/execute (an envelope around the
+// core, the pre-filled form), its form not yet completed:
+//   1. checked again against the runtime's data as it is now (the service
 //      state may have moved since it was queued); its action run inside the
 //      execution context (read-only to it, frozen): it reads a target
-//      overlaid by its execution branch, writes only the execution branches
-//      (main, runtime), and reads the runtime's context through it
-//      (exec.runtime: the repository's name, its branches, read access; for
-//      config later), never its writer
-//   3. the form completed with its output (or the error that stopped it),
-//      written in its envelope into execute/request/execute
-//   4. each execution branch merged back into its own target: main and
-//      runtime first, then request/execute (the request completed: the
-//      request protocol moves it to done, then starts the next pending)
-// executed(ctx, name, completed): steps 3 and 4 for request/execute alone, a
-// form completed elsewhere (the boot's own request) handed over the same way.
+//      overlaid by the request's execution branch, writes only its execution
+//      branches, and reads the runtime's context through it (exec.runtime:
+//      the repository's name, its branches, its protocols, read access),
+//      never its writer
+//   2. its execution branches its own, by its key: execute/<key>/<target>,
+//      each made from its target's head as the request first writes there
+//      (main, runtime, help, protocols: those the mrepo has)
+//   3. each execution branch merged back into its own target, then removed
+//      (a failure: removed, nothing merged)
+//   4. the form completed with its output (or the error that stopped it),
+//      written in its envelope through execute/<key>/request/execute, merged
+//      into request/execute (the request completed: the request protocol
+//      moves it to done, then starts the next pending)
+// executed(ctx, name, record): step 4 alone, a form completed elsewhere (the
+// boot's own request) handed over the same way.
 // failed(ctx, why): a runtime's pass that failed, its error in the request
 // executing (its form completed with it: `runtime: <message>`); the names
 // completed ([]: none was executing).
-// The base's actions are the framework's generic ones (lib/actions.js); a
-// type's own come later, read from its package.
-import { layer, wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runtimeData, isInternal } from 'mrepo-base-request'
+// A request is processed on its own branch of request/execute (begun there
+// by the request protocol, straight from pending), which only ever adds: its
+// principal, what it waits for, a child's response, its completion; merged
+// into request/execute then, and removed.
+// A wrapped remote command (lib/remote.js): a request whose URI leads into
+// another mrepo is passed on whole. Its processing ends there: what it waits
+// for is added to its principal; a request branch not being processed has a
+// waiting principal. The request protocol adds the child's response to the
+// branch; the principal is then returned with it here.
+// lib/actions.js: the generic rest actions, the tests' own.
+import { wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runtimeData, isInternal, principals } from 'mrepo-base-request'
 import { ACTIONS } from './lib/actions.js'
+import { remoteOf, pass } from './lib/remote.js'
 
 export { ACTIONS }
 // The targets an action writes, those the mrepo has: main, runtime, help,
@@ -35,30 +44,43 @@ export const TARGETS = ['main', 'runtime', 'help', 'protocols']
 
 const heads = async backend => Object.fromEntries(await backend.listBranches())
 
-// An execution branch, made from its target or brought up to it.
-async function sync (w, backend, target) {
-  if ((await heads(backend))[`execute/${target}`]) await w.merge(target, `execute/${target}`, `Sync with ${target}`, { author: AUTHOR, fastForward: true })
-  else await w.createExecution(target)
+// A request's execution branches: its own, by its key, one a target it
+// writes: execute/<key>/<target>.
+export const branchOf = (id, target) => `execute/${id}/${target}`
+
+// One made from its target's head; there already (a waiting request's):
+// brought up to its target. -> its name
+async function open (w, backend, id, target) {
+  const name = branchOf(id, target)
+  if ((await heads(backend))[name]) await w.merge(target, name, `Sync with ${target}`, { author: AUTHOR, fastForward: true })
+  else await w.createExecution(target, id)
+  return name
 }
 
-// A form completed (in its envelope), written through request/execute's own
-// execution branch and merged back into it.
-export async function executed ({ backend, writer: w }, name, completed) {
-  await sync(w, backend, EXECUTE)
-  const c = await w.change(`execute/${EXECUTE}`)
-  await c.put(`/${name}.json`, Buffer.from(JSON.stringify(completed) + '\n'))
+// One removed: merged or not (a failure's: discarded).
+async function close (backend, id, target) {
+  const name = branchOf(id, target)
+  const at = (await heads(backend))[name]
+  if (at) await backend.deleteBranch(name, at)
+}
+
+// A request's record written (in its envelope) through its own execution
+// branch of request/execute and merged back into it; the branch removed.
+export async function executed ({ backend, writer: w }, name, record) {
+  const branch = await open(w, backend, name, EXECUTE)
+  const c = await w.change(branch)
+  await c.put(`/${name}.json`, Buffer.from(JSON.stringify(record) + '\n'))
   await c.commit(`${name}: executed`, { author: AUTHOR })
-  await w.merge(`execute/${EXECUTE}`, EXECUTE, `Merge ${name}: executed`, { author: AUTHOR })
+  await w.merge(branch, EXECUTE, `Merge ${name}: executed`, { author: AUTHOR })
+  await close(backend, name, EXECUTE)
 }
 
 export async function failed (ctx, why) {
-  const requests = layer(ctx, EXECUTE)
   const names = []
-  for (const name of await requests.list()) {
-    const core = (await requests.read(name)).value
-    if (isComplete(core)) continue
-    await executed(ctx, name, wrap(`/${EXECUTE}`, complete(core, { ok: false, error: why })))
-    names.push(name)
+  for (const p of await principals(ctx)) {
+    if (isComplete(p.core) || p.waits) continue // done already; or waiting: not executing
+    await executed(ctx, p.id, wrap(`/${EXECUTE}`, complete(p.core, { ok: false, error: why })))
+    names.push(p.id)
   }
   return names
 }
@@ -77,26 +99,41 @@ const runtimeView = ctx => Object.freeze({
 
 export async function execute (ctx, { actions = ACTIONS } = {}) {
   const { repo, backend, writer: w } = ctx
-  const requests = layer(ctx, EXECUTE)
-  for (const name of await requests.list()) {
-    const core = (await requests.read(name)).value
-    if (isComplete(core)) continue
+  // Each request on its own branch of request/execute, its principal the
+  // request the branch is named after.
+  for (const p of await principals(ctx)) {
+    const { id: name, core } = p
+    // completed already (a pass interrupted before the merge): merged now
+    if (isComplete(core)) { await w.merge(p.branch, EXECUTE, `Merge ${name}: executed`, { author: AUTHOR }); await close(backend, name, EXECUTE); continue }
     const form = core.value
+    // A wrapped remote command, passed on (lib/remote.js): waiting for its
+    // child's response, it is not being processed; the response added to
+    // its branch, the principal is returned with it.
+    if (p.waits) {
+      if (!p.response || !isComplete(p.response)) continue
+      const r = p.response.value
+      await executed(ctx, name, wrap(`/${EXECUTE}`, complete(core, 'error' in r ? { ok: false, error: r.error } : { ok: true, value: r.output ?? null })))
+      continue
+    }
     const present = await heads(backend)
     const targets = TARGETS.filter(t => present[t])
-    for (const t of [...targets, EXECUTE]) await sync(w, backend, t)
-    // The action's context: reads overlaid (a target read from its execution
-    // branch), writes collected per target. Two contexts: local, the
-    // action's (exec.commit(): the writes so far committed to the execution
-    // branches, later reads see them; exec.discard(): the uncommitted writes
-    // dropped; exec.rollback(): the last local commit undone; exec.reset():
-    // all of it ditched, back to the start), for building up its changes and handling its errors; global, the runtime's, not the action's: when the action
-    // ends, its writes committed and the execution branches merged back into
-    // their targets, once; a failure rolls back globally (the execution
-    // branches reset to where they started, nothing merged).
-    const start = await heads(backend)
+    // The action's context: reads overlaid (a target read from the request's
+    // execution branch, once it wrote there), writes collected per target.
+    // Two contexts: local, the action's (exec.commit(): the writes so far
+    // committed to its execution branches, later reads see them;
+    // exec.discard(): the uncommitted writes dropped; exec.rollback(): the
+    // last local commit undone; exec.reset(): all of it ditched, back to the
+    // start), for building up its changes and handling its errors; global,
+    // the runtime's, not the action's: when the action ends, its writes
+    // committed and its execution branches merged back into their targets,
+    // once, then removed; a failure discards them, nothing merged.
+    // Its execution branches, made as it first writes a target: each with
+    // the head it started from.
+    const made = new Map()
+    const ensure = async t => { if (!made.has(t)) { const b = await open(w, backend, name, t); made.set(t, (await heads(backend))[b]) } }
+    const snapshot = async () => { const h = await heads(backend); return new Map([...made.keys()].map(t => [t, h[branchOf(name, t)]])) }
     const edits = new Map()
-    const branchOf = uri => {
+    const targetOf = uri => {
       const [, first] = uri.split('/')
       return targets.includes(first) ? first : null
     }
@@ -108,41 +145,45 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
     const threshold = await repo.read('/runtime/log.json').then(b => JSON.parse(b.toString()).level, () => 'info')
     const { log, entries } = logger(threshold)
     const flush = async (what = message) => {
-      for (const [b, list] of edits) {
-        const c = await w.change(`execute/${b}`)
+      for (const [t, list] of edits) {
+        await ensure(t)
+        const c = await w.change(branchOf(name, t))
         for (const [op, path, bytes] of list) op === 'put' ? await c.put(path, bytes) : c.remove(path)
         await c.commit(what, { author: AUTHOR })
       }
       edits.clear()
     }
-    // Back to the start: the writes not committed discarded, each execution
-    // branch reset to where this execution started (a failure; or the
-    // action's exec.reset()).
-    // The execution branches set back to given heads.
+    // Its execution branches set back: to the heads given (one made after:
+    // to where it started); the writes not committed discarded.
     const back = async to => {
       edits.clear()
       const now = await heads(backend)
-      for (const t of targets) if (now[`execute/${t}`] !== to[`execute/${t}`]) await backend.updateBranch(`execute/${t}`, to[`execute/${t}`], now[`execute/${t}`])
+      for (const [t, from] of made) {
+        const b = branchOf(name, t)
+        const at = to.get(t) ?? from
+        if (now[b] !== at) await backend.updateBranch(b, at, now[b])
+      }
     }
-    const rollbackAll = () => { commits.length = 0; return back(start) }
+    const rollbackAll = () => { commits.length = 0; return back(new Map()) }
     // The heads before each local commit: what a rollback goes back to.
     const commits = []
     const exec = Object.freeze({
       runtime: runtimeView(ctx),
-      // A URI as the execution sees it: /main/x read from execute/main.
-      path: uri => branchOf(uri) ? `/execute${uri}` : uri,
+      // A URI as the execution sees it: /main/x read from its execution
+      // branch of main, once it has one.
+      path: uri => made.has(targetOf(uri)) ? `/execute/${name}${uri}` : uri,
       select: uri => repo.select(exec.path(uri)),
       read: uri => repo.read(exec.path(uri)),
-      put (uri, bytes) { const b = branchOf(uri); if (!b) throw new Error(`not writable here: ${uri}`); (edits.get(b) ?? edits.set(b, []).get(b)).push(['put', inside(uri), bytes]) },
-      remove (uri) { const b = branchOf(uri); if (!b) throw new Error(`not writable here: ${uri}`); (edits.get(b) ?? edits.set(b, []).get(b)).push(['remove', inside(uri)]) },
+      put (uri, bytes) { const b = targetOf(uri); if (!b) throw new Error(`not writable here: ${uri}`); (edits.get(b) ?? edits.set(b, []).get(b)).push(['put', inside(uri), bytes]) },
+      remove (uri) { const b = targetOf(uri); if (!b) throw new Error(`not writable here: ${uri}`); (edits.get(b) ?? edits.set(b, []).get(b)).push(['remove', inside(uri)]) },
       // The local commit: the writes so far committed to the execution
       // branches (later reads see them).
-      commit: async (what = null) => { commits.push(await heads(backend)); return flush(what ? `${message}: ${what}` : message) },
+      commit: async (what = null) => { commits.push(await snapshot()); return flush(what ? `${message}: ${what}` : message) },
       // The uncommitted writes dropped.
       discard: () => { edits.clear() },
       // The last local commit undone (and what is not committed): back to the
       // commit before it.
-      rollback: () => commits.length ? back(commits.pop()) : back(start),
+      rollback: () => back(commits.length ? commits.pop() : new Map()),
       // Everything of this execution ditched, its local commits too: back to
       // where it started; the action goes on.
       reset: () => rollbackAll(),
@@ -151,6 +192,23 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       log
     })
     let result
+    // Its URI leading into another mrepo: passed on whole, this request
+    // waiting (its state kept on its own branch of request/execute); nothing
+    // of it executed here, the other mrepo checks it.
+    let to = null
+    try { to = await remoteOf(exec, form.uri) } catch {}
+    if (to) {
+      try {
+        // what it waits for, added to its principal on its branch: it stays
+        // there, waiting; the branch not being processed any more
+        const c = await w.change(await open(w, backend, name, EXECUTE))
+        await c.put(`/${name}.json`, Buffer.from(JSON.stringify(wrap(`/${EXECUTE}`, { ...core, value: pass(ctx, name, core, to) })) + '\n'))
+        await c.commit(`${name}: passed on to ${to.at}, waiting`, { author: AUTHOR })
+      } catch (err) {
+        await executed(ctx, name, wrap(`/${EXECUTE}`, complete(core, { ok: false, error: err.message })))
+      }
+      continue
+    }
     try {
       // Checked again as it executes: the state now, not as it was queued
       // (two queued while booted: the second initialise refused here).
@@ -165,11 +223,13 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       result = { ok: false, error: err.message }
       await rollbackAll()
     }
-    // Merged back, main first: each execution branch that moved.
+    // Merged back, each execution branch that moved (main first); then
+    // removed, merged or discarded.
     if (result.ok) {
       const now = await heads(backend)
-      for (const t of targets) if (now[`execute/${t}`] !== start[`execute/${t}`]) await w.merge(`execute/${t}`, t, `Merge ${message}`, { author: AUTHOR })
+      for (const [t, from] of made) if (now[branchOf(name, t)] !== from) await w.merge(branchOf(name, t), t, `Merge ${message}`, { author: AUTHOR })
     }
+    for (const t of made.keys()) await close(backend, name, t)
     // The form completed, in its envelope, through its own execution branch.
     await executed(ctx, name, wrap(`/${EXECUTE}`, complete(core, result, entries)))
   }

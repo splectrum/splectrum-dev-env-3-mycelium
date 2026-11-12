@@ -1260,3 +1260,82 @@ release built and tried on the human's machine: passed, every request
 done, ended by itself. Its finding applied (its patch): `boot-release.js`
 assembles each package right before bundling it (it bundled five,
 assembled two: a fresh clone stopped).
+
+## 29. Request branches; the wrapped remote command (2026-11-12)
+
+Discussed with the human, from what `haicc` is. Settled:
+
+- **`haicc` is not a protocol**: it adds no functionality of its own; what
+  it would offer is an access structure, swarm centred. An mrepo
+  application whose `main` holds that structure makes it redundant. To
+  design with the mrepo application.
+- **XPath comes into the mrepo**, as internal functionality that manages
+  the URI and issues cascading requests: a request whose URI leads into
+  another mrepo is rewritten as one sent to that mrepo; a request can
+  travel through several. Delivery on the same node is direct, a file
+  dropped into the inbox folder; another node needs dispatch.
+- **Request branches**: a request is processed on branches of its own,
+  named by its key. The branch id is the principal's name; the execution
+  context holds it and opens the principal directly. A request branch not
+  being processed has a waiting principal.
+- **A child's response** carries the branch id, arrives through pending,
+  is added to that branch's state, and processing proceeds. For the base,
+  receiving it returns the principal with it (option B). Later, with
+  proper design (the human has clear ideas): composite actions, an action
+  resuming at a label after its child request (option A), a preloading of
+  data before processing.
+- **For the base: only the wrapped remote command.**
+- **Noted by the human**: a request has become asynchronous where it was
+  synchronous; that will matter for directly submitted internal
+  processing. The importance of internal processing documentation, and of
+  AVRO for the compatibility of the data sets.
+
+Built (first without the human's confirmation of the reading, which was
+wrong to do; then corrected, point by point, to what was agreed):
+
+- **A request is processed on its own branches** (`mrepo-base-execute`,
+  `mrepo-base-request`; `createExecution(target, id)` in `mycelium-git`):
+  `execute/<key>/<target>`. It goes from pending straight onto
+  `execute/<key>/request/execute` (`begin`), its principal there; never
+  into `request/execute` itself, which only receives completed requests by
+  merge, on their way to done (and is cleared then, as before). The branch
+  only ever adds: the principal, what it waits for, a child's response,
+  its completion. The others (`main`, `runtime`, ...) are made as the
+  request first writes a target. Merged back and removed at its end,
+  discarded on a failure. No history kept in the execute branches (the
+  human): `request/done` has it. One at a time: the next pending request
+  begins when no branch is being processed.
+- **The wrapped remote command** (`lib/remote.js`): `/main/<name>/<rest>`,
+  a child's record at `/main/<name>.json`, leads into that child; the
+  request is passed on whole (the same protocol, action and body, the URI
+  `/<rest>`), its core addressed back to `/<mrepo>/execute/<key>`, dropped
+  into the child's inbox folder. What it waits for is added to its
+  principal (`remote: { at, uri, key }`). No flags: the branch id is the
+  principal's name; a branch not being processed has a waiting principal.
+- **The response** (`principals`): collected from the child's outbox
+  folder into pending (the mrepo's own); at the front of the queue added
+  to the principal's branch, a record of its own; the execute protocol
+  then returns the principal with it. Merged in with its principal, it
+  goes to `request/done` and is not sent on. A response nobody waits for
+  goes to `request/done`. `settled()` counts any request branch as not
+  done.
+- **Checked by the mrepo that executes it**: the one passing it on asks
+  only that the URI is canonical.
+- **A second defect of p2p-git, found by the branches made and removed
+  with every request**: its listing of branches returns nothing when a
+  branch is removed during its walk of the refs; a process reading the
+  repository then saw no branches at all, one run in five.
+  `mycelium-git`'s `listBranches` asks again, briefly. Open with the
+  first: to be fixed in p2p-git.
+
+Open: a child that never answers leaves its principal waiting (no time
+limit); dispatch to another node; a wildcard URI fanning out; the
+consequences of asynchronous requests (completion order no longer the
+queue's order).
+
+Tested: the module tests unchanged (execute 6/6, request 9/9, runtime 6/6,
+boot 9/9, mycelium-git 114/114); the boot's integration test sends the boot
+mrepo `help get /main/host/packages`: passed on to the host, answered by
+it, the response kept in done and not sent on, no request branch left; a
+URI with no mrepo linked there stays (93 asserts, eight runs in a row).
+All five packages' `full` sets pass.

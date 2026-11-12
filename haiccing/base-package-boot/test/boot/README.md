@@ -24,6 +24,9 @@ the tests: `boot.test.js`. It leaves nothing running.
    - requests posted to the boot mrepo's inbox: `boot redeploy /host` (the
      old runtime stopped, a new one), `boot teardown /host` (its runtime
      ended, its folder and record gone), `boot deploy /host` again;
+   - a wrapped remote command: `help get /main/host/packages` sent to the
+     boot mrepo is passed on to the host, waits, and is completed with the
+     host's response; a URI with no mrepo linked there stays here;
    - the runtime protocol: `runtime run` on the runtime package, a dry run
      of `test/full` (what it would run), a run of `test/validate` (passed,
      in a floating instance, a line a unit in its log), `/run` refused;

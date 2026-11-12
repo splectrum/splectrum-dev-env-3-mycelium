@@ -165,6 +165,24 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     const h3 = await ask({ repo: host, op: 'status' })
     t.ok(h3 && h3.pid !== h2.pid, 'the host back, a new runtime running')
 
+    // a wrapped remote command: a URI that leads into the host is passed on
+    // to it whole; the request waits, the host's response becomes its result
+    const far = await sent({ protocol: 'help', action: 'get', uri: '/main/host/packages', body: { level: 'oneliner' } })
+    t.alike([far?.error, far?.output?.uri, far?.remote?.at, far?.remote?.uri, typeof far?.remote?.key], [undefined, '/packages', '/main/host', '/packages', 'string'], `help get /main/host/packages: answered by the host ${far?.error ?? ''}`)
+    const hostRepo = openRepo(p2pgitBackend(join(host, '.git'), { fs }))
+    const passed = await hostRepo.read(`/request/done/${far?.remote?.key}.json`).then(b => JSON.parse(b.toString()).value, () => null)
+    t.alike([/^\/boot\/execute\/[0-9a-f-]{36}$/.test(passed?.topic ?? ''), passed?.value?.uri, passed?.value?.protocol], [true, '/packages', 'help'], 'in the host: the child request, its URI the host\'s own, addressed back to the waiting request\'s branch')
+    let kept = null // moved to done right after its principal, in the same pass
+    for (let i = 0; i < 50 && !kept; i++) { kept = await repo.read(`/request/done/${far?.remote?.key}.json`).then(b => JSON.parse(b.toString()).value, () => null); if (!kept) await wait(100) }
+    t.alike([kept?.value?.uri, 'output' in (kept?.value ?? {})], ['/packages', true], 'the host\'s response, merged in with its principal: kept in done')
+    t.absent(await repo.read(`/outbox/${far?.remote?.key}.json`).then(() => true, () => false), 'and not sent on')
+    const near = await sent({ protocol: 'help', action: 'get', uri: '/packages', body: { level: 'oneliner' } })
+    t.is(near?.remote, undefined, 'a URI that stays here: executed here')
+    t.alike(far?.output?.links?.map(l => l.uri).filter(u => u.includes('base-package-boot')), [], 'the host\'s packages, not the boot mrepo\'s (it does not link the boot)')
+    t.ok(near?.output?.links?.some(l => l.uri.includes('base-package-boot')), 'the boot mrepo\'s own do')
+    t.alike((await p2pgitBackend(gitdirOf(work, 'boot'), { fs }).listBranches()).map(([b]) => b).filter(b => b.startsWith('execute/')), [], 'no request branch left: the principal\'s removed once it was returned')
+    const nowhere = await sent({ protocol: 'help', action: 'get', uri: '/main/nowhere/x' })
+    t.ok(/no help at/.test(nowhere?.error ?? ''), 'no mrepo linked there: the URI stays here')
     // the runtime protocol, built in: a linked package's tests, through its
     // dispatcher; a dry run says what would run, a run returns the results
     const dry = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/test/full', body: { dryRun: true } })
@@ -229,8 +247,8 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
     const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
     let n = 0
-    for (let i = 0; i < 100 && (n = await records('done')) < 22; i++) await wait(100)
-    t.is(n, 22, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs, the three helps, the four in-situ validations, the two help extractions and the two registrations (internal, one a start), the service mrepo deployed and torn down among them)')
+    for (let i = 0; i < 100 && (n = await records('done')) < 26; i++) await wait(100)
+    t.is(n, 26, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs, the three helps, the four in-situ validations, the two help extractions and the two registrations (internal, one a start), the service mrepo deployed and torn down, the three requests of the wrapped remote command and the response of the host among them)')
     t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
     const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
     t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')

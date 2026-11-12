@@ -49,6 +49,19 @@ setting.
   form completed with the error in `request/done`. No mark: a request is
   internal when the inbox has no record of it (`isInternal(ctx, name)`).
   `ctx.intake === false`: the inbox not taken in yet.
+- **A request begins on its own branch** (`begin`, `principals`,
+  `requestBranch`): from pending straight onto
+  `execute/<key>/request/execute`, its principal; never into
+  `request/execute` itself, which only receives completed requests by
+  merge, on their way to done. One at a time: the next begins when no
+  branch is being processed.
+- **Waiting principals**: a branch not being processed has one, which says
+  which child it waits for. The child's response is collected from its
+  outbox folder into pending (the mrepo's own) and, at the front of the
+  queue, added to that branch as a record of its own. Merged in with its
+  principal, it goes to `request/done` and is not sent on. A response
+  nobody waits for goes to `request/done`. `settled()` counts any request
+  branch as not done.
 - **Checked** (`check`): its URI canonical; where the mrepo has a
   service, against the protocols the runtime loaded (`ctx.protocols`):
   the protocol loaded, the action configured, the URI one its config names
