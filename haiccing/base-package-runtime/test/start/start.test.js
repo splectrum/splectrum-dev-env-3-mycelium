@@ -1,6 +1,6 @@
 // The runtime as an mrepo's process: bare run.js --work=<folder>, over an
-// mrepo on the filesystem storage written here (its layers, initialised, a
-// preloaded start); started, answering through its inbox, stopped.
+// mrepo on the filesystem storage written here (its layers, no service);
+// started, its protocols registered, answering through its inbox, stopped.
 import test from '../../modules/node_modules/brittle/index.js'
 import process from '../../modules/node_modules/bare-process/index.js'
 import { spawn, spawnSync } from '../../modules/node_modules/bare-subprocess/index.js'
@@ -9,37 +9,30 @@ import { join, dirname } from '../../modules/node_modules/bare-path/index.js'
 import os, { tmpdir } from '../../modules/node_modules/bare-os/index.js'
 import { fileURLToPath } from '../../modules/node_modules/bare-url/index.js'
 import { openRepo, writer, p2pgitBackend } from '../../modules/pear-full-square/mycelium-git/index.js'
-import { record, wrap, guid, gitdirOf, viewOf, PENDING } from '../../modules/pear-full-square/mrepo-base-request/index.js'
+import { record, wrap, guid, gitdirOf, viewOf } from '../../modules/pear-full-square/mrepo-base-request/index.js'
 import { ask } from '../../modules/pear-full-square/mrepo-base-runtime/index.js'
 
 const pkg = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
 const author = { name: 'test', email: 'test@localhost' }
-const API = { api: 'test', types: [{ uri: '/', protocols: { service: ['start', 'stop', 'shutdown'], rest: ['get'] } }, { uri: '/main', deep: true, protocols: { rest: ['get'] } }] }
 
-// An mrepo, as a deploy leaves it: its layers, initialised, a start preloaded.
+// An mrepo, as a deploy of the runtime package alone leaves it: its layers,
+// no service (no gate), nothing preloaded.
 async function mrepo (work) {
   const gitdir = gitdirOf(work, 'test')
   mkdirSync(gitdir, { recursive: true })
   const backend = p2pgitBackend(gitdir, { fs })
   await backend.init()
   const w = writer(backend)
-  for (const l of ['main', 'runtime', 'inbox', 'outbox', 'request/pending/default', 'request/execute', 'request/done']) await w.createLayer(l, `Create ${l}`, { author })
-  const m = await w.change('main'); await m.put('/hello.json', Buffer.from('{"text":"hi"}')); await m.commit('hello', { author })
-  const r = await w.change('runtime')
-  await r.put('/service.json', Buffer.from(JSON.stringify({ state: 'initialised', type: 'test' })))
-  await r.put('/api.json', Buffer.from(JSON.stringify(API)))
-  await r.commit('Initialised', { author })
-  const core = record(null, { api: 'test', protocol: 'service', action: 'start', uri: '/' }, guid())
-  const p = await w.change(PENDING); await p.put(`/${core.key}.json`, Buffer.from(JSON.stringify(wrap(`/${PENDING}`, core)))); await p.commit('Preloaded', { author })
+  for (const l of ['main', 'runtime', 'protocols', 'inbox', 'outbox', 'request/pending/default', 'request/execute', 'request/done']) await w.createLayer(l, `Create ${l}`, { author })
   mkdirSync(join(viewOf(work, 'test'), 'inbox'), { recursive: true })
   writeFileSync(join(work, 'mrepo.json'), JSON.stringify({ storage: 'filesystem', name: 'test' }))
   return backend
 }
 
 async function send (work, backend, form) {
-  const core = record('/test', { api: 'test', ...form }, guid())
+  const core = record('/test', { ...form }, guid())
   writeFileSync(join(viewOf(work, 'test'), 'inbox', `${core.key}.json`), JSON.stringify(wrap('/test/inbox', core)))
   const repo = openRepo(backend)
   for (let i = 0; i < 100; i++) {
@@ -60,7 +53,15 @@ test('the runtime: started, answering, stopped', { timeout: 60000 }, async (t) =
     let s = null
     for (let i = 0; i < 100 && !s; i++) { s = await ask({ work, op: 'status' }); if (!s) await wait(100) }
     t.alike(s?.repository, { name: 'test', storage: 'filesystem', id: null, key: null }, 'running: the mrepo, on the filesystem')
-    t.alike((await send(work, backend, { protocol: 'rest', action: 'get', uri: '/main/hello.json' })).output, { text: 'hi' }, 'started by its preloaded request; answering')
+    // its own protocols, registered as it started (an internal request)
+    const repo = openRepo(backend)
+    let registered = null
+    for (let i = 0; i < 100 && !registered; i++) { registered = await repo.read('/protocols/runtime.json').then(b => JSON.parse(b.toString()), () => null); if (!registered) await wait(100) }
+    t.alike([registered?.package, Object.keys(registered?.actions ?? {})], ['haiccing/base-package-runtime', ['run', 'register']], 'the runtime protocol in its protocols layer')
+    t.ok(await repo.read('/protocols/help.json').then(() => true, () => false), 'and help')
+    // answering through its inbox
+    t.alike((await send(work, backend, { protocol: 'runtime', action: 'register', uri: '/' }))?.output, { registered: ['help', 'runtime'] }, 'a request through its inbox: answered')
+    t.ok(/no such|not offered|no action/.test((await send(work, backend, { protocol: 'rest', action: 'get', uri: '/main' }))?.error ?? ''), 'a protocol it does not offer: refused as it executes')
     t.ok((await ask({ work, op: 'stop' }))?.stopping, 'asked to stop')
     for (let i = 0; i < 100 && alive(child.pid); i++) await wait(100)
     t.absent(alive(child.pid), 'its process ended')

@@ -29,8 +29,9 @@ import { layer, wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runt
 import { ACTIONS } from './lib/actions.js'
 
 export { ACTIONS }
-// The targets an action writes, those the mrepo has: main, runtime, help.
-export const TARGETS = ['main', 'runtime', 'help']
+// The targets an action writes, those the mrepo has: main, runtime, help,
+// protocols.
+export const TARGETS = ['main', 'runtime', 'help', 'protocols']
 
 const heads = async backend => Object.fromEntries(await backend.listBranches())
 
@@ -68,6 +69,8 @@ const runtimeView = ctx => Object.freeze({
   work: ctx.work ?? null,
   dir: ctx.dir ?? null,
   branches: async () => (await ctx.backend.listBranches()).map(([b]) => b),
+  // the protocols the runtime loaded, their configs by name
+  protocols: ctx.protocols ?? {},
   select: uri => ctx.repo.select(uri),
   read: uri => ctx.repo.read(uri)
 })

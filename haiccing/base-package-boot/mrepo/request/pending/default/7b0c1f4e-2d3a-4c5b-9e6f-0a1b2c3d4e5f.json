@@ -9,7 +9,6 @@
     "timestamp": "2026-11-11T00:00:00.000Z",
     "headers": {},
     "value": {
-      "api": "boot",
       "protocol": "boot",
       "action": "deploy",
       "uri": "/host",

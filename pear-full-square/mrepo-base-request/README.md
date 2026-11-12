@@ -49,9 +49,13 @@ setting.
   form completed with the error in `request/done`. No mark: a request is
   internal when the inbox has no record of it (`isInternal(ctx, name)`).
   `ctx.intake === false`: the inbox not taken in yet.
-- **Checked** (`check`): an internal request for its URI, and a service action for the state; otherwise against the type, the API and the service state;
-  an mrepo without `service` (no `/runtime/service.json`): no gate, the URI
-  canonical only.
+- **Checked** (`check`): its URI canonical; where the mrepo has a
+  service, against the protocols the runtime loaded (`ctx.protocols`):
+  the protocol loaded, the action configured, the URI one its config names
+  (`matches`), the service state one that allows it (none named: started).
+  An internal request is not asked whether it is offered, and waits for a
+  state only where the action names its states. Without a service: no
+  gate.
 - **A layer's records** (`layer(ctx, branch)`): one JSON document a
   record, `<name>.json`, listed in the order they arrived (the commit
   chain). A layer's config, `layer.json` (committed with it when built from

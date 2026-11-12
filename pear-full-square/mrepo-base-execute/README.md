@@ -6,9 +6,8 @@ merges its changes back.
 An action runs in execution branches made from their targets, inside an
 execution context: it reads the targets overlaid and writes only the
 execution branches. It may commit locally as it goes. When it ends, each
-branch is merged back into its target; a failure resets instead. The base
-actions are `rest` (get, put, delete) and `service` (initialise, start,
-stop, shutdown). The runtime, `mrepo-base-runtime`, runs it.
+branch is merged back into its target; a failure resets instead. The runtime,
+`mrepo-base-runtime`, runs it, with the actions the mrepo's packages offer.
 
 | | |
 |---|---|
@@ -26,8 +25,10 @@ the runtime's context read through `exec.runtime`), its record completed,
 each branch merged back into its own target. `executed(ctx, name, record)`
 hands over a form completed elsewhere the same way (the boot's own request).
 Run by the repository's runtime
-(`mrepo-base-runtime`). The base's actions are the framework's generic ones
-(`rest`: get, put, delete; `service`: initialise, start, stop, shutdown).
+(`mrepo-base-runtime`). `lib/actions.js` holds the generic `rest` actions
+(get, put, delete), not mounted by a package yet: the tests use them. An
+action writes the targets the mrepo has: `main`, `runtime`, `help`,
+`protocols`.
 
 ## Tests
 

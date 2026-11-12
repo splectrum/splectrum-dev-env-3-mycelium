@@ -29,9 +29,8 @@
 //                           fails: its error in the request executing
 //                           (stderr when none is, or that fails too); stops
 //                           on `stop`, SIGTERM or SIGINT, closing the store,
-//                           and by itself once the service is shut down
-//                           (booted, nothing waiting). Resolves when it has
-//                           stopped.
+//                           (it runs until then: its parent's teardown stops
+//                           it). Resolves when it has stopped.
 //   start({ work, bare })   the runtime started as its own process, through
 //                           the shell (it outlives the caller), from the
 //                           deployed bundle; resolves its first status, or
@@ -50,9 +49,9 @@ import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
 import { nativeBackend, p2pgitBackend } from 'mycelium-git'
-import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, runtimeData, layer, untaken, internal, PENDING, EXECUTE, DONE } from 'mrepo-base-request'
-import { execute, failed, ACTIONS } from 'mrepo-base-execute'
-export { run as runtimeRun } from './lib/protocol.js'
+import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, layer, internal, DONE } from 'mrepo-base-request'
+import { execute, failed } from 'mrepo-base-execute'
+export { run as runtimeRun, register as runtimeRegister } from './lib/protocol.js'
 import { pathToFileURL } from 'bare-url'
 import pkg from './package.json' with { type: 'json' }
 
@@ -113,6 +112,7 @@ const socketOf = at => whereOf(at).socket
 export async function protocolsOf (repo, folder, skip = null) {
   const listed = await repo.read('/packages/manifest.json').then(b => JSON.parse(b.toString()).packages || {}, () => ({}))
   const actions = {}
+  const protocols = {}
   for (const [pkg, p] of Object.entries(listed)) {
     if (!(p.entries || []).includes('protocol') || pkg === skip) continue
     const bundle = join(folder, `${pkg}.bundle`)
@@ -120,12 +120,14 @@ export async function protocolsOf (repo, folder, skip = null) {
     // its dispatcher: run('/protocol') (imported, nothing else runs)
     const offered = await (await import(pathToFileURL(bundle).href)).run('/protocol')
     for (const [protocol, fns] of Object.entries(offered.actions || {})) actions[protocol] = { ...actions[protocol], ...fns }
+    for (const [protocol, cfg] of Object.entries(offered.protocols || {})) protocols[protocol] = cfg
   }
-  return actions
+  return { actions, protocols }
 }
 
-// own: { pkg, actions }, the protocols of the package this runtime runs
-// from (its protocol.js, passed by its run.js: not imported again here).
+// own: { pkg, actions, protocols }, the protocols of the package this
+// runtime runs from (its protocol.js, passed by its run.js: not imported
+// again here): their actions and their configs.
 export async function run ({ work: w, repo: given = null, every = 200, own = null }) {
   const at = given ? { repo: given } : { work: w }
   const { work, dir } = whereOf(at)
@@ -137,15 +139,21 @@ export async function run ({ work: w, repo: given = null, every = 200, own = nul
   // The protocols its packages offer: each linked package with a protocol
   // entry, loaded from its bundle in the mrepo's packages/ (its dispatcher's
   // run('/protocol')), its actions beside the framework's.
-  // and its own package's (base-package-runtime: runtime run, help get)
-  const actions = { ...ACTIONS, ...(own?.actions ?? {}), ...await protocolsOf(ctx.repo, join(dir, 'packages'), own?.pkg) }
+  // No protocol of its own built in: its own package's (own: base-package-
+  // runtime's runtime and help), and those of the packages linked. Their
+  // configs kept beside the actions: what the check reads (ctx.protocols).
+  const loaded = await protocolsOf(ctx.repo, join(dir, 'packages'), own?.pkg)
+  const actions = { ...(own?.actions ?? {}), ...loaded.actions }
+  ctx.protocols = { ...(own?.protocols ?? {}), ...loaded.protocols }
   // Before it is operational, its own requests: internal, straight to the
   // handler (its help extracted, where it has a help layer and its packages
   // offer the help protocol); the inbox not taken in until they are done.
   const starting = []
-  if ((await repo.backend.listBranches()).some(([b]) => b === 'help') && actions.help?.extract) {
-    starting.push((await internal(ctx, { protocol: 'help', action: 'extract', uri: '/' })).name)
-  }
+  const has = async l => (await repo.backend.listBranches()).some(([b]) => b === l)
+  // the protocols it loaded, recorded in its protocols layer
+  if (await has('protocols') && actions.runtime?.register) starting.push((await internal(ctx, { protocol: 'runtime', action: 'register', uri: '/' })).name)
+  // its help, extracted from its packages
+  if (await has('help') && actions.help?.extract) starting.push((await internal(ctx, { protocol: 'help', action: 'extract', uri: '/' })).name)
   ctx.intake = !starting.length
   const status = () => ({ ok: true, pid: process.pid, started, repository: { name: repo.name, storage: repo.storage, id: repo.id, key: repo.key }, version })
   let stopping = null
@@ -192,12 +200,6 @@ export async function run ({ work: w, repo: given = null, every = 200, own = nul
       await request(ctx)
       await execute(ctx, { actions })
       await request(ctx)
-        // Booted (shut down, or never initialised) and nothing waiting: the
-      // runtime ends; a request posted later starts it again.
-      const { service } = await runtimeData(ctx)
-      // (the inbox folder's new files were committed above: untaken counts them)
-      const waiting = (await untaken(ctx)).length + (await layer(ctx, PENDING).list()).length + (await layer(ctx, EXECUTE).list()).length
-      if (service?.state === 'booted' && !waiting) setTimeout(() => stop('shut down'), 0)
     } catch (err) {
       // The error in the request executing; none, or that failing too: stderr.
       const why = `runtime: ${err.message}`

@@ -1,0 +1,16 @@
+{
+  "name": "base-package-service",
+  "description": "Package: the service protocol, managing the service state of an mrepo's external API.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "main.js",
+  "modules": [
+    "pear-full-square/mrepo-base-service",
+    "pear-full-square/mrepo-base-help",
+    "pear-full-square/pkgm-base-check"
+  ],
+  "scripts": {
+    "test": "bare test/run.js"
+  }
+}

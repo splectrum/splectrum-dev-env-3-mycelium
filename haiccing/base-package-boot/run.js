@@ -71,7 +71,7 @@ const ask = process.stdin.isTTY
 
 // The request: the invocation, as typed (the entry's name, its arguments).
 const entry = basename(script ? process.argv[1] : process.argv[0])
-const core = record(null, { api: NAME, protocol: 'boot', action: 'deploy', uri: `/${NAME}`, command: [entry, ...args].join(' ') }, guid())
+const core = record(null, { protocol: 'boot', action: 'deploy', uri: `/${NAME}`, command: [entry, ...args].join(' ') }, guid())
 // Its log: each step's outcome, an entry in the request's own record, at or
 // above the threshold (--level=<error|warn|info|debug>, info by default).
 const { log, entries } = logger(value('level')[0] ?? 'info')

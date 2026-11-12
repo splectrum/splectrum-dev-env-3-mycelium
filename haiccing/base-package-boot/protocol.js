@@ -7,15 +7,15 @@
 // The work is mrepo-base-boot's; here only what the package offers.
 import { deploy, teardown, redeploy } from './modules/pear-full-square/mrepo-base-boot/index.js'
 
-const CHILD = { uris: ['/<name>'], states: ['started'] }
+const CHILD = { uris: ['/<name>'] }
 
 export const protocols = {
   boot: {
     package: 'haiccing/base-package-boot',
     description: 'Deploys and tears down child mrepos; executed by the parent.',
     actions: {
-      deploy: { ...CHILD, description: 'The child built from its definition (/main/<name>/mrepo/), linked into main.' },
-      teardown: { ...CHILD, description: 'The child removed, its link out of main.' },
+      deploy: { ...CHILD, description: 'A child mrepo built inside this one from a target package, its packages linked, its runtime started; body { package }.' },
+      teardown: { ...CHILD, description: 'The child\'s runtime stopped, the child and its record removed.' },
       redeploy: { ...CHILD, description: 'Teardown, then deploy.' }
     }
   }

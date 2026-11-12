@@ -21,7 +21,8 @@ history, and each module has its own repository) and brought back when
 the work reaches it.
 
 - `haiccing/`: the packages, each at the path of its repository:
-  `base-package-boot`, `base-package-runtime`, and the documentation
+  `base-package-boot`, `base-package-runtime`, `base-package-service` (one
+  package, one protocol), and the documentation
   packages `package-docs-template` (the package structure, the README
   rules, modules and methods, tests) and `package-docs-mrepo` (the mrepo,
   layer by layer).

@@ -138,7 +138,7 @@ test('deploy the runtime: the child\'s runtime started from its own packages, it
     t.ok(d.runtime?.pid, 'its runtime started')
     t.is((await ask({ repo: host, op: 'status' }))?.repository.name, 'host', 'running the child, by its directory')
     // a request into its inbox folder (the parent reaches it, forward): answered
-    const core = record('/test', { protocol: 'rest', action: 'get', uri: '/runtime' }, guid())
+    const core = record('/test', { protocol: 'runtime', action: 'register', uri: '/' }, guid())
     writeFileSync(join(host, 'inbox', `${core.key}.json`), JSON.stringify(wrap('/host/inbox', core)))
     const child = openRepo(p2pgitBackend(join(host, '.git'), { fs }))
     let back = null

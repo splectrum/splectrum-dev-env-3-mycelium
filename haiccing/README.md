@@ -4,7 +4,8 @@ The `haiccing` organisation's repositories, as they are developed here,
 each at `haiccing/<repo>`, in the package structure
 (`package-docs-template/`):
 
-- `base-package-boot/`: the boot; `base-package-runtime/`: the runtime.
+- `base-package-boot/`: the boot; `base-package-runtime/`: the runtime;
+  `base-package-service/`: the service protocol.
 - `package-docs-template/`, `package-docs-mrepo/`: the documentation
   packages.
 

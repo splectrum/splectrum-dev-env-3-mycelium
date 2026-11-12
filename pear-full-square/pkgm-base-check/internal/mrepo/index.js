@@ -14,23 +14,28 @@ export function leaves (root, rel = '') {
   return readdirSync(dir).sort().filter(n => statSync(join(dir, n)).isDirectory()).flatMap(n => leaves(root, rel ? `${rel}/${n}` : n))
 }
 
-// Its mrepo/ part: every leaf's layer.json valid; nothing but READMEs
-// outside a leaf, none inside; its preloaded requests records; its packages
-// listed by name.
+// The files a structure contributes to layers it does not define itself
+// (another package's: runtime/service.json into the runtime layer), by path.
+export function contributions (root, ls = leaves(root), rel = '') {
+  return readdirSync(join(root, rel)).sort().flatMap(n => {
+    const p = rel ? `${rel}/${n}` : n
+    if (statSync(join(root, p)).isDirectory()) return ls.includes(p) ? [] : contributions(root, ls, p)
+    return n === 'README.md' || !rel ? [] : [p]
+  })
+}
+
+// Its mrepo/ part: every leaf's layer.json valid; no file at its top but a
+// README, no README inside a layer; a file in a folder it gives no
+// layer.json a contribution to a layer another package defines, valid JSON
+// where it is JSON; its preloaded requests records; its packages by name.
 export function checkStructure (pkg) {
   const root = join(pkg, 'mrepo')
   const out = []
   const at = (detail) => out.push({ check: 'structure', detail })
   if (!existsSync(root)) return out
   const ls = leaves(root)
-  const walk = (rel) => {
-    for (const n of readdirSync(join(root, rel)).sort()) {
-      const p = rel ? `${rel}/${n}` : n
-      if (statSync(join(root, p)).isDirectory()) { if (!ls.includes(p)) walk(p); continue }
-      if (n !== 'README.md') at(`mrepo/${p}: a file outside a layer`)
-    }
-  }
-  walk('')
+  for (const n of readdirSync(root).sort()) if (!statSync(join(root, n)).isDirectory() && n !== 'README.md') at(`mrepo/${n}: a file outside a layer`)
+  for (const c of contributions(root, ls)) if (c.endsWith('.json')) { try { json(join(root, c)) } catch (err) { at(`mrepo/${c}: ${err.message}`) } }
   for (const l of ls) {
     let cfg = null
     try { cfg = json(join(root, l, 'layer.json')) } catch (err) { at(`mrepo/${l}/layer.json: ${err.message}`); continue }

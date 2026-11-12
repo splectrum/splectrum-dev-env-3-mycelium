@@ -9,7 +9,11 @@ The tests of mrepo-base-runtime, a section per file, each test by its name.
 
 ## `fixture.js`
 
-Shared by the tests, not a test itself. A booted repository for the tests, as a boot leaves it: the repository `host`, its layers, its packages (a manifest; a HAICC bundle carrying its API, /api.json), the runtime's data booted, the pending queue preloaded with service initialise /.
+Shared by the tests, not a test itself. A booted repository for the tests: the repository `host`, its layers, an empty packages manifest, its service state booted, the pending queue preloaded with service initialise /.
+
+## `runtime.js`
+
+Shared by the tests, not a test itself. The runtime from the command line, started with the rest and service protocols as packages would offer them.
 
 ## `runtime.test.js`
 

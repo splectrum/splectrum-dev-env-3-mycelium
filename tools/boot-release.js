@@ -62,6 +62,7 @@ tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', 'base-pack
 tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', 'base-package-boot'))
 tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-runtime'), `--out=${out}`)
 tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-boot'), `--out=${out}`)
+tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-service'), `--out=${out}`)
 tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'package-docs-mrepo'), `--out=${out}`)
 tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'package-docs-template'), `--out=${out}`)
 

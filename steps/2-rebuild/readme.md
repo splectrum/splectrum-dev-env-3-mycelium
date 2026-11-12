@@ -1191,3 +1191,58 @@ modules' workspace and link entries out of `package-lock.json`, the two
 new modules in (`mrepo-base-help`, `pkgm-base-check`), its workspaces as
 `package.json`'s; the dangling links out of `node_modules/`. The packages
 assemble to the same; the sets pass.
+
+## 28. base-package-service; the protocols layer; the gate (2026-11-12)
+
+The human: a package creates one entity, for the base packages a protocol;
+`base-package-mrepo` is `base-package-service` (it manages the service of
+the external API); the type is resolved by the deploy (the package an
+mrepo is deployed from, recorded at its node); an mrepo application, later,
+brings the selection of protocols together. Repositories created by the
+human: `haiccing/base-package-service`, `pear-full-square/mrepo-base-service`.
+
+- **`mrepo-base-service`**: the service actions, a directory each
+  (`external/initialise`, `start`, `stop`, `shutdown`: the state moved),
+  and the protocol's config (`CONFIG`: each action at `/`, the states that
+  allow it): the state machine is configuration.
+- **`base-package-service`**: its `protocol.js` mounts the `service`
+  protocol; its structure part brings `runtime/service.json`, booted, into
+  the runtime layer (a contribution to a layer another package defines);
+  its `packages/layer.json` lists the runtime, itself and the documentation
+  packages (deployed as the target: an mrepo with a service and nothing
+  else).
+- **The protocols layer** (`protocols`, atomic; a layer in mycelium-git, an
+  execution target; in the runtime's and the boot's structures): `runtime
+  register /`, an internal request the runtime places as it starts, before
+  `help extract /`, records each loaded protocol's config,
+  `/protocols/<protocol>.json`.
+- **The gate on the loaded configs** (`mrepo-base-request`, `check`,
+  `matches`): with a service, a request is allowed when its protocol is
+  loaded, its action configured, its URI one the config names (`/`,
+  `/<name>`, `/main/**`, `/**`), and the service state one that allows it
+  (none named: started). An internal request is not asked whether offered
+  and waits for a state only where the action names its states. Gone:
+  `api.json`, the form's `api`, the type in the service state, the
+  misdelivered-api check.
+- **No protocol built into the runtime**: its own package's and the linked
+  packages', actions and configs (`run({ own })`, `protocolsOf`,
+  `ctx.protocols`, `exec.runtime.protocols`). `rest` stays in
+  `mrepo-base-execute`, unmounted (its own package when needed). The
+  module's old command line is `test/runtime.js`, with `rest` and `service`
+  as packages would offer them.
+- **The runtime runs until stopped** (decided here, to raise): the rule
+  ending it by itself when the service is booted with nothing waiting is
+  gone; a parent's teardown stops its child's.
+- **The mrepo check accepts contributions**: a file in a folder without a
+  `layer.json` adds to a layer another package defines; in situ, that
+  layer must exist.
+
+Tested: the module tests (service 2/2, request 9/9, execute 6/6, runtime
+6/6, boot 9/9, check 6/6); the runtime package's `start` test on an mrepo
+without service (its protocols registered, a request answered); the boot's
+integration test deploys an mrepo from the service package: booted and
+closed, its protocols recorded, the service's actions each in its state,
+open once started, a protocol not linked not offered, validated in situ,
+torn down (85 asserts; five runs in a row). All five packages' `full` sets
+pass; 201 READMEs in the help tree, 109 source READMEs, the code check, no
+problems.

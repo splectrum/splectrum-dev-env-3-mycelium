@@ -11,7 +11,7 @@ import { start, ask, HOST } from '../index.js'
 import { bootedHost, send } from './fixture.js'
 
 const here = join(dirname(fileURLToPath(import.meta.url)), '..')
-const runtime = (...args) => spawnSync(Bare.argv[0], [join(here, 'runtime.js'), ...args], { stdio: ['ignore', 'pipe', 'pipe'] })
+const runtime = (...args) => spawnSync(Bare.argv[0], [join(here, 'test', 'runtime.js'), ...args], { stdio: ['ignore', 'pipe', 'pipe'] })
 
 test('version: the module and its version', (t) => {
   const r = runtime('version')
@@ -30,14 +30,14 @@ test('the runtime: started detached, the store held, asked over its connection, 
     const host = await bootedHost(work)
     t.is(await ask({ work, op: 'status' }), null, 'nothing answers before it starts')
     // Started by a process that then ends: the runtime outlives it.
-    const starter = spawnSync(Bare.argv[0], ['-e', `import('${join(here, 'index.js')}').then(m => m.start({ work: '${work}', bundle: '${join(here, 'runtime.js')}' })).then(s => console.log(JSON.stringify(s)))`], { stdio: ['ignore', 'pipe', 'pipe'] })
+    const starter = spawnSync(Bare.argv[0], ['-e', `import('${join(here, 'index.js')}').then(m => m.start({ work: '${work}', bundle: '${join(here, 'test', 'runtime.js')}' })).then(s => console.log(JSON.stringify(s)))`], { stdio: ['ignore', 'pipe', 'pipe'] })
     t.is(starter.status, 0, String(starter.stderr))
     await new Promise(resolve => setTimeout(resolve, 1000))
     const s = await ask({ work, op: 'status' })
     t.ok(s?.ok, 'it answers, its starter gone')
     t.is(s.repository.id, host.id, 'the host\'s repository')
     t.ok(s.pid > 0)
-    t.is((await start({ work, bundle: join(here, 'runtime.js') })).pid, s.pid, 'started again: the one running')
+    t.is((await start({ work, bundle: join(here, 'test', 'runtime.js') })).pid, s.pid, 'started again: the one running')
     const second = runtime('start', `--work=${work}`)
     t.is(second.status, 1, 'a second runtime: refused (the store is held)')
     t.ok(/^mrepo: /.test(String(second.stderr)), 'why, on stderr (no repository to write it into)')

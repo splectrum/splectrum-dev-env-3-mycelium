@@ -4,7 +4,7 @@ import test from 'brittle'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'bare-fs'
 import { join, dirname } from 'bare-path'
 import { tmpdir } from 'bare-os'
-import { checkStructure, checkProtocol, checkCarried, leaves } from '../index.js'
+import { checkStructure, checkProtocol, checkCarried, leaves, contributions } from '../index.js'
 
 function write (dir, files) { for (const [p, t] of Object.entries(files)) { mkdirSync(dirname(join(dir, p)), { recursive: true }); writeFileSync(join(dir, p), typeof t === 'string' ? t : JSON.stringify(t)) } }
 const KEY = '7b0c1f4e-2d3a-4c5b-9e6f-0a1b2c3d4e5f'
@@ -13,6 +13,7 @@ const good = {
   'main.js': '',
   'mrepo/README.md': '# mrepo/\n',
   'mrepo/main/layer.json': { mode: 'atomic', description: 'The data.' },
+  'mrepo/runtime/service.json': { state: 'booted' },
   'mrepo/packages/layer.json': { mode: 'replicated', description: 'The packages.', packages: ['org/p'] },
   'mrepo/request/pending/default/layer.json': { mode: 'non-atomic', description: 'Waiting.' },
   [`mrepo/request/pending/default/${KEY}.json`]: { topic: '/request/pending/default', key: KEY, value: { topic: null, key: KEY, value: { protocol: 'boot', action: 'deploy', uri: '/host' } } },
@@ -27,6 +28,7 @@ test('a package well formed: its structure, its protocols, what it carries: none
   try {
     write(d, good)
     t.alike(leaves(join(d, 'mrepo')), ['main', 'packages', 'request/pending/default'])
+    t.alike(contributions(join(d, 'mrepo')), ['runtime/service.json'], 'a file into a layer another package defines')
     t.alike([...checkStructure(d), ...await checkProtocol(d), ...checkCarried(d)], [])
   } finally { rmSync(d, { recursive: true, force: true }) }
 })
