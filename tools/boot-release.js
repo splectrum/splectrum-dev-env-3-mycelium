@@ -57,14 +57,12 @@ const meta = JSON.parse(sh('curl', ['-fsSL', '--retry', '3', `https://registry.n
 const integrity = meta.dist.integrity
 console.log(JSON.stringify({ bare: version, integrity }))
 
-// 1. The packages: modules assembled; the runtime's bundle into the sources.
-tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', 'base-package-runtime'))
-tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', 'base-package-boot'))
-tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-runtime'), `--out=${out}`)
-tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-boot'), `--out=${out}`)
-tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'base-package-service'), `--out=${out}`)
-tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'package-docs-mrepo'), `--out=${out}`)
-tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', 'package-docs-template'), `--out=${out}`)
+// 1. The packages: each assembled (its modules/, node_modules included:
+// gitignored, so not there in a fresh clone), then bundled into the sources.
+for (const p of ['base-package-runtime', 'base-package-boot', 'base-package-service', 'package-docs-mrepo', 'package-docs-template']) {
+  tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', p))
+  tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', p), `--out=${out}`)
+}
 
 // 2. Bare's tarball, as npm publishes it, by its organisation.
 // (kept when there: npm's tarball, the same bytes)
