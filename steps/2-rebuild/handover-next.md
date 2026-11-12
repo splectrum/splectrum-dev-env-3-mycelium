@@ -94,7 +94,14 @@ built is in the packages: `haiccing/package-docs-template` and
 5. **Populating `main` and `initialise`**: a type's own actions (its
    package's functions, run as configured), documented in the same shape.
 6. A request's own history in its document (step by step), when wanted.
-7. Then swarms, nodes, the requests done centralised, the demos; step 3,
+7. **A mini tool for the modules kept here** (`tools/`), no npm run: a
+   module added (brought back from its repository, or new) or removed is
+   written into `package.json` (workspaces), `package-lock.json` (its
+   workspace entry, its link entry) and `node_modules/` (its link); and the
+   third-party code nothing here uses any more is pruned from the three
+   (worked out with the closure, as the assembler does). Done by hand
+   until then (part 26). Here because the swarms bring modules back.
+8. Then swarms, nodes, the requests done centralised, the demos; step 3,
    the docs.
 
 ## Elsewhere
