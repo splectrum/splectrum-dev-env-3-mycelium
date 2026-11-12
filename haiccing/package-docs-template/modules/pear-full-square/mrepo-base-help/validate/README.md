@@ -14,5 +14,5 @@ no problems against the README rules. Run in a floating instance.
 
 The package's help, as a running mrepo's runtime extracted it, has no
 problems. Run through `runtime run`, which sets `MREPO`, the mrepo's
-directory, `PACKAGE`, and `HELP`, a file with the mrepo's help index and
-problems as extracted; skipped without them.
+directory, `PACKAGE`, and `SITU`, a file with the mrepo's state, its help
+as extracted among it; skipped without them.

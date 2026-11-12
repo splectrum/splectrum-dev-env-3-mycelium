@@ -56,8 +56,9 @@ built is in the packages: `haiccing/package-docs-template` and
 - **Help**: the READMEs of an mrepo's packages extracted into its `help`
   layer as it starts, read with `help get <uri>` at three levels.
 - **Validation in every package**: `/test/help` (the README rules),
-  `/test/code` (the code rules), `/test/modules` (the carried modules' own
-  tests), `validate-in-situ` in a running mrepo.
+  `/test/code` (the code rules), `/test/mrepo` (the integrity of its mrepo
+  side), `/test/modules` (the carried modules' own tests);
+  `validate-in-situ` in a running mrepo (`help-in-situ`, `mrepo-in-situ`).
 - **Documentation packages**: `package-docs-template`,
   `package-docs-mrepo`, linked into every mrepo, validating themselves.
 

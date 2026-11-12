@@ -4,6 +4,6 @@ The documentation package's tests: its help validated, on its own and where it i
 
 | set | tests |
 |---|---|
-| `validate` | `help`, `code` |
-| `validate-in-situ` | `help-in-situ`: run in a running mrepo with `runtime run` |
-| `full` | `help`, `code` |
+| `validate` | `help`, `code`, `mrepo` |
+| `validate-in-situ` | `help-in-situ`, `mrepo-in-situ`: run in a running mrepo with `runtime run` |
+| `full` | `help`, `code`, `mrepo` |

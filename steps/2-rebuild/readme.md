@@ -1160,3 +1160,28 @@ packages carry and `pkgm-base-manager` (the assembler's). `CLAUDE.md`
 rewritten: what is here, where documentation lives, the validation before
 every commit; `README.md`, `haiccing/README.md`, the workspaces and the
 tools' comments updated. Everything rebuilt, all sets pass.
+
+## 27. The mrepo test (2026-11-12)
+
+The human: the further generic tests bundled into one, `mrepo`, the
+integrity of a package's mrepo side. In `pkgm-base-check`
+(`internal/mrepo`, `validate/mrepo.test.js`,
+`validate/mrepo-in-situ.test.js`); the dispatcher adds `/test/mrepo`
+(in `validate`, `full`) and `/test/mrepo-in-situ` (in `validate-in-situ`).
+
+- **`/test/mrepo`**, floating: its `mrepo/` structure (each leaf's
+  `layer.json` valid, its mode and description; nothing but READMEs outside
+  a layer, none inside; a preloaded request a well formed record; its
+  packages by name), its `protocol.js` (every configured action its
+  function, and back; descriptions, URIs), what it carries (nothing not
+  recorded in `third-party.json`, each at its version; an omitted one only
+  its stub: a bundle holds less than the record, never more).
+- **`/test/mrepo-in-situ`**: in the mrepo's packages manifest; its bundle
+  there the one the manifest names (sha256); the layers it brings exist.
+  `runtime run` hands the in-situ tests the mrepo's state in one file
+  (`SITU`: its help, its layers, its manifest, each linked bundle's hash;
+  `HELP` gone).
+
+Generic units in every package now: `modules`, `help`, `code`, `mrepo`,
+and in situ `help-in-situ`, `mrepo-in-situ`. All sets pass (the runtime's
+`full` 17 units, the boot's 18, its test 72 asserts).

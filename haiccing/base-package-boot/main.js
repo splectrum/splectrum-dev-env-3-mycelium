@@ -19,6 +19,8 @@ const UNITS = {
   "/test/help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/validate/help.test.js")]),
   "/test/help-in-situ": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/validate/help-in-situ.test.js")]),
   "/test/code": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/code.test.js")]),
+  "/test/mrepo": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/mrepo.test.js")]),
+  "/test/mrepo-in-situ": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/mrepo-in-situ.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-boot": () => Promise.all([import("./modules/pear-full-square/mrepo-base-boot/test/build.test.js"), import("./modules/pear-full-square/mrepo-base-boot/test/deploy.test.js"), import("./modules/pear-full-square/mrepo-base-boot/test/prerequisites.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-execute": () => Promise.all([import("./modules/pear-full-square/mrepo-base-execute/test/execute.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/test/help.test.js")]),
@@ -32,10 +34,10 @@ const UNITS = {
   "/test/modules/pear-full-square/p2p-mrepo": () => Promise.all([import("./modules/pear-full-square/p2p-mrepo/test/contract.test.js"), import("./modules/pear-full-square/p2p-mrepo/test/local.test.js"), import("./modules/pear-full-square/p2p-mrepo/test/mrepo.test.js")]),
   "/test/modules/pear-full-square/p2p-replicate": () => Promise.all([import("./modules/pear-full-square/p2p-replicate/test/replicate.test.js")]),
   "/test/modules/pear-full-square/p2p-store": () => Promise.all([import("./modules/pear-full-square/p2p-store/test/store.test.js")]),
-  "/test/modules/pear-full-square/pkgm-base-check": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/test/rules.test.js")]),
+  "/test/modules/pear-full-square/pkgm-base-check": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/test/mrepo.test.js"), import("./modules/pear-full-square/pkgm-base-check/test/rules.test.js")]),
 }
 // The test sets: their tests by name (modules: every module's unit tests).
-const SETS = {"/test/full":["boot","help","code","modules"],"/test/validate-in-situ":["help-in-situ"],"/test/validate":["boot","help","code"]}
+const SETS = {"/test/full":["boot","help","code","mrepo","modules"],"/test/validate-in-situ":["help-in-situ","mrepo-in-situ"],"/test/validate":["boot","help","code","mrepo"]}
 
 // What a target runs: its units (a set, /test/modules, a unit); null: none.
 export function expand (target) {
