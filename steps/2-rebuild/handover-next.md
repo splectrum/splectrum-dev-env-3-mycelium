@@ -65,17 +65,38 @@ built is in the packages: `haiccing/package-docs-template` and
 - **Documentation packages**: `package-docs-template`,
   `package-docs-mrepo`, linked into every mrepo, validating themselves.
 
-## Then, in the order discussed
+## The roadmap, in order
 
-1. **The terminal as a mini mrepo** (its boxes, its requests done).
-2. **The dispatcher application** (like HAICC: its own API; requests to it
+Not built yet, and the platform is not deployed until the first two are
+(they were in the earlier packages plan; kept here so they are not lost):
+
+1. **`base-package-mrepo`**: the `service` protocol (initialise, start,
+   stop, shutdown, pause, resume) as a package, linked by every service
+   managed mrepo (`package-docs-mrepo` already names it). With it: the
+   `protocols` layer (linking a package registers its protocols' configs
+   there; today the runtime only loads the actions), and the runtime's
+   status (deployed, initialised, started...; "not yet operational", from
+   the internal requests, its first piece).
+2. **`base-package-haicc`**: the host's type: its API, the structure of
+   its `main`, its own actions, the packages it requires (runtime, boot,
+   mrepo, the documentation packages). The boot's preloaded `boot deploy
+   /host` then targets it (today: the runtime package, for now).
+3. **Release and sourcing, deferred**: bundles signed and the manifest
+   checked against the publisher's key (the key tool was removed with the
+   clean-up: to be rebuilt with it); a GitHub source beside the folder
+   source; the Docker prerequisite used (nodes).
+
+Then, as discussed:
+
+4. **The terminal as a mini mrepo** (its boxes, its requests done).
+5. **The dispatcher application** (like HAICC: its own API; requests to it
    processed, others routed; stray records returned to it as misdelivered;
    local subscriptions file operations, remote ones other nodes, followed
    or announced). Until then HAICC's input posts into the repository's
    inbox and reads its completed form from the outbox.
-3. **The headers**: to plan with the human (the execution's metadata, the
+6. **The headers**: to plan with the human (the execution's metadata, the
    states a request ran on, are in the commits only meanwhile).
-4. **Command help** (the help protocol's second stage; the first, the help
+7. **Command help** (the help protocol's second stage; the first, the help
    layer and `runtime help`, is built). Agreed with the human:
    - **The external API, structured**: a post-processing step of the help
      parser, a view of the protocols and their actions the mrepo offers,
@@ -91,17 +112,17 @@ built is in the packages: `haiccing/package-docs-template` and
    Here because the dispatcher brings requests from outside. The modules
    get their `external/`/`internal/` directories as work reaches them
    (done: `mrepo-base-boot`). Third stage, later: AI enhanced help.
-5. **Populating `main` and `initialise`**: a type's own actions (its
+8. **Populating `main` and `initialise`**: a type's own actions (its
    package's functions, run as configured), documented in the same shape.
-6. A request's own history in its document (step by step), when wanted.
-7. **A mini tool for the modules kept here** (`tools/`), no npm run: a
+9. A request's own history in its document (step by step), when wanted.
+10. **A mini tool for the modules kept here** (`tools/`), no npm run: a
    module added (brought back from its repository, or new) or removed is
    written into `package.json` (workspaces), `package-lock.json` (its
    workspace entry, its link entry) and `node_modules/` (its link); and the
    third-party code nothing here uses any more is pruned from the three
    (worked out with the closure, as the assembler does). Done by hand
    until then (part 26). Here because the swarms bring modules back.
-8. Then swarms, nodes, the requests done centralised, the demos; step 3,
+11. Then swarms, nodes, the requests done centralised, the demos; step 3,
    the docs.
 
 ## Elsewhere
