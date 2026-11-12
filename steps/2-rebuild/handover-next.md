@@ -94,8 +94,11 @@ Not built yet, and the platform is not deployed until the first two are
    nodes' haicc mrepos on the host, which proxy to the haicc mrepo of the
    node in its container: commands are issued on the host, internally a
    web of haicc mrepos. Only one haicc mrepo actively manages a host or a
-   node. To design with the human: how this maps onto what is built (the
-   boot mrepo, `base-package-boot`, the placeholder `/host`), and the
+   node. The boot mrepo is not it: it deploys the host's haicc mrepo, as
+   the boot on a PC starts the system (today's placeholder `/host` is
+   where it goes). Into a container: mapped inbox and outbox folders, or
+   something equivalent but secure. To design with the human: the haicc
+   mrepo as the first mrepo application (its packages, its `main`), and the
    mrepo application, what brings a `main` structure and a selection of
    protocols together.
    **XPath in the mrepo**: built for the base as the wrapped remote
