@@ -113,6 +113,17 @@ Not built yet, and the platform is not deployed until the first two are
    haicc mrepo, a swarm going. **Under discussion, not settled**: XPath
    as internal functionality of the runtime (beside request and execute);
    whether the boot protocol stays behind the service door.
+   **The haicc command, base-linux-haicc, the sources** (part 32, the
+   discussion still going: read it before continuing): `haicc` a sh
+   dispatcher registered globally, `haicc <URI> <protocol>/<action>
+   <args>` for an mrepo command, `haicc <name>` for a script command
+   (`boot`, `sources link|download`, https the backup by default,
+   `no-https`); the boot mrepo executes `boot/deploy /host` and passes
+   the service commands through; `base-linux-haicc` the package of the
+   scripts, without the prerequisites; the naming completed (demo,
+   solution, manager). Part 32 lists what we proposed and the human has
+   not confirmed, and what is open. The repository `base-linux-haicc` is
+   not created yet.
    **Storage** (part 31): only `main` on the Corestore (the external
    state); on disk, by default, all the remaining layers, at least the
    inbox and the outbox. The code does not follow it yet; the two-way

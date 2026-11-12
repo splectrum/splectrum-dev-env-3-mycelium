@@ -1419,3 +1419,86 @@ Settled in discussion. Nothing is built from it yet.
 
 **The priority**: the host's haicc mrepo, then a node's haicc mrepo, then
 a swarm going. The storage work waits.
+
+## 32. The haicc command; base-linux-haicc; the sources (the human, 2026-11-12; a note, nothing built)
+
+Discussion, still going. Settled so far; nothing is built from it.
+
+**The naming, completed** (it adds to part 31). Because packages are
+self-contained, what is installed is always one package holding all of
+it: no ad hoc addition of a protocol or of structure, which could break
+the testing.
+
+- `base-package-`: a single item, a protocol and/or mrepo structure.
+- `base-component-`: several packages deployed together; `main` empty.
+- `base-application-`: a component and a functional application within
+  `main`. It has minimum component requirements: protocols that must
+  exist.
+- `base-demo-`: a deployment that demonstrates some functionality, with
+  demo data.
+- `base-solution-`: a haicc component that manages the applications of a
+  solution, and proxies the management of the solution's components to
+  the nodes' haicc managers.
+- `base-manager-host`, `base-manager-node`: haicc components
+  preconfigured to manage a host or a node.
+- `base-linux-haicc`: the script application on Linux (below).
+
+The boot package is multi purpose, validly so, as our packages are in
+general. It is split all the same, because haicc is to be an application
+on the host that can be scripted and is registered globally.
+
+**The haicc command**
+
+- `haicc` is a sh file that only dispatches, registered globally. A URI
+  starts with `/` (the local root), so:
+  - a first part starting with `/` is an mrepo command:
+    `haicc <URI> <protocol>/<action> <args>`;
+  - anything else is a script command: `haicc <name> <args>`.
+- The flow:
+  ```
+  haicc boot                                     # a sh script: the boot mrepo at the root
+  haicc /host boot/deploy base-component-haicc   # an empty haicc mrepo
+  haicc /host service/initialise                 # passed through to the haicc mrepo
+  haicc /host service/start
+  ```
+- `boot/deploy` is executed by the boot mrepo: the host folder does not
+  exist yet (if it did: an error, `/host` already exists). The service
+  commands are passed through by the boot mrepo to the haicc mrepo. The
+  boot mrepo carries no preloaded deploy.
+- A `boot/install` doing the three steps is possible later.
+- The request record keeps its order (protocol, action, URI, body): only
+  the command line puts the URI first.
+
+**base-linux-haicc**: the package for the script application. It does
+not include the prerequisites.
+
+**The sources**: a script command.
+
+- `haicc sources link <folder>`: a local folder linked as a source, our
+  packages and the third-party components.
+- `haicc sources download <args>`: no arguments, all; `haiccing`, the
+  organisation; `haiccing/<package>`, one package; `third-party`, `bare`,
+  `docker`, and what else proves useful.
+- https is always the backup, by default: what is not in the sources is
+  fetched when needed. `no-https` turns that off: a missing item is then
+  an error.
+
+**Proposed by us, not confirmed yet**
+
+- POSIX sh, not bash. An mrepo command handed by `haicc` to a bundle run
+  with Bare, the terminal, a package of its own.
+- `haicc prereq`: checks the platform, the work folder and the sources,
+  and unpacks Bare from them; no network. The prerequisite code leaves
+  the boot package.
+- The release of `base-linux-haicc`: one installer sh file carrying the
+  scripts and the pins. The boot's standalone executable (Bare built in,
+  117 MB) dropped: the boot is its bundle, run with the Bare put in place.
+- Here or passed on: a request is executed where the mrepo's own
+  protocols accept it; otherwise passed into the child the URI names,
+  with the rest of the URI (`/host` leading into the child as
+  `/main/host` does today; the check before the passing on).
+- XPath as a module of its own in the runtime package, a stage between
+  request and execute.
+
+**Open**: the package argument's default organisation; whether `/host`
+gets `base-manager-host` in the end.
