@@ -1359,3 +1359,10 @@ an access structure, redundant".
 - **One manager**: there can only be one haicc mrepo actively managing a
   host or a node.
 - **haicc commands are issued on the host**; internally it is that web.
+- **The boot mrepo is not it**: the boot mrepo deploys the host's haicc
+  mrepo, as the boot on a PC starts the system. What the first-time boot
+  deploys today as `/host` (the runtime package, a placeholder) is where
+  the haicc mrepo goes.
+- **Into a container**: the node's haicc mrepo on the host reaches the one
+  in the container by mapped inbox and outbox folders (folder access), or
+  something equivalent but secure.
