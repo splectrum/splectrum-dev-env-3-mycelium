@@ -13,7 +13,7 @@ The service states and what each allows:
 |---|---|
 | booted | `initialise` |
 | initialised | `start`, `shutdown` |
-| started | `stop`, and the mrepo's external API |
+| started | `stop`, and the protocols behind the service's door |
 
 The state comes with `base-package-service`; its actions and the states
 that allow each are that protocol's config.

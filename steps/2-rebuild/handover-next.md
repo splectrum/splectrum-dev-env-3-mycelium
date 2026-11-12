@@ -77,31 +77,37 @@ Not built yet, and the platform is not deployed until the first two are
 1. **`base-package-service`**: built (part 28): the `service` protocol as
    a package, the `protocols` layer, the gate on the loaded protocols'
    configs. Rule (the human): a package creates one entity, for a base
-   package a protocol. Still open from it: the runtime's status beyond
-   "not yet operational"; `rest` as its own package when something needs
-   it.
+   package a protocol. The service's door closes a selection of
+   protocols, those `gated` in their config (the human); the others stay
+   open. Still open from it: the runtime's status beyond "not yet
+   operational".
 2. **`base-package-haicc`**: the `haicc` protocol. To discuss with the
    human first: what its functionality really is.
    Then **the mrepo application**: to design: what brings a selection of
    protocols together into one mrepo (today a target package's
    `mrepo/packages/layer.json` lists them). The boot's preloaded `boot
    deploy /host` then targets it (today: the runtime package, for now).
-3. **Release and sourcing, deferred**: bundles signed and the manifest
+3. **`base-package-crud`** (the human: CRUD, not rest): the generic
+   actions on an mrepo's data as a protocol of its own, gated. It gets its
+   full meaning with mutable and immutable implemented: an update on the
+   mutable side from a stream of immutable change events. Until then the
+   `rest` actions stay in `mrepo-base-execute`, unmounted, the tests' own.
+4. **Release and sourcing, deferred**: bundles signed and the manifest
    checked against the publisher's key (the key tool was removed with the
    clean-up: to be rebuilt with it); a GitHub source beside the folder
    source; the Docker prerequisite used (nodes).
 
 Then, as discussed:
 
-4. **The terminal as a mini mrepo** (its boxes, its requests done).
-5. **The dispatcher application** (like HAICC: its own API; requests to it
+5. **The terminal as a mini mrepo** (its boxes, its requests done).
+6. **The dispatcher application** (like HAICC: its own API; requests to it
    processed, others routed; stray records returned to it as misdelivered;
    local subscriptions file operations, remote ones other nodes, followed
    or announced). Until then HAICC's input posts into the repository's
    inbox and reads its completed form from the outbox.
-6. **The headers**: to plan with the human (the execution's metadata, the
+7. **The headers**: to plan with the human (the execution's metadata, the
    states a request ran on, are in the commits only meanwhile).
-7. **Command help** (the help protocol's second stage; the first, the help
+8. **Command help** (the help protocol's second stage; the first, the help
    layer and `runtime help`, is built). Agreed with the human:
    - **The external API, structured**: a post-processing step of the help
      parser, a view of the protocols and their actions the mrepo offers,
@@ -117,17 +123,17 @@ Then, as discussed:
    Here because the dispatcher brings requests from outside. The modules
    get their `external/`/`internal/` directories as work reaches them
    (done: `mrepo-base-boot`). Third stage, later: AI enhanced help.
-8. **Populating `main` and `initialise`**: a type's own actions (its
+9. **Populating `main` and `initialise`**: a type's own actions (its
    package's functions, run as configured), documented in the same shape.
-9. A request's own history in its document (step by step), when wanted.
-10. **A mini tool for the modules kept here** (`tools/`), no npm run: a
+10. A request's own history in its document (step by step), when wanted.
+11. **A mini tool for the modules kept here** (`tools/`), no npm run: a
    module added (brought back from its repository, or new) or removed is
    written into `package.json` (workspaces), `package-lock.json` (its
    workspace entry, its link entry) and `node_modules/` (its link); and the
    third-party code nothing here uses any more is pruned from the three
    (worked out with the closure, as the assembler does). Done by hand
    until then (part 26). Here because the swarms bring modules back.
-11. Then swarms, nodes, the requests done centralised, the demos; step 3,
+12. Then swarms, nodes, the requests done centralised, the demos; step 3,
    the docs.
 
 ## Elsewhere

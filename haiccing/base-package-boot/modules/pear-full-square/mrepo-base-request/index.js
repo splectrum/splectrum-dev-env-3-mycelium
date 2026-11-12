@@ -63,11 +63,13 @@ export function matches (pattern, uri) {
 //   without service    no more (no /runtime/service.json: no gate)
 //   with service       offered: its protocol loaded, its action configured,
 //                      its URI one the action's config names; and now (state:
-//                      true, as it executes): the service state one of the
-//                      action's states (none named: started)
+//                      true, as it executes): an action that names its
+//                      states (the service's own), in one of them; a protocol
+//                      behind the service's door (its config: gated), once
+//                      the service is started; any other, always
 //   internal           the mrepo's own (not from the inbox): not asked
-//                      whether offered; the state only where the action's
-//                      config names its states (the service's own actions)
+//                      whether offered, not held at the door; its states
+//                      where the action names them
 // At the inbox the state is not checked (state: false): the queue may hold
 // requests that change it first.
 export function check (value, { service, protocols }, { state = true, internal = false } = {}) {
@@ -85,7 +87,7 @@ export function check (value, { service, protocols }, { state = true, internal =
   }
   if (!state) return null
   if (cfg?.states) return cfg.states.includes(service.state) ? null : `not now: ${protocol} ${action} (the service is ${service.state})`
-  if (internal) return null
+  if (internal || !protocols?.[protocol]?.gated) return null
   return service.state === 'started' ? null : `not now: ${protocol} ${action} (the service is ${service.state}, not started)`
 }
 

@@ -6,7 +6,8 @@ import { check, matches, record, wrap, guid, complete, isComplete } from '../ind
 const at1 = states => ({ uris: ['/'], states })
 const protocols = {
   service: { actions: { initialise: at1(['booted']), start: at1(['initialised']), stop: at1(['started']), shutdown: at1(['initialised']) } },
-  rest: { actions: { get: { uris: ['/', '/main/**'] }, put: { uris: ['/main/**'] }, delete: { uris: ['/main/**'] } } }
+  rest: { gated: true, actions: { get: { uris: ['/', '/main/**'] }, put: { uris: ['/main/**'] }, delete: { uris: ['/main/**'] } } },
+  help: { actions: { get: { uris: ['/**'] } } }
 }
 const at = state => ({ service: { state }, protocols })
 const req = (protocol, action, uri, body) => ({ protocol, action, uri, ...(body !== undefined ? { body } : {}) })
@@ -31,7 +32,9 @@ test('check: canonical, offered, and now', (t) => {
   t.is(check(req('other', 'get', '/'), { service: null, protocols }), null, 'without service: no gate')
 })
 
-test('check: the service state gates the API', (t) => {
+test('check: the service\'s door: closed for the protocols behind it, not for the others', (t) => {
+  t.is(check(req('help', 'get', '/main'), at('booted')), null, 'not gated: open whatever the state')
+  t.is(check(req('help', 'get', '/main'), at('started')), null)
   t.is(check(req('service', 'initialise', '/'), at('booted')), null)
   t.is(check(req('service', 'start', '/'), at('booted')), 'not now: service start (the service is booted)')
   t.is(check(req('rest', 'get', '/'), at('booted')), 'not now: rest get (the service is booted, not started)')
@@ -73,7 +76,7 @@ test('check: an internal request, the mrepo\'s own: not asked whether offered, n
   t.is(check(extract, at('initialised'), { internal: true }), null, 'before it is started, not offered: allowed')
   t.is(check(extract, { service: null, protocols: null }, { internal: true }), null, 'without service too')
   t.ok(/not canonical/.test(check({ ...extract, uri: '/A' }, at('started'), { internal: true })), 'its URI still checked')
-  t.is(check(extract, at('initialised')), 'not offered: help', 'not internal: the gates apply')
+  t.is(check(extract, at('initialised')), 'not offered: help extract', 'not internal: asked whether offered')
   t.is(check(req('service', 'initialise', '/'), at('initialised'), { internal: true }), 'not now: service initialise (the service is initialised)', 'a service action: its states, internal or not')
   t.is(check(req('service', 'start', '/'), at('initialised'), { internal: true }), null, 'and allowed when its state allows')
 })

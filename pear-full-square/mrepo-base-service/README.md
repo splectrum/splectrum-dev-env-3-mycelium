@@ -3,9 +3,9 @@
 The mrepo service protocol: the service state of an mrepo's external API, and the actions that move it.
 
 The state is in the runtime layer, `/runtime/service.json`. An mrepo that
-has it is service managed: a request from outside is allowed only once the
-service is started, and each service action only in the states its config
-names. Offered by `haiccing/base-package-service`.
+has it is service managed: a protocol behind the service's door, `gated`
+in its config, is offered to the outside only once the service is started,
+and each service action only in the states its config names. Offered by `haiccing/base-package-service`.
 
 | | |
 |---|---|

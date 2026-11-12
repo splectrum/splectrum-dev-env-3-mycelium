@@ -52,9 +52,9 @@ setting.
 - **Checked** (`check`): its URI canonical; where the mrepo has a
   service, against the protocols the runtime loaded (`ctx.protocols`):
   the protocol loaded, the action configured, the URI one its config names
-  (`matches`), the service state one that allows it (none named: started).
-  An internal request is not asked whether it is offered, and waits for a
-  state only where the action names its states. Without a service: no
+  (`matches`); an action that names its states, in one of them; a gated
+  protocol, once the service is started. An internal request is not asked
+  whether it is offered and is not held at the door. Without a service: no
   gate.
 - **A layer's records** (`layer(ctx, branch)`): one JSON document a
   record, `<name>.json`, listed in the order they arrived (the commit

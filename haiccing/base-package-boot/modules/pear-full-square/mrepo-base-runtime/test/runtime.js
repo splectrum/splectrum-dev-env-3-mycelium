@@ -15,7 +15,7 @@ const own = {
   actions: { rest: ACTIONS.rest, service: { initialise, start, stop, shutdown } },
   protocols: {
     service: CONFIG,
-    rest: { actions: { get: { uris: ['/', '/main/**', '/runtime/**', '/packages/**', '/request/**'] }, put: { uris: ['/main/**'] }, delete: { uris: ['/main/**'] } } }
+    rest: { gated: true, actions: { get: { uris: ['/', '/main/**', '/runtime/**', '/packages/**', '/request/**'] }, put: { uris: ['/main/**'] }, delete: { uris: ['/main/**'] } } }
   }
 }
 

@@ -18,7 +18,7 @@ is atomic.
 | `runtime` | `run`: a linked package's entry by path, its tests above all; `register`: the protocols loaded, recorded here | `base-package-runtime`: every mrepo |
 | `help` | `get`: the help layer read by URI; `extract`: the help layer written | `base-package-runtime`, with `mrepo-base-help`: every mrepo |
 | `service` | `initialise`, `start`, `stop`, `shutdown`: the service state moved | `base-package-service`: an mrepo that is service managed |
-| `boot` | `deploy`, `teardown`, `redeploy` of a child mrepo, executed by the parent | `base-package-boot`: an mrepo that deploys others |
+| `boot` | `deploy`, `teardown`, `redeploy` of a child mrepo, executed by the parent; gated | `base-package-boot`: an mrepo that deploys others |
 
 One package, one protocol, except the runtime's, which brings its own two.
 
@@ -36,16 +36,20 @@ One package, one protocol, except the runtime's, which brings its own two.
 
 - `uris`: where the action is offered: `/`, `/<name>` any one segment,
   `/main/**` everything below, `/**` anywhere.
-- `states`: the service states that allow it. None named: once the service
-  is started.
+- `states`: the service states that allow the action, for one that moves
+  the state: the service's own.
+- `gated`, on the protocol: it is behind the service's door, offered only
+  once the service is started. Not gated: offered whatever the state.
 
 ## Gate
 
 Where the mrepo is service managed, a request from the inbox is allowed
-when its protocol is loaded, its action configured, its URI one the config
-names, and the service state one that allows it. The gate reads what the
-runtime loaded; this layer is its record. Without a service there is no
-gate.
+when its protocol is loaded, its action configured and its URI one the
+config names. The service's door then closes a selection of protocols, not
+all: a gated one waits for the service to be started; the others, such as
+`runtime` and `help`, stay open, so a closed mrepo can still be inspected
+and tested. The gate reads what the runtime loaded; this layer is its
+record. Without a service there is no gate.
 
 ## Later
 
