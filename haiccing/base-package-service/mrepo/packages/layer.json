@@ -1,0 +1,10 @@
+{
+  "mode": "replicated",
+  "description": "The packages this mrepo is made of, in deploy order: the runtime, the service protocol, the documentation packages (deployed as the target: an mrepo with a service and nothing else).",
+  "packages": [
+    "haiccing/base-package-runtime",
+    "haiccing/base-package-service",
+    "haiccing/package-docs-mrepo",
+    "haiccing/package-docs-template"
+  ]
+}

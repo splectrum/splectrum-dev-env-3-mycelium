@@ -9,12 +9,12 @@
 import process from './modules/node_modules/bare-process/index.js'
 import { resolve } from './modules/node_modules/bare-path/index.js'
 import { run } from './modules/pear-full-square/mrepo-base-runtime/index.js'
-import { actions } from './protocol.js'
+import { actions, protocols } from './protocol.js'
 
 const args = process.argv.slice(2)
 const repo = args.find(a => !a.startsWith('--'))
 const work = args.find(a => a.startsWith('--work='))
 // its own protocols, from its protocol.js
-const own = { pkg: 'haiccing/base-package-runtime', actions }
+const own = { pkg: 'haiccing/base-package-runtime', actions, protocols }
 await run(repo ? { repo: resolve(repo), own } : { work: resolve(work ? work.slice('--work='.length) : '.'), own })
 process.exit(0) // stopped: ended here (its signal handlers would hold the process open)

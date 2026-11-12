@@ -7,21 +7,27 @@ import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
 import { layer, record, wrap, complete, guid, EXECUTE } from 'mrepo-base-request'
 import { bootedHost } from 'mrepo-base-runtime/test/fixture.js'
+import { initialise, start, stop, shutdown, CONFIG } from 'mrepo-base-service'
 import { execute, executed, failed, ACTIONS } from '../index.js'
+
+// The protocols as packages would offer them: rest (this module's), service.
+const ALL = { ...ACTIONS, service: { initialise, start, stop, shutdown } }
+const any = { uris: ['/**'] }
+const PROTOCOLS = { service: CONFIG, rest: { actions: { get: any, put: any, delete: any } } }
 
 // The runtime's context over a booted host, in this process.
 async function withHost (work, fn) {
   const store = await openStore({ storage: join(work, 'store') })
   try {
     const host = await mrepos({ store, local: join(work, 'mrepos') }).open('host')
-    return await fn({ work, name: host.name, backend: host.backend, repo: openRepo(host.backend), writer: writer(host.backend) })
+    return await fn({ work, name: host.name, backend: host.backend, repo: openRepo(host.backend), writer: writer(host.backend), protocols: PROTOCOLS })
   } finally { await store.close() }
 }
 const json = async (repo, p) => JSON.parse((await repo.read(p)).toString())
 const run = async (ctx, value) => {
   const name = `${Date.now()}-00000000`
-  await layer(ctx, EXECUTE).put(name, record(`/${EXECUTE}`, record('/haicc/terminal', { api: 'haicc', ...value })))
-  await execute(ctx)
+  await layer(ctx, EXECUTE).put(name, record(`/${EXECUTE}`, record('/haicc/terminal', { ...value })))
+  await execute(ctx, { actions: ALL })
   const core = (await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value
   return 'output' in core.value ? { ok: true, value: core.value.output } : 'error' in core.value ? { ok: false, error: core.value.error } : null
 }
@@ -33,7 +39,6 @@ test('execute: execution branches from their targets, the record completed, merg
     await withHost(work, async ctx => {
       let r = await run(ctx, { protocol: 'service', action: 'initialise', uri: '/' })
       t.alike(r, { ok: true, value: { service: 'initialised' } })
-      t.is((await json(ctx.repo, '/runtime/api.json')).api, 'haicc', 'the API extracted from the type\'s package into the runtime layer')
       t.is((await json(ctx.repo, '/runtime/service.json')).state, 'initialised', 'merged back into runtime')
       r = await run(ctx, { protocol: 'service', action: 'start', uri: '/' })
       r = await run(ctx, { protocol: 'rest', action: 'put', uri: '/main/a/b.json', body: { n: 1 } })
@@ -56,9 +61,9 @@ test('the execution context: read-only to the action, the runtime\'s context rea
     await bootedHost(work, { preload: false })
     await withHost(work, async ctx => {
       let seen = null
-      const actions = { ...ACTIONS, service: { ...ACTIONS.service, initialise: async exec => { seen = { frozen: Object.isFrozen(exec) && Object.isFrozen(exec.runtime), name: exec.runtime.name, writer: 'writer' in exec.runtime, branches: (await exec.runtime.branches()).includes('runtime'), service: JSON.parse((await exec.runtime.read('/runtime/service.json')).toString()).state }; return 'seen' } } }
+      const actions = { ...ALL, service: { ...ALL.service, initialise: async exec => { seen = { frozen: Object.isFrozen(exec) && Object.isFrozen(exec.runtime), name: exec.runtime.name, writer: 'writer' in exec.runtime, branches: (await exec.runtime.branches()).includes('runtime'), service: JSON.parse((await exec.runtime.read('/runtime/service.json')).toString()).state }; return 'seen' } } }
       const name = guid()
-      await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { api: 'haicc', protocol: 'service', action: 'initialise', uri: '/' }, name)))
+      await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { protocol: 'service', action: 'initialise', uri: '/' }, name)))
       await execute(ctx, { actions })
       t.alike(seen, { frozen: true, name: 'host', writer: false, branches: true, service: 'booted' })
     })
@@ -86,7 +91,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
       const at = async (repo, p) => (await repo.select(p)).length > 0
       const one = async (fail) => {
         const name = guid()
-        await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { api: 'haicc', protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name)))
+        await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name)))
         await execute(ctx, { actions: go(fail) })
         return (await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value
       }
@@ -115,7 +120,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
         return after
       } } }
       const name = guid()
-      await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { api: 'haicc', protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name)))
+      await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name)))
       await execute(ctx, { actions: back })
       t.alike((await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value.output, { committed: 1, dropped: 0, undone: 0 }, 'discard dropped the uncommitted; rollback undid the last commit, not the one before')
       t.ok(await at(ctx.repo, '/main/committed.json'), 'merged: what stayed committed')
@@ -133,7 +138,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
         return { after }
       } } }
       const n2 = guid()
-      await layer(ctx, EXECUTE).put(n2, wrap(`/${EXECUTE}`, record(null, { api: 'haicc', protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, n2)))
+      await layer(ctx, EXECUTE).put(n2, wrap(`/${EXECUTE}`, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, n2)))
       await execute(ctx, { actions: ditch })
       t.alike((await json(ctx.repo, `/${EXECUTE}/${n2}.json`)).value.value.output, { after: 0 }, 'reset: back to the start, its local commit undone')
       t.absent(await at(ctx.repo, '/main/first.json'), 'nothing before the reset merged')
@@ -160,7 +165,7 @@ test('exec.log: entries into the request\'s record, at or above the threshold', 
       } } }
       const one = async () => {
         const name = guid()
-        await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { api: 'haicc', protocol: 'rest', action: 'get', uri: '/main' }, name)))
+        await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { protocol: 'rest', action: 'get', uri: '/main' }, name)))
         await execute(ctx, { actions: logging })
         return (await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value
       }
@@ -178,7 +183,7 @@ test('executed: a form completed elsewhere handed over as execute hands one', as
   try {
     await bootedHost(work, { preload: false })
     await withHost(work, async ctx => {
-      const core = complete(record(null, { api: 'haicc', protocol: 'service', action: 'boot', uri: '/' }, guid()), { ok: true, value: { booted: true } })
+      const core = complete(record(null, { protocol: 'service', action: 'boot', uri: '/' }, guid()), { ok: true, value: { booted: true } })
       await executed(ctx, core.key, wrap(`/${EXECUTE}`, core))
       t.alike((await json(ctx.repo, `/${EXECUTE}/${core.key}.json`)).value, core, 'in request/execute, completed')
       t.alike((await json(ctx.repo, `/execute/${EXECUTE}/${core.key}.json`)).value, core, 'through its execution branch')
@@ -192,7 +197,7 @@ test('failed: a runtime\'s error in the request executing', async (t) => {
     await bootedHost(work, { preload: false })
     await withHost(work, async ctx => {
       t.alike(await failed(ctx, 'runtime: x'), [], 'none executing: none completed (the caller says it on stderr)')
-      const core = record(null, { api: 'haicc', protocol: 'service', action: 'initialise', uri: '/' }, guid())
+      const core = record(null, { protocol: 'service', action: 'initialise', uri: '/' }, guid())
       await layer(ctx, EXECUTE).put(core.key, wrap(`/${EXECUTE}`, core))
       t.alike(await failed(ctx, 'runtime: x'), [core.key])
       t.is((await json(ctx.repo, `/${EXECUTE}/${core.key}.json`)).value.value.error, 'runtime: x', 'its form completed with the error: the request protocol moves it to done')

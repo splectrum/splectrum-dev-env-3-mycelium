@@ -37,58 +37,56 @@ export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'
 export const DONE = 'request/done'
 
-// The service protocol's actions allowed in each service state; any other
-// protocol only once started.
-export const SERVICE = {
-  booted: ['initialise'],
-  initialised: ['start', 'shutdown'],
-  started: ['stop']
-}
-
-// The runtime's data: the service state, the type, the API (once initialised).
-export async function runtimeData ({ repo }) {
+// The runtime's data the check reads: the service state (where the mrepo
+// has service), and the protocols the runtime loaded, their configs by name
+// (ctx.protocols: { <protocol>: { actions: { <action>: { uris, states } } } }).
+export async function runtimeData ({ repo, protocols = null }) {
   const read = async p => { try { return JSON.parse((await repo.read(p)).toString()) } catch { return null } }
-  return { service: await read('/runtime/service.json'), api: await read('/runtime/api.json') }
+  return { service: await read('/runtime/service.json'), protocols }
 }
 
-// A request checked against the repository's type, its API and, as it
-// executes (state: true), the service state: null when allowed, else why not.
-// At the inbox the state is not checked: the queue may hold requests that
-// change it first (a start behind the preloaded initialise); the API, once
-// extracted, is.
-export function check (value, { service, api }, { state = true, internal = false } = {}) {
+// A URI against a pattern of an action's config: segments, <name> any one,
+// ** the rest (none too): /, /<name>, /main/**, /**.
+export function matches (pattern, uri) {
+  const p = pattern.split('/').filter(Boolean)
+  const u = uri.split('/').filter(Boolean)
+  for (let i = 0; i < p.length; i++) {
+    if (p[i] === '**') return true
+    if (i >= u.length) return false
+    if (!/^<.+>$/.test(p[i]) && p[i] !== u[i]) return false
+  }
+  return p.length === u.length
+}
+
+// A request checked: null when allowed, else why not.
+//   always             a form, its URI canonical
+//   without service    no more (no /runtime/service.json: no gate)
+//   with service       offered: its protocol loaded, its action configured,
+//                      its URI one the action's config names; and now (state:
+//                      true, as it executes): the service state one of the
+//                      action's states (none named: started)
+//   internal           the mrepo's own (not from the inbox): not asked
+//                      whether offered; the state only where the action's
+//                      config names its states (the service's own actions)
+// At the inbox the state is not checked (state: false): the queue may hold
+// requests that change it first.
+export function check (value, { service, protocols }, { state = true, internal = false } = {}) {
   if (!value || typeof value !== 'object') return 'not a request'
-  // An internal request (the mrepo's own: not from the inbox): its URI
-  // canonical; no API, and it need not wait for the service to be started.
-  // The service's own actions stay under its state machine, whoever asks.
-  if (internal && !(service && value.protocol === 'service')) {
-    try { if (canonical(value.uri ?? '') !== value.uri) return `not canonical: ${value.uri}` } catch (err) { return err.message }
-    return null
-  }
-  // An mrepo without the service protocol (no /runtime/service.json: the
-  // boot mrepo): no type, no state gate (the runtime's status: a direction).
-  if (!service) {
-    try { if (canonical(value.uri ?? '') !== value.uri) return `not canonical: ${value.uri}` } catch (err) { return err.message }
-    return null
-  }
-  if (!internal && value.api !== service.type) return `misdelivered: api ${value.api}, this repository is of type ${service.type}`
   let uri
   try { uri = canonical(value.uri ?? '') } catch (err) { return err.message }
   if (uri !== value.uri) return `not canonical: ${value.uri} (${uri})`
+  if (!service) return null
   const { protocol, action } = value
-  if (protocol === 'service') {
-    if (uri !== '/') return `no service at ${uri}`
-    if (!Object.values(SERVICE).flat().includes(action)) return `not offered: service ${action}`
-    if (!state) return null
-    return (SERVICE[service.state] || []).includes(action) ? null : `not now: service ${action} (the service is ${service.state})`
+  const cfg = protocols?.[protocol]?.actions?.[action]
+  if (!internal) {
+    if (!protocols?.[protocol]) return `not offered: ${protocol}`
+    if (!cfg) return `not offered: ${protocol} ${action}`
+    if (!(cfg.uris || []).some(p => matches(p, uri))) return `not offered: ${protocol} ${action} at ${uri}`
   }
-  if (state && service.state !== 'started') return `not now: ${protocol} ${action} (the service is ${service.state}, not started)`
-  if (!api) return null
-  const type = api.types.find(t => t.uri === uri || (t.deep && uri.startsWith(t.uri === '/' ? '/' : t.uri + '/')))
-  if (!type) return `no such resource: ${uri}`
-  if (!(type.protocols[protocol] || []).includes(action)) return `not offered: ${protocol} ${action} at ${uri}`
-  if (['put', 'post'].includes(action) && value.body === undefined) return `${action} needs a body`
-  return null
+  if (!state) return null
+  if (cfg?.states) return cfg.states.includes(service.state) ? null : `not now: ${protocol} ${action} (the service is ${service.state})`
+  if (internal) return null
+  return service.state === 'started' ? null : `not now: ${protocol} ${action} (the service is ${service.state}, not started)`
 }
 
 // The completed form sent back: in the outbox, in its envelope, when its core

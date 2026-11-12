@@ -50,7 +50,7 @@ test('the boot mrepo running, without its packages: no service gate; its preload
   const work = mkdtempSync(join(tmpdir(), 'boot-'))
   try {
     await build({ from: BOOT, work, name: 'boot' })
-    const s = await start({ work, bundle: join(here, '..', 'mrepo-base-runtime', 'runtime.js') })
+    const s = await start({ work, bundle: join(here, '..', 'mrepo-base-runtime', 'test', 'runtime.js') })
     t.ok(s?.pid, 'the runtime started')
     t.is(s.repository.storage, 'filesystem')
     t.is(s.repository.name, 'boot')

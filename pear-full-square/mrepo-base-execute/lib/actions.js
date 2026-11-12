@@ -1,21 +1,13 @@
-// The framework's generic actions, the base's. Each takes the execution's context (exec:
+// The rest actions, generic (not mounted by a package yet; the tests' own).
+// Each takes the execution's context (exec:
 // reads overlaid, writes to the execution branches, the runtime's context
 // read through exec.runtime) and the request's value, and returns its value
 // (or throws: refused).
-import Bundle from 'bare-bundle'
 import * as json from 'mycelium-value-json'
 
 const isJson = uri => uri.endsWith('.json')
 
-async function service (exec) {
-  return JSON.parse((await exec.read('/runtime/service.json')).toString())
-}
-
-async function setState (exec, state) {
-  const s = { ...await service(exec), state }
-  exec.put('/runtime/service.json', json.encode(s))
-  return { service: state }
-}
+const service = async exec => exec.read('/runtime/service.json').then(b => JSON.parse(b.toString()), () => ({ state: null }))
 
 export const ACTIONS = {
   rest: {
@@ -47,24 +39,6 @@ export const ACTIONS = {
       if (!(await exec.select(uri)).length) throw new Error(`nothing at ${uri}`)
       exec.remove(uri)
       return { deleted: uri }
-    }
-  },
-  service: {
-    // The type's API extracted from its package (/api.json in its bundle,
-    // read from the packages layer) into /runtime/api.json.
-    async initialise (exec) {
-      const s = await service(exec)
-      const bundle = Bundle.from(await exec.read(`/packages/${s.package}.bundle`))
-      const api = JSON.parse(bundle.read('/api.json').toString())
-      if (api.api !== s.type) throw new Error(`the package ${s.package} is not of type ${s.type}`)
-      exec.put('/runtime/api.json', json.encode(api))
-      return setState(exec, 'initialised')
-    },
-    start: exec => setState(exec, 'started'),
-    stop: exec => setState(exec, 'initialised'),
-    async shutdown (exec) {
-      exec.remove('/runtime/api.json')
-      return setState(exec, 'booted')
     }
   }
 }

@@ -18,5 +18,6 @@ none expected.
 
 ## Also exported
 
-`leaves(root)`: the leaves of a structure, each folder holding a
-`layer.json`, by its path.
+- `leaves(root)`: the leaves of a structure, each folder holding a
+  `layer.json`, by its path.
+- `contributions(root)`: the files it adds to layers it does not define.

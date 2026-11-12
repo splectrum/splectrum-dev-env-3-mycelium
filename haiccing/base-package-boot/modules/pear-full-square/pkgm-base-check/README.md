@@ -28,7 +28,8 @@ The code rules:
 The mrepo side:
 
 - **Structure**: every leaf of `mrepo/` has a valid `layer.json`, with its
-  mode and description; nothing but READMEs outside a layer, none inside;
+  mode and description; no README inside a layer; a file in a folder
+  without a `layer.json` contributes to a layer another package defines;
   a preloaded request is a well formed record; the packages are listed by
   name.
 - **Protocol**: every action its `protocol.js` configures has its
@@ -36,7 +37,8 @@ The mrepo side:
 - **Carried**: no third-party module is carried that its record does not
   name, each at its recorded version; an omitted one is only its stub.
 - **In situ**: the package is in the mrepo's packages manifest, its bundle
-  there is the one the manifest names, and the layers it brings exist.
+  there is the one the manifest names, and the layers it brings or
+  contributes to exist.
 
 ## Tests
 

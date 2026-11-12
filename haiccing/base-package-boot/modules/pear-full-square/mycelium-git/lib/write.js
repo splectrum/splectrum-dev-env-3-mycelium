@@ -12,19 +12,20 @@ const TREE = '040000'
 
 // First segments of layers, which start as orphans. execute and publish
 // branches are derived from another branch, not created as layers.
-// request, packages, runtime, inbox, outbox and help: the mrepo's layers
-// (help: the READMEs of its packages); pending and capability go when the
+// request, packages, runtime, inbox, outbox, help and protocols: the
+// mrepo's layers (help: the READMEs of its packages; protocols: the
+// configs of the protocols it offers); pending and capability go when the
 // code using them is rebuilt.
-const LAYERS = ['main', 'request', 'packages', 'runtime', 'inbox', 'outbox', 'help', 'pending', 'overlay', 'data', 'capability']
+const LAYERS = ['main', 'request', 'packages', 'runtime', 'inbox', 'outbox', 'help', 'protocols', 'pending', 'overlay', 'data', 'capability']
 // Every reserved first segment: a branch name starts with one.
 const RESERVED = [...LAYERS, 'execute', 'publish']
 // Permanent: never deleted.
 const PERMANENT = ['main', 'pending/default']
 
 // A layer's name: its first segment is a layer's, with more segments after
-// it, except main, packages, runtime, inbox, outbox and help, each a layer
-// on its own.
-const SOLO = ['main', 'packages', 'runtime', 'inbox', 'outbox', 'help']
+// it, except main, packages, runtime, inbox, outbox, help and protocols,
+// each a layer on its own.
+const SOLO = ['main', 'packages', 'runtime', 'inbox', 'outbox', 'help', 'protocols']
 function layerName (name) {
   const first = name.split('/')[0]
   if (!LAYERS.includes(first) || (SOLO.includes(first) ? name !== first : name === first)) {

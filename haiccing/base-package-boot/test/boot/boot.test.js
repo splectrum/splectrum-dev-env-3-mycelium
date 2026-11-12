@@ -24,7 +24,7 @@ const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' })
 const bare = JSON.parse(readFileSync(join(pkg, 'bare.json')))
 const SOURCES = resolve(process.env.SOURCES || join(pkg, '..', '..', 'sources'))
 const have = existsSync(join(SOURCES, 'holepunchto', `bare-runtime-${os.platform()}-${os.arch()}-${bare.version}.tgz`)) &&
-  ['base-package-runtime', 'base-package-boot', 'package-docs-mrepo', 'package-docs-template'].every(p => existsSync(join(SOURCES, 'haiccing', `${p}.bundle`)))
+  ['base-package-runtime', 'base-package-boot', 'base-package-service', 'package-docs-mrepo', 'package-docs-template'].every(p => existsSync(join(SOURCES, 'haiccing', `${p}.bundle`)))
 
 // The PATH without any `bare` on it: the machine's own Bare not found.
 const NO_BARE = String(process.env.PATH ?? '').split(':').filter(d => d && !existsSync(join(d, 'bare'))).join(':')
@@ -108,15 +108,16 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     // (moved to request/done on the runtime's next pass)
     let history = []
     const backend = p2pgitBackend(gitdirOf(work, 'boot'), { fs })
-    for (let i = 0; i < 300 && history.length < 3; i++) {
+    for (let i = 0; i < 300 && history.length < 4; i++) {
       history = []
       for (const n of await layer({ repo, backend }, 'request/done').arrived()) history.push((await repo.read(`/request/done/${n}.json`).then(b => JSON.parse(b.toString()))).value.value)
-      if (history.length < 3) await wait(100)
+      if (history.length < 4) await wait(100)
     }
-    t.alike(history.map(f => `${f.protocol} ${f.action} ${f.uri}`), ['boot deploy /boot', 'boot deploy /host', 'help extract /'], 'the history: the boot\'s deploy, the host\'s (preloaded), its help extracted (placed by its runtime as it started)')
-    t.alike(await repo.select('/inbox/*').then(r => r.filter(([p]) => !p.endsWith('layer.json')).length, () => 0), 0, 'all three internal: none of them in the inbox')
+    t.alike(history.map(f => `${f.protocol} ${f.action} ${f.uri}`), ['boot deploy /boot', 'boot deploy /host', 'runtime register /', 'help extract /'], 'the history: the boot\'s deploy, the host\'s (preloaded), then its runtime\'s own as it started: its protocols registered, its help extracted')
+    t.alike(await repo.select('/inbox/*').then(r => r.filter(([p]) => !p.endsWith('layer.json')).length, () => 0), 0, 'all internal: none of them in the inbox')
     t.absent(history[1].error, 'the host\'s deploy done')
-    t.ok(!history[2].error && history[2].output?.readmes > 0, `its help extracted before it took requests in ${JSON.stringify(history[2].output ?? history[2].error)}`)
+    t.alike(history[2].output, { registered: ['boot', 'help', 'runtime'] }, 'its protocols: the boot\'s, and the runtime package\'s two')
+    t.ok(!history[3].error && history[3].output?.readmes > 0, `its help extracted before it took requests in ${JSON.stringify(history[3].output ?? history[3].error)}`)
     // followed: every record of the boot mrepo's request layers and its child's, one line each
     const lines = []
     const f = follow({ dir: viewOf(work, 'boot'), name: 'boot', print: l => lines.push(l) })
@@ -128,7 +129,7 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.ok(topics.every(x => x.startsWith('/boot/')), 'from the root')
     // redeploy, sent to the running boot mrepo through its inbox folder: the
     // host's runtime stopped, the host rebuilt, its runtime started again
-    const core = record('/test', { api: 'boot', protocol: 'boot', action: 'redeploy', uri: '/host' }, guid())
+    const core = record('/test', { protocol: 'boot', action: 'redeploy', uri: '/host' }, guid())
     writeFileSync(join(viewOf(work, 'boot'), 'inbox', `${core.key}.json`), JSON.stringify(wrap('/boot/inbox', core)))
     let redone = null
     for (let i = 0; i < 300 && !redone; i++) { redone = await repo.read(`/request/done/${core.key}.json`).then(b => JSON.parse(b.toString()).value.value, () => null); if (!redone) await wait(100) }
@@ -146,7 +147,7 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     // teardown, then deploy again, each a request to the running boot mrepo
     // (the child the runtime package alone)
     const sent = async (form, tries = 300) => {
-      const c = record('/test', { api: 'boot', protocol: 'boot', ...form }, guid())
+      const c = record('/test', { protocol: 'boot', ...form }, guid())
       writeFileSync(join(viewOf(work, 'boot'), 'inbox', `${c.key}.json`), JSON.stringify(wrap('/boot/inbox', c)))
       let v = null
       for (let i = 0; i < tries && !v; i++) { v = await repo.read(`/request/done/${c.key}.json`).then(b => JSON.parse(b.toString()).value.value, () => null); if (!v) await wait(100) }
@@ -187,6 +188,33 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
       const v = await sent({ protocol: 'runtime', action: 'run', uri: `/packages/haiccing/${p}/test/validate-in-situ` }, 1200)
       t.alike([v?.error, v?.output?.ok, v?.output?.units?.map(u => [u.unit, u.asserts.passed > 0 && u.asserts.passed === u.asserts.total])], [undefined, true, [['/test/help-in-situ', true], ['/test/mrepo-in-situ', true]]], `${p}: validate-in-situ, its help and itself as this mrepo holds it ${v?.error ?? JSON.stringify(v?.output?.units?.map(u => u.failures) ?? '')}`)
     }
+    // an mrepo with a service, deployed from the service package: its
+    // external API gated by its state, its protocols recorded
+    const svcUp = await sent({ action: 'deploy', uri: '/svc', body: { package: 'haiccing/base-package-service' } }, 600)
+    t.absent(svcUp?.error, `boot deploy /svc from the service package ${svcUp?.error ?? ''}`)
+    const svc = join(viewOf(work, 'boot'), 'main', 'svc')
+    const svcRepo = openRepo(p2pgitBackend(join(svc, '.git'), { fs }))
+    const toSvc = async (form, tries = 600) => {
+      const c = record('/test', form, guid())
+      writeFileSync(join(svc, 'inbox', `${c.key}.json`), JSON.stringify(wrap('/svc/inbox', c)))
+      let v = null
+      for (let i = 0; i < tries && !v; i++) { v = await svcRepo.read(`/outbox/${c.key}.json`).then(b => JSON.parse(b.toString()).value.value, () => null); if (!v) await wait(100) }
+      return v
+    }
+    const svcReq = (protocol, action, uri, body) => toSvc({ protocol, action, uri, ...(body ? { body } : {}) })
+    t.is((await svcReq('help', 'get', '/'))?.error, 'not now: help get (the service is booted, not started)', 'booted: its API closed (asked once its own requests were done)')
+    t.is(JSON.parse((await svcRepo.read('/runtime/service.json')).toString()).state, 'booted', 'its state, from the service package\'s structure')
+    t.alike((await svcRepo.select('/protocols/*')).map(([p]) => p.slice(p.lastIndexOf('/') + 1)).filter(n => n !== 'layer.json').sort(), ['help.json', 'runtime.json', 'service.json'], 'its protocols recorded: the runtime\'s, help, service')
+    t.is((await svcReq('service', 'start', '/'))?.error, 'not now: service start (the service is booted)', 'the service\'s own actions: each in its state')
+    t.alike((await svcReq('service', 'initialise', '/'))?.output, { service: 'initialised' })
+    t.alike((await svcReq('service', 'start', '/'))?.output, { service: 'started' })
+    t.ok((await svcReq('help', 'get', '/'))?.output?.oneliner, 'started: its API open')
+    t.is((await svcReq('rest', 'get', '/main'))?.error, 'not offered: rest', 'a protocol it does not link: not offered')
+    t.is((await svcReq('service', 'start', '/main'))?.error, 'not offered: service start at /main', 'an action, only at the URIs its config names')
+    const svcSitu = await svcReq('runtime', 'run', '/packages/haiccing/base-package-service/test/validate-in-situ')
+    t.alike([svcSitu?.error, svcSitu?.output?.ok, svcSitu?.output?.units?.map(u => u.unit)], [undefined, true, ['/test/help-in-situ', '/test/mrepo-in-situ']], `the service package validated in situ, in the mrepo it serves ${svcSitu?.error ?? JSON.stringify(svcSitu?.output?.units?.map(u => u.failures) ?? '')}`)
+    const svcDown = await sent({ action: 'teardown', uri: '/svc' })
+    t.alike([svcDown?.error, svcDown?.output], [undefined, { tornDown: '/svc' }], 'torn down again')
     const refused = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/run' })
     t.ok(/not run here/.test(refused?.error ?? ''), 'a package\'s program: not run in the runtime')
 
@@ -202,8 +230,8 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
     const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
     let n = 0
-    for (let i = 0; i < 100 && (n = await records('done')) < 18; i++) await wait(100)
-    t.is(n, 18, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs, the three helps, the four in-situ validations, the two help extractions (internal, one a start) among them)')
+    for (let i = 0; i < 100 && (n = await records('done')) < 22; i++) await wait(100)
+    t.is(n, 22, 'its runtime again: the second deploy done; the host\'s preloaded deploy not repeated (the redeploy, teardown, deploy, the three runtime runs, the three helps, the four in-situ validations, the two help extractions and the two registrations (internal, one a start), the service mrepo deployed and torn down among them)')
     t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
     const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
     t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')

@@ -11,10 +11,12 @@ The service states and what each allows:
 
 | state | allowed |
 |---|---|
-| booted | `initialise`, `teardown` |
+| booted | `initialise` |
 | initialised | `start`, `shutdown` |
-| started | the external API, `stop`, `pause` |
-| paused | `resume`, `stop` |
+| started | `stop`, and the mrepo's external API |
+
+The state comes with `base-package-service`; its actions and the states
+that allow each are that protocol's config.
 
 ## Process
 
@@ -26,5 +28,5 @@ a short path in the temporary folder when that one is too long), loads the
 protocols its linked packages offer, and runs them in turn.
 
 The service state gates the protocols only where the mrepo has `service`;
-without it (the boot mrepo) there is no gate and the runtime runs until
-stopped. With it, once shut down with nothing waiting, it ends.
+without it (the boot mrepo) there is no gate. Either way the runtime runs
+until it is stopped: a parent's teardown stops its child's.

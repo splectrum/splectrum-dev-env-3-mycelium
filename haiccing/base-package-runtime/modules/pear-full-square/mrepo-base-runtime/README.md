@@ -18,19 +18,22 @@ mrepo's own packages: `bare
 
 ## Design
 
-- `index.js`: the library; `runtime.js`: the command line, the package's
-  entry (`start --work=<folder>`, `version`).
+- `index.js`: the library. No protocol is built in: every action comes
+  from a package. `test/runtime.js`: a command line for the tests, started
+  with `rest` and `service` as packages would offer them.
 - The protocols its linked packages offer (`protocolsOf`): each package
   in its `packages` layer with a `protocol` entry, imported from its
   `packages/` (the bundle's dispatcher, `run('/protocol')`: nothing else
-  runs on import), its actions beside the framework's.
-- Before it is operational, its own requests: where it has a help layer,
-  it places `help extract /` as an internal request; until its own requests
-  are done, it takes nothing from the inbox. Then `help get <uri>` reads
+  runs on import): its actions, and its configs, which the check reads
+  (`ctx.protocols`).
+- Before it is operational, its own requests, internal: `runtime register
+  /` (the protocols it loaded, recorded in its `protocols` layer), then
+  `help extract /`, each where the mrepo has the layer; until they are
+  done, it takes nothing from the inbox. Then `help get <uri>` reads
   the help.
 - Its own package's protocols, passed in by its `run.js` (`run({ own })`;
-  its bundle not imported again): `runtime run`, from `lib/protocol.js`,
-  and `help get`, from `mrepo-base-help`. `runtime run
+  its bundle not imported again): `runtime run` and `runtime register`,
+  from `lib/protocol.js`, and `help`, from `mrepo-base-help`. `runtime run
   /packages/<org>/<package><target>`, body `{ dryRun }`: a linked package's
   entry through its dispatcher, its tests above all (a floating instance of
   the package, each unit its own process); the result the request's output,
@@ -52,9 +55,8 @@ mrepo's own packages: `bare
   repository over its Corestore and disk side. The same protocols on all.
 - One poller fires the protocols in turn over their data states: on the
   p2p host (and on `filesystem`) the inbox folder's new files committed, the request protocol (`mrepo-base-request`), the
-  execute protocol (`mrepo-base-execute`). Once the service is shut down
-  (booted, nothing waiting) the runtime ends; a request posted later starts
-  it again (HAICC's input does).
+  execute protocol (`mrepo-base-execute`). It runs until it is stopped: a parent's teardown
+  stops its child's.
 - `test/fixture.js`: a booted host, for the tests.
 
 ## Tests

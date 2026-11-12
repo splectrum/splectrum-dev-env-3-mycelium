@@ -19,13 +19,18 @@ the tests: `boot.test.js`. It leaves nothing running.
    - the preloaded `boot deploy /host`: the host built inside it
      (`main/host/`), its runtime running, its record at `main/host.json`;
      the records followed, the request history in `request/done`, the
-     outbox;
+     outbox; its runtime's own requests as it started, internal: its
+     protocols registered, its help extracted;
    - requests posted to the boot mrepo's inbox: `boot redeploy /host` (the
      old runtime stopped, a new one), `boot teardown /host` (its runtime
      ended, its folder and record gone), `boot deploy /host` again;
    - the runtime protocol: `runtime run` on the runtime package, a dry run
      of `test/full` (what it would run), a run of `test/validate` (passed,
      in a floating instance, a line a unit in its log), `/run` refused;
+   - an mrepo with a service, deployed from `base-package-service`: its
+     state booted and its API closed, its protocols recorded, the service's
+     actions each in its state, its API open once started, a protocol it
+     does not link not offered, the package validated in situ, torn down;
    - both runtimes stopped; the boot run again: already built, nothing
      committed, its runtime started again, the host not redeployed.
 3. **An installed Bare** on the PATH: used and recorded, none put in

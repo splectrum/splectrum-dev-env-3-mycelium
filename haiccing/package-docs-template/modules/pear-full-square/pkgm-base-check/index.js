@@ -4,4 +4,4 @@
 //   validate/   code.test.js: a package's code (/test/code); mrepo.test.js,
 //               mrepo-in-situ.test.js: its mrepo side (/test/mrepo, /test/mrepo-in-situ)
 export { checkModule, checkPackage, jsFiles } from './internal/rules/index.js'
-export { checkStructure, checkProtocol, checkCarried, leaves } from './internal/mrepo/index.js'
+export { checkStructure, checkProtocol, checkCarried, leaves, contributions } from './internal/mrepo/index.js'

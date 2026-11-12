@@ -1,6 +1,6 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-12). Read `CLAUDE.md`
+Kept current by the cloud session (last: 2026-11-12, part 28). Read `CLAUDE.md`
 first (what is here, how to validate), then this, then `readme.md` here
 (each part's record; the latest parts last). The documentation of what is
 built is in the packages: `haiccing/package-docs-template` and
@@ -64,23 +64,28 @@ built is in the packages: `haiccing/package-docs-template` and
   `validate-in-situ` in a running mrepo (`help-in-situ`, `mrepo-in-situ`).
 - **Documentation packages**: `package-docs-template`,
   `package-docs-mrepo`, linked into every mrepo, validating themselves.
+- **The service** (`base-package-service`): an mrepo that links it is
+  service managed: its external API gated by the service state, against
+  the protocols its runtime loaded and recorded in its `protocols` layer.
+  No protocol is built into the runtime: every one comes from a package.
 
 ## The roadmap, in order
 
 Not built yet, and the platform is not deployed until the first two are
 (they were in the earlier packages plan; kept here so they are not lost):
 
-1. **`base-package-mrepo`**: the `service` protocol (initialise, start,
-   stop, shutdown, pause, resume) as a package, linked by every service
-   managed mrepo (`package-docs-mrepo` already names it). With it: the
-   `protocols` layer (linking a package registers its protocols' configs
-   there; today the runtime only loads the actions), and the runtime's
-   status (deployed, initialised, started...; "not yet operational", from
-   the internal requests, its first piece).
-2. **`base-package-haicc`**: the host's type: its API, the structure of
-   its `main`, its own actions, the packages it requires (runtime, boot,
-   mrepo, the documentation packages). The boot's preloaded `boot deploy
-   /host` then targets it (today: the runtime package, for now).
+1. **`base-package-service`**: built (part 28): the `service` protocol as
+   a package, the `protocols` layer, the gate on the loaded protocols'
+   configs. Rule (the human): a package creates one entity, for a base
+   package a protocol. Still open from it: the runtime's status beyond
+   "not yet operational"; `rest` as its own package when something needs
+   it.
+2. **`base-package-haicc`**: the `haicc` protocol. To discuss with the
+   human first: what its functionality really is.
+   Then **the mrepo application**: to design: what brings a selection of
+   protocols together into one mrepo (today a target package's
+   `mrepo/packages/layer.json` lists them). The boot's preloaded `boot
+   deploy /host` then targets it (today: the runtime package, for now).
 3. **Release and sourcing, deferred**: bundles signed and the manifest
    checked against the publisher's key (the key tool was removed with the
    clean-up: to be rebuilt with it); a GitHub source beside the folder

@@ -1,26 +1,34 @@
 import test from 'brittle'
-import { check, record, wrap, guid, complete, isComplete } from '../index.js'
+import { check, matches, record, wrap, guid, complete, isComplete } from '../index.js'
 
-const api = {
-  api: 'haicc',
-  types: [
-    { uri: '/', protocols: { service: ['initialise', 'start', 'stop', 'shutdown'], rest: ['get'] } },
-    { uri: '/main', deep: true, protocols: { rest: ['get', 'put', 'delete'] } }
-  ]
+// The protocols as a runtime loaded them: each action's URIs, and the
+// states that allow it where it names them (the service's own).
+const at1 = states => ({ uris: ['/'], states })
+const protocols = {
+  service: { actions: { initialise: at1(['booted']), start: at1(['initialised']), stop: at1(['started']), shutdown: at1(['initialised']) } },
+  rest: { actions: { get: { uris: ['/', '/main/**'] }, put: { uris: ['/main/**'] }, delete: { uris: ['/main/**'] } } }
 }
-const at = state => ({ service: { state, type: 'haicc' }, api: state === 'booted' ? null : api })
-const req = (protocol, action, uri, body) => ({ api: 'haicc', protocol, action, uri, ...(body !== undefined ? { body } : {}) })
+const at = state => ({ service: { state }, protocols })
+const req = (protocol, action, uri, body) => ({ protocol, action, uri, ...(body !== undefined ? { body } : {}) })
 
-test('check: not misdelivered, canonical, offered, and now', (t) => {
+test('matches: a URI against a config\'s pattern', (t) => {
+  t.ok(matches('/', '/') && !matches('/', '/a'))
+  t.ok(matches('/<name>', '/host') && !matches('/<name>', '/') && !matches('/<name>', '/a/b'))
+  t.ok(matches('/main/**', '/main') && matches('/main/**', '/main/a/b.json') && !matches('/main/**', '/runtime/x'))
+  t.ok(matches('/**', '/') && matches('/**', '/anything/at/all'))
+})
+
+test('check: canonical, offered, and now', (t) => {
   t.is(check(req('rest', 'get', '/'), at('started')), null)
   t.is(check(req('rest', 'put', '/main/a/b.json', 1), at('started')), null, 'deep')
-  t.is(check({ ...req('rest', 'get', '/'), api: 'other' }, at('started')), 'misdelivered: api other, this repository is of type haicc')
   t.is(check(req('rest', 'get', '/Main'), at('started')), 'not canonical: /Main (/main)')
   t.ok(check(req('rest', 'get', '/a_b'), at('started')), 'a bad URI: refused')
   t.is(check(req('rest', 'put', '/', 1), at('started')), 'not offered: rest put at /')
-  t.is(check(req('rest', 'get', '/packages'), at('started')), 'no such resource: /packages')
-  t.is(check(req('rest', 'put', '/main/x.json'), at('started')), 'put needs a body')
+  t.is(check(req('rest', 'get', '/packages'), at('started')), 'not offered: rest get at /packages')
+  t.is(check(req('rest', 'post', '/main/x.json', 1), at('started')), 'not offered: rest post')
+  t.is(check(req('other', 'get', '/'), at('started')), 'not offered: other')
   t.is(check(null, at('started')), 'not a request')
+  t.is(check(req('other', 'get', '/'), { service: null, protocols }), null, 'without service: no gate')
 })
 
 test('check: the service state gates the API', (t) => {
@@ -32,14 +40,14 @@ test('check: the service state gates the API', (t) => {
   t.is(check(req('rest', 'get', '/'), at('initialised')), 'not now: rest get (the service is initialised, not started)')
   t.is(check(req('service', 'stop', '/'), at('started')), null)
   t.is(check(req('service', 'shutdown', '/'), at('started')), 'not now: service shutdown (the service is started)')
-  t.is(check(req('service', 'start', '/main'), at('initialised')), 'no service at /main')
+  t.is(check(req('service', 'start', '/main'), at('initialised')), 'not offered: service start at /main')
 })
 
 test('check at the inbox: not the state (the queue may change it first)', (t) => {
   const inbox = { state: false }
   t.is(check(req('service', 'start', '/'), at('booted'), inbox), null, 'start behind a queued initialise')
-  t.is(check(req('rest', 'put', '/main/x.json', 1), at('booted'), inbox), null, 'no API yet: offered checked as it executes')
-  t.is(check(req('rest', 'put', '/', 1), at('initialised'), inbox), 'not offered: rest put at /', 'the API, once there: checked')
+  t.is(check(req('rest', 'put', '/main/x.json', 1), at('booted'), inbox), null, 'offered; the state not checked yet')
+  t.is(check(req('rest', 'put', '/', 1), at('initialised'), inbox), 'not offered: rest put at /', 'not offered: refused at once')
   t.is(check(req('service', 'fly', '/'), at('booted'), inbox), 'not offered: service fly')
 })
 
@@ -60,12 +68,12 @@ test('a record: topic, key, timestamp, headers (empty), value; the onion; a form
   t.alike(complete(core, { ok: false, error: 'x' }).value.error, 'x')
 })
 
-test('check: an internal request, the mrepo\'s own: no API, not waiting for started; the service\'s actions still by its state', (t) => {
+test('check: an internal request, the mrepo\'s own: not asked whether offered, not waiting for started; an action that names its states still by them', (t) => {
   const extract = { protocol: 'help', action: 'extract', uri: '/' }
   t.is(check(extract, at('initialised'), { internal: true }), null, 'before it is started, not offered: allowed')
-  t.is(check(extract, { service: null, api: null }, { internal: true }), null, 'without service too')
+  t.is(check(extract, { service: null, protocols: null }, { internal: true }), null, 'without service too')
   t.ok(/not canonical/.test(check({ ...extract, uri: '/A' }, at('started'), { internal: true })), 'its URI still checked')
-  t.ok(check(extract, at('initialised')), 'not internal: the gates apply')
-  t.ok(/not now: service initialise/.test(check({ protocol: 'service', action: 'initialise', uri: '/' }, at('initialised'), { internal: true })), 'a service action: its state machine, internal or not')
-  t.is(check({ protocol: 'service', action: 'start', uri: '/' }, at('initialised'), { internal: true }), null, 'and allowed when its state allows')
+  t.is(check(extract, at('initialised')), 'not offered: help', 'not internal: the gates apply')
+  t.is(check(req('service', 'initialise', '/'), at('initialised'), { internal: true }), 'not now: service initialise (the service is initialised)', 'a service action: its states, internal or not')
+  t.is(check(req('service', 'start', '/'), at('initialised'), { internal: true }), null, 'and allowed when its state allows')
 })

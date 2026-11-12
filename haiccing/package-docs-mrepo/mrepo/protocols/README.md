@@ -1,34 +1,53 @@
 # /protocols
 
-The mrepo's external API: one config a protocol. Atomic. What this layer
-holds is what the mrepo offers; anything else is refused.
+The mrepo's external API: the config of each protocol it offers, recorded by its runtime.
+
+A protocol comes with the package that implements it. Linking the package
+is all it takes: as the runtime starts it loads each linked package's
+protocols, and records their configs here, one file a protocol. The layer
+is atomic.
 
 ```
-/protocols/boot.json        global, from base-package-boot where linked
-/protocols/service.json     global
-/protocols/<name>.json      global, from the application's package
-/protocols/<section>/...    local: shadows /main/<section>
+/protocols/<protocol>.json     the protocol's config: its package, its actions
 ```
 
 ## Protocols
 
 | protocol | actions | from |
 |---|---|---|
-| `service` | `initialise`, `start`, `stop`, `shutdown`, `pause`, `resume`, `run` | every mrepo: `base-package-mrepo` (the runtime runs the protocols; its own package offers `runtime` and `help`) |
-| `boot` | `deploy`, `teardown`, `redeploy` (teardown, then deploy): executed by the parent | `base-package-boot`, linked into an mrepo that deploys others |
-| `runtime` | `run`: a linked package's entry by path, `/packages/<org>/<package><target>`, its tests above all (body `{ dryRun }`), the result the output | `base-package-runtime`: every mrepo |
-| `help` | `get`: the help layer read by URI (body `{ level, section }`) | `base-package-runtime`, with `mrepo-base-help`: every mrepo |
+| `runtime` | `run`: a linked package's entry by path, its tests above all; `register`: the protocols loaded, recorded here | `base-package-runtime`: every mrepo |
+| `help` | `get`: the help layer read by URI; `extract`: the help layer written | `base-package-runtime`, with `mrepo-base-help`: every mrepo |
+| `service` | `initialise`, `start`, `stop`, `shutdown`: the service state moved | `base-package-service`: an mrepo that is service managed |
+| `boot` | `deploy`, `teardown`, `redeploy` of a child mrepo, executed by the parent | `base-package-boot`: an mrepo that deploys others |
 
-An application adds its own (`haicc`, `dispatch`). A protocol comes with
-the package that implements it: linking the package registers its
-protocols here (their configs, from its `protocol.js`), as global ones;
-the runtime loads the actions from the package's bundle (its dispatcher,
-`main.js`: imported, nothing runs; its `protocol` entry).
+One package, one protocol, except the runtime's, which brings its own two.
 
-- **Global**: at the layer's root, for the whole mrepo.
-- **Local**: at the path of a `main` section; available there and below
-  only. They add to those above; a same-named one deeper overrides,
-  and can narrow, the one above.
+## Config
 
-A config says the protocol's actions, the URIs, the service states each is
-allowed in, and the package that implements it.
+```json
+{
+  "package": "haiccing/base-package-service",
+  "description": "...",
+  "actions": {
+    "start": { "uris": ["/"], "states": ["initialised"], "description": "..." }
+  }
+}
+```
+
+- `uris`: where the action is offered: `/`, `/<name>` any one segment,
+  `/main/**` everything below, `/**` anywhere.
+- `states`: the service states that allow it. None named: once the service
+  is started.
+
+## Gate
+
+Where the mrepo is service managed, a request from the inbox is allowed
+when its protocol is loaded, its action configured, its URI one the config
+names, and the service state one that allows it. The gate reads what the
+runtime loaded; this layer is its record. Without a service there is no
+gate.
+
+## Later
+
+Local protocols, registered at the path of a `main` section and available
+there and below only, are not built.

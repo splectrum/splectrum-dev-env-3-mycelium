@@ -21,7 +21,7 @@ const args = process.argv.slice(2)
 const flag = (n, d) => args.find(a => a.startsWith(`--${n}=`))?.slice(n.length + 3) ?? d
 
 if (args.includes('--files')) {
-  const roots = ['pear-full-square/mrepo-base-help', 'pear-full-square/pkgm-base-check', 'haiccing/base-package-boot', 'haiccing/base-package-runtime', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template',
+  const roots = ['pear-full-square/mrepo-base-help', 'pear-full-square/pkgm-base-check', 'haiccing/base-package-service', 'haiccing/base-package-boot', 'haiccing/base-package-runtime', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template',
     ...readdirSync(join(dev, 'haiccing', 'base-package-boot', 'modules', 'pear-full-square')).map(m => `pear-full-square/${m}`)]
   const found = []
   const walk = d => { for (const n of readdirSync(join(dev, d)).sort()) { const p = `${d}/${n}`; if (n === 'node_modules' || n === 'modules' || n === '.git') continue; if (statSync(join(dev, p)).isDirectory()) walk(p); else if (n === 'README.md') found.push(p) } }
