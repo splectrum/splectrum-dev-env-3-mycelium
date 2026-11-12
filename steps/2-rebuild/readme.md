@@ -1366,3 +1366,56 @@ an access structure, redundant".
 - **Into a container**: the node's haicc mrepo on the host reaches the one
   in the container by mapped inbox and outbox folders (folder access), or
   something equivalent but secure.
+
+## 31. Solutions, components, applications; storage; the haicc component (the human, 2026-11-12; a note, nothing built)
+
+Settled in discussion. Nothing is built from it yet.
+
+**The naming**
+
+- **A package** brings a protocol and its part of the mrepo structure.
+- **A component** (`base-component-<name>`) delivers a service to the
+  solution. The components are the physical view of a solution.
+- **An application** (`base-application-<name>`) delivers user-facing
+  functionality: a logical view within the solution. It consists of an
+  mrepo and sits on one or more components, with one mrepo per component
+  it spans. That mrepo is exclusive (a child mrepo, at
+  `main/<application>/`) or shared (a section of the component's `main`,
+  with its own protocols; not built). The URI is the same either way:
+  XPath decides. With several applications there are relationships
+  between them.
+- **A solution** (`base-solution-<name>`) is a number of applications and
+  components, possibly across swarms.
+- **Why it matters**: haicc can place deployments again, to satisfy the
+  resources needed, without anything changing for the application. With
+  the replication p2p gives, a new install can come in as passive before
+  the switch.
+
+**Storage**
+
+- `main` on the Corestore is the external state; what is on the filesystem
+  is the internal state.
+- The rule: only `main` on the Corestore. On disk, by default, all the
+  remaining layers, unless an exception is raised. The minimum on disk is
+  the inbox and the outbox.
+- Needed, not built: the sync of a folder with the Corestore, both ways.
+- The code does not follow the rule yet: under `p2p` storage it routes
+  `runtime`, `packages`, `help` and `protocols` to the Corestore as well.
+  Not a worry now.
+
+**The haicc component**
+
+- `haiccing/base-component-haicc` (the repository is created). A
+  component: no data on it, no structure of its own. It is a set of
+  packages: runtime, boot, service.
+- The boot mrepo installs the host's haicc mrepo and starts it.
+- The terminal sends to the host's haicc mrepo and receives from it.
+- The demos are created on top of the component: functional units, data
+  structures in `main`. They add the folders where the swarms and the
+  swarm nodes are created.
+- XPath will probably be needed. It is internal functionality, like
+  request and execute, with no structure of its own; whether it is added
+  to the runtime is under discussion.
+
+**The priority**: the host's haicc mrepo, then a node's haicc mrepo, then
+a swarm going. The storage work waits.

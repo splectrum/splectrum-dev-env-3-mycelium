@@ -97,10 +97,26 @@ Not built yet, and the platform is not deployed until the first two are
    node. The boot mrepo is not it: it deploys the host's haicc mrepo, as
    the boot on a PC starts the system (today's placeholder `/host` is
    where it goes). Into a container: mapped inbox and outbox folders, or
-   something equivalent but secure. To design with the human: the haicc
-   mrepo as the first mrepo application (its packages, its `main`), and the
-   mrepo application, what brings a `main` structure and a selection of
-   protocols together.
+   something equivalent but secure.
+   **The naming and the component** (part 31): a package brings a protocol
+   and its part of the structure; a component (`base-component-<name>`)
+   is a service to the solution, the physical view; an application
+   (`base-application-<name>`) is user-facing, a logical view, an mrepo
+   per component it spans, exclusive or shared; a solution
+   (`base-solution-<name>`) is applications and components, possibly
+   across swarms. `haiccing/base-component-haicc` (repository created,
+   not attached yet, nothing built): runtime, boot, service; no data, no
+   structure of its own. The boot mrepo installs and starts the host's
+   haicc mrepo; the terminal sends to it and receives from it. The demos
+   come on top: structures in `main`, the folders where swarms and swarm
+   nodes are created. **The priority**: the host's haicc mrepo, a node's
+   haicc mrepo, a swarm going. **Under discussion, not settled**: XPath
+   as internal functionality of the runtime (beside request and execute);
+   whether the boot protocol stays behind the service door.
+   **Storage** (part 31): only `main` on the Corestore (the external
+   state); on disk, by default, all the remaining layers, at least the
+   inbox and the outbox. The code does not follow it yet; the two-way
+   sync of a folder with the Corestore is not built. It waits.
    **XPath in the mrepo**: built for the base as the wrapped remote
    command (a URI leading into a child is passed on whole; request
    branches; the principal waits on its branch; the response returned).
