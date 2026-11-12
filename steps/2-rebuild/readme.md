@@ -1246,3 +1246,11 @@ open once started, a protocol not linked not offered, validated in situ,
 torn down (85 asserts; five runs in a row). All five packages' `full` sets
 pass; 201 READMEs in the help tree, 109 source READMEs, the code check, no
 problems.
+
+The service's door, a selection (the human: shutdown shuts the external
+door for a selection of protocols, not all): a protocol behind it says so
+in its config, `gated`; one that does not stays open whatever the state
+(`runtime`, `help`: a closed mrepo can be inspected and tested). The boot
+protocol gated; the service's own actions by their states. On the roadmap
+(the human): `base-package-crud`, not rest, its full meaning with mutable
+and immutable. Packages overlay: one structure laid on another (confirmed).

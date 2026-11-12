@@ -13,7 +13,7 @@ import { execute, executed, failed, ACTIONS } from '../index.js'
 // The protocols as packages would offer them: rest (this module's), service.
 const ALL = { ...ACTIONS, service: { initialise, start, stop, shutdown } }
 const any = { uris: ['/**'] }
-const PROTOCOLS = { service: CONFIG, rest: { actions: { get: any, put: any, delete: any } } }
+const PROTOCOLS = { service: CONFIG, rest: { gated: true, actions: { get: any, put: any, delete: any } } }
 
 // The runtime's context over a booted host, in this process.
 async function withHost (work, fn) {

@@ -4,10 +4,10 @@ The service protocol: it manages the service state of an mrepo's external API.
 
 An mrepo that links it is service managed. Its state starts at `booted`;
 `service initialise /` and `service start /` open its external API,
-`service stop /` and `service shutdown /` close it again. Until it is
-started, a request from outside is refused: only the service's own actions
-are allowed, each in its state. An mrepo without it, such as the boot
-mrepo, has no gate.
+`service stop /` and `service shutdown /` close it again. The door closes
+a selection of protocols, not all: those whose config says `gated` wait
+for the service to be started; the others stay open. An mrepo without the
+service, such as the boot mrepo, has no gate.
 
 | | |
 |---|---|
@@ -21,7 +21,7 @@ mrepo, has no gate.
 |---|---|
 | `booted` | `initialise` |
 | `initialised` | `start`, `shutdown` |
-| `started` | `stop`, and every other protocol the mrepo offers |
+| `started` | `stop`, and the gated protocols |
 
 ## Package
 

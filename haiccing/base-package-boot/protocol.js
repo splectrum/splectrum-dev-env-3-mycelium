@@ -12,6 +12,7 @@ const CHILD = { uris: ['/<name>'] }
 export const protocols = {
   boot: {
     package: 'haiccing/base-package-boot',
+    gated: true, // behind the service's door, where the mrepo has a service
     description: 'Deploys and tears down child mrepos; executed by the parent.',
     actions: {
       deploy: { ...CHILD, description: 'A child mrepo built inside this one from a target package, its packages linked, its runtime started; body { package }.' },

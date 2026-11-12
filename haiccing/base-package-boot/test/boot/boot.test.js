@@ -202,13 +202,12 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
       return v
     }
     const svcReq = (protocol, action, uri, body) => toSvc({ protocol, action, uri, ...(body ? { body } : {}) })
-    t.is((await svcReq('help', 'get', '/'))?.error, 'not now: help get (the service is booted, not started)', 'booted: its API closed (asked once its own requests were done)')
+    t.ok((await svcReq('help', 'get', '/'))?.output?.oneliner, 'booted: help not behind the service\'s door, answered (once its own requests were done)')
     t.is(JSON.parse((await svcRepo.read('/runtime/service.json')).toString()).state, 'booted', 'its state, from the service package\'s structure')
     t.alike((await svcRepo.select('/protocols/*')).map(([p]) => p.slice(p.lastIndexOf('/') + 1)).filter(n => n !== 'layer.json').sort(), ['help.json', 'runtime.json', 'service.json'], 'its protocols recorded: the runtime\'s, help, service')
     t.is((await svcReq('service', 'start', '/'))?.error, 'not now: service start (the service is booted)', 'the service\'s own actions: each in its state')
     t.alike((await svcReq('service', 'initialise', '/'))?.output, { service: 'initialised' })
     t.alike((await svcReq('service', 'start', '/'))?.output, { service: 'started' })
-    t.ok((await svcReq('help', 'get', '/'))?.output?.oneliner, 'started: its API open')
     t.is((await svcReq('rest', 'get', '/main'))?.error, 'not offered: rest', 'a protocol it does not link: not offered')
     t.is((await svcReq('service', 'start', '/main'))?.error, 'not offered: service start at /main', 'an action, only at the URIs its config names')
     const svcSitu = await svcReq('runtime', 'run', '/packages/haiccing/base-package-service/test/validate-in-situ')
