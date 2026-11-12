@@ -1454,18 +1454,33 @@ on the host that can be scripted and is registered globally.
   - a first part starting with `/` is an mrepo command:
     `haicc <URI> <protocol>/<action> <args>`;
   - anything else is a script command: `haicc <name> <args>`.
-- The flow:
+- **What it means**: go to this node position and execute the command
+  that follows, in the context of the node where the data originates
+  from. If the node is a shortcut to somewhere else, the command is sent
+  there. The command that follows can be a `haicc <URI> <command>`
+  itself: commands concatenate, each URI local to the mrepo it is in.
   ```
-  haicc boot                                     # a sh script: the boot mrepo at the root
-  haicc /host boot/deploy base-component-haicc   # an empty haicc mrepo
-  haicc /host service/initialise                 # passed through to the haicc mrepo
+  haicc boot                                          # a sh script: the boot mrepo at the root
+  haicc / boot/deploy host base-component-haicc       # an empty haicc mrepo
+  haicc /host service/initialise                      # sent through the shortcut
   haicc /host service/start
+  haicc / boot/teardown host                          # local: the shortcut as an item
+  haicc /host haicc /swarms/swarm-1 boot/deploy node-1
   ```
-- `boot/deploy` is executed by the boot mrepo: the host folder does not
-  exist yet (if it did: an error, `/host` already exists). The service
-  commands are passed through by the boot mrepo to the haicc mrepo. The
-  boot mrepo carries no preloaded deploy.
-- A `boot/install` doing the three steps is possible later.
+- **Local and remote at once**: a command at the parent's position about
+  a name (deploy, teardown) is local; a command at the shortcut's
+  position goes through it. No rule has to guess.
+- **No XPath rewrite**: a hop takes its own `haicc <URI>` off and passes
+  the rest on unchanged, the same internally and externally. (What is
+  built rewrites `/main/<name>/<rest>` to `/<rest>`: to be replaced.)
+- **The offset**: a script that works on data at a folder position keeps
+  working when the structure is moved: only the position it is `haicc`ed
+  to changes.
+- A single URI running through a shortcut (`/host/swarms/...`): it
+  depends on how the layering of the data works, the rules of the mrepo.
+  A simple rule that works for now; the rest later.
+- The boot mrepo carries no preloaded deploy. A `boot/install` doing the
+  deploy and the two service commands is possible later.
 - The request record keeps its order (protocol, action, URI, body): only
   the command line puts the URI first.
 
@@ -1493,12 +1508,9 @@ not include the prerequisites.
 - The release of `base-linux-haicc`: one installer sh file carrying the
   scripts and the pins. The boot's standalone executable (Bare built in,
   117 MB) dropped: the boot is its bundle, run with the Bare put in place.
-- Here or passed on: a request is executed where the mrepo's own
-  protocols accept it; otherwise passed into the child the URI names,
-  with the rest of the URI (`/host` leading into the child as
-  `/main/host` does today; the check before the passing on).
 - XPath as a module of its own in the runtime package, a stage between
-  request and execute.
+  request and execute: a local URI resolved to a position, a folder or a
+  shortcut.
 
 **Open**: the package argument's default organisation; whether `/host`
 gets `base-manager-host` in the end.
