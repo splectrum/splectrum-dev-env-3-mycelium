@@ -1,7 +1,8 @@
 # internal/
 
-The code rules, run by the package test and the development tool.
+The rules and the checks, run by the package tests and the development tool.
 
 | | |
 |---|---|
-| [rules/](rules/) | the rules on a module of ours, or on a package's own code |
+| [rules/](rules/) | the code rules on a module of ours, or on a package's own code |
+| [mrepo/](mrepo/) | the integrity of a package's mrepo side |

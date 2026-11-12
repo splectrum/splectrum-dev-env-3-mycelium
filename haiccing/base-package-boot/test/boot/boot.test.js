@@ -168,10 +168,10 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     // dispatcher; a dry run says what would run, a run returns the results
     const dry = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/test/full', body: { dryRun: true } })
     const runs = dry?.output?.runs ?? []
-    t.ok(!dry?.error && runs.slice(0, 3).join() === '/test/start,/test/help,/test/code' && runs.length > 3 && runs.slice(3).every(u => u.startsWith('/test/modules/')), `runtime run, a dry run: what test/full would run, nothing run ${JSON.stringify(dry?.output ?? dry?.error)}`)
+    t.ok(!dry?.error && runs.slice(0, 4).join() === '/test/start,/test/help,/test/code,/test/mrepo' && runs.length > 4 && runs.slice(4).every(u => u.startsWith('/test/modules/')), `runtime run, a dry run: what test/full would run, nothing run ${JSON.stringify(dry?.output ?? dry?.error)}`)
     const ran = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/test/validate' }, 1200)
     t.absent(ran?.error, `runtime run test/validate: done ${ran?.error ?? ''}`)
-    t.alike([ran?.output?.ok, ran?.output?.units?.map(u => u.unit)], [true, ['/test/start', '/test/help', '/test/code']], 'its result: the start test, its help and its code passed, in a floating instance')
+    t.alike([ran?.output?.ok, ran?.output?.units?.map(u => u.unit)], [true, ['/test/start', '/test/help', '/test/code', '/test/mrepo']], 'its result: the start test, its help, its code and its mrepo side passed, in a floating instance')
     t.ok(ran?.log?.some(e => e.event === 'unit' && e.unit === '/test/start' && e.ok), 'a summary logged, a line a unit')
     // its help, extracted by its runtime as it started: retrieved by URI
     const root = await sent({ protocol: 'help', action: 'get', uri: '/' })
@@ -185,7 +185,7 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     // each package checks, in situ, what this mrepo's runtime made of its help
     for (const p of ['base-package-boot', 'base-package-runtime', 'package-docs-mrepo', 'package-docs-template']) {
       const v = await sent({ protocol: 'runtime', action: 'run', uri: `/packages/haiccing/${p}/test/validate-in-situ` }, 1200)
-      t.alike([v?.error, v?.output?.ok, v?.output?.units?.[0]?.asserts], [undefined, true, { passed: 3, total: 3 }], `${p}: validate-in-situ, its help in this mrepo ${v?.error ?? JSON.stringify(v?.output?.units?.[0]?.failures ?? '')}`)
+      t.alike([v?.error, v?.output?.ok, v?.output?.units?.map(u => [u.unit, u.asserts.passed > 0 && u.asserts.passed === u.asserts.total])], [undefined, true, [['/test/help-in-situ', true], ['/test/mrepo-in-situ', true]]], `${p}: validate-in-situ, its help and itself as this mrepo holds it ${v?.error ?? JSON.stringify(v?.output?.units?.map(u => u.failures) ?? '')}`)
     }
     const refused = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/run' })
     t.ok(/not run here/.test(refused?.error ?? ''), 'a package\'s program: not run in the runtime')

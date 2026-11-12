@@ -1,19 +1,21 @@
 # pkgm-base-check
 
-The code rules, checked on a package's modules and its own code.
+The checks a package runs on itself: its code against the code rules, and the integrity of its mrepo side.
 
-Every package carrying it runs `/test/code` in its `validate`: each module
-of ours it carries, and its own entry points, against the rules. In the
-development repository, `tools/code-check.js` runs the same rules over all
-the carried modules.
+Every package carrying it gets three units from its dispatcher: `/test/code`
+and `/test/mrepo` in its `validate`, `/test/mrepo-in-situ` in its
+`validate-in-situ`. In the development repository, `tools/code-check.js`
+runs the code rules over all the carried modules.
 
 | | |
 |---|---|
-| [internal/](internal/) | the rules |
-| [validate/](validate/) | the test every package carrying it runs on itself |
+| [internal/](internal/) | the rules and the checks |
+| [validate/](validate/) | the tests every package carrying it runs on itself |
 | [test/](test/) | its own tests |
 
 ## Rules
+
+The code rules:
 
 - **Structure**: a method directory, `external/<name>/` or
   `internal/<name>/`, has its `index.js` and its `README.md`.
@@ -23,6 +25,19 @@ the carried modules.
 - **No transient references**: nothing points at the development
   repository's `docs/` or `steps/`.
 
+The mrepo side:
+
+- **Structure**: every leaf of `mrepo/` has a valid `layer.json`, with its
+  mode and description; nothing but READMEs outside a layer, none inside;
+  a preloaded request is a well formed record; the packages are listed by
+  name.
+- **Protocol**: every action its `protocol.js` configures has its
+  function, and the other way round; each has its description and URIs.
+- **Carried**: no third-party module is carried that its record does not
+  name, each at its recorded version; an omitted one is only its stub.
+- **In situ**: the package is in the mrepo's packages manifest, its bundle
+  there is the one the manifest names, and the layers it brings exist.
+
 ## Tests
 
-- `npm test`: a module that keeps the rules, one that breaks each.
+- `npm test`: packages and modules written for it, well formed and broken.

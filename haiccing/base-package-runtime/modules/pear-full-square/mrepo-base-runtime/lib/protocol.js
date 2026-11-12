@@ -10,7 +10,8 @@
 //     /protocol, /deploy: what the entry offers (its names); with dryRun:
 //     what the target would run. /run: refused (a package's program is not
 //     run inside the runtime's process).
-import { existsSync, mkdtempSync, writeFileSync, rmSync } from 'bare-fs'
+import { existsSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'bare-fs'
+import crypto from 'bare-crypto'
 import { tmpdir } from 'bare-os'
 import { join } from 'bare-path'
 import { pathToFileURL } from 'bare-url'
@@ -33,15 +34,26 @@ export async function run (exec, { uri, body }) {
   const dispatcher = await import(pathToFileURL(bundle).href)
   if (typeof dispatcher.run !== 'function') throw new Error(`${pkg} has no dispatcher`)
   const dryRun = Boolean(body?.dryRun)
-  // the in-situ tests: which mrepo, which package, and the mrepo's help as
-  // extracted (HELP: a file, { index, problems }, removed after)
-  const help = mkdtempSync(join(tmpdir(), 'help-'))
+  // the in-situ tests: which mrepo (MREPO), which package (PACKAGE), and the
+  // mrepo's state handed over (SITU: a file, removed after): its help as
+  // extracted, its layers, its packages manifest, each linked bundle's hash
+  const situ = mkdtempSync(join(tmpdir(), 'situ-'))
   let r
   try {
     const read = p => exec.read(p).then(b => JSON.parse(b.toString()), () => null)
-    writeFileSync(join(help, 'help.json'), JSON.stringify({ index: await read('/help/index.json'), problems: await read('/help/problems.json') }))
-    r = await dispatcher.run(t, { dryRun, env: { MREPO: exec.runtime.dir, PACKAGE: pkg, HELP: join(help, 'help.json') } })
-  } finally { rmSync(help, { recursive: true, force: true }) }
+    const linked = {}
+    for (const p of Object.keys(listed)) {
+      const f = join(exec.runtime.dir, 'packages', `${p}.bundle`)
+      linked[p] = existsSync(f) ? { sha256: crypto.createHash('sha256').update(readFileSync(f)).digest('hex') } : null
+    }
+    writeFileSync(join(situ, 'situ.json'), JSON.stringify({
+      help: { index: await read('/help/index.json'), problems: await read('/help/problems.json') },
+      layers: (await exec.runtime.branches()).filter(b => !b.startsWith('execute/')),
+      packages: listed,
+      linked
+    }))
+    r = await dispatcher.run(t, { dryRun, env: { MREPO: exec.runtime.dir, PACKAGE: pkg, SITU: join(situ, 'situ.json') } })
+  } finally { rmSync(situ, { recursive: true, force: true }) }
   if (dryRun) return { target: t, runs: r }
   if (t === '/protocol' || t === '/deploy') return { target: t, offers: Object.keys(r).filter(k => k !== 'default') }
   // a test's result: summarised in the log, whole in the output

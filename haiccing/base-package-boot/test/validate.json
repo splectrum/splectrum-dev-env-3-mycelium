@@ -1,8 +1,9 @@
 {
-  "description": "The package on its own, in a floating instance: it works, and its help extracts and its code checks without problems.",
+  "description": "The package on its own, in a floating instance: it works, and its help, its code and its mrepo side check without problems.",
   "tests": [
     "boot",
     "help",
-    "code"
+    "code",
+    "mrepo"
   ]
 }

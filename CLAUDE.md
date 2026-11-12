@@ -53,7 +53,7 @@ the work reaches it.
 ## Validation, before every commit
 
 - Each package's `validate` set from its bundle (its own tests, `help`,
-  `code`), `full` when modules changed:
+  `code`, `mrepo`), `full` when modules changed:
   `SOURCES=$PWD/sources tools/bare sources/haiccing/<package>.bundle /test/full`.
 - `tools/bare tools/help-extract.js` (and `--files`) and
   `tools/bare tools/code-check.js`: no problems.
