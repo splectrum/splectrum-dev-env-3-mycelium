@@ -1481,8 +1481,30 @@ on the host that can be scripted and is registered globally.
   A simple rule that works for now; the rest later.
 - The boot mrepo carries no preloaded deploy. A `boot/install` doing the
   deploy and the two service commands is possible later.
-- The request record keeps its order (protocol, action, URI, body): only
-  the command line puts the URI first.
+- **`haicc` is a proper protocol**, with a default action: `haicc` alone
+  is rewritten internally as `haicc/goto`. So a hop is an ordinary
+  command (protocol `haicc`, action `goto`, the URI, and as its arguments
+  the command that follows), and more haicc actions can follow. Visible
+  functionality: it gets a package, `base-package-haicc`.
+- **XPath, execute and request have no protocol**: internal, invisible
+  functionality (the runtime's).
+- **Arguments**: a list, unnamed, until AVRO attaches schemas to them.
+  The terminal command is parsed into an array of parts and then
+  interpreted: `<protocol>/<action>` (or the protocol alone: its default
+  action), the URI, the arguments.
+- **At the command line** there is no mrepo context, so a sh script
+  creates the record and puts it in the inbox folder, with one rule of
+  its own: at the root the command is written plain, the name joined to
+  the position; anywhere else the `haicc` command is written as it is.
+  ```
+  haicc / boot/deploy host base-component-haicc   ->  boot/deploy /host base-component-haicc   (local)
+  haicc /host service/initialise                  ->  haicc /host service/initialise           (remote)
+  ```
+- **Forward visibility only**: the position is the root of what the
+  command sees; nothing above it is reachable. A `haicc` that does not
+  land on a shortcut is a local node. All the nodes from an mrepo
+  shortcut are brought in as local, without the shortcut information of
+  the remote repository.
 
 **base-linux-haicc**: the package for the script application. It does
 not include the prerequisites.
@@ -1500,17 +1522,18 @@ not include the prerequisites.
 
 **Proposed by us, not confirmed yet**
 
-- POSIX sh, not bash. An mrepo command handed by `haicc` to a bundle run
-  with Bare, the terminal, a package of its own.
+- POSIX sh, not bash.
 - `haicc prereq`: checks the platform, the work folder and the sources,
   and unpacks Bare from them; no network. The prerequisite code leaves
   the boot package.
 - The release of `base-linux-haicc`: one installer sh file carrying the
   scripts and the pins. The boot's standalone executable (Bare built in,
   117 MB) dropped: the boot is its bundle, run with the Bare put in place.
-- XPath as a module of its own in the runtime package, a stage between
-  request and execute: a local URI resolved to a position, a folder or a
-  shortcut.
+- The parts interpreted in the mrepo (inbox to pending), the sh script
+  writing them as typed; the script waiting for the response in the
+  outbox and printing it.
+- XPath as a module of its own, what `goto` uses: a local URI resolved to
+  a position, a folder or a shortcut.
 
 **Open**: the package argument's default organisation; whether `/host`
 gets `base-manager-host` in the end.
