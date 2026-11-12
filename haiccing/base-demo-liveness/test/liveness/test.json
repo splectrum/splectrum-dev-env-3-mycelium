@@ -1,4 +1,0 @@
-{
-  "categories": ["full"],
-  "needs": ["docker"]
-}

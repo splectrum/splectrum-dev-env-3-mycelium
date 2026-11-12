@@ -1,3 +1,0 @@
-{ "name": "splectral-timeline", "contract": "0.1", "provides": [
-  { "kind": "page", "id": "timeline", "title": "Timeline", "needs": ["world"], "module": "page.js" }
-] }

@@ -90,7 +90,7 @@ it.
 
 - One development repository per phase; each package is a folder on
   `main` at the path of its product repository, `<org>/<repo>`
-  (`pear-full-square/mycelium-uri/`, `splectral/base-view-map/`); a
+  (`pear-full-square/mycelium-uri/`, `haiccing/base-package-boot/`); a
   project and its component may share a name across organisations.
 - The code is developed on `main` as data and deployed as a tree into a
   `capability/<purpose>` branch to operate.
@@ -173,7 +173,7 @@ Scope: branch names and repository folders, wherever XPath is used.
 ## Records and topics
 
 Scope: the data the platform produces and keeps as records:
-configuration, audit, metrics, events, state (`notes/topics.md`).
+configuration, audit, metrics, events, state.
 
 - **Two levels, side by side in a repository.** Records in topics are
   the lower level. Objects (`.md`, `.js`, a JSON document, any git
@@ -203,7 +203,7 @@ configuration, audit, metrics, events, state (`notes/topics.md`).
 ## Data names
 
 Scope: the names of properties in records, values and headers, and of
-anything that becomes an AVRO name (`notes/topics.md`).
+anything that becomes an AVRO name.
 
 - **lowerCamelCase**: letters `a-z`, `A-Z` and digits `0-9`, starting
   with a lowercase letter: `publicKey`, `readyMs`,

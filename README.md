@@ -1,19 +1,19 @@
 # dev-env-3-mycelium
 
 The development environment for the third development phase of
-SPLectrum: mycelium repositories on a swarm, on the HAICC platform built
-in phase 2. Its modules are folders on `main`, at the path of their
-product repository (`pear-full-square/<module>`, `splectral/<component>`),
-as in phase 2; `haiccing/` holds the hand-written parts of the packages.
+SPLectrum: mycelium repositories on a swarm, on the HAICC platform.
 
+- `haiccing/`: the packages, each at the path of its repository.
+- `pear-full-square/`: the modules the packages carry, each at the path of
+  its repository.
+- `tools/`: assembling and bundling packages, the boot's release, the
+  product repositories, the checks.
 - `rules.md`: how to work in this repository (branches, layers, commits,
-  URIs, records and topics, data names), as returned by phase 2.
-- `docs/`: the HAICC platform's documentation (design, consistency rules,
-  guides), as returned by phase 2; worked on in this phase.
+  URIs, records and topics, data names).
 - `vision.md`: directions that are not settled, for information.
+- `steps/`: the records of the work; where it stands:
+  `steps/2-rebuild/readme.md`.
 
-Status: set up (2026-11-08, `steps/0-setup/`); reviewed (`steps/1-review/`);
-the rebuild under way (`steps/2-rebuild/readme.md`): the host's repository
-booted from a signed release, its runtime running the mrepo framework,
-every `haicc` command a request. The plan: `steps/plan.md`. Seeded from
-`splectrum/dev-env-2-p2p-cluster@c6b73bb`.
+Only what is in use is kept here: what is not is in the history and in
+each module's own repository. `CLAUDE.md` says how the work is done.
+Seeded from `splectrum/dev-env-2-p2p-cluster@c6b73bb`.

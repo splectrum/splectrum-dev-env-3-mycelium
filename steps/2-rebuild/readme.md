@@ -1145,3 +1145,18 @@ as the request executes; a preloaded request internal too. Internal: no
 API, not waiting for started; the service's own actions still under its
 state machine. `pkgm-base-check` pushed to its repository (created by the
 human). All sets pass (the boot's test 72 asserts).
+
+## 26. The repository cleaned up (2026-11-11)
+
+The human: remove what is not used any more; keep `CLAUDE.md` up to date
+with the changing landscape. Removed (in the history; each module in its
+own repository): the 21 pear-full-square modules no package carries (the
+p2p network modules, `mycelium-layer`, `mycelium-topic`, `haicc-base-cli`,
+`haicc-deployment`, the `splectral-*`), haiccing's `base-demo-*`,
+`base-swarm-three-nodes`, `base-package-haicc`, `splectral/`, the profile
+READMEs (`bare-for-pear/`, `splectrum/`), `notes/`, `demos.md`, `docs/`,
+`tools/json-check.js`, `tools/keygen.js`. Kept: the 14 modules the
+packages carry and `pkgm-base-manager` (the assembler's). `CLAUDE.md`
+rewritten: what is here, where documentation lives, the validation before
+every commit; `README.md`, `haiccing/README.md`, the workspaces and the
+tools' comments updated. Everything rebuilt, all sets pass.
