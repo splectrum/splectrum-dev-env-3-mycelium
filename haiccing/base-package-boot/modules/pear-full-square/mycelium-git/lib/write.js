@@ -88,11 +88,12 @@ export function writer (backend) {
       return this.advance(name, commit)
     },
 
-    // The execution branch of a target: execute/<target>, from its head.
-    async createExecution (target) {
+    // The execution branch of a target, from its head: execute/<target>; a
+    // request's own (id: its key): execute/<id>/<target>.
+    async createExecution (target, id = null) {
       const from = await head(target)
       if (!from) throw new Error(`no branch: ${target}`)
-      const name = `execute/${target}`
+      const name = id ? `execute/${id}/${target}` : `execute/${target}`
       await free(name)
       await backend.updateBranch(name, from, null)
       return from

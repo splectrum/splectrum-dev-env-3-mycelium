@@ -24,14 +24,16 @@
 //                                 when its core names where it is to arrive
 // A record keeps its name through its moves; a restart finishes a move half
 // done (in both: the old place cleared). The boxes (lib/boxes.js) are layers.
+import { existsSync, readFileSync } from 'bare-fs'
+import { join } from 'bare-path'
 import { validate as canonical } from 'mycelium-uri'
-import { post, ensure, inboxFolder, outboxOf, INBOX, OUTBOX } from './lib/boxes.js'
+import { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX } from './lib/boxes.js'
 import { record, wrap, guid, complete, isComplete, logger, LEVELS } from './lib/record.js'
 import { layer, AUTHOR } from './lib/layer.js'
 import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
 
 export { follow } from './lib/follow.js'
-export { post, ensure, inboxFolder, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
+export { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'
@@ -157,6 +159,21 @@ export async function request (ctx) {
   const execute = layer(ctx, EXECUTE)
   const done = layer(ctx, DONE)
 
+  // The responses of the requests waiting here, collected: each child's
+  // completed form, from its outbox folder (a child in view: main/<name>/),
+  // through the handler into pending, as the mrepo's own.
+  if (ctx.dir) {
+    const queuedNow = await pending.list()
+    for (const name of await execute.list()) {
+      const r = (await execute.read(name)).value?.value?.remote
+      if (!r?.waiting || queuedNow.includes(r.key)) continue
+      const file = join(ctx.dir, r.at.slice(1), 'outbox', `${r.key}.json`)
+      if (!existsSync(file)) continue
+      const back = JSON.parse(readFileSync(file, 'utf8')).value
+      if (back?.key === r.key && isComplete(back)) await admit(ctx, back, { origin: 'internal', name: r.key })
+    }
+  }
+
   // The inbox taken in, when its head has moved, each record through the
   // handler (admit); not while the mrepo is not operational yet (ctx.intake
   // false: its internal requests first; the records wait in the inbox).
@@ -190,13 +207,40 @@ export async function request (ctx) {
   }
 
   // The next pending request into execute (a move half done finished first).
-  // The queue in the order requests arrived in it: its commit chain.
+  // The queue in the order requests arrived in it: its commit chain. The
+  // slot is free when nothing in execute is executing: a waiting request
+  // (its remote command passed on) is not.
   const executing = await execute.list()
+  const waiting = {}
+  for (const name of executing) { const r = (await execute.read(name)).value?.value?.remote; if (r?.waiting) waiting[name] = r }
+  const active = executing.filter(n => !waiting[n])
   const queued = await pending.arrived()
   for (const name of queued.filter(n => executing.includes(n))) await pending.remove(name, `${name}: in execute`)
   const next = queued.find(n => !executing.includes(n))
-  if (!executing.length && next) {
+  if (!active.length && next) {
     const core = (await pending.read(next)).value
+    // A response to a request waiting here (its core addressed to that
+    // request's branch): not executed: added into that request's state, on
+    // its branch of request/execute; its processing proceeds.
+    const parent = isComplete(core) && typeof core.topic === 'string' && core.topic.startsWith(`/${ctx.name}/execute/`) ? core.topic.slice(`/${ctx.name}/execute/`.length) : null
+    if (parent !== null) {
+      if (waiting[parent]?.key === core.key) {
+        const was = (await execute.read(parent)).value
+        const { waiting: _, ...remote } = was.value.remote
+        const response = 'error' in core.value ? { error: core.value.error } : { output: core.value.output }
+        const branch = `execute/${parent}/${EXECUTE}`
+        if (!(await branches(ctx))[branch]) await ctx.writer.createExecution(EXECUTE, parent)
+        const c = await ctx.writer.change(branch)
+        await c.put(`/${parent}.json`, Buffer.from(JSON.stringify(wrap(`/${EXECUTE}`, { ...was, value: { ...was.value, remote: { ...remote, response } } })) + '\n'))
+        await c.commit(`${parent}: the response of ${core.key}`, { author: AUTHOR })
+        await ctx.writer.merge(branch, EXECUTE, `Merge ${parent}: the response of ${core.key}`, { author: AUTHOR })
+      } else {
+        // nobody waits for it here: kept, in done
+        await done.put(next, wrap(`/${DONE}`, core), `Stray response ${next}`)
+      }
+      await pending.remove(next, `${next}: a response${waiting[parent] ? ` for ${parent}` : ''}`)
+      return
+    }
     const into = wrap(`/${EXECUTE}`, core)
     await execute.put(next, into, `Execute ${next}`)
     await pending.remove(next, `${next}: in execute`)

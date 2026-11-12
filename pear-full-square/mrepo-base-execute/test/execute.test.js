@@ -44,7 +44,7 @@ test('execute: execution branches from their targets, the record completed, merg
       r = await run(ctx, { protocol: 'rest', action: 'put', uri: '/main/a/b.json', body: { n: 1 } })
       t.alike(r, { ok: true, value: { put: '/main/a/b.json' } }, 'completed: its form filled in, merged into request/execute')
       t.alike(await json(ctx.repo, '/main/a/b.json'), { n: 1 }, 'in main')
-      t.alike(await json(ctx.repo, '/execute/main/a/b.json'), { n: 1 }, 'its execution branch beside it')
+      t.alike((await ctx.backend.listBranches()).map(([b]) => b).filter(b => b.startsWith('execute/')), [], 'its execution branches, its own by its key: merged back and removed')
       const before = (Object.fromEntries(await ctx.backend.listBranches())).main
       r = await run(ctx, { protocol: 'rest', action: 'delete', uri: '/main/none.json' })
       t.alike(r, { ok: false, error: 'nothing at /main/none.json' }, 'failed: its result said')
@@ -99,7 +99,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
       const bad = await one(true)
       t.is(bad.error, 'failed after a local commit')
       t.is(await main(), before, 'failed: main untouched')
-      t.absent(await at(ctx.repo, '/execute/main/step.json'), 'its local commit undone: the execution branch back where it started')
+      t.alike((await ctx.backend.listBranches()).map(([b]) => b).filter(b => b.startsWith('execute/')), [], 'its local commit undone: its execution branches discarded')
       const good = await one(false)
       t.is(good.output, 'ok')
       t.alike(seen, { work, read: '1' }, 'after a local commit, reads see it; the work folder in the context')
@@ -186,7 +186,7 @@ test('executed: a form completed elsewhere handed over as execute hands one', as
       const core = complete(record(null, { protocol: 'service', action: 'boot', uri: '/' }, guid()), { ok: true, value: { booted: true } })
       await executed(ctx, core.key, wrap(`/${EXECUTE}`, core))
       t.alike((await json(ctx.repo, `/${EXECUTE}/${core.key}.json`)).value, core, 'in request/execute, completed')
-      t.alike((await json(ctx.repo, `/execute/${EXECUTE}/${core.key}.json`)).value, core, 'through its execution branch')
+      t.alike((await ctx.backend.listBranches()).map(([b]) => b).filter(b => b.startsWith('execute/')), [], 'through its own execution branch, removed after')
     })
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
