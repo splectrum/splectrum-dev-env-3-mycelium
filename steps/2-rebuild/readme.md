@@ -1339,3 +1339,23 @@ mrepo `help get /main/host/packages`: passed on to the host, answered by
 it, the response kept in done and not sent on, no request branch left; a
 URI with no mrepo linked there stays (93 asserts, eight runs in a row).
 All five packages' `full` sets pass.
+
+## 30. What haicc is (the human, 2026-11-12; a note, nothing built)
+
+It came back to the human; it replaces part 29's "haicc is not a protocol:
+an access structure, redundant".
+
+- **Its concern: deployment.** Global, across swarms. Also responsible for
+  setting up and managing cross swarm bridges.
+- **Two sides.** On the Linux side of the host, haicc is an app: it
+  manages the downloads of sources and third-party components, and
+  installs from scratch. On the swarm side, it is a specific mrepo.
+- **The haicc mrepo is the only mrepo on a node or host with the boot
+  protocol.**
+- **It only ever connects directly, with local mrepos**: the folder inbox.
+- **A web of haicc mrepos.** The host's instance takes from the terminal,
+  and connects to the swarm nodes' haicc mrepos on the host. Those proxy
+  to the haicc mrepo of the swarm node in its container.
+- **One manager**: there can only be one haicc mrepo actively managing a
+  host or a node.
+- **haicc commands are issued on the host**; internally it is that web.
