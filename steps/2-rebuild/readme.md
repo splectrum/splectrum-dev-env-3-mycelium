@@ -1260,3 +1260,66 @@ release built and tried on the human's machine: passed, every request
 done, ended by itself. Its finding applied (its patch): `boot-release.js`
 assembles each package right before bundling it (it bundled five,
 assembled two: a fresh clone stopped).
+
+## 29. Request branches; the wrapped remote command (2026-11-12)
+
+Discussed with the human, from what `haicc` is. Settled:
+
+- **`haicc` is not a protocol**: it adds no functionality of its own; what
+  it would offer is an access structure, swarm centred. An mrepo
+  application whose `main` holds that structure makes it redundant. To
+  design with the mrepo application.
+- **XPath comes into the mrepo**, as internal functionality that manages
+  the URI and issues cascading requests: a request whose URI leads into
+  another mrepo is rewritten as one sent to that mrepo; a request can
+  travel through several. Delivery on the same node is direct, a file
+  dropped into the inbox folder; another node needs dispatch.
+- **Request branches**: a request is processed on branches of its own,
+  named by its key. The branch id is the principal's name; the execution
+  context holds it and opens the principal directly. A request branch not
+  being processed has a waiting principal.
+- **A child's response** carries the branch id, arrives through pending,
+  is added to that branch's state, and processing proceeds. For the base,
+  receiving it returns the principal with it (option B). Later, with
+  proper design (the human has clear ideas): composite actions, an action
+  resuming at a label after its child request (option A), a preloading of
+  data before processing.
+- **For the base: only the wrapped remote command.**
+- **Noted by the human**: a request has become asynchronous where it was
+  synchronous; that will matter for directly submitted internal
+  processing. The importance of internal processing documentation, and of
+  AVRO for the compatibility of the data sets.
+
+Built (first without the human's confirmation of the reading, which was
+wrong to do; then corrected to what was agreed):
+
+- **Execution on request branches** (`mrepo-base-execute`; `createExecution(
+  target, id)` in `mycelium-git`): `execute/<key>/<target>`, made from its
+  target's head as the request first writes there, merged back and removed
+  at its end, discarded on a failure. Nothing shared between requests.
+- **The wrapped remote command** (`lib/remote.js`): `/main/<name>/<rest>`,
+  a child's record at `/main/<name>.json`, leads into that child; the
+  request is passed on whole (the same protocol, action and body, the URI
+  `/<rest>`), its core addressed back to `/<mrepo>/execute/<key>`, dropped
+  into the child's inbox folder. The principal's record is kept on
+  `execute/<key>/request/execute` with what it waits for (`remote: { at,
+  uri, key }`), out of `request/execute`: the slot is free. No flags.
+- **The response** (`mrepo-base-request`): collected from the child's
+  outbox folder into pending (the mrepo's own, `waitingOn`); at the front
+  of the queue added to the principal's branch, a record of its own; the
+  execute protocol then returns the principal with it. A response nobody
+  waits for goes to `request/done`. `settled()` counts a waiting principal
+  as not done.
+- **Checked by the mrepo that executes it**: the one passing it on asks
+  only that the URI is canonical.
+
+Open: a child that never answers leaves its principal waiting (no time
+limit); dispatch to another node; a wildcard URI fanning out; the
+consequences of asynchronous requests (completion order no longer the
+queue's order).
+
+Tested: the module tests unchanged (execute 6/6, request 9/9, runtime 6/6,
+boot 9/9, mycelium-git 114/114); the boot's integration test sends the boot
+mrepo `help get /main/host/packages`: passed on to the host, answered by
+it, no request branch left; a URI with no mrepo linked there stays (91
+asserts, five runs in a row). All five packages' `full` sets pass.
