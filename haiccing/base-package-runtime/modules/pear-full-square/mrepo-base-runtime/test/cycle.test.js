@@ -100,7 +100,7 @@ test('where the layers live on the p2p host: the atomic ones in the store, the r
     await ask({ work, op: 'stop' })
     for (let i = 0; i < 100 && alive(s.pid); i++) await wait(100)
     const onDisk = (await p2pgitBackend(join(work, 'mrepos', 'host', '.git'), { fs }).listBranches()).map(([n]) => n)
-    t.alike(onDisk, ['execute/main', 'execute/request/execute', 'execute/runtime', 'inbox', 'outbox', 'request/done', 'request/execute', 'request/pending/default'], 'on disk: the boxes, the request layers, the execution branches')
+    t.alike(onDisk, ['inbox', 'outbox', 'request/done', 'request/execute', 'request/pending/default'], 'on disk: the boxes, the request layers (a request\'s execution branches there too while it runs: none left)')
     const { openStore } = await import('p2p-store')
     const { mrepos } = await import('p2p-mrepo')
     const store = await openStore({ storage: join(work, 'store') })

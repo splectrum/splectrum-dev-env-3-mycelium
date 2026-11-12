@@ -5,7 +5,7 @@ import { tmpdir } from 'bare-os'
 import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
-import { layer, record, wrap, complete, guid, EXECUTE } from 'mrepo-base-request'
+import { layer, record, wrap, complete, guid, begin, EXECUTE } from 'mrepo-base-request'
 import { bootedHost } from 'mrepo-base-runtime/test/fixture.js'
 import { initialise, start, stop, shutdown, CONFIG } from 'mrepo-base-service'
 import { execute, executed, failed, ACTIONS } from '../index.js'
@@ -26,7 +26,7 @@ async function withHost (work, fn) {
 const json = async (repo, p) => JSON.parse((await repo.read(p)).toString())
 const run = async (ctx, value) => {
   const name = `${Date.now()}-00000000`
-  await layer(ctx, EXECUTE).put(name, record(`/${EXECUTE}`, record('/haicc/terminal', { ...value })))
+  await begin(ctx, name, record('/haicc/terminal', { ...value }))
   await execute(ctx, { actions: ALL })
   const core = (await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value
   return 'output' in core.value ? { ok: true, value: core.value.output } : 'error' in core.value ? { ok: false, error: core.value.error } : null
@@ -44,7 +44,7 @@ test('execute: execution branches from their targets, the record completed, merg
       r = await run(ctx, { protocol: 'rest', action: 'put', uri: '/main/a/b.json', body: { n: 1 } })
       t.alike(r, { ok: true, value: { put: '/main/a/b.json' } }, 'completed: its form filled in, merged into request/execute')
       t.alike(await json(ctx.repo, '/main/a/b.json'), { n: 1 }, 'in main')
-      t.alike(await json(ctx.repo, '/execute/main/a/b.json'), { n: 1 }, 'its execution branch beside it')
+      t.alike((await ctx.backend.listBranches()).map(([b]) => b).filter(b => b.startsWith('execute/')), [], 'its execution branches, its own by its key: merged back and removed')
       const before = (Object.fromEntries(await ctx.backend.listBranches())).main
       r = await run(ctx, { protocol: 'rest', action: 'delete', uri: '/main/none.json' })
       t.alike(r, { ok: false, error: 'nothing at /main/none.json' }, 'failed: its result said')
@@ -63,7 +63,7 @@ test('the execution context: read-only to the action, the runtime\'s context rea
       let seen = null
       const actions = { ...ALL, service: { ...ALL.service, initialise: async exec => { seen = { frozen: Object.isFrozen(exec) && Object.isFrozen(exec.runtime), name: exec.runtime.name, writer: 'writer' in exec.runtime, branches: (await exec.runtime.branches()).includes('runtime'), service: JSON.parse((await exec.runtime.read('/runtime/service.json')).toString()).state }; return 'seen' } } }
       const name = guid()
-      await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { protocol: 'service', action: 'initialise', uri: '/' }, name)))
+      await begin(ctx, name, record(null, { protocol: 'service', action: 'initialise', uri: '/' }, name))
       await execute(ctx, { actions })
       t.alike(seen, { frozen: true, name: 'host', writer: false, branches: true, service: 'booted' })
     })
@@ -91,7 +91,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
       const at = async (repo, p) => (await repo.select(p)).length > 0
       const one = async (fail) => {
         const name = guid()
-        await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name)))
+        await begin(ctx, name, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name))
         await execute(ctx, { actions: go(fail) })
         return (await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value
       }
@@ -99,7 +99,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
       const bad = await one(true)
       t.is(bad.error, 'failed after a local commit')
       t.is(await main(), before, 'failed: main untouched')
-      t.absent(await at(ctx.repo, '/execute/main/step.json'), 'its local commit undone: the execution branch back where it started')
+      t.alike((await ctx.backend.listBranches()).map(([b]) => b).filter(b => b.startsWith('execute/')), [], 'its local commit undone: its execution branches discarded')
       const good = await one(false)
       t.is(good.output, 'ok')
       t.alike(seen, { work, read: '1' }, 'after a local commit, reads see it; the work folder in the context')
@@ -120,7 +120,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
         return after
       } } }
       const name = guid()
-      await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name)))
+      await begin(ctx, name, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name))
       await execute(ctx, { actions: back })
       t.alike((await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value.output, { committed: 1, dropped: 0, undone: 0 }, 'discard dropped the uncommitted; rollback undid the last commit, not the one before')
       t.ok(await at(ctx.repo, '/main/committed.json'), 'merged: what stayed committed')
@@ -138,7 +138,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
         return { after }
       } } }
       const n2 = guid()
-      await layer(ctx, EXECUTE).put(n2, wrap(`/${EXECUTE}`, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, n2)))
+      await begin(ctx, n2, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, n2))
       await execute(ctx, { actions: ditch })
       t.alike((await json(ctx.repo, `/${EXECUTE}/${n2}.json`)).value.value.output, { after: 0 }, 'reset: back to the start, its local commit undone')
       t.absent(await at(ctx.repo, '/main/first.json'), 'nothing before the reset merged')
@@ -165,7 +165,7 @@ test('exec.log: entries into the request\'s record, at or above the threshold', 
       } } }
       const one = async () => {
         const name = guid()
-        await layer(ctx, EXECUTE).put(name, wrap(`/${EXECUTE}`, record(null, { protocol: 'rest', action: 'get', uri: '/main' }, name)))
+        await begin(ctx, name, record(null, { protocol: 'rest', action: 'get', uri: '/main' }, name))
         await execute(ctx, { actions: logging })
         return (await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value
       }
@@ -186,7 +186,7 @@ test('executed: a form completed elsewhere handed over as execute hands one', as
       const core = complete(record(null, { protocol: 'service', action: 'boot', uri: '/' }, guid()), { ok: true, value: { booted: true } })
       await executed(ctx, core.key, wrap(`/${EXECUTE}`, core))
       t.alike((await json(ctx.repo, `/${EXECUTE}/${core.key}.json`)).value, core, 'in request/execute, completed')
-      t.alike((await json(ctx.repo, `/execute/${EXECUTE}/${core.key}.json`)).value, core, 'through its execution branch')
+      t.alike((await ctx.backend.listBranches()).map(([b]) => b).filter(b => b.startsWith('execute/')), [], 'through its own execution branch, removed after')
     })
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
@@ -198,7 +198,7 @@ test('failed: a runtime\'s error in the request executing', async (t) => {
     await withHost(work, async ctx => {
       t.alike(await failed(ctx, 'runtime: x'), [], 'none executing: none completed (the caller says it on stderr)')
       const core = record(null, { protocol: 'service', action: 'initialise', uri: '/' }, guid())
-      await layer(ctx, EXECUTE).put(core.key, wrap(`/${EXECUTE}`, core))
+      await begin(ctx, core.key, core)
       t.alike(await failed(ctx, 'runtime: x'), [core.key])
       t.is((await json(ctx.repo, `/${EXECUTE}/${core.key}.json`)).value.value.error, 'runtime: x', 'its form completed with the error: the request protocol moves it to done')
     })

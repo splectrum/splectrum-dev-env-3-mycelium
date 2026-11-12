@@ -1,6 +1,6 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-12, part 28). Read `CLAUDE.md`
+Kept current by the cloud session (last: 2026-11-12, part 29). Read `CLAUDE.md`
 first (what is here, how to validate), then this, then `readme.md` here
 (each part's record; the latest parts last). The documentation of what is
 built is in the packages: `haiccing/package-docs-template` and
@@ -8,6 +8,9 @@ built is in the packages: `haiccing/package-docs-template` and
 
 ## How the human works with us
 
+- **Finish the discussion before building**: a reading of what the human
+  said is confirmed by the human before any of it is built ("go"). Building
+  on an unconfirmed reading, even a mostly right one, costs changes after.
 - **Ask point by point, briefly**: one question at a time, short; no walls
   of text. Discuss first; build what has settled; structure and design are
   decided with the human.
@@ -81,12 +84,20 @@ Not built yet, and the platform is not deployed until the first two are
    protocols, those `gated` in their config (the human); the others stay
    open. Still open from it: the runtime's status beyond "not yet
    operational".
-2. **`base-package-haicc`**: the `haicc` protocol. To discuss with the
-   human first: what its functionality really is.
-   Then **the mrepo application**: to design: what brings a selection of
-   protocols together into one mrepo (today a target package's
-   `mrepo/packages/layer.json` lists them). The boot's preloaded `boot
-   deploy /host` then targets it (today: the runtime package, for now).
+2. **The mrepo application**, and what `haicc` is. Settled with the human
+   (part 29): `haicc` is not a protocol; it would only offer a swarm
+   centred access structure, which an mrepo application whose `main` holds
+   that structure makes redundant. To design: the mrepo application, what
+   brings a selection of protocols and a `main` structure together (today
+   a target package's `mrepo/packages/layer.json` lists the packages). The
+   boot's preloaded `boot deploy /host` then targets it.
+   **XPath in the mrepo**: built for the base as the wrapped remote
+   command (a URI leading into a child is passed on whole; request
+   branches; the principal waits on its branch; the response returned).
+   Open, each needing design with the human first: composite actions (an
+   action resuming at a label after a child request; preloading data),
+   fan-out, a time limit for a child that never answers, dispatch to
+   another node, the consequences of asynchronous requests.
 3. **`base-package-crud`** (the human: CRUD, not rest): the generic
    actions on an mrepo's data as a protocol of its own, gated. It gets its
    full meaning with mutable and immutable implemented: an update on the
@@ -145,9 +156,13 @@ Then, as discussed:
   `--files`), `tools/bare tools/code-check.js`, each package's set from its
   bundle. Run the boot's test several times when the runtime or the
   repository code changed: a race shows one run in a few.
-- **Open, p2p-git**: a ref is written in place (for an instant unreadable
-  to another process); to be written aside and renamed. `mycelium-git`'s
-  `listBranches` tolerates it meanwhile.
+- **Open, p2p-git** (two defects for a process reading a repository
+  another process writes; `mycelium-git`'s `listBranches` tolerates both
+  meanwhile): a ref is written in place, for an instant unreadable (to be
+  written aside and renamed); and its listing of branches returns nothing
+  when a branch is removed during its walk of the refs (`readdirDeep`
+  fails on the vanished file: to skip it). Request branches, made and
+  removed with every request, make the second frequent.
 - **Internal requests** (part 24): placed by the mrepo itself, straight to
   the handler into pending (`admit`), no mark: internal is having no
   record in the inbox (`isInternal`); the inbox waits until the mrepo's own

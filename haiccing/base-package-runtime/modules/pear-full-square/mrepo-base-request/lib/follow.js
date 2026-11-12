@@ -7,8 +7,9 @@
 //                                         URI part (/boot); print: a line
 //                                         out (console.log by default)
 //   -> { stop, pass, settled }            pass(): one round, now; settled():
-//                                         every request done (none pending or
-//                                         executing in any of them, at least one
+//                                         every request done (none pending,
+//                                         executing or waiting on a request
+//                                         branch in any of them, at least one
 //                                         done)
 // What is there when it starts is printed first (the history so far).
 import fs, { existsSync, readdirSync } from 'bare-fs'
@@ -63,6 +64,8 @@ export function follow ({ dir, name, every = 200, print = line => console.log(li
       const ctx = opened.get(d)
       if (!ctx) return false
       const heads = Object.fromEntries(await ctx.backend.listBranches().catch(() => []))
+      // a request branch: a principal waiting for a response, not done yet
+      if (Object.keys(heads).some(b => /^execute\/[^/]+\/request\/execute$/.test(b))) return false
       for (const l of LAYERS) {
         if (!heads[l]) continue
         const n = (await layer(ctx, l).list()).length
