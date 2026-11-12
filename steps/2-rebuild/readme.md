@@ -1254,3 +1254,9 @@ in its config, `gated`; one that does not stays open whatever the state
 protocol gated; the service's own actions by their states. On the roadmap
 (the human): `base-package-crud`, not rest, its full meaning with mutable
 and immutable. Packages overlay: one structure laid on another (confirmed).
+
+The local agent's note of 2026-11-12 (`31501e6`, the service commit): the
+release built and tried on the human's machine: passed, every request
+done, ended by itself. Its finding applied (its patch): `boot-release.js`
+assembles each package right before bundling it (it bundled five,
+assembled two: a fresh clone stopped).
