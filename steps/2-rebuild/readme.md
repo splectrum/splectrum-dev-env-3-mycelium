@@ -1904,3 +1904,19 @@ unpacked as an object, across lines, in a compact form.
 
 **Validated**: the `haicc` test, 104 of 104; the README check, no
 problems.
+
+## 41. Small leftovers (2026-11-13)
+
+- **The sh commands stay as they are** (the human): `haicc sources` and
+  `haicc prereq` keep their form; only the machine level took
+  `<protocol>/<action>` (`boot/deploy`, `boot/teardown`).
+- **The lockfile cleaned up**, by hand: the 23 entries nothing here
+  reaches any more, left from modules removed earlier (`hyperswarm`,
+  `hyperdht`, `dht-rpc`, `udx-native`, `react`, `react-dom`, `htm` and
+  what only they needed). Worked out from the lockfile itself: what the
+  root's dependencies and the workspaces reach, the rest dropped; none
+  was imported by a module or carried by a package. The install replays
+  (207 kept, none fetched).
+
+**Validated**: the release built; the seven packages' full sets; the
+`haicc` test, 104 of 104; the code check, no problems.
