@@ -244,6 +244,28 @@ handover's "start over", as one command). To settle with the human:
 whether the package store goes with it, and whether the other script
 commands (`sources`, `prereq`) take the same form.
 
+### 5. A missing argument is not said: the target falls back to `/`
+
+The human, on finding `boot/teardown`: it should have said "missing
+argument target". The second part of a command is its target URI, and
+when it is missing `mrepo-base-request/lib/command.js` makes it `/`
+(`second === undefined ? '/'`): the action then runs on `/` and fails on
+something else. Tried on a scratch `haicc` home (the human's left alone),
+a boot mrepo only:
+
+| `haicc / ...` | Says now | Should say |
+|---|---|---|
+| `boot/teardown` | `not a child to deploy: /` ("deploy", in a teardown) | missing argument: target |
+| `boot/deploy` | `not a child to deploy: /` | missing argument: target |
+| `boot/deploy host` | `no package to deploy /host from (its first argument)` | missing argument: package |
+| `service/stop` (no service protocol in the boot mrepo) | `no action: service stop` | no protocol: service |
+
+Proposal: an action's arguments named in its signature (as its README
+has them: `teardown(exec, { uri })`), and checked before it runs: one
+missing, `missing argument: <name>` (`target`, `package`); `/` a target
+only where an action takes it as one (`help/get`). An unknown protocol
+said as such (with 3). And `teardown`'s error said in its own words.
+
 ## 2026-11-12: `31501e6`
 
 The prompt ran, with one stop in step 3 (1): on this clone
