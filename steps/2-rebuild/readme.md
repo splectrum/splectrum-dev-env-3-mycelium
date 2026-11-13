@@ -1722,3 +1722,76 @@ Step five of building part 32.
 
 **Validated**: the seven packages' full sets; the boot's test three times
 (108 asserts); the checks, no problems (17 modules, 7 packages).
+
+## 37. base-linux-haicc: the haicc command (2026-11-13)
+
+Step six of building part 32, the last. The flow the human wrote in part
+32 now runs from the command line:
+
+```
+sh haicc-install.sh
+haicc sources link <folder>
+haicc prereq
+haicc boot
+haicc / boot/deploy host base-component-haicc
+haicc /host service/initialise
+haicc /host service/start
+```
+
+**Built** (`haiccing/base-linux-haicc`, POSIX sh, no bundle)
+
+- **`haicc`** dispatches: a first part starting with `/` is an mrepo
+  command; anything else is the script `haicc-<name>`.
+- **`haicc sources`**: `link <folder>`, `unlink`, `download [<what>...]`,
+  `https`, `no-https`. The folders come first, https after them as the
+  backup, on by default. The only command that reaches the network.
+- **`haicc prereq [--check]`**: the platform, the tools, the work folder,
+  the sources, Bare. Nothing is fetched: the pinned Bare is unpacked from
+  the sources and its tarball's sha512 recorded. `--check` changes
+  nothing.
+- **`haicc boot`**: checks the prerequisites and stops when one is
+  missing; else runs the boot package's bundle with the Bare put in
+  place.
+- **An mrepo command** (`haicc-request`): the record written into the boot
+  mrepo's inbox folder (whole, then renamed), the response waited for in
+  its outbox folder, the command's output printed as JSON, its error on
+  stderr with exit 1. At the root the command is written plain; anywhere
+  else the `haicc` command goes as typed. The parts are sent unnamed.
+- **Reading the response in sh**: a small scanner in awk follows strings
+  and depth to find the completed form's `output` or `error`, three
+  objects deep. No JSON tool is needed on the host.
+- **The installer**, `haicc-install.sh`: one file carrying the scripts and
+  the pins, written by the package's own `build.sh` and committed. It
+  registers the command as a small script on the PATH.
+- **The pins**: Bare's version, URL and sha512, brought in line with the
+  lockfile by `tools/release.js`, which also writes the installer again.
+- **Its test**, `sh test/run.sh`: the whole flow in a temporary folder,
+  from the installer to a started host, a node inside it, chained
+  commands and the teardowns; 66 checks; nothing left running. It
+  replaces `tools/haicc-try.sh`, which is removed.
+
+**Decided here, as the human left them to us** (listed as assumptions
+before the go, none corrected)
+
+- The script waits for the response and prints it; 120 seconds, then exit
+  4 and the request stays.
+- `haicc prereq` exists and puts Bare in place; `haicc boot` never
+  fetches or fixes.
+- The release is one installer file; there is no executable.
+- haicc's own folder is `~/.haicc` (`HAICC_HOME`), with the work folder
+  inside it (`HAICC_WORK`).
+
+**Not built, said plainly by the scripts**
+
+- **Our packages are not published anywhere.** `haicc sources download`
+  fetches Bare only and says so for the rest; a sources folder has to be
+  linked for the packages. Where bundles are published is the release and
+  sourcing work on the roadmap.
+- **The https backup is not read by the mrepos.** It is recorded and
+  passed to the boot as a source; the fetch inside an mrepo only reads
+  folders.
+- `docker` and other third-party components: nothing pinned for them.
+
+**Validated**: the haicc test, 66 of 66; the seven bundle packages' full
+sets; the boot's test (108 asserts); the checks, no problems (17 modules,
+8 packages); the Bare download tried once by hand, as pinned.

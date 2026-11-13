@@ -43,17 +43,31 @@ built is in the packages: `haiccing/package-docs-template` and
 - **A test waits for a runtime's process to end** (signal 0, `kill -0`), not
   only for it to stop answering.
 
-## What is built (`readme.md`, parts 13 to 26)
+## What is built (`readme.md`, parts 13 to 37)
 
 - **Packages**: a package is one bundle carrying its structure (`mrepo/`),
   its code (`modules/`, assembled), its tests and its READMEs; its main a
   generated dispatcher running every entry by path (`/run`, `/protocol`,
   `/deploy`, `/test/...`). Assembly options per package (`assemble.omit`).
-- **The boot** (`base-package-boot`): from nothing, prerequisites checked,
-  the boot mrepo built, its packages placed, its runtime started; a
-  standalone executable per platform (`tools/boot-release.js`). Its
-  protocol: `boot deploy`, `teardown`, `redeploy` of a child, inside its
-  parent (`main/<name>/`).
+- **The boot** (`base-package-boot`): run with Bare from its bundle, the
+  boot mrepo built, its packages placed, its runtime started; nothing
+  deployed by it, no executable. Its protocol: `boot deploy`, `teardown`,
+  `redeploy` of a child, inside its parent (`main/<name>/`, the shadow of
+  `main`), its shortcut in the parent's `xpath` layer.
+- **The haicc command** (`base-linux-haicc`, sh): one installer file;
+  `haicc sources`, `haicc prereq`, `haicc boot`; `haicc <URI>
+  <protocol>/<action> <args>` writes a record into the boot mrepo's inbox
+  folder and prints the response.
+- **Commands** (parts 33, 34): a request is protocol, action, URI and a
+  list of unnamed arguments; given as its parts as typed, it is
+  interpreted on its way in. `haicc` is a protocol (`base-package-haicc`),
+  `goto` its default action: at a shortcut the command that follows is
+  sent on unchanged, at the root it is executed here. XPath
+  (`mrepo-base-xpath`) is the runtime's internal: a local URI resolved to
+  a position, an ordinary node or a shortcut. An mrepo has a unique URI
+  (`local/boot`, `local/host`).
+- **The haicc component** (`base-component-haicc`): the mrepo a host or a
+  node is managed with: runtime, boot, service, haicc; `main` empty.
 - **The runtime** (`base-package-runtime`): the engine of every mrepo; its
   `protocol.js` offers `runtime run` (a linked package's entry, its tests)
   and `help` (`get`, `extract`). Requests: one handler into pending;
@@ -84,57 +98,38 @@ Not built yet, and the platform is not deployed until the first two are
    protocols, those `gated` in their config (the human); the others stay
    open. Still open from it: the runtime's status beyond "not yet
    operational".
-2. **haicc, and the mrepo application.** What haicc is (the human, part
-   30): its concern is deployment, global across swarms, and the cross
-   swarm bridges. On the host's Linux side an app (downloads of sources
-   and third-party components, install from scratch); on the swarm side a
-   specific mrepo, the only one on a host or node with the boot protocol.
-   It only connects directly with local mrepos (the folder inbox). The
-   host's haicc mrepo takes from the terminal and connects to the swarm
-   nodes' haicc mrepos on the host, which proxy to the haicc mrepo of the
-   node in its container: commands are issued on the host, internally a
-   web of haicc mrepos. Only one haicc mrepo actively manages a host or a
-   node. The boot mrepo is not it: it deploys the host's haicc mrepo, as
-   the boot on a PC starts the system (today's placeholder `/host` is
-   where it goes). Into a container: mapped inbox and outbox folders, or
-   something equivalent but secure.
-   **The naming and the component** (part 31): a package brings a protocol
-   and its part of the structure; a component (`base-component-<name>`)
-   is a service to the solution, the physical view; an application
-   (`base-application-<name>`) is user-facing, a logical view, an mrepo
-   per component it spans, exclusive or shared; a solution
-   (`base-solution-<name>`) is applications and components, possibly
-   across swarms. `haiccing/base-component-haicc` (repository created,
-   not attached yet, nothing built): runtime, boot, service; no data, no
-   structure of its own. The boot mrepo installs and starts the host's
-   haicc mrepo; the terminal sends to it and receives from it. The demos
-   come on top: structures in `main`, the folders where swarms and swarm
-   nodes are created. **The priority**: the host's haicc mrepo, a node's
-   haicc mrepo, a swarm going. **Under discussion, not settled**: XPath
-   as internal functionality of the runtime (beside request and execute);
-   whether the boot protocol stays behind the service door.
-   **The haicc command, base-linux-haicc, the sources** (part 32, the
-   discussion still going: read it before continuing): `haicc` a sh
-   dispatcher registered globally, `haicc <URI> <protocol>/<action>
-   <args>` for an mrepo command, `haicc <name>` for a script command
-   (`boot`, `sources link|download`, https the backup by default,
-   `no-https`); the boot mrepo executes `boot/deploy /host` and passes
-   the service commands through; `base-linux-haicc` the package of the
-   scripts, without the prerequisites; the naming completed (demo,
-   solution, manager). Part 32 lists what we proposed and the human has
-   not confirmed, and what is open. The repository `base-linux-haicc` is
-   not created yet.
-   **Storage** (part 31): only `main` on the Corestore (the external
-   state); on disk, by default, all the remaining layers, at least the
-   inbox and the outbox. The code does not follow it yet; the two-way
-   sync of a folder with the Corestore is not built. It waits.
-   **XPath in the mrepo**: built for the base as the wrapped remote
-   command (a URI leading into a child is passed on whole; request
-   branches; the principal waits on its branch; the response returned).
-   Open, each needing design with the human first: composite actions (an
-   action resuming at a label after a child request; preloading data),
-   fan-out, a time limit for a child that never answers, dispatch to
-   another node, the consequences of asynchronous requests.
+2. **haicc**: the first build is done (parts 30 to 37): the command, the
+   protocol, XPath and shortcuts, the component, deployed and started from
+   the command line, a node inside it, commands chained through both.
+   What haicc is and the naming are in parts 30 to 32 (read them before
+   designing further): package, component, application, demo, solution,
+   manager; the offset (a command executed in the context of its position,
+   forward visibility only); the storage rule (only `main` on the
+   Corestore).
+   **Next, the human's priority**: the host's haicc mrepo is there; then a
+   node's haicc mrepo, then a swarm going, the demos on top of the
+   component (they bring the folders in `main`).
+   **Open, each to settle with the human first**:
+   - a position deeper inside `main` (`haicc /swarms/swarm-1 boot/deploy
+     node-1`): `goto` refuses it for now; it needs the execution context
+     opened at the position, and it comes with the first demo;
+   - a node's unique URI, `<swarm>/<node>`: a child takes its parent's
+     swarm today, so everything is `local/<name>`;
+   - teardown does not cascade: an mrepo torn down leaves its own
+     children's runtimes running (part 36);
+   - into a node's container: mapped inbox and outbox folders, or an
+     equivalent, secure; `base-manager-host`, `base-manager-node`;
+   - where our packages are published: `haicc sources download` fetches
+     Bare only, and the mrepos do not fetch over https (the backup is
+     recorded and passed on, nothing reads it);
+   - the main data of a linked mrepo seen through its shortcut;
+   - composite actions (an action resuming at a label after a child
+     request; `boot/install` as one), fan-out, a time limit for a child
+     that never answers, dispatch to another node;
+   - the layer routing in the code against the storage rule; the two-way
+     sync of a folder with the Corestore;
+   - the boot mrepo's identity file laid into every mrepo that links the
+     boot package (part 36); `bare-build` still in the lockfile, unused.
 3. **`base-package-crud`** (the human: CRUD, not rest): the generic
    actions on an mrepo's data as a protocol of its own, gated. It gets its
    full meaning with mutable and immutable implemented: an update on the
@@ -209,9 +204,13 @@ Then, as discussed:
   `validate` the proof.
 - **`mrepo-base-help`**: built (step 2, part 24): the help protocol, the
   extraction, the validation; documentation packages marked `docs`.
-- **The local agent** builds, tests and publishes releases
-  (`prompt-local.md`, `handover-local.md`); it was busy with a release when
-  this was written: its record will be in `local-run.md`.
+- **The local agent** builds and tests on the human's machine
+  (`prompt-local.md`, `handover-local.md`, its notes in `local-note.md`,
+  its record in `local-run.md`). What it runs changed with part 37: there
+  is no executable and no `tools/haicc-try.sh` any more. The sources are
+  built with `tools/bare tools/release.js`, and the whole flow is tried
+  with `sh haiccing/base-linux-haicc/test/run.sh` (`--keep` to inspect).
+  Its prompt and handover still describe the earlier way.
 - **The seed `dev-env-3-mrepo-native`** is on `splectrum/roadmap-1`
   (`seeds/dev-env-3-mrepo-native/`, a copy in `seed-dev-env-3-mrepo-native/`
   here): the mrepo framework on native git, standalone. Its repository,

@@ -24,7 +24,8 @@ the work reaches it.
   `base-package-boot`, `base-package-runtime`, `base-package-service`,
   `base-package-haicc` (one package, one protocol), the component
   `base-component-haicc` (several packages deployed together, `main`
-  empty), and the documentation
+  empty), `base-linux-haicc` (the `haicc` command: sh scripts, no bundle),
+  and the documentation
   packages `package-docs-template` (the package structure, the README
   rules, modules and methods, tests) and `package-docs-mrepo` (the mrepo,
   layer by layer).
@@ -32,7 +33,8 @@ the work reaches it.
   `pkgm-base-manager`, which the tools use. A documented method is a
   directory, under `external/` (protocol actions) or `internal/`.
 - `tools/`: assembling and bundling a package (`package-assemble.js`,
-  `package-bundle.js`), the release into the sources (`release.js`), the product
+  `package-bundle.js`), the release into the sources (`release.js`: every
+  package, Bare's tarball, the `haicc` installer), the product
   repositories (`products.sh`), the checks (`help-extract.js`,
   `code-check.js`). `sources/` (ignored by git): the bundles built here.
 - `rules.md`: this repository's own rules (branches, layers, commits,
@@ -62,8 +64,13 @@ the work reaches it.
   `tools/bare tools/code-check.js`: no problems.
 - When the runtime or the repository code changed, the boot's test several
   times: a race shows one run in a few. Nothing left running after.
+- The `haicc` command end to end, when anything it touches changed (the
+  scripts, the boot, the component, the request form):
+  `sh haiccing/base-linux-haicc/test/run.sh`.
 - Rebuild first: `tools/bare tools/package-assemble.js haiccing/<package>`,
-  then `tools/bare tools/package-bundle.js haiccing/<package>`.
+  then `tools/bare tools/package-bundle.js haiccing/<package>`; or all of
+  it, `tools/bare tools/release.js`. A bundle carries its package's tests:
+  rebuild after a test changed, too.
 
 ## Execution
 

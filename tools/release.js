@@ -14,6 +14,10 @@
 //                                       sha512
 //   sources/third-party.json            the third-party components: each its
 //                                       file, where it comes from, its sha512
+//   haiccing/base-linux-haicc/pins      Bare's pin, for the haicc scripts,
+//                                       brought in line with the lockfile;
+//   haiccing/base-linux-haicc/haicc-install.sh   its installer written
+//                                       again (its build.sh)
 // No executable: the boot is its bundle, run with Bare
 // (haiccing/base-linux-haicc: haicc boot).
 //   tools/bare tools/release.js [--out=<folder>]     (default: sources/ here)
@@ -57,6 +61,16 @@ if (!existsSync(join(out, file)) || sha512(join(out, file)) !== want) {
 if (sha512(join(out, file)) !== want) throw new Error(`Bare's runtime is not as pinned (sha512): ${file}`)
 const third = { description: 'The third-party components an install needs: each its file here, where it comes from, its sha512.', components: { bare: { file, version: lock.version, platform, url: lock.resolved, sha512: want } } }
 writeFileSync(join(out, 'third-party.json'), JSON.stringify(third, null, 2) + '\n')
+
+// 3. The haicc scripts: their pin of Bare the lockfile's, their installer
+// written from them (the package's own build.sh).
+const linux = join(dev, 'haiccing', 'base-linux-haicc')
+const pins = readFileSync(join(linux, 'pins'), 'utf8')
+const pinned = { BARE_VERSION: lock.version, BARE_PLATFORM: platform, BARE_FILE: file, BARE_URL: lock.resolved, BARE_SHA512: want }
+const next = pins.split('\n').map(l => { const k = l.split('=')[0]; return k in pinned ? `${k}=${pinned[k]}` : l }).join('\n')
+if (next !== pins) writeFileSync(join(linux, 'pins'), next)
+const built = spawnSync('sh', [join(linux, 'build.sh')], { stdio: ['ignore', 'ignore', 'inherit'] })
+if (built.status !== 0) throw new Error('failed: base-linux-haicc/build.sh')
 
 const commit = spawnSync('git', ['-C', dev, 'rev-parse', 'HEAD'], { stdio: ['ignore', 'pipe', 'ignore'] }).stdout?.toString().trim() || null
 console.log(JSON.stringify({ sources: out, packages: packages.map(p => `haiccing/${p}`), bare: lock.version, commit }))
