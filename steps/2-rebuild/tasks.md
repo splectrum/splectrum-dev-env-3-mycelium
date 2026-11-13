@@ -175,6 +175,17 @@ item 3), wanted for creating structure in `main`.
 - With task 1, `crud` gets the URI from the mrepo's root, layer first
   (`main/swarms/swarm-1`, `runtime/log`), and nothing from outside can
   name another layer.
+- **Idempotent** (the human): repeating a request is safe.
+  - `create` ensures the node exists, and creates the whole path, not
+    just the leaf: missing parents are made too, each with an empty
+    document. A node already there is left untouched, also when a
+    different value is given (changing it is `update`'s); the request
+    succeeds and the result says what was created and what was there.
+  - `delete` ensures the node is gone: one that is not there selects
+    nothing, and the request succeeds with an empty result (the empty
+    selection, task 1).
+  - Why: a step retried or a run replayed does not fail on its own first
+    attempt; parallel steps that need the same node do not collide.
 - The names (agreed): protocol `crud`, module
   `pear-full-square/mrepo-base-crud`, package
   `haiccing/base-package-crud`.
@@ -193,10 +204,12 @@ item 3), wanted for creating structure in `main`.
 
 - A node's name is a plain name, no extension (`isName`,
   `mycelium-uri`).
-- Strict by default: `create` refuses a position that exists, or one
-  whose parent does not; `delete` refuses a node that still has children,
-  or a shortcut below it; `read` returns the node's value and the names
-  of its children.
+- `delete` refuses a node that still has children, or an mrepo linked
+  below it: creating too much is harmless, removing too much is not. (Put
+  to the human with the whole path for `create`; the human answered on
+  `create` only.)
+- `read` returns, for each node selected, its value and the names of its
+  children.
 - A URI at or through a shortcut is refused, with the way across named
   (`haicc` at the shortcut).
 - Where it is open: in `base-component-haicc`, behind the service's door
