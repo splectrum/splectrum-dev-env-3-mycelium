@@ -1,7 +1,7 @@
 # Tasks: discussed, waiting to be built
 
 Tasks discussed with the human and stacked here, to be built later in
-batches, in this order: "First", "Coverage", then 1, 2, 3. A task is removed from this file when it is built:
+batches, in this order: "First", "Test reports", "Coverage", then 1, 2, 3. A task is removed from this file when it is built:
 its record is then a part in `readme.md`.
 
 How to read a task:
@@ -178,6 +178,42 @@ step shown to the human first)
   requests).
 - Each protocol's module tests, to see what is covered as functions:
   `pear-full-square/mrepo-base-*/test/`.
+
+## Test reports: proof of test execution
+
+The human, 2026-11-14. Part of the standard: it belongs in the template.
+
+**Settled** (the human)
+
+- We need proof of test execution: each package has a test report that
+  shows it passed all the tests within the package, created before any
+  release.
+- Its place: a folder `test-reports/` at the package's top (agreed; not
+  `test/reports/`: every folder of `test/` is a test).
+- Agreed with it:
+  - what it holds: the result of the `full` set (every unit, its tests
+    and asserts, its failures) and what was tested (the package, the
+    Bare version, the date);
+  - tied to the content: it names a hash of the package's content as
+    tested, so a report for an older state is recognisably stale;
+  - checked at release: the release refuses a package whose report is
+    missing, failed, or for different content;
+  - not inside the bundle it certifies: it lives in the package's folder
+    and repository, and beside the bundle in the sources.
+- **Nothing changed, nothing rerun**: when the content is the same there
+  is no need for a new report, and the release build creates the same
+  release.
+
+**Proposed** (ours)
+
+- The hash is the bundle's own (its sha256, in the manifest already): the
+  tests run from the bundle, the build is the same from the same content,
+  and `test-reports/` is left out of the bundle, so writing the report
+  does not change what it certifies.
+- The runner writes the report when the `full` set is run from a bundle;
+  the release compares the bundle it built with the report's.
+- A README in `test-reports/` (every folder has one), and the folder in
+  the template.
 
 ## Coverage: a generic test of the test coverage
 
