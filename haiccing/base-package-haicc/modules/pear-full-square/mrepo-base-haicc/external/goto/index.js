@@ -3,7 +3,7 @@
 import { resolve } from 'mrepo-base-xpath'
 
 export async function goto (exec, { uri, args = [] }) {
-  if (!args.length) throw new Error(`haicc ${uri}: no command to execute there`)
+  if (!args.length) throw new Error('missing argument: command')
   const to = await resolve(exec, uri)
   // a shortcut: the data originates elsewhere, the command goes there, as it is
   if (to.shortcut) return exec.forward(to.shortcut, args)

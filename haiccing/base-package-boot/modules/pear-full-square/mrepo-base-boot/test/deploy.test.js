@@ -81,7 +81,15 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
     const backend = p2pgitBackend(join(dir, '.git'), { fs })
     const { exec, commit, repo } = context(dir, backend)
 
-    await t.exception(deploy(exec, { uri: '/host' }), /no package/, 'the target named: its first argument')
+    await t.exception(deploy(exec, { uri: '/host' }), /missing argument: package/, 'the package: its first argument, missing said')
+    await t.exception(deploy(exec, { uri: '/', args: ['haiccing/target'] }), /missing argument: target/, 'a target of /: the mrepo itself, which one cannot deploy; missing')
+    await t.exception(teardown(exec, { uri: '/' }), /missing argument: target/, 'nor tear down')
+    // a position that exists locally (data in main there): not a target
+    exec.put('/main/notes/a.json', Buffer.from('1'))
+    await commit()
+    await t.exception(deploy(exec, { uri: '/notes', args: ['haiccing/target'] }), /\/notes exists locally: the boot protocol cannot target it/, 'a local folder: deploy cannot target it')
+    await t.exception(teardown(exec, { uri: '/notes' }), /\/notes exists locally/, 'nor teardown')
+    await t.exception(teardown(exec, { uri: '/nothing' }), /not deployed: \/nothing/, 'nothing there at all: not deployed')
     const d = await deploy(exec, { uri: '/host', args: ['haiccing/target'] })
     await commit()
     const host = join(dir, 'main', 'host')
@@ -119,7 +127,7 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
     t.is(await repo.read('/xpath/host/shortcut.json').catch(() => null), null, 'its shortcut out of the xpath layer')
     await t.exception(teardown(exec, { uri: '/host' }), /not deployed/)
     await t.exception(deploy(exec, { uri: '/x', args: ['haiccing/none'] }), /not in the store nor the sources/)
-    await t.exception(deploy(exec, { uri: '/../x', args: ['haiccing/target'] }), /not a child/)
+    await t.exception(deploy(exec, { uri: '/../x', args: ['haiccing/target'] }), /not a name for an mrepo/)
   } finally {
     rmSync(work, { recursive: true, force: true })
     rmSync(pkgs, { recursive: true, force: true })

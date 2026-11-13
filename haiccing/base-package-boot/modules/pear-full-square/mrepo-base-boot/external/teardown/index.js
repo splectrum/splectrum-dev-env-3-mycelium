@@ -22,7 +22,7 @@ async function stopped (pid, ask) {
 
 export async function teardown (exec, { uri }) {
   const c = child(exec, uri)
-  if (!(await c.recorded())) throw new Error(`not deployed: ${uri}`)
+  if (!(await c.recorded())) { await c.refuse(); throw new Error(`not deployed: ${uri}`) }
   // Its runtime stopped first (when it runs), waited for until its process
   // has ended (not only until it stops answering): asked over its socket;
   // still there, SIGTERM; still there, SIGKILL.

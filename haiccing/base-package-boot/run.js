@@ -1,5 +1,5 @@
 // The boot: the boot mrepo, the root, put in place up to its runtime's start.
-// Run with Bare from its bundle (haicc boot: base-linux-haicc's script) or
+// Run with Bare from its bundle (haicc boot/deploy: base-linux-haicc's script) or
 // from the package's folder. What it needs is there already: Bare (the one
 // running this), the sources. The invocation is a request from the start, a
 // record (boot deploy /boot, the command as typed, its key a GUID); each

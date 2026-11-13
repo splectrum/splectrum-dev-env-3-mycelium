@@ -19,7 +19,7 @@
 //   haiccing/base-linux-haicc/haicc-install.sh   its installer written
 //                                       again (its build.sh)
 // No executable: the boot is its bundle, run with Bare
-// (haiccing/base-linux-haicc: haicc boot).
+// (haiccing/base-linux-haicc: haicc boot/deploy).
 //   tools/bare tools/release.js [--out=<folder>]     (default: sources/ here)
 import process from 'bare-process'
 import os from 'bare-os'

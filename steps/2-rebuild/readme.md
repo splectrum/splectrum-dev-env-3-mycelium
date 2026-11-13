@@ -1835,3 +1835,49 @@ modules removed earlier. For the mini tool on the roadmap.
 
 **Validated**: the release built; the checks, no problems; the `haicc`
 test, 66 of 66; the boot's test, 108 asserts; three packages' full sets.
+
+## 39. After the first test by hand: four changes (2026-11-13)
+
+The human's answers to the local agent's findings (part 38), built.
+
+1. **`haicc` prints the response record whole**, as it is in the outbox
+   folder. The exit code still comes from its completed form: 0 an
+   output, 1 an error, which is also said on stderr. `haicc --output <URI>
+   ...` (or `HAICC_OUTPUT=1`) prints the output alone. The local agent's
+   patch, taken as tested there.
+2. **The service answers what was done and the state now**:
+   `{ service, state }`. `service/stop` answers `stopped` with the state
+   `initialised`; `service/shutdown` answers `shut down` with the state
+   `booted`.
+3. **What is missing is said.** The human: the error on a teardown
+   without its target was the wrong one; it was a missing argument.
+   - An action's config names what it needs: `target` (a target other
+     than `/`, the mrepo itself, which one cannot deploy or tear down; a
+     URI left out is `/`) and `args` (its arguments by name, in order, one
+     ending in `?` optional). One not given: `missing argument: <name>`
+     (`mrepo-base-request`: `missing`, read by `check`, with or without a
+     service, before the URI is looked at).
+   - Declared: `boot deploy` (target, `package`), `teardown` (target),
+     `redeploy` (target, `package?`), `haicc goto` (`command`),
+     `runtime run` (target).
+   - A protocol or an action that is not there is said with what is:
+     `no protocol: deploy (boot, haicc, help, runtime)`,
+     `no action: boot remove (deploy, redeploy, teardown)`.
+   - **The boot protocol cannot target a local folder** (the human): a
+     position that exists locally, as data in `main`, is refused by
+     deploy and by teardown: `<uri> exists locally: the boot protocol
+     cannot target it`.
+4. **The machine level**: a `<protocol>/<action>` without a URI is the
+   level above the root mrepo, in the same form as every command below
+   it. `haicc boot` becomes `haicc boot/deploy`; `haicc boot/teardown`
+   undoes it: every runtime under the work folder stopped (the boot
+   mrepo's and those of every mrepo deployed below it), then what the
+   deploy put in place removed: the mrepos, the package store, the work
+   folder's setting. Bare, the sources and the scripts stay. `sources` and
+   `prereq` keep their form: not asked.
+
+Also: `haicc --help` lists the teardowns and says where the mrepos' help
+is; the local agent's prompt and handover follow the new commands.
+
+**Validated**: the `haicc` test, 96 of 96; the seven packages' full sets;
+the boot's test three times (108 asserts); the checks, no problems.

@@ -70,6 +70,11 @@ setting.
   principal, it goes to `request/done` and is not sent on. A response
   nobody waits for goes to `request/done`. `settled()` counts any request
   branch as not done.
+- **What is missing is said** (`missing(cfg, uri, args)`): an action's
+  config names what it needs, a target (`target`: not `/`, the mrepo
+  itself) and its arguments (`args`, by name, `?` optional). One not
+  given: `missing argument: <name>`, with or without a service, before
+  the URI is looked at.
 - **Checked** (`check`): its URI canonical; where the mrepo has a
   service, against the protocols the runtime loaded (`ctx.protocols`):
   the protocol loaded, the action configured, the URI one its config names

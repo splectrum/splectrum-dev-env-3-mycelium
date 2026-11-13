@@ -10,14 +10,16 @@ export async function stateOf (exec) {
   return JSON.parse((await exec.read(STATE)).toString())
 }
 
-export async function moveTo (exec, state) {
+// The state moved: the answer says what was done (done: initialised,
+// started, stopped, shut down) and the state the service is in now.
+export async function moveTo (exec, state, done) {
   exec.put(STATE, json.encode({ ...await stateOf(exec), state }))
-  return { service: state }
+  return { service: done, state }
 }
 
 const at = states => ({ uris: ['/'], states })
 export const CONFIG = {
-  description: 'The service state of the mrepo\'s external API: initialised, started, stopped, shut down.',
+  description: 'The service of the mrepo\'s external API, moved between its states: booted, initialised, started.',
   actions: {
     initialise: { ...at(['booted']), description: 'From booted to initialised: the mrepo made ready.' },
     start: { ...at(['initialised']), description: 'From initialised to started: the external API open.' },

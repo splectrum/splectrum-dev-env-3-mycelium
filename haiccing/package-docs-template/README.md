@@ -155,7 +155,7 @@ bundle can run, Bare and the sources, is put in place by the `haicc`
 scripts (`haiccing/base-linux-haicc`), which are plain sh.
 
 ```sh
-haicc boot
+haicc boot/deploy
 ```
 
 Written from [splectrum/splectrum-dev-env-3-mycelium](https://github.com/splectrum/splectrum-dev-env-3-mycelium).

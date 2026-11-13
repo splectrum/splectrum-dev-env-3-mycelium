@@ -1,5 +1,5 @@
 import test from 'brittle'
-import { check, matches, record, wrap, guid, complete, isComplete, interpret, formOf } from '../index.js'
+import { check, matches, missing, record, wrap, guid, complete, isComplete, interpret, formOf } from '../index.js'
 
 // The protocols as a runtime loaded them: each action's URIs, and the
 // states that allow it where it names them (the service's own).
@@ -27,6 +27,23 @@ test('a command interpreted: its parts, the default action, the URI', (t) => {
   t.alike(formOf({ command: ['service/start'] }), { command: ['service/start'], protocol: 'service', action: 'start', uri: '/', args: [] })
   const form = { protocol: 'service', action: 'start', uri: '/' }
   t.is(formOf(form), form, 'a form given filled in: kept as it is')
+})
+
+test('missing: what an action\'s config asks for and the request does not give', (t) => {
+  const deploy = { uris: ['/<name>'], target: true, args: ['package'] }
+  const redeploy = { uris: ['/<name>'], target: true, args: ['package?'] }
+  t.is(missing(deploy, '/host', ['haiccing/x']), null, 'all given')
+  t.is(missing(deploy, '/', ['haiccing/x']), 'missing argument: target', 'a target needed: / is the mrepo itself')
+  t.is(missing(deploy, '/host', []), 'missing argument: package', 'an argument, by its name')
+  t.is(missing(deploy, '/', []), 'missing argument: target', 'the target first')
+  t.is(missing(redeploy, '/host', []), null, 'one ending in ?: optional')
+  t.is(missing({ uris: ['/**'] }, '/', []), null, 'no target asked for: / is a target (help get /)')
+  t.is(missing(undefined, '/', []), null, 'no config: nothing asked')
+  const p = { boot: { gated: true, actions: { deploy } } }
+  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/' }, { service: null, protocols: p }), 'missing argument: target', 'checked without a service too')
+  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/' }, { service: { state: 'started' }, protocols: p }), 'missing argument: target', 'with a service: said before the URI is said not offered')
+  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/host' }, { service: { state: 'started' }, protocols: p }), 'missing argument: package')
+  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/host', args: ['x'] }, { service: { state: 'started' }, protocols: p }), null)
 })
 
 test('matches: a URI against a config\'s pattern', (t) => {

@@ -62,7 +62,7 @@ test('the boot mrepo running, without its packages: no service gate; its preload
     const repo = openRepo(r.backend)
     const done = JSON.parse((await repo.read(`/request/done/${PRELOADED}.json`)).toString()).value.value
     t.alike([done.protocol, done.action, done.uri, done.args], ['boot', 'deploy', '/host', ['haiccing/base-package-runtime']], 'the preloaded request: boot deploy /host, the runtime its target')
-    t.is(done.error, 'no action: boot deploy', 'done, refused here: no boot protocol linked (the package\'s test runs it with its packages)')
+    t.is(done.error, 'no protocol: boot (rest, service)', 'done, refused here: no boot protocol linked, said with those there (the package\'s test runs it with its packages)')
     t.alike((await repo.select('/request/pending/default/*')).map(([p]) => p), ['/request/pending/default/layer.json'], 'nothing pending')
   } finally {
     rmSync(work, { recursive: true, force: true })

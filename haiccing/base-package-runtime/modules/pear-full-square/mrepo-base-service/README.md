@@ -17,6 +17,12 @@ and each service action only in the states its config names. Offered by `haiccin
 `booted` → `initialise` → `initialised` → `start` → `started`; back with
 `stop` and `shutdown`.
 
+## Answers
+
+Each action answers what was done and the state now: `{ service, state }`.
+`stop` answers `stopped` with the state `initialised`; `shutdown` answers
+`shut down` with the state `booted`.
+
 ## Config
 
 `CONFIG`, in `internal/state.js`: each action at `/`, with the states that

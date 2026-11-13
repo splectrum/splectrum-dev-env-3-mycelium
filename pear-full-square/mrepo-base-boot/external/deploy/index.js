@@ -14,8 +14,10 @@ const ORG = 'haiccing'
 export async function deploy (exec, { uri, args = [] }) {
   const c = child(exec, uri)
   if (await c.recorded()) throw new Error(`deployed already: ${uri}`)
+  // a position that exists locally (data in main there): not a target
+  await c.refuse()
   if (existsSync(c.dir)) throw new Error(`in the way: ${c.dir}`)
-  if (!args[0]) throw new Error(`no package to deploy ${uri} from (its first argument)`)
+  if (!args[0]) throw new Error('missing argument: package')
   // <org>/<package>; the package alone: ours
   const target = args[0].includes('/') ? args[0] : `${ORG}/${args[0]}`
   // The store and the sources: the mapping the parent's packages manifest records.

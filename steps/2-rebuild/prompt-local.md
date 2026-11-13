@@ -42,15 +42,17 @@ Only its note is committed.
 >    `~/.haicc` and registers `haicc` in `/usr/local/bin` when that can be
 >    written, else in `~/.local/bin`; it says if that folder is not on the
 >    PATH). Then `haicc sources link "$PWD/sources"` and `haicc prereq`.
->    Do not run `haicc boot`: that is the human's.
+>    Do not run `haicc boot/deploy`: that is the human's.
 > 7. **Tell the human** it is ready: what steps 4 and 5 printed last (or
 >    what failed and how), where `haicc` was registered, and the commands
 >    to try, in this order:
->    `haicc boot`, `haicc / boot/deploy host base-component-haicc`,
+>    `haicc boot/deploy`, `haicc / boot/deploy host base-component-haicc`,
 >    `haicc /host service/initialise`, `haicc /host service/start`,
->    `haicc /host help/get /`. The boot mrepo's runtime keeps running after
->    `haicc boot`; its work folder is `~/.haicc/work`. `haicc --help` lists
->    the commands.
+>    `haicc /host help/get /`; and to undo: `haicc / boot/teardown host`,
+>    then `haicc boot/teardown`. The boot mrepo's runtime keeps running
+>    after `haicc boot/deploy`; its work folder is `~/.haicc/work`. A
+>    command prints its response record whole; `haicc --output ...` the
+>    output alone. `haicc --help` lists the commands.
 > 8. **Write a note back**: what ran, each result, anything that did not
 >    run as written and why (with a proposal and a patch if you have one,
 >    as before), in `steps/2-rebuild/local-note.md`: a new section at the

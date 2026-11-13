@@ -23,6 +23,9 @@ service, such as the boot mrepo, has no gate.
 | `initialised` | `start`, `shutdown` |
 | `started` | `stop`, and the gated protocols |
 
+Each action answers what was done and the state the service is in now:
+`service/stop` answers `{ "service": "stopped", "state": "initialised" }`.
+
 ## Package
 
 - `protocol.js`: the `service` protocol, its config and its actions, from

@@ -10,11 +10,11 @@ function context (state) {
 
 test('the actions: the state moved, booted to started and back', async (t) => {
   const exec = context('booted')
-  t.alike(await initialise(exec), { service: 'initialised' })
-  t.alike(await start(exec), { service: 'started' })
+  t.alike(await initialise(exec), { service: 'initialised', state: 'initialised' }, 'the answer: what was done, and the state now')
+  t.alike(await start(exec), { service: 'started', state: 'started' })
   t.is((await stateOf(exec)).state, 'started', 'written')
-  t.alike(await stop(exec), { service: 'initialised' })
-  t.alike(await shutdown(exec), { service: 'booted' })
+  t.alike(await stop(exec), { service: 'stopped', state: 'initialised' }, 'stopped: back to initialised')
+  t.alike(await shutdown(exec), { service: 'shut down', state: 'booted' }, 'shut down: back to booted')
 })
 
 test('the config: each action at /, in the states that allow it', (t) => {

@@ -23,7 +23,7 @@ of the mrepo it was sent to.
 
 ## Errors
 
-- No command follows.
+- No command follows: `missing argument: command`.
 - The URI runs through a shortcut.
 - A position inside `main` other than the root: not built yet.
 - Those of the command itself.
