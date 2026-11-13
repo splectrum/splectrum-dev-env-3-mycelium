@@ -1,6 +1,7 @@
 {
   "description": "The package on its own, in a floating instance: its help, its code and its mrepo side check without problems.",
   "tests": [
+    "none",
     "help",
     "code",
     "mrepo",

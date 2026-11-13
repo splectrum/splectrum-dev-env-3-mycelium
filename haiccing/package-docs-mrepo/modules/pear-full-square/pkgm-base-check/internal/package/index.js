@@ -23,8 +23,8 @@ const dirs = d => existsSync(d) ? readdirSync(d).sort().filter(n => statSync(joi
 
 // What a package provides, read from its files: the protocols of its
 // protocol.js (null: it could not be loaded), a program (run.js), hooks,
-// an mrepo of its own (a list of packages); a documentation package
-// provides none of them.
+// an mrepo of its own (a list of packages); whether it is the package
+// template, or a documentation package.
 export async function provides (pkg) {
   const pj = existsSync(join(pkg, 'package.json')) ? json(join(pkg, 'package.json')) : {}
   let protocols = []
@@ -32,6 +32,7 @@ export async function provides (pkg) {
     try { protocols = Object.keys((await import(pathToFileURL(join(pkg, 'protocol.js')).href)).protocols ?? {}).sort() } catch { protocols = null }
   }
   return {
+    template: pj.name === TEMPLATE,
     docs: pj.docs === true,
     protocols,
     run: existsSync(join(pkg, 'run.js')),
@@ -71,8 +72,7 @@ export function checkFiles (pkg) {
 // Its sets: validate, validate-in-situ and full, each a description and
 // its tests by name; every test named has its folder, test/<name>/, the
 // generic ones too; the generic ones in the sets they belong to (full:
-// modules too, where it carries modules and is not a documentation
-// package).
+// modules too, where it carries modules).
 export function checkSets (pkg, what) {
   const out = []
   const at = detail => out.push({ check: 'package', detail })
@@ -86,7 +86,7 @@ export function checkSets (pkg, what) {
     if (!set.description) at(`test/${name}.json: no description`)
     if (!Array.isArray(set.tests)) { at(`test/${name}.json: tests, a list of names`); continue }
     for (const t of set.tests) if (!folders.includes(t)) missing.add(t)
-    const wanted = name === 'full' && what.modules && !what.docs ? [...generic, 'modules'] : generic
+    const wanted = name === 'full' && what.modules ? [...generic, 'modules'] : generic
     for (const g of wanted) if (!set.tests.includes(g)) at(`test/${name}.json: ${g} is not in it`)
   }
   for (const t of [...missing].sort()) at(`the ${t} test: no folder (test/${t}/)`)
@@ -95,14 +95,15 @@ export function checkSets (pkg, what) {
 
 // Its tests: each a folder with its run.js and its README, the generic
 // ones too; one of its own also with a test file, and named in validate
-// and in full. And that it tests what it provides: at least one test of
-// its own where it provides a protocol, a program, hooks or an mrepo of
-// its own. A documentation package: none of its own asked, a folder
-// documenting one left alone.
+// and in full. And at least one test of its own: what is specific to the
+// package tested there; where nothing is, a dummy that says so, running
+// nothing (0 of 0): an explicit decision, written for the package, never
+// part of the template. The template itself is asked for none: its folder
+// documenting one is left alone.
 export function checkTests (pkg, what) {
   const out = []
   const at = detail => out.push({ check: 'package', detail })
-  const own = what.docs ? [] : ownTests(pkg)
+  const own = what.template ? [] : ownTests(pkg)
   const inSet = name => { try { return json(join(pkg, 'test', `${name}.json`)).tests ?? [] } catch { return [] } }
   for (const t of [...testFolders(pkg).filter(n => GENERIC.includes(n)), ...own]) {
     const dir = join(pkg, 'test', t)
@@ -114,9 +115,11 @@ export function checkTests (pkg, what) {
     for (const s of ['validate', 'full']) if (!inSet(s).includes(t)) at(`test/${t}: not in the ${s} set`)
   }
   if (what.protocols === null) at('protocol.js: could not be loaded, its protocols unknown')
-  if (what.docs) return out
+  if (what.template || own.length) return out
   const brings = [...(what.protocols ?? []).map(p => `the ${p} protocol`), what.run && 'a program (run.js)', what.hooks && 'hooks', what.list && 'an mrepo of its own (its list of packages)'].filter(Boolean)
-  if (brings.length && !own.length) at(`it provides ${brings.join(', ')}: no test of its own`)
+  at(brings.length
+    ? `it provides ${brings.join(', ')}: no test of its own`
+    : 'no test of its own: what is specific to the package, or a dummy that says nothing is (an explicit decision)')
   return out
 }
 

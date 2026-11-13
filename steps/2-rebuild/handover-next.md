@@ -1,11 +1,12 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-14, part 51). Read `CLAUDE.md`
+Kept current by the cloud session (last: 2026-11-14, part 52). Read `CLAUDE.md`
 first (what is here, how to validate), then this, then `readme.md` here
 (each part's record; the latest parts last: 30 to 45 are the haicc work; 46 is a note on future design; 47 the
 package check; 48 the template up to standard; 49 the test
 reports; 50 the pin, `package-docs-mrepo` brought to the template; 51
-`base-package-runtime`).
+`base-package-runtime`; 52 an action a documented method, a test of its
+own always).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -65,6 +66,11 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   a test of their own: `tools/bare tools/code-check.js` lists it all, and
   `tasks.md` ("First") says what is left. One step at a time, each shown
   to the human; a package's repository is pushed when it passes.
+- **A dummy test is a decision, not a default** (the human, 2026-11-14):
+  a package with nothing of its own to test says so with a dummy (0 of
+  0), written for it after asking: is there anything package specific
+  that needs testing? Never copied, never in the template. A protocol
+  package has something specific: no dummy there.
 - **The tools are kept well structured** (the human, 2026-11-14): soon
   packages are built for them, so they run on the haicc platform as well.
   `tools/README.md` says what each is for and how they are kept.

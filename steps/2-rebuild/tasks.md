@@ -79,6 +79,12 @@ change of every command in task 1 is made with these tests in place.
   the haiccing packages as well. On the list; its implementation is
   looked at later ("Coverage", below).
 
+- **A protocol package is tested on the pattern it must expose** (the
+  module and method pattern): possible without an mrepo.
+- **A package without custom tests gets a dummy**, so there is a 0/0
+  entry. Not part of the template: it is done explicitly; one must have
+  asked oneself the question: is there anything package specific that
+  needs testing?
 - **The template is the start of every package** (2026-11-14): if the
   folders are part of the template structure they are there from the
   start; a new package is created by cloning it from the template.
@@ -112,6 +118,11 @@ step shown to the human first)
 - Part 51: `base-package-runtime` brought to the template; the boot
   component's `boot` test green again. The order from here (the human):
   up the protocol stack, one by one.
+- Part 52: every action a protocol configures is a documented method
+  (checked without an mrepo); the runtime's `run` moved into
+  `external/run/`; every package has a test of its own, a dummy where
+  nothing is specific to it (an explicit decision, never from the
+  template); `package-docs-mrepo`'s dummy, `test/none/`.
 - **What is left, as the check lists it** (78 lines, by package; each of
   the eight also lacks `test-reports/` and the pin):
 

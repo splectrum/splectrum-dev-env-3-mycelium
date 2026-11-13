@@ -73,19 +73,24 @@ is left to another package's test. Their names are the package's own. A
 test can be as large as it needs: a test mrepo made for it with test
 data, a whole deployment, several swarms.
 
-| the package | its tests |
-|---|---|
-| provides a protocol (`protocol.js`), has a program (`run.js`), brings hooks, or lists the packages of an mrepo of its own | at least one of its own |
-| is a documentation package | none of its own |
-
-For a protocol: a test mrepo with test data, the protocol's actions, its
-hooks and its configs tested there.
+Every package has at least one. For a protocol: a test mrepo with test
+data, the protocol's actions, its hooks and its configs tested there.
 
 A test of its own is a folder with its `run.js`, its `README.md` and a
 `*.test.js`, named in `validate` and in `full`.
 
-`/test/package` checks all of this in every package: one that provides
-something and does not test it fails its own validation.
+## Nothing to test
+
+For each package the question is asked: is there anything package
+specific that needs testing? Where the answer is no, the package says so
+with a dummy: a test of its own that runs nothing, its README giving the
+reason. It shows in the report as 0 of 0.
+
+The dummy is not part of this template and is never copied: it is written
+for the package, as the answer to that question.
+
+`/test/package` checks all of this in every package: one that has no test
+of its own, real or dummy, fails its own validation.
 
 ## Modules test
 

@@ -2299,3 +2299,44 @@ which runs the runtime package's `validate` in a running mrepo: 119 of
 119 again (red since part 47). The READMEs, 147, no problems. Nothing
 left running. Its repository pushed.
 
+## 52. An action is a documented method; a test of its own, always (2026-11-14)
+
+The human: a protocol package has a requirement it can be tested on
+without an mrepo: the module and method pattern it must expose. And: a
+package without custom tests gets a dummy, so there is a 0/0 entry; not
+part of the template: it has to be done explicitly, the question asked
+for each package: is there anything package specific that needs testing?
+
+- **An action is a documented method** (the generic `mrepo` test,
+  `pkgm-base-check`, `checkProtocol`): for every action a protocol
+  configures, the function mounted is the one `external/<action>/` of a
+  module the package carries exports; that method's README states its
+  signature, what it returns and its errors, and its arguments where the
+  config names any. Until now the two halves were checked apart (the
+  wiring of `protocol.js`; a method folder's files) and nothing linked
+  them.
+- **The runtime's `run`** moved from the older layout
+  (`mrepo-base-runtime/lib/protocol.js`) into `external/run/`, with its
+  README; `lib/` is gone. The five other protocol packages followed the
+  pattern already.
+- **A test of its own, always** (the package check): every package has at
+  least one; where nothing is specific to it, a dummy that says so: a
+  test that runs nothing, reported as 0 of 0, its README giving the
+  reason. Written for the package, never copied: the template has none,
+  `tools/package-template.sh` copies none, and the template itself is
+  asked for none. A documentation package is no longer exempt. The rule
+  is in the template's `test/README.md`, "Nothing to test".
+- **`package-docs-mrepo`**: its entry, `test/none/`. The question asked:
+  nothing package specific, it is documentation and the generic help test
+  checks every README.
+
+**Validated**: the check's own tests, 14. The pre-releases: the template
+(6 units), `package-docs-mrepo` (7 units, `/test/none` 0 of 0),
+`base-package-runtime` (21 units, 227 tests, 1069 asserts), each report
+written. On the rebuilt runtime: `base-component-boot`'s `validate`, its
+`boot` test 119 of 119; the `haicc` test, 107 of 107. The runtime
+module's own tests, 6. The READMEs, 149, no problems. Nothing left
+running. The packages that carry `mrepo-base-runtime` and are not yet
+brought to the template (`base-component-boot`, `base-package-boot`) keep
+their copy of it until they are.
+

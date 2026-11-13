@@ -84,8 +84,29 @@ export function checkStructure (pkg) {
   return out
 }
 
+// The methods the modules a package carries document as protocol actions:
+// modules/<org>/<module>/external/<action>/, by action.
+function methodsOf (pkg) {
+  const mods = join(pkg, 'modules')
+  const out = {}
+  const dirs = d => existsSync(d) ? readdirSync(d).sort().filter(n => statSync(join(d, n)).isDirectory()) : []
+  for (const org of dirs(mods).filter(n => n !== 'node_modules')) {
+    for (const mod of dirs(join(mods, org))) {
+      for (const a of dirs(join(mods, org, mod, 'external'))) (out[a] ??= []).push({ module: `${org}/${mod}`, dir: join(mods, org, mod, 'external', a) })
+    }
+  }
+  return out
+}
+
+// What a method's README states, an action's: its sections.
+const SECTIONS = ['Signature', 'Returns', 'Errors']
+
 // Its protocol.js: each protocol's config with its package and description;
-// every action configured has its function, every function its config.
+// every action configured has its function, every function its config; and
+// every action is a documented method: the function mounted is the one
+// external/<action>/ of a module it carries exports, its README stating
+// its signature, what it returns, its errors, and its arguments where the
+// config names any.
 export async function checkProtocol (pkg) {
   const file = join(pkg, 'protocol.js')
   const out = []
@@ -94,6 +115,7 @@ export async function checkProtocol (pkg) {
   let m = null
   try { m = await import(pathToFileURL(file).href) } catch (err) { at(`protocol.js: ${err.message}`); return out }
   const { protocols = {}, actions = {} } = m
+  const methods = methodsOf(pkg)
   for (const [p, cfg] of Object.entries(protocols)) {
     if (!cfg.package) at(`${p}: no package`)
     if (!cfg.description) at(`${p}: no description`)
@@ -101,6 +123,18 @@ export async function checkProtocol (pkg) {
       if (typeof actions[p]?.[a] !== 'function') at(`${p} ${a}: configured, no function`)
       if (!c.description) at(`${p} ${a}: no description`)
       if (!Array.isArray(c.uris) || !c.uris.length) at(`${p} ${a}: no uris`)
+      if (typeof actions[p]?.[a] !== 'function') continue
+      const found = methods[a] ?? []
+      let method = null
+      for (const m of found) {
+        try { if (Object.values(await import(pathToFileURL(join(m.dir, 'index.js')).href)).includes(actions[p][a])) { method = m; break } } catch {}
+      }
+      if (!method) { at(found.length ? `${p} ${a}: the function mounted is not its method's (external/${a}/ in ${found.map(m => m.module).join(', ')})` : `${p} ${a}: not a documented method (external/${a}/ in a module it carries)`); continue }
+      const readme = join(method.dir, 'README.md')
+      const text = existsSync(readme) ? readFileSync(readme, 'utf8') : ''
+      for (const section of [...SECTIONS, ...((c.args ?? []).length ? ['Arguments'] : [])]) {
+        if (!new RegExp(`^## ${section}\\s*$`, 'm').test(text)) at(`${p} ${a}: its README does not state its ${section.toLowerCase()} (${method.module}, external/${a}/README.md, "## ${section}")`)
+      }
     }
   }
   for (const [p, fns] of Object.entries(actions)) for (const a of Object.keys(fns)) if (!protocols[p]?.actions?.[a]) at(`${p} ${a}: a function, not configured`)
