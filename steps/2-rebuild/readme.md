@@ -1920,3 +1920,45 @@ problems.
 
 **Validated**: the release built; the seven packages' full sets; the
 `haicc` test, 104 of 104; the code check, no problems.
+
+## 42. Hooks, activation, the boot split, the help package: the design (the human, 2026-11-13; a note)
+
+Settled in discussion, then the go. It started as "the help protocol gets
+its own package" and became how an mrepo comes to offer anything at all.
+
+- **A proper protocol gets a package**: `help` moves out of the runtime
+  package into `base-package-help`, with the `help` layer.
+- **`help/extract` is an ordinary action.** The runtime no longer places
+  it, nor any other protocol's request, by name.
+- **Hooks on the status transitions**, as files a package drops in, one
+  folder a transition: `/runtime/hooks/<transition>/<name>.json`, each a
+  command, its parts. No config is updated or merged: a package linked
+  has its files there.
+  - `boot`: fired by the runtime as it starts. All protocols are loaded
+    at boot (the service too, before any `initialise`).
+  - `initialise`, `start`, `stop`, `shutdown`: fired by the service, which
+    runs the transition's hooks in its own execution and then moves the
+    state. That is the functionality the service provides.
+- **Activation.** A request from outside is accepted only for a protocol
+  that is active; nothing is active by default. `protocol/activate` and
+  `protocol/deactivate` are actions of a new protocol, `protocol`
+  (`base-package-protocol`); they write the active protocols into the
+  mrepo's config, and the gate reads that. Without a service, the `boot`
+  hooks activate what the mrepo offers. With one, `start` and `stop` open
+  and close the door. The `gated` flag, the rule "no service, no gate"
+  and `runtime register` go.
+- **Only the last package in the list drops runtime config**, whichever
+  type it is: the package that defines the mrepo says its hooks, its
+  service state, in full. A protocol package's runtime config counts only
+  when it is itself the one deployed.
+- **The boot package split**: `base-package-boot`, the boot protocol
+  only; `base-component-boot`, the initial boot mrepo: its list, its
+  runtime config, the program that puts it in place. The boot mrepo is
+  not a service: its `boot` hooks activate its protocols.
+- **The sh commands stay as they are.**
+
+Decided by us within it: the active set is written in the `protocols`
+layer, one file a protocol holding its config (the layer stops being a
+copy nothing reads); a hook file is one command; hooks run as the mrepo's
+own, not held at the door; the `protocol` protocol itself is not
+activated for the outside by default.
