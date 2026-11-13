@@ -2094,3 +2094,140 @@ roadmap's distant horizon (`handover-next.md`, item 13):
 
 What the human said and what is only proposed or open are kept apart
 there.
+
+## 47. The package check: a package tests what it provides (2026-11-13)
+
+The human, on seeing haiccing packages without tests of their own: very
+disappointing that this was skipped. For each package there are custom
+tests, at the haiccing level, for the functionality it provides; for a
+protocol a test mrepo with some test data, its actions, its hooks and its
+specific configs tested. Built one by one and double checked; and tests
+that fail when something is forgotten, so we are reminded early: the
+platform is so flexible that without full coverage testing in place it
+becomes hell; with everything checked by default one can be relaxed.
+
+**What was found**
+
+- Tests of its own: only `base-package-runtime` (`start`) and
+  `base-component-boot` (`boot`). The five protocol packages after the
+  runtime and `base-component-haicc`: none. The protocols were tested by
+  their modules' unit tests and by two end to end tests living elsewhere;
+  the tests stayed where they were when the protocols were split into
+  packages (parts 28, 37, 43 to 45).
+- No test validated a package against the structure
+  `package-docs-template` documents, and no rule said which tests of its
+  own a package must have: a package with none passed.
+
+**Built: the reminder first** (step 1; the packages' tests follow, one at
+a time, `tasks.md`)
+
+- **The rule**, in `haiccing/package-docs-template/test/README.md`, "Its
+  own tests": a package tests what it provides, in tests of its own. One
+  for each protocol its `protocol.js` configures, `test/protocol-<name>/`
+  (the prefix: `help` is a generic test's name too); at least one where
+  it has a program, hooks or a list of packages; a documentation package
+  none.
+- **The check**, a fifth generic test, `/test/package`
+  (`pkgm-base-check`: `internal/package`, `validate/package.test.js`; the
+  dispatcher adds the unit), in every package's `validate` and `full`:
+  its files (README, LICENSE, `package.json`), its three sets (every name
+  a test that is there, the generic ones where they belong), each test of
+  its own a unit (`run.js`, README, a test file, in `validate` and
+  `full`, not under a generic name), and the rule above.
+- **The same over every package** from `tools/bare tools/code-check.js`.
+
+**The list it fails**: `base-package-runtime`, `-protocol`, `-service`,
+`-help`, `-haicc`, `-boot` (each its `test/protocol-<name>/`) and
+`base-component-haicc` (a test of its own). `base-component-boot`'s `boot`
+test is red with them: it runs the runtime package's `validate` in a
+running mrepo and expects it to pass.
+
+**Validated**: the check's own tests (6, in the module's 12); every
+package's `full` set: the two documentation packages pass whole, the
+seven named fail on `/test/package` alone, `base-component-boot` on one
+assert of its `boot` test (118 of 119: the runtime package's `validate`
+no longer passing); the `haicc` test, 107 of 107; the READMEs, no
+problems; the code rules, none; the package check, the eight lines above
+(a package can lack two things). Nothing left running. Committed red, on
+`execute/main` only, not merged into `main`: for the human's check first.
+
+## 48. The template up to standard: a folder for every test (2026-11-14)
+
+The human: every test needs a named folder in the haiccing package's
+`test/` folder, a folder a test or a test group, the generic ones too
+(one existed, `test/modules/run.js`, and was removed by us in part 22).
+Apart from the generic tests the naming is local. If the folders are part
+of the template structure they are there from the start: a new package is
+created by cloning it from the template. The model: packages
+self-contained, pinned to a commit of the template, upgraded explicitly;
+for now the blanket approach, because the test coverage is insufficient.
+First: the template brought up to standard and committed.
+
+- **`haiccing/package-docs-template/test/`**: a folder for each generic
+  test, `help`, `code`, `mrepo`, `package`, `modules` (a group),
+  `help-in-situ`, `mrepo-in-situ`, each with its `run.js` (it runs the
+  test, whose code is in a module the package carries) and its README
+  (what it checks). Each runs on its own, `bare test/<name>/run.js`. Its
+  `full` set holds `modules` too.
+- **The standard written there** (`test/README.md`): a folder each,
+  nothing runs that has no folder; the generic ones come with the
+  template; a test of the package's own is named as the package likes and
+  can be as large as it needs.
+- **The dispatcher** (`tools/lib/dispatcher.js`) finds a test from its
+  folder; `test/modules/` is the group, its units the modules'. A generic
+  test without its folder, in a package not yet brought to the template,
+  is still found in the module that carries it.
+- **The package check** (`pkgm-base-check`, `internal/package`): every
+  test a set names has its folder, with its `run.js` and README, said
+  once a test; the fixed name for a protocol's test (part 47) is gone: a
+  package that provides a protocol, a program, hooks or an mrepo of its
+  own has at least one test of its own, whatever its name.
+
+**Validated**: the template alone. Its `full` set from its bundle, 6
+units, passes; each folder's `run.js` run on its own passes (the in-situ
+ones skip without an mrepo); the check's own tests, 6 in the module's 12;
+the READMEs, 132, no problems (the rule caught the template's own page,
+its summary 117 words: shortened). The nine other bundle packages were
+not rebuilt: `tools/bare tools/code-check.js` lists what each lacks, 68
+lines (`tasks.md`). On `execute/main` only.
+
+## 49. Test reports: proof of test execution, in the template (2026-11-14)
+
+The human: we need proof of test execution; each package has a test
+report showing it passed all its tests, created before any release, in a
+folder `test-reports/`. Test reports are a production pipeline concern:
+the release only needs to know the standards were upheld. The final test
+run is part of the pre-release; the report is added and the release
+built, so the bundle contains its pre-release report. Nothing changed:
+no new report, and the release build creates the same release.
+
+- **The content hash** (`tools/package-bundle.js`): every bundle's
+  `content`, in the manifest: a hash of its files, its resolutions and
+  its addons, its test reports (`test-reports/*.json`) left out. It is
+  what a report certifies, the same before and after the report is added:
+  the report can travel in the bundle it proves.
+- **The pre-release** (`tools/package-test.js <package folder>...`): the
+  package assembled and bundled; its report current (it names the
+  bundle's content and passed): nothing run. Else the `full` set run from
+  the bundle, the report written (passed or not), the package bundled
+  again with it. Exit 1 when one did not pass.
+- **The report** (`test-reports/full.json`): the package, the content, the
+  Bare version, the date, the set, its result unit by unit. Its status
+  against a bundle (`tools/lib/report.js`): current, failed, stale (the
+  package changed since), none.
+- **The release** (`tools/release.js`) states each package's report
+  against the bundle it built; `--strict` refuses unless all are current.
+- **The template**: `test-reports/` with its README (what the report is,
+  the pre-release) and its own report; the folder among a unit's parts in
+  its top README. The package check asks for the folder and its README.
+
+**Validated**: the template's pre-release: the report written, 6 units
+passed; run again, nothing changed: current, nothing run, the same bundle
+(sha256 and content the same); the report is in the bundle; a file of the
+package changed: stale; changed back: current again. The check's own
+tests, 12; the READMEs, 133, no problems; the template has no line in
+`tools/bare tools/code-check.js` (77 lines for the nine others, each now
+also lacking `test-reports/`). `tools/release.js` whole was not run (it
+rebuilds every package): its report part on its own, over the manifest as
+it is. On `execute/main` only.
+

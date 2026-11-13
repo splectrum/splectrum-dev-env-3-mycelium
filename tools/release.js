@@ -20,7 +20,11 @@
 //                                       again (its build.sh)
 // No executable: the boot is its bundle, run with Bare
 // (haiccing/base-linux-haicc: haicc boot/deploy).
-//   tools/bare tools/release.js [--out=<folder>]     (default: sources/ here)
+// Each package's test report against the bundle built (tools/lib/report.js:
+// current, stale, failed, none) is said in the result; --strict: exit 1
+// unless every one is current (a release to publish: every package tested
+// as it is; a package's pre-release, tools/package-test.js, writes it).
+//   tools/bare tools/release.js [--out=<folder>] [--strict]     (default: sources/ here)
 import process from 'bare-process'
 import os from 'bare-os'
 import crypto from 'bare-crypto'
@@ -28,6 +32,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 
 import { join, resolve, dirname } from 'bare-path'
 import { fileURLToPath } from 'bare-url'
 import { spawnSync } from 'bare-subprocess'
+import { statusOf } from './lib/report.js'
 
 const dev = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const flag = (n, d) => process.argv.slice(2).find(a => a.startsWith(`--${n}=`))?.slice(n.length + 3) ?? d
@@ -72,5 +77,13 @@ if (next !== pins) writeFileSync(join(linux, 'pins'), next)
 const built = spawnSync('sh', [join(linux, 'build.sh')], { stdio: ['ignore', 'ignore', 'inherit'] })
 if (built.status !== 0) throw new Error('failed: base-linux-haicc/build.sh')
 
+// 4. The test reports: each package's against the bundle just built.
+const manifest = JSON.parse(readFileSync(join(out, 'haiccing', 'manifest.json'), 'utf8')).packages
+const reports = Object.fromEntries(packages.map(p => [`haiccing/${p}`, statusOf(join(dev, 'haiccing', p), manifest[`haiccing/${p}`]?.content)]))
+
 const commit = spawnSync('git', ['-C', dev, 'rev-parse', 'HEAD'], { stdio: ['ignore', 'pipe', 'ignore'] }).stdout?.toString().trim() || null
-console.log(JSON.stringify({ sources: out, packages: packages.map(p => `haiccing/${p}`), bare: lock.version, commit }))
+console.log(JSON.stringify({ sources: out, packages: packages.map(p => `haiccing/${p}`), reports, bare: lock.version, commit }))
+if (process.argv.includes('--strict') && Object.values(reports).some(r => r !== 'current')) {
+  console.error(`not every package's test report is current: ${Object.entries(reports).filter(([, r]) => r !== 'current').map(([p, r]) => `${p} (${r})`).join(', ')}`)
+  process.exit(1)
+}

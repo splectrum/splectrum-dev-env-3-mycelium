@@ -30,15 +30,20 @@ the work reaches it.
   own package, which states the mrepo's runtime config);
   `base-linux-haicc` (the `haicc` command: sh scripts, no bundle); and the
   documentation packages `package-docs-template` (the package structure,
-  the README rules, modules and methods, tests) and `package-docs-mrepo`
-  (the mrepo, layer by layer).
+  the README rules, modules and methods, tests; the template a package
+  starts from: its `test/` holds the generic tests, a folder each) and
+  `package-docs-mrepo` (the mrepo, layer by layer).
 - `pear-full-square/`: the modules those packages carry, and
   `pkgm-base-manager`, which the tools use. A documented method is a
   directory, under `external/` (protocol actions) or `internal/`.
 - `tools/`: the dependencies replayed from the lockfile (`install.sh`),
   assembling and bundling a package (`package-assemble.js`,
   `package-bundle.js`), the release into the sources (`release.js`: every
-  package, Bare's tarball, the `haicc` installer), the product
+  package, Bare's tarball, the `haicc` installer; it says each package's
+  test report against the bundle built), a package's pre-release
+  (`package-test.js`: built, its `full` set run from the bundle unless its
+  report is current, the report written into `test-reports/` and bundled
+  with it), the product
   repositories (`products.sh` for the modules, `packages.sh` for the
   packages), the checks (`help-extract.js`, `code-check.js`). `sources/`
   and `node_modules/` are ignored by git: a fresh clone needs
@@ -59,22 +64,30 @@ the work reaches it.
   generic lives in the documentation packages; a package or a module
   documents only what is its own. A decision and its reason: the step's
   record.
-- **The rules are checked**, not remembered: the README rules and the code
-  rules are in `package-docs-template` and run as tests.
+- **The rules are checked**, not remembered: the README rules, the code
+  rules and a package's structure (among it: a package tests what it
+  provides) are in `package-docs-template` and run as tests.
 
 ## Validation, before every commit
 
 - Each package's `validate` set from its bundle (its own tests, `help`,
-  `code`, `mrepo`), `full` when modules changed:
+  `code`, `mrepo`, `package`), `full` when modules changed:
   `SOURCES=$PWD/sources tools/bare sources/haiccing/<package>.bundle /test/full`.
 - `tools/bare tools/help-extract.js` (and `--files`) and
-  `tools/bare tools/code-check.js`: no problems.
+  `tools/bare tools/code-check.js`: no problems. The second also checks
+  every package's structure: a package that provides something and has no
+  test of its own for it is named there.
 - When the runtime or the repository code changed, the boot's test
   (`base-component-boot`: `test/boot/run.js`) several times: a race shows
   one run in a few. Nothing left running after.
 - The `haicc` command end to end, when anything it touches changed (the
   scripts, the boot, the component, the request form):
   `sh haiccing/base-linux-haicc/test/run.sh`.
+- A package brought to the template (it has `test-reports/`) is validated
+  by its pre-release, one command: `tools/bare tools/package-test.js
+  haiccing/<package>`. It rebuilds, runs the `full` set when the package
+  changed, and writes the report that is committed with it. Nothing
+  changed: nothing run, the same bundle.
 - Rebuild first: `tools/bare tools/package-assemble.js haiccing/<package>`,
   then `tools/bare tools/package-bundle.js haiccing/<package>`; or all of
   it, `tools/bare tools/release.js`. A bundle carries its package's tests:

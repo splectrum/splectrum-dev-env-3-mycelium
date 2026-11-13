@@ -18,6 +18,7 @@ is for.
 | `modules/`, `package.json` | carries its own dependencies |
 | `mrepo/` | comes with an mrepo, by layers |
 | `test/` | has tests and test sets |
+| `test-reports/` | holds the proof that its tests passed: the report of its last pre-release |
 | `<name>/` | holds a further unit, by its URI part name |
 | `example/` | has examples |
 | `README.md` | says what it is; extracted into an mrepo's help layer |
@@ -26,6 +27,7 @@ is for.
 |---|---|
 | [mrepo/](mrepo/) | an mrepo's definition, by layers |
 | [test/](test/) | tests, a folder each, and the sets |
+| [test-reports/](test-reports/) | the report of its last pre-release |
 | [name/](name/) | a further unit |
 | [example/](example/) | examples, a folder each |
 | [modules/](modules/) | its dependencies, assembled: the help module its tests use |

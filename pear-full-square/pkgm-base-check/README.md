@@ -1,11 +1,12 @@
 # pkgm-base-check
 
-The checks a package runs on itself: its code against the code rules, and the integrity of its mrepo side.
+The checks a package runs on itself: its code, the integrity of its mrepo side, and its own structure.
 
-Every package carrying it gets three units from its dispatcher: `/test/code`
-and `/test/mrepo` in its `validate`, `/test/mrepo-in-situ` in its
-`validate-in-situ`. In the development repository, `tools/code-check.js`
-runs the code rules over all the carried modules.
+Every package carrying it gets four units from its dispatcher: `/test/code`,
+`/test/mrepo` and `/test/package` in its `validate`, `/test/mrepo-in-situ`
+in its `validate-in-situ`. In the development repository,
+`tools/code-check.js` runs the code rules over all the carried modules and
+the package check over every package.
 
 | | |
 |---|---|
@@ -39,6 +40,18 @@ The mrepo side:
 - **In situ**: the package is in the mrepo's packages manifest, its bundle
   there is the one the manifest names, and the layers it brings or
   contributes to exist.
+
+The package itself:
+
+- **Files**: its README, its LICENSE, its `package.json`, the folder its
+  test report goes in.
+- **Sets**: `validate`, `validate-in-situ` and `full`, the generic tests
+  in the sets they belong to.
+- **A folder for every test**: each test a set names, the generic ones
+  too, is `test/<name>/` with its `run.js` and README.
+- **Its own tests**: at least one where it provides a protocol, a
+  program, hooks or an mrepo of its own; their names are the package's.
+  A documentation package is asked for none.
 
 ## Tests
 

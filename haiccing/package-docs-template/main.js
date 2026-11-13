@@ -13,16 +13,17 @@ const ENTRIES = {
 // The test units, each run in one process: the package's tests, each
 // carried module's unit tests.
 const UNITS = {
-  "/test/help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/validate/help.test.js")]),
-  "/test/help-in-situ": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/validate/help-in-situ.test.js")]),
-  "/test/code": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/code.test.js")]),
-  "/test/mrepo": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/mrepo.test.js")]),
-  "/test/mrepo-in-situ": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/mrepo-in-situ.test.js")]),
+  "/test/code": () => Promise.all([import("./test/code/run.js")]),
+  "/test/help": () => Promise.all([import("./test/help/run.js")]),
+  "/test/help-in-situ": () => Promise.all([import("./test/help-in-situ/run.js")]),
+  "/test/mrepo": () => Promise.all([import("./test/mrepo/run.js")]),
+  "/test/mrepo-in-situ": () => Promise.all([import("./test/mrepo-in-situ/run.js")]),
+  "/test/package": () => Promise.all([import("./test/package/run.js")]),
   "/test/modules/pear-full-square/mrepo-base-help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/test/help.test.js")]),
-  "/test/modules/pear-full-square/pkgm-base-check": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/test/mrepo.test.js"), import("./modules/pear-full-square/pkgm-base-check/test/rules.test.js")]),
+  "/test/modules/pear-full-square/pkgm-base-check": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/test/mrepo.test.js"), import("./modules/pear-full-square/pkgm-base-check/test/package.test.js"), import("./modules/pear-full-square/pkgm-base-check/test/rules.test.js")]),
 }
 // The test sets: their tests by name (modules: every module's unit tests).
-const SETS = {"/test/full":["help","code","mrepo"],"/test/validate-in-situ":["help-in-situ","mrepo-in-situ"],"/test/validate":["help","code","mrepo"]}
+const SETS = {"/test/full":["help","code","mrepo","package","modules"],"/test/validate-in-situ":["help-in-situ","mrepo-in-situ"],"/test/validate":["help","code","mrepo","package"]}
 
 // What a target runs: its units (a set, /test/modules, a unit); null: none.
 export function expand (target) {

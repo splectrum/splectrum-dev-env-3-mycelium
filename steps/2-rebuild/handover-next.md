@@ -1,8 +1,10 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-13, part 46). Read `CLAUDE.md`
+Kept current by the cloud session (last: 2026-11-14, part 49). Read `CLAUDE.md`
 first (what is here, how to validate), then this, then `readme.md` here
-(each part's record; the latest parts last: 30 to 45 are the haicc work; 46 is a note on future design).
+(each part's record; the latest parts last: 30 to 45 are the haicc work; 46 is a note on future design; 47 the
+package check; 48 the template up to standard; 49 the test
+reports).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -46,9 +48,29 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   Its notes come back in `local-note.md`: fetch and read them when told.
 - **No release yet**: on the human's word, created by the local agent
   (`handover-local.md`, "Releases").
+- **Red on purpose, and not in `main`** (2026-11-14): `execute/main` is
+  ahead of `main` by the package check (part 47) and the template brought
+  up to standard (part 48: a folder for every test, the generic ones
+  too; part 49: `test-reports/`, a package's pre-release,
+  `tools/package-test.js`). The other nine bundle packages are not yet
+  brought in line, and
+  six lack a test of their own: `tools/bare tools/code-check.js` lists it
+  all, and `tasks.md` ("First") says what is left. One step at a time,
+  each shown to the human. Merge into `main` and push the product
+  repositories only on the human's word.
+- **This session's focus** (the human, 2026-11-14): the generic tests and
+  tests that need no test mrepo, so a new implementation is known to
+  adhere to the rules; the packages' own tests in running mrepos after.
+- **A package tests what it provides** (the human, firmly: it was skipped
+  and that was very disappointing): custom tests in each package for its
+  functionality; for a protocol a test mrepo with test data, its actions,
+  hooks and configs. Tests that fail when something is forgotten: the
+  platform is so flexible that without full coverage it becomes hell.
+  Never leave a package's functionality to another package's test.
 - **Tasks stacked, to be built in batches** (the human, 2026-11-13):
-  `tasks.md` here holds what was discussed and waits: relative URIs, the
-  `crud` protocol, the rest actions removed. Each says what
+  `tasks.md` here holds what was discussed and waits: first every package
+  testing what it provides (a debt, the human disappointed it was
+  skipped), then relative URIs, the `crud` protocol, the rest actions removed. Each says what
   the human settled and what is only proposed: confirm the proposed with
   the human before building. More are added as they are discussed; build
   when the human says so.

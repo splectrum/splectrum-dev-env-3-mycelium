@@ -12,7 +12,11 @@
 //                                 (two levels up from the bundle file)
 //   <out>/<org>/manifest.json     each bundle: its file, its id, its sha256,
 //                                 its size, its main, its entry points, its addons, the commit it
-//                                 was made from, the Bare it was made on
+//                                 was made from, the Bare it was made on; and
+//                                 its content: a hash of everything in it but
+//                                 its test reports (test-reports/*.json), what
+//                                 a test report certifies: the same before and
+//                                 after the report is added (tools/package-test.js)
 // Unsigned for now. The package's modules/ assembled first
 // (tools/package-assemble.js).
 //   tools/bare tools/package-bundle.js <package folder> [--out=<folder>] [--org=haiccing]
@@ -41,6 +45,23 @@ function files (dir, at = '') {
 }
 
 const ENTRIES = ['run', 'deploy', 'protocol']
+
+// A test report in a package: test-reports/<set>.json (not its README).
+export const isReport = path => /^\/?test-reports\/[^/]+\.json$/.test(path)
+
+// A bundle's content: a hash over its files (each its path and its bytes'
+// hash, in path order), its resolutions and its addons, its test reports
+// left out.
+export function contentOf (bundle, addons) {
+  const h = crypto.createHash('sha256')
+  for (const key of Object.keys(bundle.files).sort()) {
+    if (isReport(key)) continue
+    h.update(`${key}\0${sha256(bundle.read(key))}\n`)
+  }
+  h.update(JSON.stringify(bundle.resolutions))
+  h.update(JSON.stringify([...new Set(addons)].sort()))
+  return h.digest('hex')
+}
 
 export async function bundlePackage ({ folder, out, org = 'haiccing' }) {
   const repo = basename(folder)
@@ -90,7 +111,7 @@ export async function bundlePackage ({ folder, out, org = 'haiccing' }) {
   const commit = spawnSync('git', ['-C', dev, 'rev-parse', 'HEAD'], { stdio: ['ignore', 'pipe', 'ignore'] }).stdout?.toString().trim() || null
   // docs: a documentation package (its package.json's docs): no structure laid in
   const docs = JSON.parse(readFileSync(join(folder, 'package.json'), 'utf8')).docs === true
-  const entry = { file, id: bundle.id, sha256: sha256(bytes), bytes: bytes.length, main: bundle.main, entries, docs, addons: [...new Set(addons)].sort(), commit, bare: Bare.version }
+  const entry = { file, id: bundle.id, sha256: sha256(bytes), content: contentOf(bundle, addons), bytes: bytes.length, main: bundle.main, entries, docs, addons: [...new Set(addons)].sort(), commit, bare: Bare.version }
   const mf = join(out, org, 'manifest.json')
   const manifest = existsSync(mf) ? readJson(mf) : { packages: {} }
   manifest.packages[`${org}/${repo}`] = entry
@@ -98,9 +119,12 @@ export async function bundlePackage ({ folder, out, org = 'haiccing' }) {
   return entry
 }
 
-const args = process.argv.slice(2)
-const folder = args.find(a => !a.startsWith('--'))
-if (!folder) { console.error('usage: package-bundle.js <package folder> [--out=<folder>] [--org=haiccing]'); process.exit(2) }
-const flag = (n, d) => args.find(a => a.startsWith(`--${n}=`))?.slice(n.length + 3) ?? d
-const r = await bundlePackage({ folder: resolve(folder), out: resolve(flag('out', join(dev, 'sources'))), org: flag('org', 'haiccing') })
-console.log(JSON.stringify({ ...r, addons: r.addons.length }))
+// Started as the program (not imported by another tool).
+if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
+  const args = process.argv.slice(2)
+  const folder = args.find(a => !a.startsWith('--'))
+  if (!folder) { console.error('usage: package-bundle.js <package folder> [--out=<folder>] [--org=haiccing]'); process.exit(2) }
+  const flag = (n, d) => args.find(a => a.startsWith(`--${n}=`))?.slice(n.length + 3) ?? d
+  const r = await bundlePackage({ folder: resolve(folder), out: resolve(flag('out', join(dev, 'sources'))), org: flag('org', 'haiccing') })
+  console.log(JSON.stringify({ ...r, addons: r.addons.length }))
+}

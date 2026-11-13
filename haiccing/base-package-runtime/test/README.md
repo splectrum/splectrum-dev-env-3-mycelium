@@ -4,9 +4,9 @@ The runtime package's tests: its sets and its one test, `start`.
 
 | set | tests |
 |---|---|
-| `validate` | `start`, `help`, `code`, `mrepo` |
+| `validate` | `start`, `help`, `code`, `mrepo`, `package` |
 | `validate-in-situ` | `help-in-situ`, `mrepo-in-situ`: run in a running mrepo with `runtime run` |
-| `full` | `start`, `help`, `code`, `mrepo`, `modules` |
+| `full` | `start`, `help`, `code`, `mrepo`, `package`, `modules` |
 
 | | |
 |---|---|
