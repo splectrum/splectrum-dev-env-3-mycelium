@@ -10,8 +10,10 @@ setup file, three signed bundles, an executable) are in `local-run.md`,
 
 - **No executable, no setup file.** The boot is its bundle, run with Bare.
   `tools/boot-release.js` and `tools/haicc-try.sh` are gone.
-- **No signing, no publishing.** Nothing is signed; the publisher's key is
-  not used. The sources are built locally and linked locally.
+- **No signing.** Nothing is signed; the publisher's key is not used: we
+  are not set up for it yet.
+- **Releases are yours to create**, on the human's word (below). The
+  sources are built locally and linked locally first.
 - **The `haicc` command** is sh scripts (`haiccing/base-linux-haicc`),
   installed by one file, `haicc-install.sh`.
 
@@ -44,7 +46,35 @@ haicc /host service/start
   `pkill -f "bin/bare $HOME/.haicc/"`. To start over: stop them, then
   remove `~/.haicc/work`.
 
+## Releases: created on the local machine
+
+Decided by the human (2026-11-13). The cloud session cannot create a
+GitHub release; it can only push commits. So:
+
+- **Where**: a release on each package's own repository
+  (`github.com/haiccing/<package>`), not in a repository of sources.
+- **What**: what `tools/bare tools/release.js` built for that package,
+  from the commit you tested: its bundle and what belongs with it, as
+  `sources/` holds it (the manifest entry, its native addons). For
+  `base-linux-haicc`: `haicc-install.sh`. Bare is third party: it is not
+  ours to release.
+- **How**: with `gh`, as you published before (`local-run.md`). The
+  script of that time, `tools/publish.sh`, went with the clean-up and
+  signed its manifest: do not bring the signing back. The local sources
+  keep the structure you know.
+- **When**: only on the human's word, and only after the tests of
+  `prompt-local.md` passed on that commit.
+- **The network is not good enough for many downloads**: prefer few
+  files per release over many.
+- **Record it** in `local-run.md`, a new section: the commit, each
+  repository, its tag, its assets with their sizes and hashes, the URL
+  each is downloaded from. The download side is not built yet
+  (`haicc sources download` fetches Bare only): it will be written to
+  match what you record, so say exactly what you published and how you
+  named it.
+
 ## Where things stand
+
 
 `readme.md`, parts 30 to 37, and `handover-next.md`. Known and not built:
 our packages are not published, so `haicc sources download` fetches Bare
