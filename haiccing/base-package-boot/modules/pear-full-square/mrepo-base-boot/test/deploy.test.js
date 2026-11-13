@@ -97,6 +97,7 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
     t.alike(json(await child.read('/runtime/mrepo.json')), { uri: 'local/host' }, 'its identity, in its own runtime layer')
     await t.exception(deploy(exec, { uri: '/host', args: ['haiccing/target'] }), /deployed already/)
 
+    await t.exception(deploy(exec, { uri: '/y', args: ['none'] }), /haiccing\/none.*not in the store nor the sources|not in the store nor the sources.*haiccing\/none/, 'a package named without its organisation: haiccing')
     const r = await redeploy(exec, { uri: '/host' })
     await commit()
     t.is(r.tornDown, '/host')

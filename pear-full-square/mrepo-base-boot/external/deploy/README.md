@@ -13,7 +13,8 @@ in, in that order, and the child is built at `<parent>/main/<name>/`.
 
 ## Arguments
 
-1. The target package, `<org>/<package>`. Required.
+1. The target package, `<org>/<package>`. Required. The package alone
+   means `haiccing/<package>`.
 
 ## Returns
 
