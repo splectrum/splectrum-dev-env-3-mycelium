@@ -56,12 +56,8 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   array, also for a plain path with a typo in it. Whether that is an
   error is for the one who submits the request to check. No rule of ours
   tells a plain path from a pattern.
-- **The flag `error-on-empty`, for the XPath**: with it, a selection that
-  matches nothing fails the request. It is needed for a subset of
-  commands only. It can be added to a request by the user, or set for
-  specific protocols (like `service`). It is a local matter: how a
-  package is made, and what type of mrepo it is for. The configs must be
-  well documented.
+- The flag `error-on-empty` is not in this round: "Future additions",
+  below.
 
 **Proposed** (put to the human, not yet answered)
 
@@ -233,3 +229,36 @@ table, the default of `execute`'s `actions`);
 `pear-full-square/mrepo-base-execute/test/execute.test.js` and
 `pear-full-square/mrepo-base-boot/test/build.test.js` (its users); the
 roadmap's item 3 in `handover-next.md`, which says they stay until then.
+
+## Future additions
+
+Not for this round. Noted so they are not lost; each is discussed again
+before it is built.
+
+### The flag error-on-empty
+
+The human, 2026-11-13: of no importance at the moment.
+
+**Settled** (the human)
+
+- A flag `error-on-empty` for the XPath: with it, a selection that
+  matches nothing fails the request. Without it an empty selection gives
+  an empty array (task 1).
+- It is needed for a subset of commands only. It can be added to a
+  request by the user, or set for specific protocols (like `service`).
+- It is a local matter: how a package is made, and what type of mrepo it
+  is for. The configs must be well documented.
+
+**Proposed** (not answered: the human set the whole flag aside)
+
+- In the form: a property of the request, `errorOnEmpty: true`, applying
+  to every selection evaluated for it.
+- At the command line: an option before the URI, where `--raw` and
+  `--output` go: `haicc --error-on-empty hots service/start`.
+- In a config: the same property on a protocol, or on one of its actions.
+
+### Predicates in a URI
+
+`haicc test/mydata/users[name=s*] users/check-addresses *` (the human's
+example, task 1). Not valid in our URIs today; `mycelium-xpath` knows
+only `*`. Task 1 is built so that it does not block them.
