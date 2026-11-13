@@ -167,3 +167,87 @@ layer as cascading click and runs (`notes/packages.md`).
   repository, inside the swarm: that is mycelium's, and becomes the
   capability store.
 
+
+## Pipelines, and mycelium as a database server
+
+Discussed with the human, 2026-11-13: a direction for the distant horizon.
+What the human said is stated as it is; what is marked proposed or open is
+not agreed. The practicalities are designed when the work reaches it.
+
+### The pipeline engine
+
+A platform to run processing pipelines (as StreamSets does), our own, on
+p2p, tied in with our request processing.
+
+- **Built from core actions:** the protocols provide core actions; more
+  complex processing is built from them, typically the output of one the
+  input of the next. New functionality is tried out as a pipeline; a
+  protocol package is created only where needed.
+- **Run as requests:** each step is a request, executed completely on its
+  own, so a pipeline runs asynchronously and in parallel. Which pipeline
+  and which step is metadata on the record.
+- **Its start:** one ordinary request, of a single type, the only one that
+  can come from outside. It is rewritten with the pipeline and step
+  identifiers and executed; every other request of the pipeline is
+  internal.
+- **Its state:** the pipeline's request branch, an execute branch of
+  `main` named by the unique pipeline request id. A step merges into that
+  branch at its end; the pipeline merges into `main` at its end, as one
+  commit, the pipeline request's. The steps' history stays out of `main`.
+  A plain request stays as it is (it could be seen as a pipeline of one
+  step).
+- **Its data:** what passes between steps is the record; larger data is
+  on the pipeline's branch, referred to by URI. The pipeline cleans up as
+  it runs, so that at merge time only the data that needs merging is
+  there.
+- **Errors:** handled by the pipeline's definition, for example diverting
+  to an error handling path. What happens to the request branch after a
+  failure is configuration: discarded, or kept for debugging.
+- **Execution plans:** the rewrite is where a plan is made, fixed or on
+  the fly.
+- **Compiled:** a pipeline written in code, loaded and executed: for
+  heavy processing, to gain speed; or for complex jobs over distributed
+  remote data, where a plan optimised for the installation can be created
+  (long-running batch processing).
+- **Written** in a graphical UI or a scripted language. AVRO between the
+  steps (schemas: an output checked against the next input).
+
+Proposed, not agreed: the completion of a step places the next one, read
+from the definition (no coordinator process); compiled code as a generated
+protocol package; the pipeline taking the place of the composite actions
+on the roadmap. Open: joins, parallel steps writing the same path, the
+definition's format, the grain (a request costs several commits: a step
+works on a batch, not on one record).
+
+### A database server
+
+The human: the pipeline engine is a necessity when mycelium is implemented
+as a database server. A reading of how they meet, not designed: a query a
+pipeline, its operators steps on the core actions (CRUD first); the
+execution plan the query plan; the pipeline's branch the transaction (a
+snapshot of `main`, one commit at the end, the branch discarded a
+rollback); AVRO the rows' schema.
+
+### Data is local
+
+- **Processing is over local stores**, which may be replicas of stores
+  from elsewhere. Replicated lazily, such a store works as a cache: a
+  block fetched on first read, verified, local from then on.
+- **Cache management with a TTL** can be a process on it. Hypercore
+  (11.39.6, the one pinned) has `clear` (blocks dropped, fetched again
+  when read) and mark and sweep (`startMarking`, `sweep`: what was not
+  read since is cleared); it keeps no time per block, so the TTL is ours:
+  the period between sweeps, or our own record of use. Only replicas of
+  others' cores are cleared, never our own. Open: a TTL per store or per
+  source.
+- **Applications are designed in local data terms:** a classical
+  distributed application is logically one central application, and
+  physically runs on each node that has signed into it. To design per
+  application: the order of writes (no single place where they arrive),
+  global constraints, authority (who is accepted as a writer; every node
+  validating what it applies).
+- **The atomic commits of `main` come in handy here:** a replica is seen
+  only at commit boundaries; a commit is the unit of change, one per
+  pipeline request, and names what it was based on; a pipeline reads one
+  snapshot throughout. The atomicity is per node: combining two nodes'
+  `main` is a merge whose rule is the application's.
