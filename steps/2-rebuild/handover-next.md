@@ -48,16 +48,17 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   Its notes come back in `local-note.md`: fetch and read them when told.
 - **No release yet**: on the human's word, created by the local agent
   (`handover-local.md`, "Releases").
-- **Red on purpose, and not in `main`** (2026-11-14): `execute/main` is
-  ahead of `main` by the package check (part 47) and the template brought
-  up to standard (part 48: a folder for every test, the generic ones
-  too; part 49: `test-reports/`, a package's pre-release,
-  `tools/package-test.js`). The other nine bundle packages are not yet
-  brought in line, and
-  six lack a test of their own: `tools/bare tools/code-check.js` lists it
-  all, and `tasks.md` ("First") says what is left. One step at a time,
-  each shown to the human. Merge into `main` and push the product
-  repositories only on the human's word.
+- **Red on purpose** (2026-11-14): the package check (part 47), the
+  template brought up to standard (part 48: a folder for every test, the
+  generic ones too) and the test reports (part 49: `test-reports/`, a
+  package's pre-release, `tools/package-test.js`) are in `main`, merged
+  on the human's word once the template passed its own full set. The
+  template's repository (`haiccing/package-docs-template`) and the check
+  module's (`pear-full-square/pkgm-base-check`) are pushed. The other
+  nine bundle packages are not yet brought to the template, and six lack
+  a test of their own: `tools/bare tools/code-check.js` lists it all, and
+  `tasks.md` ("First") says what is left. One step at a time, each shown
+  to the human; a package's repository is pushed when it passes.
 - **This session's focus** (the human, 2026-11-14): the generic tests and
   tests that need no test mrepo, so a new implementation is known to
   adhere to the rules; the packages' own tests in running mrepos after.

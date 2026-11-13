@@ -91,7 +91,8 @@ change of every command in task 1 is made with these tests in place.
 - **For now the blanket approach**, because our test coverage is
   insufficient and it costs us.
 
-**Built so far** (on `execute/main` only, not merged into `main`: each
+**Built so far** (in `main` since 2026-11-14, the template passing its
+own full set; its repository and the check module's pushed; each further
 step shown to the human first)
 
 - Part 47: the rule that a package tests what it provides, and the check,
