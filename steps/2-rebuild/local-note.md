@@ -10,8 +10,9 @@ them, git URLs to local mirrors), so `tools/install.sh` and
 ## 2026-11-13: `381bbae`
 
 The prompt ran as written, every step passed, nothing downloaded. Then the
-human tried `haicc` by hand: four findings (1 to 4), one with a tested
-patch. The code not changed here.
+human tried `haicc` by hand: five findings (1 to 5), one with a tested
+patch. The code not changed here. No release created: the human's word,
+not yet; first the cloud's changes for these findings, then a new run.
 
 Cleaned up first, on the human's word: the old releases' leftovers (the
 setup file, the executable, `haicc-try.sh`, the old work folders, the old
