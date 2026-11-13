@@ -150,13 +150,12 @@ From its folder, the same: `bare main.js [target] [arguments]`. Imported, a
 bundle runs nothing: a runtime takes its protocols (`run('/protocol')`), a
 deploy its structure (`mrepo/`, read from the bundle).
 
-The boot is the exception: released as a standalone executable, one per
-platform, Bare built in, so nothing is needed before it. It uses an
-installed Bare at its pinned major (the same version or newer), else puts
-its own in place, then starts the boot mrepo's runtime.
+The boot is a bundle like the others. What has to be there before any
+bundle can run, Bare and the sources, is put in place by the `haicc`
+scripts (`haiccing/base-linux-haicc`), which are plain sh.
 
 ```sh
-./base-package-boot --work=<folder> --sources=folder:<sources> [--yes]
+haicc boot
 ```
 
 Written from [splectrum/splectrum-dev-env-3-mycelium](https://github.com/splectrum/splectrum-dev-env-3-mycelium).

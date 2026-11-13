@@ -1,8 +1,9 @@
 # Prompt for the local agent
 
 Give this to Claude Code on the local machine (Linux x86-64; git, curl,
-tar). Nothing is published and nothing is signed: the sources are built
-locally and used locally. Only its note is committed.
+tar; `gh` for a release). Nothing is signed. The sources are built
+locally and used locally; a release is created only when the human asks.
+Only its note is committed.
 
 > Build the sources locally and test the `haicc` command end to end, so the
 > human can then use it from the command line.
@@ -56,4 +57,6 @@ locally and used locally. Only its note is committed.
 >    top, dated, naming the commit you tested. Commit only that file on
 >    `execute/main`, merge it into `main` (a plain merge), push both.
 >
-> Do not change the code: report, and propose.
+> Do not change the code: report, and propose. Do not create a release
+> unless the human asks: how, when they do, is in
+> `steps/2-rebuild/handover-local.md`, "Releases".
