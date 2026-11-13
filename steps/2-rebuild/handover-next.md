@@ -1,10 +1,58 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-12, part 30). Read `CLAUDE.md`
+Kept current by the cloud session (last: 2026-11-13, part 45). Read `CLAUDE.md`
 first (what is here, how to validate), then this, then `readme.md` here
-(each part's record; the latest parts last). The documentation of what is
-built is in the packages: `haiccing/package-docs-template` and
-`haiccing/package-docs-mrepo`, and each folder's README.
+(each part's record; the latest parts last: 30 to 45 are the haicc work).
+The documentation of what is built is in the packages:
+`haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
+each folder's README.
+
+## Starting a session
+
+A fresh clone has no `node_modules/` and no `sources/` (both ignored by
+git), so nothing runs until they are there:
+
+```sh
+sh tools/install.sh           # the dependencies, replayed from the lockfile (curl, tar; no npm)
+tools/bare tools/release.js   # every package assembled and bundled into sources/, Bare's tarball
+```
+
+Then the validation in `CLAUDE.md` works. To see the whole thing run:
+`sh haiccing/base-linux-haicc/test/run.sh`.
+
+- **Work on `execute/main`**, merged into `main` with a plain merge, both
+  pushed (a cloud session may be given a branch of its own: it is not
+  used for the work).
+- **The product repositories** are pushed from here, so a cloud session
+  attaches them first (`add_repo`, with push): the modules, each
+  `pear-full-square/<module>` for a folder of `pear-full-square/`
+  (`sh tools/products.sh <module>...`); the packages, each
+  `haiccing/<package>` for a folder of `haiccing/`
+  (`sh tools/packages.sh -m "<what changed>" <package>...`). Only those
+  that changed.
+- **Nothing is left running** by the tests. A runtime left over from a
+  failed run: `pgrep -fa "bin/bare"`, then stop it by its pid.
+
+## Right now
+
+- **Built and pushed**: everything through part 45. The `haicc` command
+  installs, boots, deploys a host from `base-component-haicc`, starts its
+  service, deploys a node inside it and chains commands through both.
+  Hooks and activation decide what an mrepo offers; every protocol has
+  its own package; the boot is a component.
+- **With the human**: testing by hand on the local machine. The local
+  agent ran `381bbae` (its note, 2026-11-13) and has not yet run what
+  came after (parts 39 to 45): its prompt, `prompt-local.md`, is current.
+  Its notes come back in `local-note.md`: fetch and read them when told.
+- **No release yet**: on the human's word, created by the local agent
+  (`handover-local.md`, "Releases").
+- **Next, in the human's order** (each discussed first): creating
+  structure in `main` (the start of `base-package-crud`), with the
+  execution context opened at a position, so that
+  `haicc /swarms/swarm-1 boot/deploy node-1` works; a node's unique URI;
+  then the first demo. The list is under "The roadmap", item 2.
+- **A leftover branch**: `claude/vigilant-gates-b1r8rn` on the remote
+  holds nothing that is not in `main`; the human may delete it.
 
 ## How the human works with us
 
@@ -18,9 +66,13 @@ built is in the packages: `haiccing/package-docs-template` and
   -f q='<name> in:name org:<org>'`; the code; the docs).
 - **Few pushes** (GitHub suspended us once): one commit and one push per
   part; when a part is done, merge `execute/main` into `main` (a plain
-  merge, a message file: `git merge --no-ff -F <file>`) and push both at
-  once; then the product repositories (`sh tools/products.sh <module>...`,
-  from `main`).
+  merge, `git merge --no-ff`) and push both at once; then the product
+  repositories (`sh tools/products.sh <module>...` and
+  `sh tools/packages.sh -m "..." <package>...`, from `main`).
+- **Say in a few words what you are doing** when a step takes long; report
+  after each step of a build, plainly, with what passed and what did not.
+- **Record what settled**, in `readme.md` as a part, and keep this file and
+  `CLAUDE.md` current: a context reset loses everything else.
 - **The lock file by hand**: a module added or removed is written into
   `package.json` (workspaces) and `package-lock.json` (its workspace entry,
   its link entry) directly, its link made in `node_modules/`; no npm run.

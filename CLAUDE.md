@@ -23,22 +23,26 @@ the work reaches it.
 - `haiccing/`: the packages, each at the path of its repository:
   `base-package-runtime`, `base-package-protocol`, `base-package-help`,
   `base-package-boot`, `base-package-service`, `base-package-haicc` (one
-  package, one protocol); the components `base-component-boot` (the initial boot mrepo
-  and the program that puts it in place) and `base-component-haicc`
+  package, one protocol); the components `base-component-boot` (the
+  initial boot mrepo and the program that puts it in place) and
+  `base-component-haicc`
   (several packages deployed together, `main` empty; a list ends with its
   own package, which states the mrepo's runtime config);
   `base-linux-haicc` (the `haicc` command: sh scripts, no bundle); and the
-  documentation packages `package-docs-template` (the package structure, the README
-  rules, modules and methods, tests) and `package-docs-mrepo` (the mrepo,
-  layer by layer).
+  documentation packages `package-docs-template` (the package structure,
+  the README rules, modules and methods, tests) and `package-docs-mrepo`
+  (the mrepo, layer by layer).
 - `pear-full-square/`: the modules those packages carry, and
   `pkgm-base-manager`, which the tools use. A documented method is a
   directory, under `external/` (protocol actions) or `internal/`.
-- `tools/`: assembling and bundling a package (`package-assemble.js`,
+- `tools/`: the dependencies replayed from the lockfile (`install.sh`),
+  assembling and bundling a package (`package-assemble.js`,
   `package-bundle.js`), the release into the sources (`release.js`: every
   package, Bare's tarball, the `haicc` installer), the product
-  repositories (`products.sh`), the checks (`help-extract.js`,
-  `code-check.js`). `sources/` (ignored by git): the bundles built here.
+  repositories (`products.sh` for the modules, `packages.sh` for the
+  packages), the checks (`help-extract.js`, `code-check.js`). `sources/`
+  and `node_modules/` are ignored by git: a fresh clone needs
+  `sh tools/install.sh`, then `tools/bare tools/release.js`.
 - `rules.md`: this repository's own rules (branches, layers, commits,
   URIs, records, data names). `vision.md`: directions to take into
   account, not settled.
@@ -65,7 +69,8 @@ the work reaches it.
 - `tools/bare tools/help-extract.js` (and `--files`) and
   `tools/bare tools/code-check.js`: no problems.
 - When the runtime or the repository code changed, the boot's test
-  (`base-component-boot`: `test/boot/run.js`) several times: a race shows one run in a few. Nothing left running after.
+  (`base-component-boot`: `test/boot/run.js`) several times: a race shows
+  one run in a few. Nothing left running after.
 - The `haicc` command end to end, when anything it touches changed (the
   scripts, the boot, the component, the request form):
   `sh haiccing/base-linux-haicc/test/run.sh`.
@@ -81,8 +86,8 @@ the work reaches it.
 - **Product repositories:** a session can attach other repositories and
   push to them. After a change, each module's repository is updated
   (`sh tools/products.sh <module>...`, from `main`) and each package's
-  (copied from `haiccing/<package>/`). New repositories are created by the
-  human.
+  (`sh tools/packages.sh -m "<what changed>" <package>...`). New
+  repositories are created by the human.
 - **Planning:** the phase's request comes from `splectrum/roadmap-1`; the
   work is planned here, as it goes, and its outcome reported back.
 - In a Claude Code cloud session, execution runs on `execute/main`, merged
