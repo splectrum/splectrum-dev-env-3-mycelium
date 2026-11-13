@@ -16,12 +16,12 @@ is atomic.
 | protocol | actions | from |
 |---|---|---|
 | `runtime` | `run`: a linked package's entry by path, its tests above all; `register`: the protocols loaded, recorded here | `base-package-runtime`: every mrepo |
-| `help` | `get`: the help layer read by URI; `extract`: the help layer written | `base-package-runtime`, with `mrepo-base-help`: every mrepo |
+| `help` | `get`: the help layer read by URI; `extract`: the help layer written | `base-package-help`: an mrepo that has help |
 | `service` | `initialise`, `start`, `stop`, `shutdown`: the service state moved | `base-package-service`: an mrepo that is service managed |
 | `boot` | `deploy`, `teardown`, `redeploy` of a child mrepo, executed by the parent; gated | `base-package-boot`: an mrepo that deploys others |
 | `haicc` | `goto`, its default action: the command that follows executed at a node position, or sent on at a shortcut | `base-package-haicc`: an mrepo addressed at a position, or passing commands on |
 
-One package, one protocol, except the runtime's, which brings its own two.
+One package, one protocol.
 
 ## Config
 

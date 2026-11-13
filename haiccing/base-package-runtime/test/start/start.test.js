@@ -58,10 +58,9 @@ test('the runtime: started, answering, stopped', { timeout: 60000 }, async (t) =
     let registered = null
     for (let i = 0; i < 100 && !registered; i++) { registered = await repo.read('/protocols/runtime.json').then(b => JSON.parse(b.toString()), () => null); if (!registered) await wait(100) }
     t.alike([registered?.package, Object.keys(registered?.actions ?? {})], ['haiccing/base-package-runtime', ['run', 'register']], 'the runtime protocol in its protocols layer')
-    t.ok(await repo.read('/protocols/help.json').then(() => true, () => false), 'and help')
     // answering through its inbox
-    t.alike((await send(work, backend, { protocol: 'runtime', action: 'register', uri: '/' }))?.output, { registered: ['help', 'runtime'] }, 'a request through its inbox: answered')
-    t.is((await send(work, backend, { protocol: 'rest', action: 'get', uri: '/main' }))?.error, 'no protocol: rest (help, runtime)', 'a protocol it does not offer: refused as it executes, said with the protocols there')
+    t.alike((await send(work, backend, { protocol: 'runtime', action: 'register', uri: '/' }))?.output, { registered: ['runtime'] }, 'a request through its inbox: answered (its own protocol alone: this mrepo links no other package)')
+    t.is((await send(work, backend, { protocol: 'rest', action: 'get', uri: '/main' }))?.error, 'no protocol: rest (runtime)', 'a protocol it does not offer: refused as it executes, said with the protocols there')
     t.ok((await ask({ work, op: 'stop' }))?.stopping, 'asked to stop')
     for (let i = 0; i < 100 && alive(child.pid); i++) await wait(100)
     t.absent(alive(child.pid), 'its process ended')

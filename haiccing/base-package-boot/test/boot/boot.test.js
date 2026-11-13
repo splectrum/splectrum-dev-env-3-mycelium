@@ -19,9 +19,12 @@ import { ask, gitdirOf, viewOf } from '../../modules/pear-full-square/mrepo-base
 
 const pkg = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
+// What a start of the boot adds to the requests done: the boot's own, then
+// its runtime's as it starts.
+const STARTS = ['boot deploy /boot', 'help extract /', 'runtime register /']
 const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
 const SOURCES = resolve(process.env.SOURCES || join(pkg, '..', '..', 'sources'))
-const have = ['base-package-runtime', 'base-package-boot', 'base-package-service', 'base-package-haicc', 'base-component-haicc', 'package-docs-mrepo', 'package-docs-template'].every(p => existsSync(join(SOURCES, 'haiccing', `${p}.bundle`)))
+const have = ['base-package-runtime', 'base-package-help', 'base-package-boot', 'base-package-service', 'base-package-haicc', 'base-component-haicc', 'package-docs-mrepo', 'package-docs-template'].every(p => existsSync(join(SOURCES, 'haiccing', `${p}.bundle`)))
 
 // A run of the boot, on the Bare running this test: its exit code and what
 // it printed (one record a line).
@@ -61,7 +64,7 @@ test('the boot: put in place, its runtime started, nothing deployed; the host de
     t.is(statSync(store).ino, statSync(mine).ino, 'hard linked: one file')
     const repo = openRepo(p2pgitBackend(gitdirOf(work, 'boot'), { fs }))
     const listed = JSON.parse((await repo.read('/packages/manifest.json')).toString()).packages
-    t.alike(Object.keys(listed), ['haiccing/base-package-runtime', 'haiccing/base-package-boot', 'haiccing/base-package-haicc', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template'], 'the packages layer: the list (the runtime, the boot protocol, the haicc protocol, the documentation packages)')
+    t.alike(Object.keys(listed), ['haiccing/base-package-runtime', 'haiccing/base-package-help', 'haiccing/base-package-boot', 'haiccing/base-package-haicc', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template'], 'the packages layer: the list (the runtime, the help protocol, the boot protocol, the haicc protocol, the documentation packages)')
     t.is(listed['haiccing/base-package-runtime'].sha256, logged[1].packages['haiccing/base-package-runtime'].sha256, 'and the hashes')
     t.absent((await repo.select('/packages/haiccing')).length, 'not the bytes')
     // the runtime: from the boot mrepo's own packages, on the Bare that ran the boot
@@ -91,7 +94,7 @@ test('the boot: put in place, its runtime started, nothing deployed; the host de
     // (its shortcut merged into the xpath layer when the action ends, after the host is up)
     let node = null
     for (let i = 0; i < 100 && !node; i++) { node = await repo.read('/xpath/host/shortcut.json').then(b => JSON.parse(b.toString()), () => null); if (!node) await wait(100) }
-    t.alike([node.mrepo, node.package, node.packages], ['local/host', 'haiccing/base-package-runtime', ['haiccing/base-package-runtime', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template']], 'its shortcut: the mrepo linked there by its unique URI, what was deployed, the packages it is made of')
+    t.alike([node.mrepo, node.package, node.packages], ['local/host', 'haiccing/base-package-runtime', ['haiccing/base-package-runtime', 'haiccing/base-package-help', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template']], 'its shortcut: the mrepo linked there by its unique URI, what was deployed, the packages it is made of')
     t.is(await repo.read('/main/host.json').catch(() => null), null, 'no presence in main')
     t.is(h?.repository.uri, 'local/host', 'the host knows its own unique URI')
     // (moved to request/done on the runtime's next pass)
@@ -104,7 +107,7 @@ test('the boot: put in place, its runtime started, nothing deployed; the host de
     }
     t.alike(history.map(f => `${f.protocol} ${f.action} ${f.uri}`), ['boot deploy /boot', 'runtime register /', 'help extract /', 'boot deploy /host'], 'the history: the boot\'s deploy, then its runtime\'s own as it started (its protocols registered, its help extracted), then the first command')
     t.alike(await repo.select('/inbox/*').then(r => r.filter(([p]) => !p.endsWith('layer.json')).length, () => 0), 1, 'the first three internal: only the command in the inbox')
-    t.alike(history[1].output, { registered: ['boot', 'haicc', 'help', 'runtime'] }, 'its protocols: the boot\'s, haicc, and the runtime package\'s two')
+    t.alike(history[1].output, { registered: ['boot', 'haicc', 'help', 'runtime'] }, 'its protocols: the boot\'s, haicc, help, and the runtime\'s own')
     t.ok(!history[2].error && history[2].output?.readmes > 0, `its help extracted before it took requests in ${JSON.stringify(history[2].output ?? history[2].error)}`)
     // followed: every record of the boot mrepo's request layers and its child's, one line each
     const lines = []
@@ -188,13 +191,13 @@ test('the boot: put in place, its runtime started, nothing deployed; the host de
     const root = await sent({ protocol: 'help', action: 'get', uri: '/' })
     t.ok(!root?.error && root?.output?.oneliner && root.output.links.some(l => l.uri === '/packages'), `help get /: the mrepo's, its links with their one-liners ${root?.error ?? ''}`)
     const pk = await sent({ protocol: 'help', action: 'get', uri: '/packages', args: ['oneliner'] })
-    t.alike(['haiccing/base-package-runtime', 'haiccing/base-package-boot', 'haiccing/base-package-haicc', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template'].map(p => pk?.output?.links?.some(l => l.uri === `/packages/${p}`)), [true, true, true, true, true], 'help get /packages: each package it links')
+    t.alike(['haiccing/base-package-runtime', 'haiccing/base-package-help', 'haiccing/base-package-boot', 'haiccing/base-package-haicc', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template'].map(p => pk?.output?.links?.some(l => l.uri === `/packages/${p}`)), [true, true, true, true, true, true], 'help get /packages: each package it links')
     const tb = await sent({ protocol: 'help', action: 'get', uri: '/packages/haiccing/base-package-boot/test/boot', args: ['detail'] })
     t.ok(!tb?.error && tb?.output?.title === 'boot/' && tb.output.summary, `help get on this very test: its README ${tb?.error ?? ''}`)
     const hostHelp = await openRepo(p2pgitBackend(join(host, '.git'), { fs })).read('/help/index.json').then(b => JSON.parse(b.toString()), () => null)
     t.ok(hostHelp?.['/packages/haiccing/base-package-runtime'], 'the host\'s help: extracted by its own runtime, from its own packages')
     // each package checks, in situ, what this mrepo's runtime made of its help
-    for (const p of ['base-package-boot', 'base-package-runtime', 'base-package-haicc', 'package-docs-mrepo', 'package-docs-template']) {
+    for (const p of ['base-package-boot', 'base-package-runtime', 'base-package-help', 'base-package-haicc', 'package-docs-mrepo', 'package-docs-template']) {
       const v = await sent({ protocol: 'runtime', action: 'run', uri: `/packages/haiccing/${p}/test/validate-in-situ` }, 1200)
       t.alike([v?.error, v?.output?.ok, v?.output?.units?.map(u => [u.unit, u.asserts.passed > 0 && u.asserts.passed === u.asserts.total])], [undefined, true, [['/test/help-in-situ', true], ['/test/mrepo-in-situ', true]]], `${p}: validate-in-situ, its help and itself as this mrepo holds it ${v?.error ?? JSON.stringify(v?.output?.units?.map(u => u.failures) ?? '')}`)
     }
@@ -260,18 +263,24 @@ test('the boot: put in place, its runtime started, nothing deployed; the host de
     for (let i = 0; i < 100 && (alive(child.pid) || alive(h3.pid)); i++) await wait(100)
     t.absent(alive(child.pid) || alive(h3.pid), 'both processes ended')
 
-    // run again: already built, the packages unchanged; its runtime started again
+    // run again: already built, the packages unchanged; its runtime started
+    // again: only its own requests are added, nothing done before is repeated
+    const doneNow = async () => {
+      const out = {}
+      for (const [p] of await repo.select('/request/done/*')) if (!p.endsWith('layer.json')) { const v = JSON.parse((await repo.read(p)).toString()).value.value; out[p] = `${v.protocol} ${v.action} ${v.uri}` }
+      return out
+    }
+    const before = await doneNow()
     const again = boot(work, [`--sources=folder:${SOURCES}`])
     t.is(again.code, 0)
     const o2 = again.lines.find(l => l.value).value.log
     t.ok(o2[0].already, 'already built')
     t.is(o2[1].committed, false, 'the packages unchanged: nothing committed')
-    const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
-    let n = 0
-    for (let i = 0; i < 100 && (n = await records('done')) < 46; i++) await wait(100)
-    const all = []
-    for (const [p] of await repo.select('/request/done/*')) if (!p.endsWith('layer.json')) { const v = JSON.parse((await repo.read(p)).toString()).value.value; all.push(`${v.protocol} ${v.action} ${v.uri}`) }
-    t.is(n, 46, `its runtime again: the boot's own request done a second time, nothing else repeated: ${all.sort().join(', ')}`)
+    let added = []
+    for (let i = 0; i < 100 && added.length < STARTS.length; i++) { const now = await doneNow(); added = Object.keys(now).filter(k => !(k in before)).map(k => now[k]).sort(); if (added.length < STARTS.length) await wait(100) }
+    await wait(1000) // nothing more follows
+    const after = await doneNow()
+    t.alike(Object.keys(after).filter(k => !(k in before)).map(k => after[k]).sort(), STARTS, 'its runtime again: the boot\'s own request and its runtime\'s as it starts, nothing else repeated')
     t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
     const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
     t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')

@@ -1,8 +1,9 @@
 # base-package-runtime
 
 The mrepo runtime: the engine every mrepo runs on. Its process holds the
-mrepo's store, runs its protocols (`runtime` and `help` from this
-package's `protocol.js`; the others from the packages linked in), and serves its local connection.
+mrepo's store, runs its protocols (`runtime` from this package's
+`protocol.js`; the others from the packages linked in), and serves its
+local connection.
 
 ```sh
 bare <dir>/packages/haiccing/base-package-runtime.bundle <dir>
@@ -24,8 +25,8 @@ mrepo a work folder's setting names, as the p2p host.)
 - `main.js`: the dispatcher, the bundle's main (generated): every entry and
   test by path, `run(target, { dryRun })`.
 - `run.js`: the entry, the runtime's process.
-- `protocol.js`: its protocols, `runtime` (run, register) and `help` (get,
-  extract), their actions and configs passed to the runtime by `run.js`.
+- `protocol.js`: its protocol, `runtime` (run, register), its actions and
+  config passed to the runtime by `run.js`.
 - [modules/](modules/): the code, assembled: ours and the third-party code.
 - [test/](test/): its tests.
 

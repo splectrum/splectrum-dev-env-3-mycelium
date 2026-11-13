@@ -1,8 +1,9 @@
 {
   "mode": "replicated",
-  "description": "The packages the haicc mrepo is made of, in deploy order: the runtime, the boot protocol, the service protocol, the haicc protocol, this component, the documentation packages.",
+  "description": "The packages the haicc mrepo is made of, in deploy order: the runtime, the help protocol, the boot protocol, the service protocol, the haicc protocol, this component, the documentation packages.",
   "packages": [
     "haiccing/base-package-runtime",
+    "haiccing/base-package-help",
     "haiccing/base-package-boot",
     "haiccing/base-package-service",
     "haiccing/base-package-haicc",
