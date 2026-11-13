@@ -1,9 +1,10 @@
 # test/
 
-The documentation package's tests: the generic ones, a folder each; it has none of its own.
+The documentation package's tests: the generic ones, a folder each, and its explicit entry for none of its own.
 
 | | |
 |---|---|
+| [none/](none/) | its own: nothing specific to the package needs testing, said explicitly |
 | [help/](help/) | the READMEs against the README rules |
 | [code/](code/) | the code against the code rules |
 | [mrepo/](mrepo/) | the integrity of the mrepo side |
@@ -16,6 +17,6 @@ The documentation package's tests: the generic ones, a folder each; it has none 
 
 | set | tests |
 |---|---|
-| `validate` | `help`, `code`, `mrepo`, `package` |
+| `validate` | `none`, `help`, `code`, `mrepo`, `package` |
 | `validate-in-situ` | `help-in-situ`, `mrepo-in-situ`: run in a running mrepo with `runtime run` |
-| `full` | `help`, `code`, `mrepo`, `package`, `modules` |
+| `full` | `none`, `help`, `code`, `mrepo`, `package`, `modules` |

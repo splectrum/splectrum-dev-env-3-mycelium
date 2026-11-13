@@ -1,11 +1,24 @@
 {
   "package": "haiccing/package-docs-mrepo",
-  "content": "f76035b5d8f83062c86ab21bca618fb84dc75cebd26f58ab9ee36006132bf5e1",
+  "content": "12a25a9403be9f80ad7868db6271daad82426f5244cebb0af31babdc2d40c29f",
   "bare": "v1.36.0",
-  "date": "2026-11-13T23:01:35.823Z",
+  "date": "2026-11-13T23:25:48.250Z",
   "set": "full",
   "ok": true,
   "units": [
+    {
+      "unit": "/test/none",
+      "ok": true,
+      "tests": {
+        "passed": 0,
+        "total": 0
+      },
+      "asserts": {
+        "passed": 0,
+        "total": 0
+      },
+      "failures": []
+    },
     {
       "unit": "/test/help",
       "ok": true,
@@ -75,12 +88,12 @@
       "unit": "/test/modules/pear-full-square/pkgm-base-check",
       "ok": true,
       "tests": {
-        "passed": 13,
-        "total": 13
+        "passed": 14,
+        "total": 14
       },
       "asserts": {
-        "passed": 24,
-        "total": 24
+        "passed": 26,
+        "total": 26
       },
       "failures": []
     }

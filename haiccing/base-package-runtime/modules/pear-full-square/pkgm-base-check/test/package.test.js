@@ -30,7 +30,7 @@ const PROTOCOL = 'export const protocols = { p: { actions: { a: {} } }, q: { act
 
 test('a package well formed: a folder for every test, a test of its own, whatever its name: none', async (t) => {
   await within({ ...base, 'protocol.js': PROTOCOL, ...sets(['anything']), ...unit('anything') }, async d => {
-    t.alike(await provides(d), { docs: false, protocols: ['p', 'q'], run: false, hooks: false, list: false, modules: true }, 'what it provides, read from its files')
+    t.alike(await provides(d), { template: false, docs: false, protocols: ['p', 'q'], run: false, hooks: false, list: false, modules: true }, 'what it provides, read from its files')
     t.alike(testFolders(d), ['anything', 'code', 'help', 'help-in-situ', 'modules', 'mrepo', 'mrepo-in-situ', 'package'], 'its test folders, the generic ones among them')
     t.alike(ownTests(d), ['anything'], 'its tests of its own: the name is the package\'s')
     t.alike(await details(d), [])
@@ -44,13 +44,13 @@ test('it tests what it provides: protocols, a program, hooks, a list, and no tes
   await within({ ...base, 'run.js': '', 'mrepo/runtime/hooks/boot/x.json': ['a/b'], 'mrepo/packages/layer.json': { packages: ['org/p'] }, ...sets() }, async d => {
     t.alike(await details(d), ['it provides a program (run.js), hooks, an mrepo of its own (its list of packages): no test of its own'], 'what it brings named')
   })
-  await within({ ...base, 'protocol.js': 'export const protocols = (', ...sets() }, async d => {
+  await within({ ...base, 'protocol.js': 'export const protocols = (', ...sets(['x']), ...unit('x') }, async d => {
     t.alike(await details(d), ['protocol.js: could not be loaded, its protocols unknown'], 'a protocol.js that does not load: said, not passed over')
   })
 })
 
 test('every test has its folder: a generic test named in a set without one', async (t) => {
-  const files = { ...base, ...sets() }
+  const files = { ...base, ...sets(['x']), ...unit('x') }
   delete files['test/code/run.js']; delete files['test/code/README.md']
   delete files['test/help/README.md']
   await within(files, async d => {
@@ -58,8 +58,18 @@ test('every test has its folder: a generic test named in a set without one', asy
   })
 })
 
-test('a documentation package: no test of its own asked, a folder documenting one left alone', async (t) => {
-  await within({ ...base, 'package.json': { name: 'd', description: 'Docs package: d.', license: 'MIT', type: 'module', docs: true, modules: ['org/m'], template: { commit: 'b'.repeat(40) } }, ...sets([], false), 'test/name/README.md': '# name\n' }, async d => {
+test('every package has a test of its own: where nothing is specific, a dummy that says so', async (t) => {
+  const docs = { ...base, 'package.json': { name: 'd', description: 'Docs package: d.', license: 'MIT', type: 'module', docs: true, modules: ['org/m'], template: { commit: 'b'.repeat(40) } } }
+  await within({ ...docs, ...sets() }, async d => {
+    t.alike(await details(d), ['no test of its own: what is specific to the package, or a dummy that says nothing is (an explicit decision)'], 'a package that provides nothing and says nothing: asked')
+  })
+  await within({ ...docs, ...sets(['none']), ...unit('none') }, async d => {
+    t.alike(await details(d), [], 'with its dummy, a test of its own like any other: none')
+  })
+})
+
+test('the template itself: no test of its own asked, its folder documenting one left alone, no pin', async (t) => {
+  await within({ ...base, 'package.json': { name: 'package-docs-template', description: 'Docs package: the template.', license: 'MIT', type: 'module', docs: true, modules: ['org/m'] }, ...sets(), 'test/name/README.md': '# name\n' }, async d => {
     t.alike(await details(d), [])
   })
 })
@@ -98,14 +108,8 @@ test('a package that breaks each: its files, its sets, a test that is not a unit
   })
 })
 
-test('the template itself has no pin', async (t) => {
-  await within({ ...base, 'package.json': { name: 'package-docs-template', description: 'Docs package: the template.', license: 'MIT', type: 'module', docs: true, modules: ['org/m'] }, ...sets([], false) }, async d => {
-    t.alike(await details(d), [])
-  })
-})
-
 test('full holds modules where modules are carried', async (t) => {
-  await within({ ...base, ...sets([], false) }, async d => {
+  await within({ ...base, ...sets(['x'], false), ...unit('x') }, async d => {
     t.alike(await details(d), ['test/full.json: modules is not in it'])
   })
 })

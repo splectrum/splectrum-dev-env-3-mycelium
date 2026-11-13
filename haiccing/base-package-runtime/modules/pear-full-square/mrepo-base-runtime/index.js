@@ -52,7 +52,7 @@ import { nativeBackend, p2pgitBackend } from 'mycelium-git'
 import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, layer, internal, hooks, DONE } from 'mrepo-base-request'
 import { execute, failed } from 'mrepo-base-execute'
 import { IDENTITY } from 'mrepo-base-xpath'
-export { run as runtimeRun } from './lib/protocol.js'
+export { run as runtimeRun } from './external/run/index.js'
 import { pathToFileURL } from 'bare-url'
 import pkg from './package.json' with { type: 'json' }
 

@@ -20,9 +20,10 @@ not pass: the reminder comes from the check, not from memory.
 
 `[{ check, detail }]`, `check` always `package`; none expected.
 
-`provides` returns `{ docs, protocols, run, hooks, list, modules }`:
+`provides` returns `{ template, docs, protocols, run, hooks, list, modules }`:
 `protocols` the names its `protocol.js` configures (`null` when it could
-not be loaded), the others whether it is a documentation package, has a
+not be loaded), the others whether it is the package template, a
+documentation package, has a
 `run.js`, brings hooks, lists the packages of an mrepo of its own, and
 carries modules of ours.
 
@@ -41,10 +42,12 @@ carries modules of ours.
   the generic ones too, with its `run.js` and its `README.md`.
 - **A test of its own** also has a `*.test.js` and is named in `validate`
   and in `full`. Its name is the package's own.
-- **It tests what it provides**: at least one test of its own where it
-  provides a protocol, has a `run.js`, brings hooks, or lists the
-  packages of an mrepo.
-- **A documentation package** is asked for no test of its own.
+- **A test of its own, always**: at least one. What is specific to the
+  package is tested there. Where nothing is, a dummy says so: a test that
+  runs nothing, reported as 0 of 0, its README giving the reason. It is
+  an explicit decision, written for the package, never part of the
+  template.
+- **The template itself** is asked for no test of its own and no pin.
 
 ## Also exported
 

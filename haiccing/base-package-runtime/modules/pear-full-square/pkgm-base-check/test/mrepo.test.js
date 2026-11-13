@@ -17,7 +17,9 @@ const good = {
   'mrepo/packages/layer.json': { mode: 'replicated', description: 'The packages.', packages: ['org/p'] },
   'mrepo/request/pending/default/layer.json': { mode: 'non-atomic', description: 'Waiting.' },
   [`mrepo/request/pending/default/${KEY}.json`]: { topic: '/request/pending/default', key: KEY, value: { topic: null, key: KEY, value: { protocol: 'boot', action: 'deploy', uri: '/host' } } },
-  'protocol.js': 'export const protocols = { p: { package: "org/p", description: "P.", actions: { a: { uris: ["/"], description: "A." } } } }\nexport const actions = { p: { a () {} } }\n',
+  'modules/org/m/external/a/index.js': 'export function a () {}\n',
+  'modules/org/m/external/a/README.md': '# a\n\nDoes a.\n\n## Signature\n\n## Arguments\n\n## Returns\n\n## Errors\n',
+  'protocol.js': 'import { a } from "./modules/org/m/external/a/index.js"\nexport const protocols = { p: { package: "org/p", description: "P.", actions: { a: { uris: ["/"], args: ["x"], description: "A." } } } }\nexport const actions = { p: { a } }\n',
   'modules/third-party.json': { modules: [{ name: 'x', version: '1.0.0' }], omitted: ['y'] },
   'modules/node_modules/x/package.json': { name: 'x', version: '1.0.0' },
   'modules/node_modules/y/package.json': { name: 'y', version: '0.0.0-omitted' }
@@ -52,8 +54,25 @@ test('a package that breaks each', async (t) => {
     const s = checkStructure(d).map(p => p.detail)
     t.is(s.length, 8, `structure: a stray file, a mode, no description, a README in a layer, the packages list, a preloaded request's topic, key and form\n${s.join('\n')}`)
     const p = (await checkProtocol(d)).map(p => p.detail).sort()
-    t.alike(p, ['p a: no uris', 'p b: configured, no function', 'p c: a function, not configured', 'p: no description', 'p: no package'].sort(), 'protocol')
+    t.alike(p, ['p a: no uris', 'p a: the function mounted is not its method\'s (external/a/ in org/m)', 'p b: configured, no function', 'p c: a function, not configured', 'p: no description', 'p: no package'].sort(), 'protocol')
     t.alike(checkCarried(d).map(p => p.detail).sort(), ['package.json: main gone.js not there', 'x: 2.0.0 carried, 1.0.0 recorded', 'y: omitted, yet carried (1.0.0)', 'z: carried, not recorded'].sort(), 'carried')
+  } finally { rmSync(d, { recursive: true, force: true }) }
+})
+
+test('an action is a documented method: its folder, the function it exports, what its README states', async (t) => {
+  const d = mkdtempSync(join(tmpdir(), 'mrepo-'))
+  try {
+    write(d, {
+      ...good,
+      'modules/org/m/external/a/README.md': '# a\n\nDoes a.\n\n## Signature\n\n## Returns\n',
+      'modules/org/m/internal/b/index.js': 'export function b () {}\n',
+      'protocol.js': 'import { a } from "./modules/org/m/external/a/index.js"\nimport { b } from "./modules/org/m/internal/b/index.js"\nexport const protocols = { p: { package: "org/p", description: "P.", actions: { a: { uris: ["/"], args: ["x"], description: "A." }, b: { uris: ["/"], description: "B." } } } }\nexport const actions = { p: { a, b } }\n'
+    })
+    t.alike((await checkProtocol(d)).map(p => p.detail).sort(), [
+      'p a: its README does not state its arguments (org/m, external/a/README.md, "## Arguments")',
+      'p a: its README does not state its errors (org/m, external/a/README.md, "## Errors")',
+      'p b: not a documented method (external/b/ in a module it carries)'
+    ], 'a section missing, said; arguments asked where the config names any; an action mounted from elsewhere')
   } finally { rmSync(d, { recursive: true, force: true }) }
 })
 
