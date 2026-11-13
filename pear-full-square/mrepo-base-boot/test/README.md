@@ -14,10 +14,3 @@ The boot protocol's actions, with a context like the execute protocol's (reads f
 
 - deploy from a target package's list, inside the parent; redeploy; teardown
 - deploy the runtime: the child's runtime started from its own packages, its inbox answering; teardown stops it
-
-## `prerequisites.test.js`
-
-- platform, work, sources
-- bare: missing, not fixed without a yes; put in place from a folder source, checked; there next time
-- bare: an installed one on the PATH, at the pinned major, the same or newer; recorded, used next time
-- docker: only where its condition holds

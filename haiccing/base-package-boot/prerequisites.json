@@ -1,9 +1,0 @@
-{
-  "description": "What the boot needs before it writes anything, checked in order at the start of run.js.",
-  "prerequisites": [
-    { "check": "platform", "platforms": ["linux-x64"] },
-    { "check": "work" },
-    { "check": "sources" },
-    { "check": "bare", "fix": true }
-  ]
-}

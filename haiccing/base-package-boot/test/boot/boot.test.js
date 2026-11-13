@@ -1,11 +1,11 @@
 // The boot, as the package runs it: bare run.js --work=<folder> (test/boot/run.js
-// its entry). Its prerequisites, the boot mrepo built, its packages put in
-// place, its request handed over, its runtime started (from its own
-// packages/): it executes its preloaded boot deploy /host, the host inside
-// it with its runtime running.
+// its entry). The boot mrepo built, its packages put in place, its request
+// handed over, its runtime started (from its own packages/). Nothing is
+// deployed by it: the host is deployed by a command, and from there on
+// everything is a command sent to the boot mrepo's inbox.
 // The sources: SOURCES, else the development repository's sources/ (the
-// runtime's bundle written there, the pinned Bare's tarball); what needs them
-// skipped without. Everything from the package's own modules/.
+// packages' bundles written there); what needs them skipped without.
+// Everything from the package's own modules/.
 import test from '../../modules/node_modules/brittle/index.js'
 import process from '../../modules/node_modules/bare-process/index.js'
 import { spawn, spawnSync } from '../../modules/node_modules/bare-subprocess/index.js'
@@ -18,66 +18,41 @@ import { record, wrap, guid, layer, follow } from '../../modules/pear-full-squar
 import { ask, gitdirOf, viewOf } from '../../modules/pear-full-square/mrepo-base-runtime/index.js'
 
 const pkg = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
-const PRELOADED = '7b0c1f4e-2d3a-4c5b-9e6f-0a1b2c3d4e5f'
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
-const bare = JSON.parse(readFileSync(join(pkg, 'bare.json')))
 const SOURCES = resolve(process.env.SOURCES || join(pkg, '..', '..', 'sources'))
-const have = existsSync(join(SOURCES, 'holepunchto', `bare-runtime-${os.platform()}-${os.arch()}-${bare.version}.tgz`)) &&
-  ['base-package-runtime', 'base-package-boot', 'base-package-service', 'base-package-haicc', 'package-docs-mrepo', 'package-docs-template'].every(p => existsSync(join(SOURCES, 'haiccing', `${p}.bundle`)))
+const have = ['base-package-runtime', 'base-package-boot', 'base-package-service', 'base-package-haicc', 'package-docs-mrepo', 'package-docs-template'].every(p => existsSync(join(SOURCES, 'haiccing', `${p}.bundle`)))
 
-// The PATH without any `bare` on it: the machine's own Bare not found.
-const NO_BARE = String(process.env.PATH ?? '').split(':').filter(d => d && !existsSync(join(d, 'bare'))).join(':')
-// A run of the boot: its exit code and what it printed (one record a line);
-// its PATH NO_BARE unless given.
-function boot (work, extra, path = NO_BARE) {
-  const r = spawnSync(os.execPath(), [join(pkg, 'run.js'), `--work=${work}`, ...extra], { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, PATH: path } })
+// A run of the boot, on the Bare running this test: its exit code and what
+// it printed (one record a line).
+function boot (work, extra) {
+  const r = spawnSync(os.execPath(), [join(pkg, 'run.js'), `--work=${work}`, ...extra], { stdio: ['ignore', 'pipe', 'pipe'] })
   return { code: r.status, lines: r.stdout.toString().split('\n').filter(Boolean).map(l => JSON.parse(l)), err: r.stderr.toString() }
 }
-// A request posted to the boot's inbox (its folder), its completed form read
-// from the outbox.
-async function send (work, form) {
-  const core = record('/test', { api: 'boot', ...form }, guid())
-  writeFileSync(join(viewOf(work, 'boot'), 'inbox', `${core.key}.json`), JSON.stringify(wrap('/local/boot/inbox', core)))
-  const repo = openRepo(p2pgitBackend(gitdirOf(work, 'boot'), { fs }))
-  for (let i = 0; i < 100; i++) {
-    const back = await repo.read(`/outbox/${core.key}.json`).then(b => JSON.parse(b.toString()), () => null)
-    if (back) return back.value.value
-    await wait(100)
-  }
-  return null
-}
-
-test('the prerequisites: one missing, the boot stops before writing anything', async (t) => {
+test('the sources missing: the boot says so, its request printed, exit 1', async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'boot-pre-'))
   try {
-    const r = boot(work, ['--sources=folder:/nowhere/at/all', '--yes'])
-    t.is(r.code, 3, 'a source missing: exit 3')
+    const r = boot(work, ['--sources=folder:/nowhere/at/all'])
+    t.is(r.code, 1, 'exit 1')
     const form = r.lines.at(-1).value
     t.alike([form.protocol, form.action, form.uri], ['boot', 'deploy', '/boot'], 'its request printed: boot deploy /boot')
     t.ok(form.command.includes('--sources=folder:/nowhere/at/all'), 'the command as typed')
-    t.ok(/^missing: the source folder/.test(form.error), 'completed with what is missing')
-    t.absent(existsSync(join(work, 'mrepos')), 'nothing written')
-    const empty = mkdtempSync(join(tmpdir(), 'boot-src-'))
-    try {
-      t.is(boot(work, [`--sources=folder:${empty}`]).code, 3, 'Bare missing, no yes: exit 3')
-      t.absent(existsSync(join(work, 'bare')), 'Bare not put in place')
-    } finally { rmSync(empty, { recursive: true, force: true }) }
+    t.ok(form.error, `completed with the error: ${form.error}`)
+    t.is(await ask({ repo: viewOf(work, 'boot'), op: 'status' }), null, 'no runtime started')
   } finally { rmSync(work, { recursive: true, force: true }) }
 })
 
-test('the boot: put in place, its runtime started, the host deployed inside it; redeployed, torn down, deployed again by requests; run again', { timeout: 240000, skip: !have }, async (t) => {
+test('the boot: put in place, its runtime started, nothing deployed; the host deployed, redeployed, torn down, deployed again by commands; haicc; run again', { timeout: 240000, skip: !have }, async (t) => {
   const work = mkdtempSync(join(tmpdir(), 'boot-'))
   try {
-    const r = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
+    const r = boot(work, [`--sources=folder:${SOURCES}`])
     t.is(r.code, 0, `done ${r.err}`)
     const out = r.lines.find(l => l.value).value.output
     const logged = r.lines.find(l => l.value).value.log
     const started = r.lines.at(-1).runtime
     t.is(started?.repository, 'boot', 'its runtime started by the boot (its status printed last)')
-    t.alike(logged.map(e => [e.level, e.event]), [['info', 'prerequisites'], ['info', 'built'], ['info', 'packages']], 'its steps logged in its request, with their level')
-    t.ok(logged[0].results.find(c => c.check === 'bare').fixed, 'Bare put in place')
-    t.is(readFileSync(join(work, 'bare', 'tarball.sha512'), 'utf8').trim(), bare.integrity, 'as pinned')
+    t.alike(logged.map(e => [e.level, e.event]), [['info', 'built'], ['info', 'packages']], 'its steps logged in its request, with their level')
+    t.absent(existsSync(join(work, 'bare')), 'no Bare put in place: the one running it is used')
 
     // the packages: in the store once, hard linked into the boot mrepo
     const store = join(work, 'packages', 'haiccing', 'base-package-runtime.bundle')
@@ -87,18 +62,30 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     const repo = openRepo(p2pgitBackend(gitdirOf(work, 'boot'), { fs }))
     const listed = JSON.parse((await repo.read('/packages/manifest.json')).toString()).packages
     t.alike(Object.keys(listed), ['haiccing/base-package-runtime', 'haiccing/base-package-boot', 'haiccing/base-package-haicc', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template'], 'the packages layer: the list (the runtime, the boot protocol, the haicc protocol, the documentation packages)')
-    t.is(listed['haiccing/base-package-runtime'].sha256, logged[2].packages['haiccing/base-package-runtime'].sha256, 'and the hashes')
+    t.is(listed['haiccing/base-package-runtime'].sha256, logged[1].packages['haiccing/base-package-runtime'].sha256, 'and the hashes')
     t.absent((await repo.select('/packages/haiccing')).length, 'not the bytes')
-    // the runtime: from the boot mrepo's own packages, on the Bare put in place
-    t.is(out.runtime, `${join(work, 'bare', 'bin', 'bare')} ${mine} ${viewOf(work, 'boot')}`, 'its command recorded')
+    // the runtime: from the boot mrepo's own packages, on the Bare that ran the boot
+    t.is(out.runtime, `${os.execPath()} ${mine} ${viewOf(work, 'boot')}`, 'its command recorded')
     const s = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
     t.alike(s?.repository, { name: 'boot', uri: 'local/boot', storage: 'filesystem', id: null, key: null }, 'running the boot mrepo, its unique URI local/boot')
     const child = { pid: s.pid }
-    // its preloaded request: boot deploy /host (the runtime the target): the
-    // host inside it, main/host/, its runtime running
+    // a command as typed, its parts, into the boot mrepo's inbox folder; its
+    // completed form read from request/done
+    const typed = async (parts, tries = 300) => {
+      const c = record('/test', parts, guid())
+      writeFileSync(join(viewOf(work, 'boot'), 'inbox', `${c.key}.json`), JSON.stringify(wrap('/local/boot/inbox', c)))
+      let v = null
+      for (let i = 0; i < tries && !v; i++) { v = await repo.read(`/request/done/${c.key}.json`).then(b => JSON.parse(b.toString()).value.value, () => null); if (!v) await wait(100) }
+      return v
+    }
+    // nothing deployed by the boot: no host, nothing pending
     const host = join(viewOf(work, 'boot'), 'main', 'host')
-    let h = null
-    for (let i = 0; i < 150 && !h; i++) { h = await ask({ repo: host, op: 'status' }); if (!h) await wait(100) }
+    t.absent(existsSync(host), 'nothing deployed by the boot: no host yet')
+    // the host deployed by a command at the root, the name joined to the
+    // position: boot/deploy /host (the runtime the target)
+    const first = await typed(['boot/deploy', 'host', 'haiccing/base-package-runtime'])
+    t.alike([first?.error, first?.uri, first?.output?.deployed, first?.output?.mrepo], [undefined, '/host', '/host', 'local/host'], `boot/deploy host: done ${first?.error ?? ''}`)
+    const h = await ask({ repo: host, op: 'status' })
     t.is(h?.repository.name, 'host', 'the host deployed inside the boot mrepo (main/host), its runtime running')
     t.is(statSync(join(host, 'packages', 'haiccing', 'base-package-runtime.bundle')).ino, statSync(store).ino, 'its runtime linked from the store')
     // (its shortcut merged into the xpath layer when the action ends, after the host is up)
@@ -115,11 +102,10 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
       for (const n of await layer({ repo, backend }, 'request/done').arrived()) history.push((await repo.read(`/request/done/${n}.json`).then(b => JSON.parse(b.toString()))).value.value)
       if (history.length < 4) await wait(100)
     }
-    t.alike(history.map(f => `${f.protocol} ${f.action} ${f.uri}`), ['boot deploy /boot', 'boot deploy /host', 'runtime register /', 'help extract /'], 'the history: the boot\'s deploy, the host\'s (preloaded), then its runtime\'s own as it started: its protocols registered, its help extracted')
-    t.alike(await repo.select('/inbox/*').then(r => r.filter(([p]) => !p.endsWith('layer.json')).length, () => 0), 0, 'all internal: none of them in the inbox')
-    t.absent(history[1].error, 'the host\'s deploy done')
-    t.alike(history[2].output, { registered: ['boot', 'haicc', 'help', 'runtime'] }, 'its protocols: the boot\'s, haicc, and the runtime package\'s two')
-    t.ok(!history[3].error && history[3].output?.readmes > 0, `its help extracted before it took requests in ${JSON.stringify(history[3].output ?? history[3].error)}`)
+    t.alike(history.map(f => `${f.protocol} ${f.action} ${f.uri}`), ['boot deploy /boot', 'runtime register /', 'help extract /', 'boot deploy /host'], 'the history: the boot\'s deploy, then its runtime\'s own as it started (its protocols registered, its help extracted), then the first command')
+    t.alike(await repo.select('/inbox/*').then(r => r.filter(([p]) => !p.endsWith('layer.json')).length, () => 0), 1, 'the first three internal: only the command in the inbox')
+    t.alike(history[1].output, { registered: ['boot', 'haicc', 'help', 'runtime'] }, 'its protocols: the boot\'s, haicc, and the runtime package\'s two')
+    t.ok(!history[2].error && history[2].output?.readmes > 0, `its help extracted before it took requests in ${JSON.stringify(history[2].output ?? history[2].error)}`)
     // followed: every record of the boot mrepo's request layers and its child's, one line each
     const lines = []
     const f = follow({ dir: viewOf(work, 'boot'), name: 'boot', print: l => lines.push(l) })
@@ -170,13 +156,6 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     // haicc: go to a node position and execute the command that follows. A
     // command as typed, its parts; at a shortcut it is sent on to the mrepo
     // linked there, unchanged; the request waits, the response its result
-    const typed = async (parts, tries = 300) => {
-      const c = record('/test', parts, guid())
-      writeFileSync(join(viewOf(work, 'boot'), 'inbox', `${c.key}.json`), JSON.stringify(wrap('/local/boot/inbox', c)))
-      let v = null
-      for (let i = 0; i < tries && !v; i++) { v = await repo.read(`/request/done/${c.key}.json`).then(b => JSON.parse(b.toString()).value.value, () => null); if (!v) await wait(100) }
-      return v
-    }
     const far = await typed(['haicc', '/host', 'help/get', '/packages', 'oneliner'])
     t.alike([far?.error, far?.protocol, far?.action, far?.uri, far?.args], [undefined, 'haicc', 'goto', '/host', ['help/get', '/packages', 'oneliner']], `haicc /host help/get /packages oneliner: haicc alone is haicc/goto, what follows its arguments ${far?.error ?? ''}`)
     t.alike([far?.output?.uri, far?.remote?.at, far?.remote?.folder, typeof far?.remote?.key], ['/packages', '/host', 'main/host', 'string'], 'answered by the host: /host is a shortcut, the command sent on')
@@ -253,17 +232,17 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
     t.absent(alive(child.pid) || alive(h3.pid), 'both processes ended')
 
     // run again: already built, the packages unchanged; its runtime started again
-    const again = boot(work, [`--sources=folder:${SOURCES}`, '--yes'])
+    const again = boot(work, [`--sources=folder:${SOURCES}`])
     t.is(again.code, 0)
     const o2 = again.lines.find(l => l.value).value.log
-    t.ok(o2[1].already, 'already built')
-    t.is(o2[2].committed, false, 'the packages unchanged: nothing committed')
+    t.ok(o2[0].already, 'already built')
+    t.is(o2[1].committed, false, 'the packages unchanged: nothing committed')
     const records = async l => (await repo.select(`/request/${l}/*`)).filter(([p]) => !p.endsWith('layer.json')).length
     let n = 0
     for (let i = 0; i < 100 && (n = await records('done')) < 30; i++) await wait(100)
     const all = []
     for (const [p] of await repo.select('/request/done/*')) if (!p.endsWith('layer.json')) { const v = JSON.parse((await repo.read(p)).toString()).value.value; all.push(`${v.protocol} ${v.action} ${v.uri}`) }
-    t.is(n, 30, `its runtime again: the second deploy done; the host's preloaded deploy not repeated: ${all.sort().join(', ')}`)
+    t.is(n, 30, `its runtime again: the boot's own request done a second time, nothing else repeated: ${all.sort().join(', ')}`)
     t.ok(await ask({ repo: host, op: 'status' }) === null, 'the host not redeployed, nor started (its runtime stopped above)')
     const s2 = await ask({ repo: viewOf(work, 'boot'), op: 'status' })
     t.ok((await ask({ repo: viewOf(work, 'boot'), op: 'stop' }))?.stopping, 'stopped again')
@@ -276,35 +255,5 @@ test('the boot: put in place, its runtime started, the host deployed inside it; 
       if (s?.pid) { try { os.kill(s.pid, 'SIGTERM') } catch {} for (let i = 0; i < 50 && alive(s.pid); i++) await wait(100) }
     }
     rmSync(work, { recursive: true, force: true })
-  }
-})
-
-test('an installed Bare on the PATH: used, recorded, none put in place, no question', { timeout: 120000, skip: !have }, async (t) => {
-  const work = mkdtempSync(join(tmpdir(), 'boot-inst-'))
-  const bin = mkdtempSync(join(tmpdir(), 'boot-bin-'))
-  try {
-    // the Bare running this test, installed as `bare` (the pinned version, or newer)
-    fs.symlinkSync(os.execPath(), join(bin, 'bare'))
-    const r = boot(work, [`--sources=folder:${SOURCES}`], [bin, NO_BARE].join(':'))
-    t.is(r.code, 0, `done without --yes ${r.err}`)
-    const out = r.lines.find(l => l.value).value.output
-    const b = r.lines.find(l => l.value).value.log[0].results.find(c => c.check === 'bare')
-    t.ok(b.value.installed && !b.fixed, 'the installed one: used')
-    t.is(b.value.bare, join(bin, 'bare'))
-    t.absent(existsSync(join(work, 'bare')), 'no Bare put in place')
-    t.is(JSON.parse(readFileSync(join(work, 'bare.json'))).bare, join(bin, 'bare'), 'recorded in the work folder')
-    t.ok(out.runtime.startsWith(`${join(bin, 'bare')} `), 'its runtime started on it')
-    t.is(boot(work, [`--sources=folder:${SOURCES}`]).code, 0, 'run again: the recorded one, without it on the PATH')
-  } finally {
-    // the runtimes the boot started: the boot's first (its stop waits for a
-    // deploy in progress, which starts the host), then the host's; waited for
-    for (const r of [viewOf(work, 'boot'), join(viewOf(work, 'boot'), 'main', 'host')]) {
-      const s = await ask({ repo: r, op: 'status' })
-      if (!s) continue
-      await ask({ repo: r, op: 'stop' })
-      for (let i = 0; i < 100 && alive(s.pid); i++) await wait(100)
-    }
-    rmSync(work, { recursive: true, force: true })
-    rmSync(bin, { recursive: true, force: true })
   }
 })

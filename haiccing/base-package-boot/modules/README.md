@@ -25,6 +25,6 @@ modules test, `/test/modules`.
 | [pear-full-square/p2p-store/](pear-full-square/p2p-store/) | Local storage for the p2p layer: a Corestore and its resources, no peer needed |
 | [pear-full-square/pkgm-base-check/](pear-full-square/pkgm-base-check/) | Module: the checks a package runs on itself, its code against the code rules and the integrity of its mrepo side. |
 
-The third-party code: `node_modules/`, 187 modules for linux-x64, each
+The third-party code: `node_modules/`, 181 modules for linux-x64, each
 with its version, licence and source in [third-party.json](third-party.json).
 Our modules find each other by name through `node_modules/` (links).

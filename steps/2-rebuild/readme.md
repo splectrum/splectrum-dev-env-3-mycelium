@@ -1652,3 +1652,40 @@ in place of fixed lists.
 **Validated**: the six packages' full sets; the boot's test four times
 (100 asserts), `haicc` going through a real shortcut between two running
 mrepos; the checks, no problems (17 modules, 6 packages).
+
+## 35. The boot package: its bundle, nothing preloaded (2026-11-13)
+
+Step four of building part 32.
+
+- **The boot deploys nothing by itself.** The preloaded `boot deploy
+  /host` is removed. The boot builds the boot mrepo, places its packages
+  and starts its runtime; the host is then deployed by a command,
+  `boot/deploy host <package>`.
+- **The prerequisite code is out of the boot package**: the check of the
+  platform, the work folder, the sources and Bare, with its fix
+  (`mrepo-base-boot`'s `internal/check`, the package's `prerequisites.json`
+  and `bare.json`). It moves to the scripts of `base-linux-haicc` (step
+  six). The boot runs on the Bare that runs it and starts its runtime on
+  that same one.
+- **The boot runs from its bundle**: `bare base-package-boot.bundle
+  --work=<folder> --sources=...`. It reads the boot mrepo's structure out
+  of the bundle it runs from, as deploy reads any package's. The embedded
+  structure module is gone.
+- **No standalone executable.** `tools/boot-release.js` is replaced by
+  `tools/release.js`: every package assembled and bundled into the
+  sources, Bare's tarball fetched once as the lockfile pins it and
+  checked, and `sources/third-party.json` listing the third-party
+  components with their hashes.
+- **The boot's test** is rewritten around commands: the host deployed,
+  redeployed, torn down and deployed again by commands sent to the boot
+  mrepo's inbox.
+
+**Not working until step six**: `tools/haicc-try.sh` still calls the
+executable. It becomes the test of `base-linux-haicc`.
+
+**Left for later**: `bare-build` is no longer used by anything here; it
+is still in the lockfile, and `tools/install.sh` still installs it.
+
+**Validated**: the six packages' full sets; the boot's test three times
+(91 asserts); the boot run by hand from its bundle; the checks, no
+problems.
