@@ -19,7 +19,8 @@
 import { readFileSync, readdirSync, existsSync, lstatSync } from 'bare-fs'
 import { join, dirname, resolve, relative, sep } from 'bare-path'
 
-const SPEC = /(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s+|\brequire\s*\(\s*)(['"])([^'"\n]+)\1/g
+// (not a method called import or require: x.import('name'))
+const SPEC = /(?:\bfrom\s*|(?<!\.)\bimport\s*\(\s*|\bimport\s+|(?<!\.)\brequire\s*\(\s*)(['"])([^'"\n]+)\1/g
 const KINDS = ['dependencies', 'optionalDependencies', 'peerDependencies', 'devDependencies']
 
 const readJson = f => { try { return JSON.parse(readFileSync(f, 'utf8')) } catch { return null } }

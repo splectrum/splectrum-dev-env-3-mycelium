@@ -44,7 +44,7 @@ const root = readJson(join(dev, 'package.json'))
 const aliases = Object.entries(root.dependencies || {}).filter(([, v]) => String(v).startsWith('npm:')).map(([k]) => k)
 // An alias only when carried third-party code imports it by that name: the
 // closure again with those, until nothing new is imported.
-const SPEC = /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)(['"])([^'"\n]+)\1/g
+const SPEC = /(?:\bfrom\s*|(?<!\.)\bimport\s*\(\s*|(?<!\.)\brequire\s*\(\s*)(['"])([^'"\n]+)\1/g
 function jsFiles (dir) {
   const out = []
   for (const n of readdirSync(dir)) {
