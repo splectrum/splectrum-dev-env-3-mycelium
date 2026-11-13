@@ -15,7 +15,7 @@ How to read a task:
 Validation, the commit, the merge and the product repositories: as
 `CLAUDE.md` and `handover-next.md` say, for every task.
 
-## 1. Relative URIs in commands
+## 1. Relative URIs
 
 Discussed 2026-11-13, while designing task 2, which builds on it.
 
@@ -23,39 +23,76 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
 
 - A URI in a command, which today starts at `/`, is in fact the mrepo's
   `main`: a request from outside is naturally restricted to `main`.
-- A URI in a command becomes relative: no leading slash. The human
-  prefers this; it suits the `haicc` concatenation better
-  (`haicc / haicc swarms boot/deploy swarm-1` was the example given, in
-  today's form for its first part).
-- `.` is written where `/` was: the position itself.
-- A request from outside is `main` prefixed; internally a URI always
-  starts with its layer.
+- **Relative throughout**: a URI never has a leading slash. It is
+  relative to where its writer stands.
+  - From outside, the writer stands at `main`: `.` becomes `main`, `host`
+    becomes `main/host`.
+  - The mrepo itself stands at its root, the folder above the layers: `.`
+    is that root, and its own commands name the layer first
+    (`protocol/activate . help`).
+- `.` is written where `/` was: the position itself. A command that
+  gives no URI means `.` (`haicc host service/start`).
+- **One standard, inside the code too, in the long run.** Writing to one
+  standard outside and another inside leads to confusion, and certain
+  patterns do not work. The easiest first is fine; the code can start to
+  accept `.` and no slash, and change over gradually.
+- **The current root can move away from the mrepo's root**:
+  `haicc test/mydata/users users/check-addresses *` (the position
+  `test/mydata/users` in `main`; there the protocol `users`, its action
+  `check-addresses`, the URI `*`). An action written with relative URIs
+  works wherever its root is.
+- **A position can be a selection**:
+  `haicc test/mydata/users[name=s*] users/check-addresses *`. The command
+  is executed once for each node selected, that node the current root.
+- **The rule: all node selections are arrays.** Most are singletons; the
+  system is then ready for set processing, as in the example. (From an
+  earlier discussion of the human's; found written nowhere in this
+  repository, 2026-11-13.)
 
-**Proposed** (put to the human as one reading, not yet answered)
+**Proposed** (put to the human, not yet answered)
+
+- The changeover, in this order:
+  1. requests first: everything written or stored as a request is
+     relative (commands, hooks, the form); one function at the boundary
+     serves the code that still wants slash-led paths;
+  2. the interface accepts both: the validator and the read and write
+     calls take `.` and no leading slash as well as the old form, meaning
+     the same;
+  3. modules change over as they are touched; when none uses the old
+     form, the validator refuses it;
+  4. the current root moves: reads and writes relative to the
+     execution's root (the roadmap's "execution context opened at a
+     position"). An action at a moved root reaches the mrepo's own state
+     (the service state in `runtime`) through the runtime's view the
+     execution has, not through its own root: to settle then.
+- Predicates (`[name=s*]`) are a later task of their own: not valid in
+  our URIs today, and `mycelium-xpath` knows only `*`. This task must not
+  block them: a relative URI is XPath's relative path, the current root
+  its context node, `.` its self.
+- Selections as arrays, in this task: `resolve` gives an array of
+  positions and `goto` executes at each; only singletons and `*` can
+  occur until predicates are built.
+- What an action is about is an argument, not the request's URI:
+  `help/get` and `runtime/run` take their subject (`packages/...`, from
+  the mrepo's root) as an argument after the URI:
+  `haicc . help/get . packages oneliner`. An argument is data, not
+  access.
+- The `haicc` script tells an mrepo command from its own commands
+  (`haicc sources`, `haicc prereq`) by the leading slash today. Without
+  it: a first word that is one of the script's own commands is that
+  command, anything else is a URI. A position at the local root named
+  like one of them is reached as `haicc . haicc <name> ...`.
+- The order of the tasks: this one first, validated end to end, then
+  task 2 on top, so `crud` needs no adapter and its tests are written
+  once.
 
 | Today | Relative |
 |---|---|
 | `haicc / boot/deploy host <package>` | `haicc . boot/deploy host <package>` |
 | `haicc /host service/start` | `haicc host service/start` |
 | `haicc /host haicc /node-1 service/start` | `haicc host haicc node-1 service/start` |
-| `haicc / help/get /packages oneliner` | `haicc . help/get . /packages oneliner` |
-
-- `.` is also the default when a command gives no URI.
-- In the form, inside, the URI is always the full one, layer first: `.`
-  at the root becomes `/main`, `host` becomes `/main/host`. A hook's
-  command is internal and written full, as now (`/` is the mrepo itself).
-- A leading slash from outside is refused as a request's URI.
-- What an action is about is an argument, not the request's URI:
-  `help/get` and `runtime/run` keep their full, layer-first subject
-  (`/packages/...`), as an argument after the URI. An argument is data,
-  not access.
-- The `haicc` script tells an mrepo command from its own commands
-  (`haicc sources`, `haicc prereq`) by the leading slash today. Without
-  it: a first word that is one of the script's own commands is that
-  command, anything else is a URI. A position at the local root named
-  like one of them is reached as `haicc . haicc <name> ...`.
-- The order: this task first, validated end to end, then task 2 on top,
-  so `crud` needs no adapter and its tests are written once.
+| `haicc / help/get /packages oneliner` | `haicc . help/get . packages oneliner` |
+| a hook: `protocol/activate / help` | `protocol/activate . help` |
 
 **Where**
 
