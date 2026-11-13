@@ -1795,3 +1795,43 @@ before the go, none corrected)
 **Validated**: the haicc test, 66 of 66; the seven bundle packages' full
 sets; the boot's test (108 asserts); the checks, no problems (17 modules,
 8 packages); the Bare download tried once by hand, as pinned.
+
+## 38. The local run of 381bbae; bare-build removed (2026-11-13)
+
+**The local agent's report** (`local-note.md`, 2026-11-13, on `381bbae`):
+the prompt ran as written, offline, every step passed (the `haicc` test
+66 of 66, the seven packages' full sets). The human then tried `haicc` by
+hand. Five findings, to settle with the human before they are built:
+
+1. `haicc` should print the response record whole by default, the output
+   alone on request (`--output`); a patch tested there, 71 checks.
+2. The service's responses say the state reached, not what was done:
+   `service/stop` answers `initialised`.
+3. Teardown was not to be found: not in `haicc --help` nor in the prompt;
+   an unknown protocol is reported as `no action`.
+4. The machine level: `haicc boot` to become `haicc boot/deploy`, with a
+   `haicc boot/teardown` to undo it.
+5. A missing argument is not said: the target falls back to `/`, and the
+   action fails on something else.
+
+No release was created: the human's word, not yet.
+
+**Done here, on the human's word**
+
+- **`bare-build` removed**: from `package.json`, from the lockfile by
+  hand (it and the twenty entries only it needed: its platform prebuilts,
+  `bare-apk`, `bare-app-image`, `bare-lief`, `bare-link`, `bare-tpl`,
+  `bare-unpack`, its own `bare-pack`), from `tools/install.sh` (its
+  special handling). The install replays cleanly.
+- **The assembler's `unresolved` report** the local agent saw
+  (`p2p-mrepo: from-native`, `from-bundle`, `a`): a method called
+  `import` in a test was read as an import. The pattern no longer takes
+  `x.import('name')` or `x.require('name')` (`pkgm-base-manager`'s
+  closure, `tools/package-assemble.js`). Nothing was missing.
+
+**Seen, not touched**: the lockfile still holds about forty entries that
+nothing here reaches (`hyperdht`, `dht-rpc` and others), left from
+modules removed earlier. For the mini tool on the roadmap.
+
+**Validated**: the release built; the checks, no problems; the `haicc`
+test, 66 of 66; the boot's test, 108 asserts; three packages' full sets.

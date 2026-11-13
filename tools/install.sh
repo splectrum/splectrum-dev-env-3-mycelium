@@ -6,10 +6,8 @@
 # turns the lockfile into a list, and the shell installs it: each package
 # from the registry fetched with curl, checked against its sha512, unpacked
 # with tar into its lockfile path; the git dependency fetched at its commit;
-# workspaces linked; other platforms' optional packages skipped, and of
-# bare-build only this platform's prebuilt, no Android or AppImage builder
-# (the releases are --standalone: about 46 MB instead of 314); the top-level
-# packages' commands linked into node_modules/.bin; a package
+# workspaces linked; other platforms' optional packages skipped; the
+# top-level packages' commands linked into node_modules/.bin; a package
 # already there at its version kept. npm is needed only to change the
 # dependencies (resolve versions, write a new package-lock.json).
 #   sh tools/install.sh
@@ -33,11 +31,7 @@ for (const [path, e] of Object.entries(l.packages)) {
   if (!path.startsWith('node_modules/')) continue
   if (e.link) { console.log(['link', path, e.resolved].join(' ')); continue }
   if ((e.os && !e.os.includes(Bare.platform)) || (e.cpu && !e.cpu.includes(Bare.arch))) continue
-  // bare-build: only this platform's prebuilt (its other platforms' are plain
-  // dependencies, unmarked); no Android or AppImage builder (--standalone only)
   const name = path.slice(path.lastIndexOf('node_modules/') + 13)
-  if (/^bare-build-/.test(name) && name !== 'bare-build-' + Bare.platform + '-' + Bare.arch) continue
-  if (name === 'bare-apk' || name === 'bare-app-image') continue
   console.log([String(e.resolved).startsWith('git+') ? 'git' : 'tar', path, e.resolved, e.integrity || '-', e.version].join(' '))
   // a top-level package's commands, linked into node_modules/.bin as npm does
   if (path === 'node_modules/' + name) for (const [cmd, file] of Object.entries(e.bin || {})) console.log(['bin', 'node_modules/.bin/' + cmd, path + '/' + file].join(' '))
