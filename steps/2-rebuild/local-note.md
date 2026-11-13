@@ -262,9 +262,13 @@ a boot mrepo only:
 
 Proposal: an action's arguments named in its signature (as its README
 has them: `teardown(exec, { uri })`), and checked before it runs: one
-missing, `missing argument: <name>` (`target`, `package`); `/` a target
-only where an action takes it as one (`help/get`). An unknown protocol
-said as such (with 3). And `teardown`'s error said in its own words.
+missing, `missing argument: <name>` (`target`, `package`). The human:
+`/` is the mrepo itself, and one cannot deploy or tear down oneself; so
+for `boot/deploy` and `boot/teardown` a target of `/` is still a missing
+argument, left out or written (`haicc / boot/teardown /`): `missing
+argument: target`, not an error about `/`. `/` stays a target where an
+action takes the mrepo itself (`help/get`). An unknown protocol said as
+such (with 3).
 
 ## 2026-11-12: `31501e6`
 
