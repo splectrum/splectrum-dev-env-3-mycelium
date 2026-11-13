@@ -59,43 +59,54 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
 - The flag `error-on-empty` is not in this round: "Future additions",
   below.
 
-**Proposed** (put to the human, not yet answered)
+- **What an action is about is an argument**, not the request's URI
+  (agreed): `help/get` and `runtime/run` take their subject, written from
+  the mrepo's root (`packages/...`), as their first argument:
+  `haicc . help/get . packages oneliner`. An argument is data, not
+  access.
+- **A `./` prefix is allowed** (the human): `./sources` is the position
+  `sources`. It is how a position at the local root named like one of the
+  `haicc` script's own commands is typed.
 
-- The changeover, in this order:
+**Left to us** (the human: "you know best how it fits in")
+
+- The changeover, in four steps; this task builds the first two:
   1. requests first: everything written or stored as a request is
      relative (commands, hooks, the form); one function at the boundary
      serves the code that still wants slash-led paths;
   2. the interface accepts both: the validator and the read and write
      calls take `.` and no leading slash as well as the old form, meaning
      the same;
-  3. modules change over as they are touched; when none uses the old
-     form, the validator refuses it;
+  3. modules change over as they are touched, starting with `crud`,
+     written relative from its first line; when none uses the old form,
+     the validator refuses it;
   4. the current root moves: reads and writes relative to the
      execution's root (the roadmap's "execution context opened at a
-     position"). An action at a moved root reaches the mrepo's own state
-     (the service state in `runtime`) through the runtime's view the
-     execution has, not through its own root: to settle then.
-- Predicates (`[name=s*]`) are a later task of their own: not valid in
-  our URIs today, and `mycelium-xpath` knows only `*`. This task must not
-  block them: a relative URI is XPath's relative path, the current root
-  its context node, `.` its self.
-- Selections as arrays, in this task: `resolve` gives an array of
-  positions and `goto` executes at each (it follows from the rule; the
-  code gives one position and executes once today); only singletons and
-  `*` can occur until predicates are built.
-- What an action is about is an argument, not the request's URI:
-  `help/get` and `runtime/run` take their subject (`packages/...`, from
-  the mrepo's root) as an argument after the URI:
-  `haicc . help/get . packages oneliner`. An argument is data, not
-  access.
-- The `haicc` script tells an mrepo command from its own commands
-  (`haicc sources`, `haicc prereq`) by the leading slash today. Without
-  it: a first word that is one of the script's own commands is that
-  command, anything else is a URI. A position at the local root named
-  like one of them is reached as `haicc . haicc <name> ...`.
+     position"): a task of its own, after `crud`. An action at a moved
+     root reaches the mrepo's own state (the service state in `runtime`)
+     through the runtime's view the execution has, not through its own
+     root: to settle then.
 - The order of the tasks: this one first, validated end to end, then
   task 2 on top, so `crud` needs no adapter and its tests are written
   once.
+
+**Proposed** (ours, to keep or change while building; say what was done)
+
+- Selections as arrays, in this task: `resolve` gives an array of
+  positions and `goto` executes at each (it follows from the rule; the
+  code gives one position and executes once today); only singletons and
+  `*` can occur until predicates are built. A command executed at
+  several positions runs in the one execution: one failure, nothing
+  merged.
+- A leading slash is refused in a request's URI.
+- `./` is accepted wherever a URI is written and is not part of its
+  canonical form (`./host` is `host`).
+- A subject left out is the root: `haicc host help/get` is help on the
+  mrepo itself.
+- The `haicc` script: a first word that is one of its own commands
+  (`sources`, `prereq`) is that command; `.`, a word starting with `./`,
+  and anything else is a URI. The machine level stays: `haicc boot/deploy`,
+  `haicc boot/teardown`, a protocol and action with no URI before them.
 
 | Today | Relative |
 |---|---|
@@ -103,6 +114,7 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
 | `haicc /host service/start` | `haicc host service/start` |
 | `haicc /host haicc /node-1 service/start` | `haicc host haicc node-1 service/start` |
 | `haicc / help/get /packages oneliner` | `haicc . help/get . packages oneliner` |
+| `haicc /host help/get /` | `haicc host help/get` |
 | a hook: `protocol/activate / help` | `protocol/activate . help` |
 
 **Where**
