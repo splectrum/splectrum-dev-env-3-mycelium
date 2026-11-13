@@ -15,13 +15,13 @@ const ENTRIES = {
 // The test units, each run in one process: the package's tests, each
 // carried module's unit tests.
 const UNITS = {
+  "/test/code": () => Promise.all([import("./test/code/run.js")]),
+  "/test/help": () => Promise.all([import("./test/help/run.js")]),
+  "/test/help-in-situ": () => Promise.all([import("./test/help-in-situ/run.js")]),
+  "/test/mrepo": () => Promise.all([import("./test/mrepo/run.js")]),
+  "/test/mrepo-in-situ": () => Promise.all([import("./test/mrepo-in-situ/run.js")]),
+  "/test/package": () => Promise.all([import("./test/package/run.js")]),
   "/test/start": () => Promise.all([import("./test/start/run.js")]),
-  "/test/help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/validate/help.test.js")]),
-  "/test/help-in-situ": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/validate/help-in-situ.test.js")]),
-  "/test/code": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/code.test.js")]),
-  "/test/mrepo": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/mrepo.test.js")]),
-  "/test/mrepo-in-situ": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/mrepo-in-situ.test.js")]),
-  "/test/package": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/package.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-execute": () => Promise.all([import("./modules/pear-full-square/mrepo-base-execute/test/execute.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/test/help.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-protocol": () => Promise.all([import("./modules/pear-full-square/mrepo-base-protocol/test/protocol.test.js")]),

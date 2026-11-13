@@ -29,5 +29,6 @@ mrepo a work folder's setting names, as the p2p host.)
   passed to the runtime by `run.js`.
 - [modules/](modules/): the code, assembled: ours and the third-party code.
 - [test/](test/): its tests.
+- [test-reports/](test-reports/): the report of its last pre-release.
 
 Written from [splectrum/splectrum-dev-env-3-mycelium](https://github.com/splectrum/splectrum-dev-env-3-mycelium).

@@ -1,10 +1,11 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-14, part 50). Read `CLAUDE.md`
+Kept current by the cloud session (last: 2026-11-14, part 51). Read `CLAUDE.md`
 first (what is here, how to validate), then this, then `readme.md` here
 (each part's record; the latest parts last: 30 to 45 are the haicc work; 46 is a note on future design; 47 the
 package check; 48 the template up to standard; 49 the test
-reports; 50 the pin, `package-docs-mrepo` brought to the template).
+reports; 50 the pin, `package-docs-mrepo` brought to the template; 51
+`base-package-runtime`).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -55,13 +56,18 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   on the human's word once the template passed its own full set. The
   template's repository (`haiccing/package-docs-template`) and the check
   module's (`pear-full-square/pkgm-base-check`) are pushed.
-  `package-docs-mrepo` is brought to the template and pinned (part 50),
-  its repository pushed. The other eight bundle packages are not yet
+  `package-docs-mrepo` (part 50) and `base-package-runtime` (part 51)
+  are brought to the template and pinned, their repositories pushed; the
+  human's order from here: up the protocol stack, one by one. The other
+  seven bundle packages are not yet
   brought to the template (`sh tools/package-template.sh <package>`, its
   pages by hand, `tools/bare tools/package-test.js`), and six lack
   a test of their own: `tools/bare tools/code-check.js` lists it all, and
   `tasks.md` ("First") says what is left. One step at a time, each shown
   to the human; a package's repository is pushed when it passes.
+- **The tools are kept well structured** (the human, 2026-11-14): soon
+  packages are built for them, so they run on the haicc platform as well.
+  `tools/README.md` says what each is for and how they are kept.
 - **This session's focus** (the human, 2026-11-14): the generic tests and
   tests that need no test mrepo, so a new implementation is known to
   adhere to the rules; the packages' own tests in running mrepos after.
