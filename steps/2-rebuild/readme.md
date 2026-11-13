@@ -1881,3 +1881,26 @@ is; the local agent's prompt and handover follow the new commands.
 
 **Validated**: the `haicc` test, 96 of 96; the seven packages' full sets;
 the boot's test three times (108 asserts); the checks, no problems.
+
+## 40. The response record unpacked (2026-11-13)
+
+The human: the record came back raw, on a single line; could it be
+unpacked as an object, across lines, in a compact form.
+
+- **`haicc <URI> ...` prints the record unpacked** (`haicc-format.awk`):
+  a container that fits on the line is left as it is stored; one that
+  does not is opened, an entry a line, indented by two, and so on inside
+  it. So the envelope, the core and the form open up, and a short output
+  or argument list stays on its line. The width is 80 (`HAICC_WIDTH`).
+- **Nothing of the record is changed**: only line breaks, indentation and
+  a space after an opened object's keys are added. The test takes them
+  off again for every record in the outbox and finds the record as
+  stored.
+- **`haicc --raw <URI> ...`** (or `HAICC_RAW=1`) prints it as it is in
+  the outbox folder, one line. `--output` is as before: the output alone,
+  as stored.
+- No JSON tool on the host: the formatter is awk, like the response
+  reader.
+
+**Validated**: the `haicc` test, 104 of 104; the README check, no
+problems.

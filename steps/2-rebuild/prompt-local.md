@@ -51,7 +51,8 @@ Only its note is committed.
 >    `haicc /host help/get /`; and to undo: `haicc / boot/teardown host`,
 >    then `haicc boot/teardown`. The boot mrepo's runtime keeps running
 >    after `haicc boot/deploy`; its work folder is `~/.haicc/work`. A
->    command prints its response record whole; `haicc --output ...` the
+>    command prints its response record whole, unpacked across lines;
+>    `haicc --raw ...` as it is stored, one line; `haicc --output ...` the
 >    output alone. `haicc --help` lists the commands.
 > 8. **Write a note back**: what ran, each result, anything that did not
 >    run as written and why (with a proposal and a patch if you have one,

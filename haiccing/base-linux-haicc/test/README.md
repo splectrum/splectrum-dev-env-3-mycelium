@@ -25,7 +25,9 @@ inspect. One line a check, the count last; exit 0 passed, 1 failed.
 6. **The boot**: `haicc boot/deploy`: the boot mrepo at the root, its
    runtime started, nothing deployed.
 7. **Commands**: the host deployed at the root from
-   `base-component-haicc`, the response record printed whole; deployed
+   `base-component-haicc`; the response record printed unpacked across
+   lines by default, as stored with `--raw`; every record in the outbox
+   unpacked and packed again is the record as stored; deployed
    again, an error on stderr; its boot protocol behind the service's door;
    `service/initialise` and `service/start` passed through to it, each
    answering what was done and the state now (`--output`).

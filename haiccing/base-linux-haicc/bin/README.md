@@ -9,7 +9,8 @@ The haicc scripts, a file each; POSIX sh.
 | `haicc-sources` | Where packages and third-party components come from: folders linked, downloads over https, the https backup on or off. |
 | `haicc-prereq` | What a boot needs, checked: the platform, the tools, the work folder, the sources, Bare; Bare unpacked from the sources. |
 | `haicc-boot` | The machine level. `boot/deploy`: the boot package's bundle run with the Bare put in place, the boot mrepo at the root, its runtime started. `boot/teardown`: every runtime under the work folder stopped, what the deploy put in place removed. |
-| `haicc-request` | An mrepo command: the record written into the boot mrepo's inbox folder, its response waited for and printed whole; the output alone with `--output`. |
+| `haicc-request` | An mrepo command: the record written into the boot mrepo's inbox folder, its response waited for and printed unpacked; as stored with `--raw`, the output alone with `--output`. |
+| `haicc-format.awk` | A record printed unpacked, across lines, in a compact form: a container that fits on the line is left as stored, one that does not is opened, an entry a line. |
 | `haicc-response.awk` | A response record read: the completed form's output or its error found, for the exit code and for `--output`; a scanner, three objects deep. |
 
 ## Exit codes
