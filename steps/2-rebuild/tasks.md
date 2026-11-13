@@ -48,6 +48,20 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   system is then ready for set processing, as in the example. (From an
   earlier discussion of the human's; found written nowhere in this
   repository, 2026-11-13.)
+- **An action's result is an array too**, because its input is in
+  essence XPath: `crud/read swarms` gives an array holding one node,
+  `crud/read *` an array of all of them, the same shape. A set comes in,
+  a set goes out.
+- **An empty selection is not an error** inside: it gives an empty
+  array, also for a plain path with a typo in it. Whether that is an
+  error is for the one who submits the request to check. No rule of ours
+  tells a plain path from a pattern.
+- **The flag `error-on-empty`, for the XPath**: with it, a selection that
+  matches nothing fails the request. It is needed for a subset of
+  commands only. It can be added to a request by the user, or set for
+  specific protocols (like `service`). It is a local matter: how a
+  package is made, and what type of mrepo it is for. The configs must be
+  well documented.
 
 **Proposed** (put to the human, not yet answered)
 
@@ -70,8 +84,9 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   block them: a relative URI is XPath's relative path, the current root
   its context node, `.` its self.
 - Selections as arrays, in this task: `resolve` gives an array of
-  positions and `goto` executes at each; only singletons and `*` can
-  occur until predicates are built.
+  positions and `goto` executes at each (it follows from the rule; the
+  code gives one position and executes once today); only singletons and
+  `*` can occur until predicates are built.
 - What an action is about is an argument, not the request's URI:
   `help/get` and `runtime/run` take their subject (`packages/...`, from
   the mrepo's root) as an argument after the URI:
