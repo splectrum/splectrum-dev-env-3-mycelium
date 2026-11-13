@@ -152,27 +152,6 @@
       "integrity": "sha512-ePu0axonbewvuUv9TFqjfvnZTaw+mL4JNx1q79dw8T3DIQEjqHs+pXyj92ghepa8K14KLtX3GdUuAVB+faaGDw=="
     },
     {
-      "name": "bare-http-parser",
-      "version": "2.1.4",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-http-parser/-/bare-http-parser-2.1.4.tgz",
-      "integrity": "sha512-6CRjxqMdrEoKKBCS6FbdZUuVsRtyqq18BUae9l9N5okSV75S9lUAF9f5aFSKTNybBS/hcnlxFNocdpXbd2Ohaw=="
-    },
-    {
-      "name": "bare-http1",
-      "version": "4.6.3",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-http1/-/bare-http1-4.6.3.tgz",
-      "integrity": "sha512-ZkQgU73JWPyjSKOWHeB2EV1HABokjbuwXLbqnsAfmVpy6Ox3Pq4y+A4+A3r15E2HrcybYDz3TCnRBIgUfTn3zw=="
-    },
-    {
-      "name": "bare-https",
-      "version": "3.1.0",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-https/-/bare-https-3.1.0.tgz",
-      "integrity": "sha512-HNAS0q7CBAXGDFRy/xaYJEsAaVcvyDRXKU1b/KxS/zdcfBWsQVB0TntSzz3IlqZ5ZWHiaOOrMYAO/oIDgpTLkQ=="
-    },
-    {
       "name": "bare-inspect",
       "version": "3.1.10",
       "license": "Apache-2.0",
@@ -206,13 +185,6 @@
       "license": "Apache-2.0",
       "resolved": "https://registry.npmjs.org/bare-module-traverse/-/bare-module-traverse-2.7.4.tgz",
       "integrity": "sha512-K+r/K4TzcqS+WbaoVsif1S2Mm5CgWXhpOVGJ3xObhCZQm+KmDMW2tk3nI9VftbqCg5m32PxHy55Gnqaw5MCo0w=="
-    },
-    {
-      "name": "bare-net",
-      "version": "2.3.3",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-net/-/bare-net-2.3.3.tgz",
-      "integrity": "sha512-q1noXFJKn+eNi6vXYv2Y+5FTnn+o7qpli4m2lUZTdK8cBjVs2zGaykuzTUIa29v70eOsQI9OAIyYwN3ODHtFaQ=="
     },
     {
       "name": "bare-os",
@@ -313,13 +285,6 @@
       "integrity": "sha512-WkLdv7BRdGlChAdM3rLPgM2/1kRHk2dlDyf1Jedfc2LbUjzY6kjJ2W5IHB0DfVjY0r+XdfpCk4PomcpINeBW6w=="
     },
     {
-      "name": "bare-tls",
-      "version": "3.2.0",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-tls/-/bare-tls-3.2.0.tgz",
-      "integrity": "sha512-aPdeROdlokqfaPhrLCxsdURV2pvxOfsM7zkWBaTXwUWLZyFSTXZyIJTiPamcMLdF9L7NtUzZ/CWvT4yj7HAhUw=="
-    },
-    {
       "name": "bare-tty",
       "version": "5.2.2",
       "license": "Apache-2.0",
@@ -346,13 +311,6 @@
       "license": "Apache-2.0",
       "resolved": "https://registry.npmjs.org/bare-utils/-/bare-utils-1.6.1.tgz",
       "integrity": "sha512-k3yAod0yDg/qctLnbhefmtwdufkzbpDFqmcympxenmRwGk7euZ0ll6gha2bC6rM230G5XS5BHyzcHyYSuXcfzQ=="
-    },
-    {
-      "name": "bare-zlib",
-      "version": "1.4.1",
-      "license": "Apache-2.0",
-      "resolved": "https://registry.npmjs.org/bare-zlib/-/bare-zlib-1.4.1.tgz",
-      "integrity": "sha512-CsnQl+XyLaUecB9/OUpjqmemung10M7J2UNXz+6NAVrZAI3HC9c5Kxw34aI0jaU9+gb2yUCD31hOrtPZlnE3bA=="
     },
     {
       "name": "base64-js",

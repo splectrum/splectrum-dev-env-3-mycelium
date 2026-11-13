@@ -30,7 +30,7 @@ the work reaches it.
   `pkgm-base-manager`, which the tools use. A documented method is a
   directory, under `external/` (protocol actions) or `internal/`.
 - `tools/`: assembling and bundling a package (`package-assemble.js`,
-  `package-bundle.js`), the boot's release (`boot-release.js`), the product
+  `package-bundle.js`), the release into the sources (`release.js`), the product
   repositories (`products.sh`), the checks (`help-extract.js`,
   `code-check.js`). `sources/` (ignored by git): the bundles built here.
 - `rules.md`: this repository's own rules (branches, layers, commits,

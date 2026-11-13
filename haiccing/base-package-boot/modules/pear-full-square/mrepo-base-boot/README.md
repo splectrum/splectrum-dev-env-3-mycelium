@@ -7,7 +7,7 @@ the parent holds a shortcut for it in its `xpath` layer. Deploy builds it from a
 target package's list of packages, links its packages and starts its
 runtime. Teardown stops the runtime and removes the child; redeploy does
 both in turn. The module also holds the install routine: building an mrepo
-from its structure, placing packages, checking prerequisites. Carried by
+from its structure and placing its packages. Carried by
 `haiccing/base-package-boot`, whose `protocol.js` offers the actions.
 
 | | |
@@ -34,4 +34,4 @@ from its structure, placing packages, checking prerequisites. Carried by
 ## Tests
 
 - `npm test`: the unit tests: building, running a built mrepo on the
-  runtime, the prerequisites, the actions.
+  runtime, the actions.
