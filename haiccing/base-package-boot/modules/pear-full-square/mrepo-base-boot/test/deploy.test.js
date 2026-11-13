@@ -33,11 +33,11 @@ function source (dir, packages) {
   writeFileSync(join(dir, 'haiccing', 'manifest.json'), JSON.stringify(manifest))
 }
 
-// A parent: main, runtime, packages; its packages manifest (the store, the sources).
+// A parent: main, runtime, packages, xpath; its packages manifest (the store, the sources).
 async function parent (work, sources) {
   const src = mkdtempSync(join(tmpdir(), 'deploy-parent-'))
   try {
-    for (const l of ['main', 'runtime', 'packages']) lj(join(src, l), 'atomic')
+    for (const l of ['main', 'runtime', 'packages', 'xpath']) lj(join(src, l), 'atomic')
     const { dir } = await build({ from: src, work, name: 'boot' })
     await place({ dir, store: join(work, 'packages'), sources, list: [] })
     return dir
@@ -45,12 +45,12 @@ async function parent (work, sources) {
 }
 
 // An execution's context: reads the repository, writes collected and
-// committed to main after the action (exec.commit(): a local commit).
+// committed to their layers after the action (exec.commit(): a local commit).
 function context (dir, backend) {
   const repo = openRepo(backend)
   const edits = []
   const exec = {
-    runtime: { name: 'boot', dir },
+    runtime: { name: 'boot', uri: 'local/boot', dir },
     select: uri => repo.select(uri),
     read: uri => repo.read(uri),
     put: (uri, bytes) => edits.push(['put', uri, bytes]),
@@ -59,9 +59,12 @@ function context (dir, backend) {
   }
   async function commit () {
     if (!edits.length) return
-    const c = await writer(backend).change('main')
-    for (const [op, uri, bytes] of edits.splice(0)) op === 'put' ? await c.put(uri.slice('/main'.length), bytes) : c.remove(uri.slice('/main'.length))
-    await c.commit('test', { author: { name: 'test', email: 'test@localhost' } })
+    const all = edits.splice(0)
+    for (const l of new Set(all.map(([, uri]) => uri.split('/')[1]))) {
+      const c = await writer(backend).change(l)
+      for (const [op, uri, bytes] of all.filter(([, uri]) => uri.split('/')[1] === l)) op === 'put' ? await c.put(uri.slice(l.length + 1), bytes) : c.remove(uri.slice(l.length + 1))
+      await c.commit('test', { author: { name: 'test', email: 'test@localhost' } })
+    }
   }
   return { exec, commit, repo }
 }
@@ -89,7 +92,9 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
     t.alike(json(await child.read('/runtime/kind.json')), { kind: 'target' }, 'laid in in order: a later package\'s file replaces')
     t.alike(d.packages, ['haiccing/base', 'haiccing/target'], 'its packages, in order')
     t.is(statSync(join(work, 'packages', 'haiccing', 'base.bundle')).ino, statSync(join(host, 'packages', 'haiccing', 'base.bundle')).ino, 'each linked from the store')
-    t.alike(json(await repo.read('/main/host.json')).package, 'haiccing/target', 'its type recorded at the node')
+    t.alike(json(await repo.read('/xpath/host/shortcut.json')), { mrepo: 'local/host', package: 'haiccing/target', packages: d.packages, layers: d.layers }, 'its shortcut, in the xpath layer: the mrepo linked there (its unique URI, in its parent\'s swarm), what was deployed')
+    t.is(await repo.read('/main/host.json').catch(() => null), null, 'nothing of it in main')
+    t.alike(json(await child.read('/runtime/mrepo.json')), { uri: 'local/host' }, 'its identity, in its own runtime layer')
     await t.exception(deploy(exec, { uri: '/host', args: ['haiccing/target'] }), /deployed already/)
 
     const r = await redeploy(exec, { uri: '/host' })
@@ -99,8 +104,8 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
 
     // a runtime that does not stop (no socket, SIGTERM ignored): teardown ends it all the same
     const stubborn = spawn('sh', ['-c', 'trap "" TERM; while true; do sleep 1; done'], { stdio: 'ignore', detached: true })
-    const rec = json(await repo.read('/main/host.json'))
-    exec.put('/main/host.json', Buffer.from(JSON.stringify({ ...rec, runtime: { pid: stubborn.pid } })))
+    const rec = json(await repo.read('/xpath/host/shortcut.json'))
+    exec.put('/xpath/host/shortcut.json', Buffer.from(JSON.stringify({ ...rec, runtime: { pid: stubborn.pid } })))
     await commit()
     const logged = []
     exec.log = (level, event, data) => logged.push({ level, event, ...data })
@@ -110,7 +115,7 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
     delete exec.log
     await commit()
     t.absent(existsSync(host), 'removed')
-    t.is(await repo.read('/main/host.json').catch(() => null), null, 'its record out of main')
+    t.is(await repo.read('/xpath/host/shortcut.json').catch(() => null), null, 'its shortcut out of the xpath layer')
     await t.exception(teardown(exec, { uri: '/host' }), /not deployed/)
     await t.exception(deploy(exec, { uri: '/x', args: ['haiccing/none'] }), /not in the store nor the sources/)
     await t.exception(deploy(exec, { uri: '/../x', args: ['haiccing/target'] }), /not a child/)
@@ -136,10 +141,10 @@ test('deploy the runtime: the child\'s runtime started from its own packages, it
     await commit()
     const host = join(dir, 'main', 'host')
     t.ok(d.runtime?.pid, 'its runtime started')
-    t.is((await ask({ repo: host, op: 'status' }))?.repository.name, 'host', 'running the child, by its directory')
+    t.alike([(await ask({ repo: host, op: 'status' }))?.repository.name, (await ask({ repo: host, op: 'status' }))?.repository.uri], ['host', 'local/host'], 'running the child, by its directory; its unique URI its own')
     // a request into its inbox folder (the parent reaches it, forward): answered
     const core = record('/test', { protocol: 'runtime', action: 'register', uri: '/' }, guid())
-    writeFileSync(join(host, 'inbox', `${core.key}.json`), JSON.stringify(wrap('/host/inbox', core)))
+    writeFileSync(join(host, 'inbox', `${core.key}.json`), JSON.stringify(wrap('/local/host/inbox', core)))
     const child = openRepo(p2pgitBackend(join(host, '.git'), { fs }))
     let back = null
     for (let i = 0; i < 100 && !back; i++) { back = await child.read(`/outbox/${core.key}.json`).then(json, () => null); if (!back) await new Promise(resolve => setTimeout(resolve, 100)) }

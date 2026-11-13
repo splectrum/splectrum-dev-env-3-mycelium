@@ -21,13 +21,17 @@ branch is merged back into its target; a failure resets instead. The runtime,
   principal, begun there by the request protocol, and only ever adds; the
   others are made as the request first writes a target. Merged back and
   removed at its end, discarded on a failure. No history kept in them.
-- **A wrapped remote command** (`lib/remote.js`): a request whose URI leads
-  into a child mrepo (`/main/<name>/...`, its record at `/main/<name>.json`)
-  is passed on whole to the child's inbox folder. Its processing ends: what
-  it waits for (`remote`) is added to its principal. A request branch not
-  being processed has a waiting principal. Once the request protocol has
-  added the child's response to the branch, the principal is returned with
+- **A command sent on** (`exec.forward(to, command)`, `lib/remote.js`): an
+  action that finds its position a shortcut sends the command that follows
+  to the mrepo linked there, unchanged, into its inbox folder. Nothing of
+  the request is executed here; its processing ends: what it waits for
+  (`remote`) is added to its principal. A request branch not being
+  processed has a waiting principal. Once the request protocol has added
+  the other mrepo's response to the branch, the principal is returned with
   it here.
+- **A command executed here** (`exec.run(command)`): its parts
+  interpreted, checked as the request itself is, its action run in the
+  same execution; its value returned.
 
 The mrepo execute protocol, base variant: a request in `request/execute`
 executed in execution
@@ -41,7 +45,7 @@ Run by the repository's runtime
 (`mrepo-base-runtime`). `lib/actions.js` holds the generic `rest` actions
 (get, put, delete), not mounted by a package yet: the tests use them. An
 action writes the targets the mrepo has: `main`, `runtime`, `help`,
-`protocols`.
+`protocols`, `xpath`.
 
 ## Tests
 

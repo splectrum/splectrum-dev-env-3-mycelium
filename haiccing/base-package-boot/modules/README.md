@@ -14,6 +14,7 @@ modules test, `/test/modules`.
 | [pear-full-square/mrepo-base-request/](pear-full-square/mrepo-base-request/) | Module: the mrepo request protocol, a request from the inbox through pending, execute and done. |
 | [pear-full-square/mrepo-base-runtime/](pear-full-square/mrepo-base-runtime/) | Module: the mrepo runtime, the engine running an mrepo's protocols. |
 | [pear-full-square/mrepo-base-service/](pear-full-square/mrepo-base-service/) | Module: the mrepo service protocol, the service state and its actions. |
+| [pear-full-square/mrepo-base-xpath/](pear-full-square/mrepo-base-xpath/) | Module: a local URI resolved to a node position in an mrepo, an ordinary node or a shortcut. |
 | [pear-full-square/mycelium-container-document/](pear-full-square/mycelium-container-document/) | A storage container: one value per file, written atomically, in the encoding it is given |
 | [pear-full-square/mycelium-git/](pear-full-square/mycelium-git/) | The repository rules over a backend contract |
 | [pear-full-square/mycelium-uri/](pear-full-square/mycelium-uri/) | Our URIs: parse, validate, split at known prefixes |

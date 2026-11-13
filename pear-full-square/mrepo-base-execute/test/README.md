@@ -10,3 +10,4 @@ The tests of mrepo-base-execute, a section per file, each test by its name.
 - exec.log: entries into the request's record, at or above the threshold
 - executed: a form completed elsewhere handed over as execute hands one
 - failed: a runtime's error in the request executing
+- exec.run: a command executed here; exec.forward: sent on, the principal waiting, returned with the response

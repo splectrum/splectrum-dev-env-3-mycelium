@@ -59,7 +59,7 @@ console.log(JSON.stringify({ bare: version, integrity }))
 
 // 1. The packages: each assembled (its modules/, node_modules included:
 // gitignored, so not there in a fresh clone), then bundled into the sources.
-for (const p of ['base-package-runtime', 'base-package-boot', 'base-package-service', 'package-docs-mrepo', 'package-docs-template']) {
+for (const p of ['base-package-runtime', 'base-package-boot', 'base-package-service', 'base-package-haicc', 'package-docs-mrepo', 'package-docs-template']) {
   tool(join(dev, 'tools', 'package-assemble.js'), join(dev, 'haiccing', p))
   tool(join(dev, 'tools', 'package-bundle.js'), join(dev, 'haiccing', p), `--out=${out}`)
 }
