@@ -59,6 +59,17 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   array, also for a plain path with a typo in it. Whether that is an
   error is for the one who submits the request to check. No rule of ours
   tells a plain path from a pattern.
+- **URIs are rewritten on exit, by a prefix** (the human). There will be
+  many rewrites: a linked mrepo that returns URIs needs them rewritten to
+  the mrepo that links it, and so on outwards. Instead of rewriting the
+  data, the output carries a prefix for its URIs: when a data set crosses
+  a boundary only the prefix is updated, and any tool showing the URIs
+  reconstructs them (prefix and URI).
+  - The prefix may be stored as an array, because the rewrites are fixed
+    chunks (the human; agreed by us: a rewrite is then an operation on
+    whole elements, and the array keeps the boundaries a joined string
+    loses, one chunk an mrepo crossed, so a tool can rebuild the path or
+    the chain of `haicc` commands that reaches it).
 - The flag `error-on-empty` is not in this round: "Future additions",
   below.
 
@@ -101,6 +112,20 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   `*` can occur until predicates are built. A command executed at
   several positions runs in the one execution: one failure, nothing
   merged.
+- The prefix, as put to the human (the array answered, the rest not):
+  - it is the execution's current root: an action answers relative to
+    its root without knowing where it stands, and the framework supplies
+    the prefix; no action sets it;
+  - it is a header on the envelope, not part of the data: every
+    hand-over already makes a new envelope around the unchanged core.
+    The first planned use of the record's headers;
+  - its chunks, outermost first; the first is the holder's layer. For
+    `haicc host haicc node-1 crud/read swarms`, the URI in the data
+    `swarms` throughout: inside `node-1` `["main"]`; handed to `host`
+    `["main", "node-1"]`; handed to the boot mrepo
+    `["main", "host", "node-1"]`; out to the sender `["host", "node-1"]`.
+    A boundary replaces the first chunk with its own layer and the
+    link's position; the way out drops it.
 - A leading slash is refused in a request's URI.
 - `./` is accepted wherever a URI is written and is not part of its
   canonical form (`./host` is `host`).
@@ -196,9 +221,10 @@ item 3), wanted for creating structure in `main`.
   change to this mrepo, undoable. Whoever wants the linked mrepo itself
   gone tears it down first (`boot/teardown`): the sender's matter, not
   something `crud` guards against.
-- **A URI in a result is in the internal format** (the human), from the
-  mrepo's root: `main/swarms`. An action cannot know a sender's
-  standpoint; there are internal requests that never see the outbox.
+- **A URI in a result is in the internal format** (the human): an action
+  cannot know a sender's standpoint; there are internal requests that
+  never see the outbox. With the prefix of task 1: the URI in the data is
+  relative to the execution's root, and the prefix says where that is.
 - The names (agreed): protocol `crud`, module
   `pear-full-square/mrepo-base-crud`, package
   `haiccing/base-package-crud`.
@@ -222,17 +248,14 @@ item 3), wanted for creating structure in `main`.
   named options yet).
 - A node with children deleted without `recurse`: refused, saying so.
 - The result, an array, an entry for each node (the rule of task 1):
-  `{ "uri": "main/swarms", "value": {}, "children": ["swarm-1"] }` for
+  `{ "uri": "swarms", "value": {}, "children": ["swarm-1"] }` (the
+  prefix `["main"]` on the envelope) for
   `read`, the children by name only (`crud/read swarms/*` reads them);
   `create` and `delete` answer in the same shape, saying for each node
   what happened: created, already there, deleted.
 - `read` at a shortcut shows a node that is a link, with where it leads.
   A URI still does not run through a shortcut: the way across is `haicc`
   at it.
-- A response that leaves through the outbox is not translated back:
-  only the request's own URI is in the sender's terms, translated once
-  on the way in; arguments and output are data, in the mrepo's own terms.
-  From outside, `crud/read swarms` answers with `"uri": "main/swarms"`.
 - Where it is open: in `base-component-haicc`, behind the service's door
   as `boot` is: activated by a `start` hook, deactivated by a `stop`
   hook.
