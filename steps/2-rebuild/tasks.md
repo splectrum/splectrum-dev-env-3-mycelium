@@ -235,6 +235,15 @@ item 3), wanted for creating structure in `main`.
   cannot know a sender's standpoint; there are internal requests that
   never see the outbox. With the prefix of task 1: the URI in the data is
   relative to the execution's root, and the prefix says where that is.
+- **Where it is open**:
+  - in `base-component-haicc`, behind the service's door as `boot` is:
+    activated by a `start` hook, deactivated by a `stop` hook (ours,
+    agreed);
+  - in the boot mrepo as well (the human): the haicc app may want to
+    create tools outside the realm of swarm management, and this could be
+    on the user's initiative, so it is good to be able to put some
+    structure in. The boot mrepo has no service: there `crud` is
+    activated by a `boot` hook, as its other protocols are.
 - The names (agreed): protocol `crud`, module
   `pear-full-square/mrepo-base-crud`, package
   `haiccing/base-package-crud`.
@@ -266,9 +275,6 @@ item 3), wanted for creating structure in `main`.
 - `read` at a shortcut shows a node that is a link, with where it leads.
   A URI still does not run through a shortcut: the way across is `haicc`
   at it.
-- Where it is open: in `base-component-haicc`, behind the service's door
-  as `boot` is: activated by a `start` hook, deactivated by a `stop`
-  hook.
 - Not in this task: `goto` at a position deeper inside `main` (the
   execution context opened at a position); it is the next item on the
   roadmap.
@@ -288,8 +294,12 @@ item 3), wanted for creating structure in `main`.
   refused (`pear-full-square/mycelium-uri/lib/uri.js`, checked).
 - A shortcut: `resolve` in `pear-full-square/mrepo-base-xpath`; it has no
   presence in `main`, its entry is in the `xpath` layer.
-- The activation hooks: `haiccing/base-component-haicc/mrepo/runtime/hooks/`
-  and the component's list of packages.
+- The activation hooks and the lists of packages, in both components:
+  `haiccing/base-component-haicc/mrepo/runtime/hooks/` (`start/`,
+  `stop/`, as `activate-boot.json` and `deactivate-boot.json` there) and
+  `haiccing/base-component-boot/mrepo/runtime/hooks/boot/` (as
+  `activate-help.json` there); each component's
+  `mrepo/packages/layer.json` (its own package last).
 - A new module and a new package are written into `package.json`
   (workspaces) and `package-lock.json` by hand, the module linked in
   `node_modules/` (`handover-next.md`, "The lock file by hand");
