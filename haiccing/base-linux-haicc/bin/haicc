@@ -1,10 +1,11 @@
 #!/bin/sh
 # haicc: the command. It only dispatches.
-#   haicc [--output] <URI> <protocol>/<action> <argument>...   an mrepo
-#       command: a URI starts with / (the local root), so a first part
+#   haicc [--raw | --output] <URI> <protocol>/<action> <argument>...   an
+#       mrepo command: a URI starts with / (the local root), so a first part
 #       starting with / is a command for the mrepos; it goes to the boot
-#       mrepo's inbox (haicc-request). --output: the completed form's output
-#       alone printed, not the response record
+#       mrepo's inbox (haicc-request). Its response record is printed
+#       unpacked, across lines. --raw: as it is stored, one line.
+#       --output: the completed form's output alone
 #   haicc <protocol>/<action> <argument>...          a command without a
 #       URI: the machine level, above the root mrepo, in the same form
 #       (boot/deploy, boot/teardown): the script haicc-<protocol>, its
@@ -22,9 +23,11 @@ haicc <URI> <protocol>/<action> <argument>...   a command for the mrepos:
                                                 go to this node position and
                                                 execute the command that
                                                 follows; its response record
-                                                printed whole
-haicc --output <URI> <protocol>/<action> ...    the same, the completed
-                                                form's output alone
+                                                printed, unpacked across lines
+haicc --raw <URI> <protocol>/<action> ...       the record as it is stored,
+                                                one line
+haicc --output <URI> <protocol>/<action> ...    the completed form's output
+                                                alone
 haicc boot/deploy                               the machine level: the boot
                                                 mrepo put in place at the
                                                 root, its runtime started
@@ -55,9 +58,11 @@ USAGE
 
 case "${1:-}" in
   /*) exec sh "$here/haicc-request" "$@" ;;
-  --output) shift; HAICC_OUTPUT=1; export HAICC_OUTPUT
+  --output|--raw)
+    if [ "$1" = --output ]; then HAICC_OUTPUT=1; export HAICC_OUTPUT; else HAICC_RAW=1; export HAICC_RAW; fi
+    option=$1; shift
     case "${1:-}" in /*) exec sh "$here/haicc-request" "$@" ;; esac
-    echo "haicc: --output goes before a URI" >&2; exit 2 ;;
+    echo "haicc: $option goes before a URI" >&2; exit 2 ;;
   ''|help|--help|-h) usage; exit 0 ;;
 esac
 name=$1; shift

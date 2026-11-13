@@ -47,7 +47,7 @@ out=$(sh "$pkg/haicc-install.sh" --home="$T/home" --bin="$T/bin" 2>&1)
 is $? 0 "installed: sh haicc-install.sh --home --bin"
 [ -x "$T/bin/haicc" ] && [ -f "$T/home/pins" ] && ok "the command registered in the bin folder, its scripts and pins in its own" || no "the command registered" "$out"
 PATH=$T/bin:$PATH; export PATH
-unset HAICC_HOME HAICC_WORK HAICC_OUTPUT 2>/dev/null
+unset HAICC_HOME HAICC_WORK HAICC_OUTPUT HAICC_RAW HAICC_WIDTH 2>/dev/null
 HAICC_TIMEOUT=180; export HAICC_TIMEOUT
 
 # 2. the dispatcher
@@ -59,6 +59,7 @@ out=$(haicc boot 2>&1); is $? 2 "haicc boot alone: exit 2 (the machine level is 
 has "$out" "haicc boot/deploy, haicc boot/teardown" "said"
 haicc boot/nosuch >/dev/null 2>&1; is $? 2 "no such action at the machine level: exit 2"
 out=$(haicc --output 2>&1); is $? 2 "haicc --output without a URI: exit 2"
+out=$(haicc --raw 2>&1); is $? 2 "haicc --raw without a URI: exit 2"
 
 # 3. nothing there yet: the prerequisites say what is missing; no boot
 is "$(haicc sources)" "github:$HAICC_ORG" "the sources at first: https, the backup, by default"
@@ -102,10 +103,25 @@ has "$out" '"repository":"boot"' "its runtime started"
 is "$(running | wc -l | tr -d ' ')" 1 "one runtime running: the boot mrepo's"
 
 # 7. commands: the host deployed at the root; passed through to it. The
-# response record is printed whole; --output: the output alone
-out=$(haicc / boot/deploy host base-component-haicc 2>&1); is $? 0 "haicc / boot/deploy host base-component-haicc"
+# response record is printed whole, unpacked across lines; --raw: as it is
+# stored, one line; --output: the output alone
+out=$(haicc --raw / boot/deploy host base-component-haicc 2>&1); is $? 0 "haicc --raw / boot/deploy host base-component-haicc"
 has "$out" '"deployed":"/host","mrepo":"local/host","package":"haiccing/base-component-haicc"' "its output: the haicc mrepo deployed at /host, its unique URI local/host"
-has "$out" '"topic":"/haicc/terminal"' "the response record printed whole: the core addressed back to the terminal"
+has "$out" '"topic":"/haicc/terminal"' "--raw: the response record as it is stored, the core addressed back to the terminal"
+is "$(printf '%s\n' "$out" | wc -l | tr -d ' ')" 1 "one line"
+out=$(haicc /host help/get / oneliner 2>&1); is $? 0 "haicc /host help/get /: by default the record unpacked"
+has "$out" '    "topic": "/haicc/terminal",' "across lines, an entry a line, indented: the core two deep"
+has "$out" '      "protocol": "haicc",' "the form three deep"
+[ "$(printf '%s\n' "$out" | wc -l | tr -d ' ')" -gt 10 ] && ok "many lines" || no "many lines" "$out"
+# nothing of a record changed by the unpacking: line breaks, indentation and
+# the space after an opened object's keys taken off again, it is the record
+for f in "$T"/home/work/mrepos/boot/outbox/*.json; do
+  case "$f" in */layer.json) continue ;; esac
+  back=$(awk -f "$T/home/bin/haicc-format.awk" "$f" | sed -e 's/^ *//' -e 's/\([^\\]\)": /\1":/g' | tr -d '\n')
+  [ "$back" = "$(cat "$f")" ] || { no "unpacked and packed again: the record as stored" "$f"; back=''; break; }
+done
+[ -z "$back" ] || ok "unpacked and packed again: every record in the outbox as stored"
+is "$(awk -f "$T/home/bin/haicc-format.awk" -v width=1000 "$f" | wc -l | tr -d ' ')" 1 "a record that fits the width: left on one line"
 out=$(haicc / boot/deploy host base-component-haicc 2>&1 >/dev/null); is $? 1 "deployed again: exit 1"
 is "$out" "haicc: deployed already: /host" "its error on stderr: /host is there already"
 out=$(haicc /host boot/deploy node-1 base-package-runtime 2>&1 >/dev/null); is $? 1 "the host booted: its boot protocol behind the service's door"
@@ -126,11 +142,11 @@ is "$out" "haicc: no protocol: deploy (boot, haicc, help, runtime)" "said, with 
 out=$(haicc / boot/remove host 2>&1 >/dev/null); is "$out" "haicc: no action: boot remove (deploy, redeploy, teardown)" "an action that is not there: said, with the protocol's actions"
 
 # 9. a node inside the host; commands chained through both
-out=$(haicc /host boot/deploy node-1 base-package-runtime 2>&1); is $? 0 "haicc /host boot/deploy node-1: executed by the haicc mrepo"
+out=$(haicc --raw /host boot/deploy node-1 base-package-runtime 2>&1); is $? 0 "haicc /host boot/deploy node-1: executed by the haicc mrepo"
 has "$out" '"deployed":"/node-1","mrepo":"local/node-1"' "the node deployed inside it"
 [ -d "$T/home/work/mrepos/boot/main/host/main/node-1/inbox" ] && ok "in the shadow of its main: main/host/main/node-1" || no "in the shadow of its main"
 is "$(running | wc -l | tr -d ' ')" 3 "three runtimes running: the boot mrepo's, the host's, the node's"
-out=$(haicc /host haicc /node-1 help/get /packages oneliner 2>&1); is $? 0 "haicc /host haicc /node-1 help/get /packages: chained through two shortcuts"
+out=$(haicc --raw /host haicc /node-1 help/get /packages oneliner 2>&1); is $? 0 "haicc /host haicc /node-1 help/get /packages: chained through two shortcuts"
 has "$out" '"uri":"/packages"' "answered by the node"
 case "$out" in *base-package-boot*) no "the node's packages, not the host's" "$out" ;; *) ok "the node's packages, not the host's" ;; esac
 out=$(haicc /host/node-1 help/get 2>&1 >/dev/null); is $? 1 "a URI running through a shortcut: exit 1"

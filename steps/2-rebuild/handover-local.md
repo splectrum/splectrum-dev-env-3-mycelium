@@ -46,8 +46,9 @@ haicc /host service/start
   and start over: `haicc boot/teardown` (every runtime under the work
   folder stopped, the mrepos and the package store removed; Bare, the
   sources and the scripts stay), then `haicc boot/deploy` again.
-- A command prints its response record whole; `haicc --output <URI> ...`
-  prints the output alone.
+- A command prints its response record whole, unpacked across lines;
+  `haicc --raw <URI> ...` prints it as stored, one line;
+  `haicc --output <URI> ...` the output alone.
 
 ## Releases: created on the local machine
 

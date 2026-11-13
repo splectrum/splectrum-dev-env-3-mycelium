@@ -11,12 +11,16 @@
 #                  resolves the position:
 #                    haicc /host service/start    ->  haicc /host service/start
 # The parts go as typed, unnamed; the mrepo interprets them.
-# Prints the response record whole, as it is in the outbox folder; exit 0
-# when its completed form holds an output, 1 an error (also said on stderr).
+# Prints the response record whole, unpacked across lines in a compact form
+# (haicc-format.awk: nothing of it changed); exit 0 when its completed form
+# holds an output, 1 an error (also said on stderr).
 #   HAICC_TIMEOUT   seconds to wait for the response (120); none in time:
 #                   exit 4 (the request stays; its key is said)
+#   HAICC_RAW=1     the record printed as it is in the outbox folder, one
+#                   line (haicc --raw)
 #   HAICC_OUTPUT=1  the completed form's output alone printed, not the
 #                   record (haicc --output)
+#   HAICC_WIDTH     the width the unpacked record is fitted to (80)
 set -u
 . "$(dirname "$0")/haicc-lib.sh"
 [ $# -ge 2 ] || fail "haicc <URI> <protocol>/<action> <argument>... (a command follows the URI)" 2
@@ -59,5 +63,8 @@ while [ ! -f "$back" ]; do
   sleep 0.2 2>/dev/null || sleep 1
   waited=$((waited + 1))
 done
-if [ "${HAICC_OUTPUT:-}" = 1 ]; then quiet=''; else quiet=1; cat "$back"; fi
+if [ "${HAICC_OUTPUT:-}" = 1 ]; then quiet=''
+elif [ "${HAICC_RAW:-}" = 1 ]; then quiet=1; cat "$back"
+else quiet=1; awk -f "$(dirname "$0")/haicc-format.awk" -v width="${HAICC_WIDTH:-80}" "$back"
+fi
 awk -f "$(dirname "$0")/haicc-response.awk" -v quiet="$quiet" "$back"

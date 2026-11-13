@@ -55,8 +55,38 @@ haicc /host service/start
 
 The script writes a record into the boot mrepo's inbox folder, waits for
 the response in its outbox folder, and prints the response record whole,
-as it is there. The exit code comes from its completed form: 0 an output,
-1 an error, which is also said on stderr.
+unpacked across lines in a compact form: what fits on a line stays as it
+is stored, what does not is opened, an entry a line. The exit code comes
+from its completed form: 0 an output, 1 an error, which is also said on
+stderr.
+
+```
+{
+  "topic": "/outbox",
+  "key": "f949ad01-34db-4dd9-a5bc-bf438a21028c",
+  "timestamp": "2026-11-13T02:02:31.745Z",
+  "headers": {},
+  "value": {
+    "topic": "/haicc/terminal",
+    "key": "f949ad01-34db-4dd9-a5bc-bf438a21028c",
+    "timestamp": "2026-11-13T02:02:29.000Z",
+    "headers": {},
+    "value": {
+      "command": ["haicc","/host","service/start"],
+      "protocol": "haicc",
+      "action": "goto",
+      "uri": "/host",
+      "args": ["service/start"],
+      "remote": {
+        "at": "/host",
+        "folder": "main/host",
+        "key": "0c1d4c6e-6a52-4e0a-9b4a-0d7c2f0e2f11"
+      },
+      "output": {"service":"started","state":"started"}
+    }
+  }
+}
+```
 
 There is no mrepo context at the command line, so one rule of its own:
 
@@ -71,8 +101,11 @@ go as typed, unnamed; the mrepo interprets them.
 
 - `HAICC_TIMEOUT`: seconds to wait for the response, 120; none in time:
   exit 4, and the request stays.
+- `haicc --raw <URI> ...`, or `HAICC_RAW=1`: the record as it is in the
+  outbox folder, one line.
 - `haicc --output <URI> ...`, or `HAICC_OUTPUT=1`: the completed form's
   output alone printed, not the record.
+- `HAICC_WIDTH`: the width the unpacked record is fitted to, 80.
 
 Tearing down, bottom up:
 
