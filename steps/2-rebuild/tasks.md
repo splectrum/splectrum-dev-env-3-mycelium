@@ -7,8 +7,11 @@ its record is then a part in `readme.md`.
 How to read a task:
 
 - **Settled** is what the human said or confirmed. Build it as written.
+- **Left to us** is what the human handed over: ours to decide and to
+  change while building. Say what was done.
 - **Proposed** is ours, put to the human and not yet answered. Confirm it
-  with the human before building ("go"); do not build on it as it is.
+  with the human before building ("go"), unless the task says it is ours
+  to keep or change.
 - **Where** names the code found when the task was discussed, to start
   from; check it again, the code may have moved.
 
