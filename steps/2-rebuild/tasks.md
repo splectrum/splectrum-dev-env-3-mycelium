@@ -164,17 +164,26 @@ item 3), wanted for creating structure in `main`.
     it is not;
   - the system name starts with a dot: it is naturally hidden, our URIs
     do not allow it.
-- With task 1, `crud` gets the full URI, layer first, and nothing from
-  outside can name another layer.
+- With task 1, `crud` gets the URI from the mrepo's root, layer first
+  (`main/swarms/swarm-1`, `runtime/log`), and nothing from outside can
+  name another layer.
+- The names (agreed): protocol `crud`, module
+  `pear-full-square/mrepo-base-crud`, package
+  `haiccing/base-package-crud`.
+- The actions (agreed): `create`, `read`, `delete`. `update` is not there
+  at all: asking for it answers
+  `no action: crud update (create, delete, read)`.
+- The two repositories are created by the human now (asked for
+  2026-11-13, public as the others; check they exist before the product
+  pushes), with these descriptions:
+  - `pear-full-square/mrepo-base-crud`: "Module: the mrepo crud protocol,
+    an mrepo's nodes created, read and deleted by URI."
+  - `haiccing/base-package-crud`: "Package: the crud protocol, the
+    generic actions on an mrepo's data: its nodes created, read and
+    deleted by URI."
 
-**Proposed** (put to the human, not yet answered; the first two lines were
-not objected to)
+**Proposed** (put to the human, not yet answered)
 
-- Names: protocol `crud`, module `pear-full-square/mrepo-base-crud`,
-  package `haiccing/base-package-crud` (the package's name is the
-  roadmap's).
-- Actions: `create`, `read`, `delete`. `update` is not there: asking for
-  it answers `no action: crud update (create, delete, read)`.
 - The stored form:
   - a node without children is the file `<name>.json`, holding its
     document (`{}` when none is given): `/main/swarms/swarm-1` is
@@ -222,10 +231,8 @@ not objected to)
   (workspaces) and `package-lock.json` by hand, the module linked in
   `node_modules/` (`handover-next.md`, "The lock file by hand");
   `tools/release.js` builds every package.
-- The repositories `pear-full-square/mrepo-base-crud` and
-  `haiccing/base-package-crud` do not exist on GitHub (checked
-  2026-11-13): to be created by the human before the product pushes.
-  Building and testing here does not need them.
+- Building and testing here does not need the two new repositories; the
+  product pushes do.
 
 ## 3. The rest actions removed
 
