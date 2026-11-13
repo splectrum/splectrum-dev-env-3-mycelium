@@ -43,7 +43,9 @@ the work reaches it.
   test report against the bundle built), a package's pre-release
   (`package-test.js`: built, its `full` set run from the bundle unless its
   report is current, the report written into `test-reports/` and bundled
-  with it), the product
+  with it), a package brought to the template (`package-template.sh`: the
+  generic tests' folders and `test-reports/` copied from the template's
+  repository, the package pinned to that commit), the product
   repositories (`products.sh` for the modules, `packages.sh` for the
   packages), the checks (`help-extract.js`, `code-check.js`). `sources/`
   and `node_modules/` are ignored by git: a fresh clone needs

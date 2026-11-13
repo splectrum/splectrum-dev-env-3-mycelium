@@ -2248,3 +2248,32 @@ names the file without linking it. Validated from no report at all: the
 first pre-release passes, the second runs nothing, the same bundle; the
 three files are in the bundle.
 
+## 50. The pin; package-docs-mrepo brought to the template (2026-11-14)
+
+The human: bring `package-docs-mrepo` in line with the template. With it
+the pin the human described: a package is self-contained and pinned to a
+commit of the template; bringing it to a newer template is an explicit
+step for that package.
+
+- **The pin**: `template` in a package's `package.json`, the template's
+  repository and the commit the package was brought to. Described in the
+  template ("From the template", `package.json`); the package check asks
+  every package but the template for it.
+- **`tools/package-template.sh <package>...`**: the explicit step. From
+  the template's own repository, at the commit it is at: the seven
+  generic tests' folders written into the package's `test/`,
+  `test-reports/README.md`, the pin set. The package's own tests, sets
+  and READMEs are not touched.
+- **`package-docs-mrepo`** brought to it, pinned to
+  `haiccing/package-docs-template@deb7ed6`: the folders, `test-reports/`,
+  its `test/README.md` linking each test's folder, its README linking
+  `test-reports/`, `modules` in its `full` set as the template has it.
+
+**Validated**: the template's pre-release again (its page changed: 6
+units passed, report written); the check's own tests, 13; the READMEs,
+140, no problems. `package-docs-mrepo`'s pre-release: 6 units, 22 tests,
+51 asserts passed, the report written; again: current, nothing run; each
+test from its own folder passes. Neither documentation package has a
+line in `tools/bare tools/code-check.js` any more; the eight others, 78
+(each now also lacking the pin). Both repositories pushed.
+
