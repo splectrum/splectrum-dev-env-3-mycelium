@@ -156,14 +156,22 @@ item 3), wanted for creating structure in `main`.
   internal requests on other layers: those changes are then audited (a
   request each). The human's consideration: with `main` only there is no
   natural auditing on the layers, where it could be useful.
-- A folder needs a file in it; the convention for the "dummy":
-  - an empty folder is created as a file, and changed into a folder when
-    needed;
-  - with folder metadata as part of the structure: a JSON document with
-    the folder's name while it is empty, and an agreed system name when
-    it is not;
-  - the system name starts with a dot: it is naturally hidden, our URIs
-    do not allow it.
+- **The stored form** (agreed 2026-11-13, replacing the human's earlier
+  suggestion of a file turned into a folder when needed): every node is
+  a folder holding `.node.json`, its document, `{}` when no value is
+  given. `main/swarms/swarm-1` is `swarms/swarm-1/.node.json` in `main`.
+  - The folder is created straight away, with the file in it: it is the
+    "dummy" that keeps the folder in git.
+  - The system name starts with a dot (the human): it is naturally
+    hidden, our URIs do not allow it.
+  - Why: one stored form, no conversion; a write touches only its own
+    node (a file turned into a folder would have a create rewrite its
+    parent, where parallel steps would collide).
+  - Its costs, accepted: two git objects a node; the existing files on
+    other layers (`runtime/service.json`) are not in this form, so `crud`
+    does not see them as nodes: they move to it when an internal use
+    comes.
+  - The two repositories exist (checked on GitHub, 2026-11-13).
 - With task 1, `crud` gets the URI from the mrepo's root, layer first
   (`main/swarms/swarm-1`, `runtime/log`), and nothing from outside can
   name another layer.
@@ -173,9 +181,8 @@ item 3), wanted for creating structure in `main`.
 - The actions (agreed): `create`, `read`, `delete`. `update` is not there
   at all: asking for it answers
   `no action: crud update (create, delete, read)`.
-- The two repositories are created by the human now (asked for
-  2026-11-13, public as the others; check they exist before the product
-  pushes), with these descriptions:
+- The two repositories, created by the human (2026-11-13, public), with
+  these descriptions:
   - `pear-full-square/mrepo-base-crud`: "Module: the mrepo crud protocol,
     an mrepo's nodes created, read and deleted by URI."
   - `haiccing/base-package-crud`: "Package: the crud protocol, the
@@ -184,19 +191,8 @@ item 3), wanted for creating structure in `main`.
 
 **Proposed** (put to the human, not yet answered)
 
-- The stored form:
-  - a node without children is the file `<name>.json`, holding its
-    document (`{}` when none is given): `/main/swarms/swarm-1` is
-    `swarms/swarm-1.json` in `main`;
-  - creating its first child turns it into the folder `<name>/`, its
-    document moved inside as `.node.json` (the exact system name is
-    ours; the leading dot is the human's);
-  - deleting its last child turns it back into the file: one stored form
-    for each case;
-  - a node's name is a plain name, no extension (`isName`,
-    `mycelium-uri`): the URI never shows how it is stored;
-  - on another layer the same holds: `/runtime/service` is
-    `service.json`; a folder there has no document of its own.
+- A node's name is a plain name, no extension (`isName`,
+  `mycelium-uri`).
 - Strict by default: `create` refuses a position that exists, or one
   whose parent does not; `delete` refuses a node that still has children,
   or a shortcut below it; `read` returns the node's value and the names
