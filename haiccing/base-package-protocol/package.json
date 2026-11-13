@@ -1,0 +1,16 @@
+{
+  "name": "base-package-protocol",
+  "description": "Package: the protocol protocol, activating and deactivating the protocols an mrepo offers to the outside.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "main.js",
+  "modules": [
+    "pear-full-square/mrepo-base-protocol",
+    "pear-full-square/mrepo-base-help",
+    "pear-full-square/pkgm-base-check"
+  ],
+  "scripts": {
+    "test": "bare test/run.js"
+  }
+}

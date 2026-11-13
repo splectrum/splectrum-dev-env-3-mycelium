@@ -6,15 +6,18 @@ Entry: `run.js`; the test: `start.test.js`.
 
 ## Steps
 
-- An mrepo written as a deploy of the runtime package alone leaves it: its
-  layers on the filesystem storage, no service, so no gate.
+- An mrepo written from the runtime package's part of the structure
+  alone: its layers on the filesystem storage, its boot hooks, no package
+  linked.
 - The runtime started (`bare run.js --work=<folder>`; `RUNTIME`: a bundle
   to test instead, the release check): running, its status over its local
   connection.
-- Its own protocols, `runtime` and `help`, recorded in its `protocols`
-  layer as it started: an internal request.
-- A request posted through its inbox folder, answered in its outbox; a
-  protocol it does not offer, refused as it executes.
+- Its boot hooks placed as its own requests as it started, each done
+  before anything is taken in. With no package linked, the protocols they
+  name are not there, and each says so: nothing is active.
+- A request posted through its inbox folder, for a protocol that is
+  loaded and not active: refused. For one it does not have: refused, said
+  with the active ones.
 - Asked to stop: its process ends.
 
 Leaves nothing running.

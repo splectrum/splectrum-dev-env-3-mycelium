@@ -32,8 +32,8 @@ Only its note is committed.
 >    `# checks = <n>/<n> pass` and `# ok`; exit 0 passed, 1 failed. It
 >    leaves nothing running: check with `pgrep -fa "bin/bare"`.
 > 5. **Run the packages' own tests**, each from its bundle, from the clone's
->    folder, for each of `base-package-runtime`, `base-package-help`,
->    `base-package-boot`, `base-package-service`, `base-package-haicc`,
+>    folder, for each of `base-package-runtime`, `base-package-protocol`,
+>    `base-package-help`, `base-package-boot`, `base-package-service`, `base-package-haicc`,
 >    `base-component-boot`, `base-component-haicc`, `package-docs-mrepo`,
 >    `package-docs-template`:
 >    `SOURCES=$PWD/sources tools/bare sources/haiccing/<package>.bundle /test/full`

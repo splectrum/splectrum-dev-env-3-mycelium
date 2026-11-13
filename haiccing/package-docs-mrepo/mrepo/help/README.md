@@ -14,6 +14,9 @@ always matches the packages actually linked.
 
 ## Usage
 
+- **Written by `help/extract`**, an ordinary action. It is run by a hook:
+  at `boot` where the mrepo has no service, at the service's `initialise`
+  where it has one. Before that, `help/get` says nothing is extracted yet.
 - **Read with `help get <uri> [<level> | <section>]`**: the
   README documenting that URI, with each link's one-liner. Levels:
   `oneliner`, `summary` (the default), `detail`.

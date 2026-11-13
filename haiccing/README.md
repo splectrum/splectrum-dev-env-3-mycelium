@@ -5,6 +5,7 @@ each at `haiccing/<repo>`, in the package structure
 (`package-docs-template/`):
 
 - Packages, each one protocol: `base-package-runtime/`, the runtime;
+  `base-package-protocol/`, the activation of protocols;
   `base-package-help/`, help; `base-package-boot/`, the boot protocol;
   `base-package-service/`, the service; `base-package-haicc/`, haicc.
 - Components, several packages deployed together: `base-component-boot/`,

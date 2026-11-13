@@ -32,9 +32,10 @@ branch is merged back into its target; a failure resets instead. The runtime,
 - **What is not there is said with what is**: `no protocol: <name>`, with
   the mrepo's protocols; `no action: <protocol> <action>`, with the
   protocol's actions.
-- **A command executed here** (`exec.run(command)`): its parts
+- **A command executed here** (`exec.run(command, { own })`): its parts
   interpreted, checked as the request itself is, its action run in the
-  same execution; its value returned.
+  same execution; its value returned. `own`: as the mrepo's own, not held
+  at the door; the service runs its hooks so.
 
 The mrepo execute protocol, base variant: a request in `request/execute`
 executed in execution

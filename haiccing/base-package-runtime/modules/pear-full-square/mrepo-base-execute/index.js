@@ -203,10 +203,11 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       // where it started; the action goes on.
       reset: () => rollbackAll(),
       // A command executed here, in this execution: its parts interpreted,
-      // checked as this request is, its action run; its value.
-      run: async command => {
+      // checked as this request is, its action run; its value. own: as the
+      // mrepo's own (a hook: not held at the door).
+      run: async (command, { own = false } = {}) => {
         const inner = formOf(Array.isArray(command) || typeof command === 'string' ? { command } : command, ctx.protocols ?? {})
-        const why = check(inner, await runtimeData(ctx), { internal })
+        const why = check(inner, await runtimeData(ctx), { internal: internal || own })
         if (why) throw new Error(why)
         const fn = actions[inner.protocol]?.[inner.action]
         if (!fn) throw new Error(unknown(actions, inner.protocol, inner.action))

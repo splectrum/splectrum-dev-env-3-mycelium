@@ -28,7 +28,8 @@ inspect. One line a check, the count last; exit 0 passed, 1 failed.
    `base-component-haicc`; the response record printed unpacked across
    lines by default, as stored with `--raw`; every record in the outbox
    unpacked and packed again is the record as stored; deployed
-   again, an error on stderr; its boot protocol behind the service's door;
+   again, an error on stderr; its boot protocol behind the service's door,
+   not active; its help not extracted yet;
    `service/initialise` and `service/start` passed through to it, each
    answering what was done and the state now (`--output`).
 8. **What is missing is said**: a target, a package, a command; a
@@ -36,7 +37,8 @@ inspect. One line a check, the count last; exit 0 passed, 1 failed.
 9. **A node inside the host**, deployed by a command passed through;
    commands chained through both shortcuts; a URI running through a
    shortcut; an argument with spaces and quotes; the output alone.
-10. **Torn down**: the node; the service stopped and shut down; the host.
+10. **Torn down**: the node; the service stopped, its boot protocol
+    deactivated; shut down; the host.
 11. **The boot again**: there already, kept.
 12. **The machine level torn down**: `haicc boot/teardown` with a host
     deployed: both runtimes stopped, the mrepos and the package store

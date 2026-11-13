@@ -1,6 +1,6 @@
 // The runtime for the module's tests, from the command line: started with
-// the rest and service protocols as packages would offer them (their
-// actions and their configs passed as its own).
+// the rest, service and protocol protocols as packages would offer them
+// (their actions and their configs passed as its own).
 //   bare test/runtime.js start --work=<host folder>   the runtime, in the
 //       foreground (`start` in the library detaches it)
 //   bare test/runtime.js version
@@ -9,13 +9,15 @@ import process from 'bare-process'
 import { resolve } from 'bare-path'
 import { ACTIONS } from 'mrepo-base-execute'
 import { initialise, start, stop, shutdown, CONFIG } from 'mrepo-base-service'
+import { activate, deactivate, CONFIG as PROTOCOL } from 'mrepo-base-protocol'
 import { version, run } from '../index.js'
 
 const own = {
-  actions: { rest: ACTIONS.rest, service: { initialise, start, stop, shutdown } },
+  actions: { rest: ACTIONS.rest, service: { initialise, start, stop, shutdown }, protocol: { activate, deactivate } },
   protocols: {
     service: CONFIG,
-    rest: { gated: true, actions: { get: { uris: ['/', '/main/**', '/runtime/**', '/packages/**', '/request/**'] }, put: { uris: ['/main/**'] }, delete: { uris: ['/main/**'] } } }
+    protocol: PROTOCOL,
+    rest: { actions: { get: { uris: ['/', '/main/**', '/runtime/**', '/packages/**', '/request/**'] }, put: { uris: ['/main/**'] }, delete: { uris: ['/main/**'] } } }
   }
 }
 

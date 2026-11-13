@@ -24,6 +24,7 @@ bare base-component-boot.bundle --work=<folder> --sources=folder:<sources>
 |---|---|
 | `base-package-runtime` | the runtime, its layers, the `runtime` protocol |
 | `base-package-help` | the `help` protocol and the help layer |
+| `base-package-protocol` | the `protocol` protocol: activate, deactivate |
 | `base-package-boot` | the `boot` protocol: deploy, teardown, redeploy |
 | `base-package-haicc` | the `haicc` protocol: goto |
 | `package-docs-mrepo`, `package-docs-template` | the documentation |
@@ -60,7 +61,9 @@ command as typed and a GUID. Each step's outcome is logged in it.
 
 - Its unique URI is `local/boot`. It is the root: commands are addressed
   to it, and it passes on those for the mrepos linked in it.
-- No `service`: it is not service managed.
+- No `service`: it is not service managed. Its `boot` hooks, fired by its
+  runtime each time it starts, activate its protocols and extract its
+  help.
 
 ## Package
 

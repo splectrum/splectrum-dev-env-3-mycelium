@@ -4,8 +4,8 @@ The help protocol: an mrepo's help, extracted from the READMEs of the packages i
 
 An mrepo that links it has a `help` layer. `help/extract` fills it from the
 READMEs the linked packages carry, each at the URI it documents, with an
-index; `help/get <URI>` reads one, at a level, with the one-liner of each
-link below it, so the help can be walked down from the root.
+index; `help/get <URI>` reads one, with the one-liner of each link below
+it, so the help can be walked down from the root.
 
 | | |
 |---|---|
@@ -25,6 +25,8 @@ haicc /host help/get /protocols detail
 - `help/get <URI> [<level> | <section>]`: the levels are `oneliner`,
   `summary`, the default, and `detail`; or one section, by its title.
 - `help/extract`: the help layer written again from the linked packages.
+  Run by a hook: at `boot` in an mrepo without a service, at the
+  service's `initialise` in one that has it.
 
 ## Package
 

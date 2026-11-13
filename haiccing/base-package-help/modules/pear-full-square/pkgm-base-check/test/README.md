@@ -12,3 +12,4 @@ The tests of pkgm-base-check, a section per file, each test by its name.
 - a package well formed: its structure, its protocols, what it carries: none
 - a package that breaks each
 - a list that does not end with its own package
+- hooks: in their place, on a transition, each a command

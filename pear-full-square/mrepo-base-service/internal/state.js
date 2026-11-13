@@ -1,8 +1,10 @@
 // The service state, in the runtime layer (/runtime/service.json: { state }),
-// read and moved by the service actions; and the protocol's config: each
-// action at /, in the states that allow it (the state machine: booted ->
-// initialised -> started, and back).
+// read and moved by the service actions, each firing its transition's
+// hooks first; and the protocol's config: each action at /, in the states
+// that allow it (the state machine: booted -> initialised -> started, and
+// back).
 import * as json from 'mycelium-value-json'
+import { hooks } from 'mrepo-base-request'
 
 export const STATE = '/runtime/service.json'
 
@@ -15,6 +17,18 @@ export async function stateOf (exec) {
 export async function moveTo (exec, state, done) {
   exec.put(STATE, json.encode({ ...await stateOf(exec), state }))
   return { service: done, state }
+}
+
+// A transition made: its hooks run first (the commands the mrepo's defining
+// package dropped into /runtime/hooks/<transition>/, in name order), each in
+// this same execution, as the mrepo's own; then the state moved. A hook that
+// fails fails the transition: nothing of it stays.
+export async function transition (exec, name, state, done) {
+  for (const h of await hooks(exec, name)) {
+    await exec.run(h.command, { own: true })
+    exec.log?.('info', 'hook', { transition: name, hook: h.name, command: h.command.join(' ') })
+  }
+  return moveTo(exec, state, done)
 }
 
 const at = states => ({ uris: ['/'], states })

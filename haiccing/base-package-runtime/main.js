@@ -23,6 +23,7 @@ const UNITS = {
   "/test/mrepo-in-situ": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/mrepo-in-situ.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-execute": () => Promise.all([import("./modules/pear-full-square/mrepo-base-execute/test/execute.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/test/help.test.js")]),
+  "/test/modules/pear-full-square/mrepo-base-protocol": () => Promise.all([import("./modules/pear-full-square/mrepo-base-protocol/test/protocol.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-request": () => Promise.all([import("./modules/pear-full-square/mrepo-base-request/test/boxes.test.js"), import("./modules/pear-full-square/mrepo-base-request/test/check.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-runtime": () => Promise.all([import("./modules/pear-full-square/mrepo-base-runtime/test/cycle.test.js"), import("./modules/pear-full-square/mrepo-base-runtime/test/runtime.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-service": () => Promise.all([import("./modules/pear-full-square/mrepo-base-service/test/service.test.js")]),

@@ -3,11 +3,11 @@
 The service protocol: it manages the service state of an mrepo's external API.
 
 An mrepo that links it is service managed. Its state starts at `booted`;
-`service initialise /` and `service start /` open its external API,
-`service stop /` and `service shutdown /` close it again. The door closes
-a selection of protocols, not all: those whose config says `gated` wait
-for the service to be started; the others stay open. An mrepo without the
-service, such as the boot mrepo, has no gate.
+`service/initialise` and `service/start` open its external API,
+`service/stop` and `service/shutdown` close it again. Each action first
+runs the hooks of its transition, then moves the state. The door is two
+hooks: one on `start` that activates what sits behind it, one on `stop`
+that deactivates it again.
 
 | | |
 |---|---|
@@ -21,7 +21,7 @@ service, such as the boot mrepo, has no gate.
 |---|---|
 | `booted` | `initialise` |
 | `initialised` | `start`, `shutdown` |
-| `started` | `stop`, and the gated protocols |
+| `started` | `stop`, and what its `start` hooks activated |
 
 Each action answers what was done and the state the service is in now:
 `service/stop` answers `{ "service": "stopped", "state": "initialised" }`.

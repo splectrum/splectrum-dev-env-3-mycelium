@@ -8,7 +8,7 @@ const LEVELS = ['oneliner', 'summary', 'detail']
 
 export async function get (exec, { uri, args = [] }) {
   const u = uri.replace(/^\/help(?=\/|$)/, '') || '/'
-  const index = JSON.parse((await exec.read('/help/index.json').catch(() => { throw new Error('no help in this mrepo (its help layer)') })).toString())
+  const index = JSON.parse((await exec.read('/help/index.json').catch(() => { throw new Error('no help extracted in this mrepo yet (help/extract)') })).toString())
   const known = index[u]
   if (!known) {
     const near = Object.keys(index).filter(k => u.startsWith(k === '/' ? '/' : k + '/')).sort((a, b) => b.length - a.length)[0] ?? '/'

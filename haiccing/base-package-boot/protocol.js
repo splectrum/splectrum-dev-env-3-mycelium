@@ -1,6 +1,6 @@
 // base-package-boot's protocols: the boot protocol, mounted by every mrepo that deploys
-// others. Linked into an mrepo, its configs are registered in the
-// protocols layer and its actions loaded by the runtime.
+// others. Linked into an mrepo, its config and its actions are loaded by
+// the runtime; a hook activates it for the outside.
 //   protocols   the configs: each protocol's actions, the URIs, the service
 //               states each is allowed in, the package that implements it
 //   actions     the actions, by protocol: (exec, form) -> output, or throws
@@ -14,7 +14,6 @@ const CHILD = { uris: ['/<name>'], target: true }
 export const protocols = {
   boot: {
     package: 'haiccing/base-package-boot',
-    gated: true, // behind the service's door, where the mrepo has a service
     description: 'Deploys and tears down child mrepos; executed by the parent.',
     actions: {
       deploy: { ...CHILD, args: ['package'], description: 'A child mrepo built inside this one from a target package, its packages linked, its runtime started; its argument the package.' },

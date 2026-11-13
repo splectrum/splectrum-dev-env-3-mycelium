@@ -49,10 +49,10 @@ import { openStore } from 'p2p-store'
 import { mrepos } from 'p2p-mrepo'
 import { openRepo, writer } from 'mycelium-git'
 import { nativeBackend, p2pgitBackend } from 'mycelium-git'
-import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, layer, internal, DONE } from 'mrepo-base-request'
+import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, layer, internal, hooks, DONE } from 'mrepo-base-request'
 import { execute, failed } from 'mrepo-base-execute'
 import { IDENTITY } from 'mrepo-base-xpath'
-export { run as runtimeRun, register as runtimeRegister } from './lib/protocol.js'
+export { run as runtimeRun } from './lib/protocol.js'
 import { pathToFileURL } from 'bare-url'
 import pkg from './package.json' with { type: 'json' }
 
@@ -144,20 +144,20 @@ export async function run ({ work: w, repo: given = null, every = 200, own = nul
   // entry, loaded from its bundle in the mrepo's packages/ (its dispatcher's
   // run('/protocol')), its actions beside the framework's.
   // No protocol of its own built in: its own package's (own: base-package-
-  // runtime's runtime and help), and those of the packages linked. Their
-  // configs kept beside the actions: what the check reads (ctx.protocols).
+  // runtime's runtime), and those of the packages linked. All are loaded
+  // here, at boot; which are open to the outside is another matter (the
+  // active ones: protocol/activate, from the hooks). Their configs kept
+  // beside the actions: what the check reads (ctx.protocols).
   const loaded = await protocolsOf(ctx.repo, join(dir, 'packages'), own?.pkg)
   const actions = { ...(own?.actions ?? {}), ...loaded.actions }
   ctx.protocols = { ...(own?.protocols ?? {}), ...loaded.protocols }
-  // Before it is operational, its own requests: internal, straight to the
-  // handler (its help extracted, where it has a help layer and its packages
-  // offer the help protocol); the inbox not taken in until they are done.
+  // Boot: its hooks, the commands its defining package dropped into
+  // /runtime/hooks/boot/, placed as its own requests, in name order
+  // (internal, straight to the handler); the inbox not taken in until they
+  // are done. The runtime names no protocol: what is activated, extracted
+  // or made ready at boot is the hooks'.
   const starting = []
-  const has = async l => (await repo.backend.listBranches()).some(([b]) => b === l)
-  // the protocols it loaded, recorded in its protocols layer
-  if (await has('protocols') && actions.runtime?.register) starting.push((await internal(ctx, { protocol: 'runtime', action: 'register', uri: '/' })).name)
-  // its help, extracted from its packages
-  if (await has('help') && actions.help?.extract) starting.push((await internal(ctx, { protocol: 'help', action: 'extract', uri: '/' })).name)
+  for (const h of await hooks(ctx.repo, 'boot')) starting.push((await internal(ctx, { command: h.command })).name)
   ctx.intake = !starting.length
   const status = () => ({ ok: true, pid: process.pid, started, repository: { name: repo.name, uri: ctx.uri, storage: repo.storage, id: repo.id, key: repo.key }, version })
   let stopping = null

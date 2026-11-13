@@ -109,10 +109,11 @@ out=$(haicc --raw / boot/deploy host base-component-haicc 2>&1); is $? 0 "haicc 
 has "$out" '"deployed":"/host","mrepo":"local/host","package":"haiccing/base-component-haicc"' "its output: the haicc mrepo deployed at /host, its unique URI local/host"
 has "$out" '"topic":"/haicc/terminal"' "--raw: the response record as it is stored, the core addressed back to the terminal"
 is "$(printf '%s\n' "$out" | wc -l | tr -d ' ')" 1 "one line"
-out=$(haicc /host help/get / oneliner 2>&1); is $? 0 "haicc /host help/get /: by default the record unpacked"
+out=$(haicc / help/get / oneliner 2>&1); is $? 0 "haicc / help/get /: by default the record unpacked"
 has "$out" '    "topic": "/haicc/terminal",' "across lines, an entry a line, indented: the core two deep"
-has "$out" '      "protocol": "haicc",' "the form three deep"
+has "$out" '      "protocol": "help",' "the form three deep"
 [ "$(printf '%s\n' "$out" | wc -l | tr -d ' ')" -gt 10 ] && ok "many lines" || no "many lines" "$out"
+out=$(haicc /host help/get / 2>&1 >/dev/null); is "$out" "haicc: no help extracted in this mrepo yet (help/extract)" "the host, booted: help active from boot, extracted by its initialise hook, not yet"
 # nothing of a record changed by the unpacking: line breaks, indentation and
 # the space after an opened object's keys taken off again, it is the record
 for f in "$T"/home/work/mrepos/boot/outbox/*.json; do
@@ -125,7 +126,7 @@ is "$(awk -f "$T/home/bin/haicc-format.awk" -v width=1000 "$f" | wc -l | tr -d '
 out=$(haicc / boot/deploy host base-component-haicc 2>&1 >/dev/null); is $? 1 "deployed again: exit 1"
 is "$out" "haicc: deployed already: /host" "its error on stderr: /host is there already"
 out=$(haicc /host boot/deploy node-1 base-package-runtime 2>&1 >/dev/null); is $? 1 "the host booted: its boot protocol behind the service's door"
-is "$out" "haicc: not now: boot deploy (the service is booted, not started)" "said"
+is "$out" "haicc: not now: boot deploy (boot is not active; the service is booted)" "said: boot is activated by the service's start"
 is "$(haicc --output /host service/initialise 2>&1)" '{"service":"initialised","state":"initialised"}' "haicc --output /host service/initialise: passed through to the haicc mrepo; what was done, the state now"
 is "$(haicc --output /host service/start 2>&1)" '{"service":"started","state":"started"}' "haicc /host service/start"
 
@@ -137,6 +138,7 @@ out=$(haicc / boot/teardown / 2>&1 >/dev/null); is "$out" "haicc: missing argume
 out=$(haicc / boot/deploy other 2>&1 >/dev/null); is "$out" "haicc: missing argument: package" "haicc / boot/deploy other: missing argument: package"
 out=$(haicc /host boot/deploy 2>&1 >/dev/null); is "$out" "haicc: missing argument: target" "and passed through: said by the mrepo it lands in"
 out=$(haicc /host 2>&1); is $? 2 "haicc /host, no command: exit 2 at the command line"
+out=$(haicc / protocol/activate / service 2>&1 >/dev/null); is "$out" "haicc: not now: protocol activate (protocol is not active)" "activating a protocol is the hooks', not a command from outside"
 out=$(haicc / deploy/teardown host 2>&1 >/dev/null); is $? 1 "a protocol that is not there: exit 1"
 is "$out" "haicc: no protocol: deploy (boot, haicc, help, runtime)" "said, with the protocols there"
 out=$(haicc / boot/remove host 2>&1 >/dev/null); is "$out" "haicc: no action: boot remove (deploy, redeploy, teardown)" "an action that is not there: said, with the protocol's actions"
@@ -161,6 +163,7 @@ case "$out" in *'"topic":'*) no "no record around it, HAICC_OUTPUT=1" "$out" ;; 
 # 10. torn down: the node; the service stopped and shut down; the host
 is "$(haicc --output /host boot/teardown node-1 2>&1)" '{"tornDown":"/node-1"}' "haicc /host boot/teardown node-1"
 is "$(haicc --output /host service/stop 2>&1)" '{"service":"stopped","state":"initialised"}' "haicc /host service/stop: stopped, the state initialised again"
+out=$(haicc /host boot/deploy node-2 base-package-runtime 2>&1 >/dev/null); is "$out" "haicc: not now: boot deploy (boot is not active; the service is initialised)" "stopped: its boot protocol deactivated, the door closed again"
 is "$(haicc --output /host service/shutdown 2>&1)" '{"service":"shut down","state":"booted"}' "haicc /host service/shutdown: shut down, the state booted again"
 is "$(haicc --output / boot/teardown host 2>&1)" '{"tornDown":"/host"}' "haicc / boot/teardown host: at the root, about the shortcut as an item"
 [ ! -e "$T/home/work/mrepos/boot/main/host" ] && ok "the host's folder removed" || no "the host's folder removed"

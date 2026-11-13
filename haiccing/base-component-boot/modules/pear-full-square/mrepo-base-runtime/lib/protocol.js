@@ -61,16 +61,4 @@ export async function run (exec, { uri, args = [] }) {
   return r
 }
 
-// runtime register /: the protocols the runtime loaded, each one's config
-// written into the protocols layer (/protocols/<protocol>.json); one no
-// longer loaded removed. An internal request, placed as the runtime starts.
-export async function register (exec, { uri }) {
-  if (uri !== '/') throw new Error(`runtime register: the whole mrepo only, / (not ${uri})`)
-  const loaded = exec.runtime.protocols
-  const there = (await exec.select('/protocols/*').catch(() => [])).map(([p]) => p.slice(p.lastIndexOf('/') + 1)).filter(n => n.endsWith('.json') && n !== 'layer.json')
-  for (const [name, cfg] of Object.entries(loaded)) exec.put(`/protocols/${name}.json`, Buffer.from(JSON.stringify(cfg, null, 2) + '\n'))
-  for (const f of there) if (!loaded[f.slice(0, -5)]) exec.remove(`/protocols/${f}`)
-  return { registered: Object.keys(loaded).sort() }
-}
-
-export const ACTIONS = { [PROTOCOL]: { run, register } }
+export const ACTIONS = { [PROTOCOL]: { run } }

@@ -154,12 +154,12 @@ test('deploy the runtime: the child\'s runtime started from its own packages, it
     t.ok(d.runtime?.pid, 'its runtime started')
     t.alike([(await ask({ repo: host, op: 'status' }))?.repository.name, (await ask({ repo: host, op: 'status' }))?.repository.uri], ['host', 'local/host'], 'running the child, by its directory; its unique URI its own')
     // a request into its inbox folder (the parent reaches it, forward): answered
-    const core = record('/test', { protocol: 'runtime', action: 'register', uri: '/' }, guid())
+    const core = record('/test', ['help/get', '/', 'oneliner'], guid())
     writeFileSync(join(host, 'inbox', `${core.key}.json`), JSON.stringify(wrap('/local/host/inbox', core)))
     const child = openRepo(p2pgitBackend(join(host, '.git'), { fs }))
     let back = null
     for (let i = 0; i < 100 && !back; i++) { back = await child.read(`/outbox/${core.key}.json`).then(json, () => null); if (!back) await new Promise(resolve => setTimeout(resolve, 100)) }
-    t.ok(back?.value.value.output, 'its inbox operational: a request answered (no service: no gate)')
+    t.ok(back?.value.value.output?.oneliner, `its inbox operational: its boot hooks run (help activated, extracted), a request answered ${back?.value.value.error ?? ''}`)
     let inFolder = null
     for (let i = 0; i < 50 && !inFolder; i++) { inFolder = existsSync(join(host, 'outbox', `${core.key}.json`)) ? JSON.parse(readFileSync(join(host, 'outbox', `${core.key}.json`))) : null; if (!inFolder) await new Promise(resolve => setTimeout(resolve, 100)) }
     t.alike(inFolder?.value.value, back.value.value, 'and in its outbox folder, as committed (for a subscriber)')

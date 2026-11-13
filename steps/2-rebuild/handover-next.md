@@ -43,7 +43,7 @@ built is in the packages: `haiccing/package-docs-template` and
 - **A test waits for a runtime's process to end** (signal 0, `kill -0`), not
   only for it to stop answering.
 
-## What is built (`readme.md`, parts 13 to 37)
+## What is built (`readme.md`, parts 13 to 45)
 
 - **Packages**: a package is one bundle carrying its structure (`mrepo/`),
   its code (`modules/`, assembled), its tests and its READMEs; its main a
@@ -85,9 +85,18 @@ built is in the packages: `haiccing/package-docs-template` and
 - **Documentation packages**: `package-docs-template`,
   `package-docs-mrepo`, linked into every mrepo, validating themselves.
 - **The service** (`base-package-service`): an mrepo that links it is
-  service managed: its external API gated by the service state, against
-  the protocols its runtime loaded and recorded in its `protocols` layer.
-  No protocol is built into the runtime: every one comes from a package.
+  service managed: a state machine (booted, initialised, started) whose
+  actions each run the hooks of their transition, then move the state.
+- **Hooks and activation** (parts 42 to 45): a request from outside is
+  accepted only for an active protocol; nothing is active by default.
+  `protocol/activate` and `protocol/deactivate` (`base-package-protocol`)
+  write the active set, the `protocols` layer. Hooks are files,
+  `/runtime/hooks/<transition>/<name>.json`, each a command: `boot` fired
+  by the runtime as it starts, the other four by the service. Runtime
+  config (the hooks, the service state) is laid in from the last package
+  of a list only, the one that defines the mrepo; a list ends with its
+  own package. The runtime names no protocol; every protocol has its own
+  package (`help` in `base-package-help`).
 
 ## The roadmap, in order
 
@@ -112,13 +121,6 @@ Not built yet, and the platform is not deployed until the first two are
    **Next, the human's priority**: the host's haicc mrepo is there; then a
    node's haicc mrepo, then a swarm going, the demos on top of the
    component (they bring the folders in `main`).
-   **After the initial testing** (the human, 2026-11-13): the help
-   protocol moved to a package of its own, `base-package-help`: a proper
-   protocol gets a package, as `haicc` did. It lives in
-   `base-package-runtime` today, beside `runtime` (the module is
-   `mrepo-base-help`). To discuss with it: what the runtime does at start,
-   where it places `help extract /` itself now; which packages then list
-   it (every mrepo needs it); a new repository, created by the human.
    **Open, each to settle with the human first**:
    - a position deeper inside `main` (`haicc /swarms/swarm-1 boot/deploy
      node-1`): `goto` refuses it for now; it needs the execution context
@@ -146,9 +148,7 @@ Not built yet, and the platform is not deployed until the first two are
      request; `boot/install` as one), fan-out, a time limit for a child
      that never answers, dispatch to another node;
    - the layer routing in the code against the storage rule; the two-way
-     sync of a folder with the Corestore;
-   - the boot mrepo's identity file laid into every mrepo that links the
-     boot package (part 36).
+     sync of a folder with the Corestore.
 3. **`base-package-crud`** (the human: CRUD, not rest): the generic
    actions on an mrepo's data as a protocol of its own, gated. It gets its
    full meaning with mutable and immutable implemented: an update on the

@@ -1,7 +1,9 @@
 // A booted repository for the tests: the repository `host`, its layers, its
 // packages manifest (none linked: the tests' runtime, test/runtime.js, is
-// given the rest and service protocols), its service state booted, the
-// pending queue preloaded with service initialise /. Without a setup: written directly. On the p2p
+// given the rest, service and protocol protocols), its service state booted,
+// its hooks (service active from boot; rest behind the service's door:
+// activated by its start, deactivated by its stop), the pending queue
+// preloaded with service initialise /. Without a setup: written directly. On the p2p
 // layer (as haicc-base-boot leaves the host) or on native git (storage:
 // 'git': a bare repository, <work>/mrepos/host/.git, and <work>/mrepo.json).
 // And an input's request, as HAICC's input sends it, its answer read.
@@ -13,14 +15,21 @@ import { writer, openRepo, nativeBackend, p2pgitBackend } from 'mycelium-git'
 import { record, wrap, guid, post, inboxFolder, setting, gitdirOf, PENDING } from 'mrepo-base-request'
 
 const author = { name: 'test', email: 'test@localhost' }
+// The hooks, as a defining package would drop them into the runtime layer.
+export const HOOKS = {
+  'boot/activate-service': ['protocol/activate', '/', 'service'],
+  'start/activate-rest': ['protocol/activate', '/', 'rest'],
+  'stop/deactivate-rest': ['protocol/deactivate', '/', 'rest']
+}
 async function layers (backend, { preload }) {
   const w = writer(backend)
-  for (const l of ['main', 'packages', 'runtime', 'inbox', 'outbox', 'request/pending/default', 'request/execute', 'request/done']) await w.createLayer(l, `Create ${l}`, { author })
+  for (const l of ['main', 'packages', 'runtime', 'protocols', 'inbox', 'outbox', 'request/pending/default', 'request/execute', 'request/done']) await w.createLayer(l, `Create ${l}`, { author })
   const p = await w.change('packages')
   await p.put('/manifest.json', Buffer.from(JSON.stringify({ packages: {} })))
   await p.commit('Installed', { author })
   const r = await w.change('runtime')
   await r.put('/service.json', Buffer.from(JSON.stringify({ state: 'booted' })))
+  for (const [f, command] of Object.entries(HOOKS)) await r.put(`/hooks/${f}.json`, Buffer.from(JSON.stringify(command)))
   await r.commit('Booted', { author })
   if (preload) {
     const q = await w.change(PENDING)

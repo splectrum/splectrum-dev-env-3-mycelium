@@ -1,24 +1,28 @@
 # /protocols
 
-The mrepo's external API: the config of each protocol it offers, recorded by its runtime.
+The mrepo's external API: the protocols that are active, one file a protocol, holding its config.
 
-A protocol comes with the package that implements it. Linking the package
-is all it takes: as the runtime starts it loads each linked package's
-protocols, and records their configs here, one file a protocol. The layer
-is atomic.
+A protocol comes with the package that implements it, and every linked
+package's protocols are loaded as the runtime starts. Loaded is not
+offered: a request from outside is accepted only for a protocol that is
+active, and nothing is active by default. This layer is the active set.
+`protocol/activate` writes a protocol's file here, `protocol/deactivate`
+removes it; the hooks of the mrepo's status transitions call them. The
+layer is atomic.
 
 ```
-/protocols/<protocol>.json     the protocol's config: its package, its actions
+/protocols/<protocol>.json     an active protocol's config: its package, its actions
 ```
 
 ## Protocols
 
 | protocol | actions | from |
 |---|---|---|
-| `runtime` | `run`: a linked package's entry by path, its tests above all; `register`: the protocols loaded, recorded here | `base-package-runtime`: every mrepo |
+| `runtime` | `run`: a linked package's entry by path, its tests above all | `base-package-runtime`: every mrepo |
+| `protocol` | `activate`, `deactivate`: a loaded protocol opened to the outside, or closed | `base-package-protocol`: an mrepo that offers anything |
 | `help` | `get`: the help layer read by URI; `extract`: the help layer written | `base-package-help`: an mrepo that has help |
-| `service` | `initialise`, `start`, `stop`, `shutdown`: the service state moved | `base-package-service`: an mrepo that is service managed |
-| `boot` | `deploy`, `teardown`, `redeploy` of a child mrepo, executed by the parent; gated | `base-package-boot`: an mrepo that deploys others |
+| `service` | `initialise`, `start`, `stop`, `shutdown`: the service state moved, each firing its hooks | `base-package-service`: an mrepo that is service managed |
+| `boot` | `deploy`, `teardown`, `redeploy` of a child mrepo, executed by the parent | `base-package-boot`: an mrepo that deploys others |
 | `haicc` | `goto`, its default action: the command that follows executed at a node position, or sent on at a shortcut | `base-package-haicc`: an mrepo addressed at a position, or passing commands on |
 
 One package, one protocol.
@@ -47,18 +51,28 @@ One package, one protocol.
   the state: the service's own.
 - `default`, on the protocol: the action taken when a command names the
   protocol alone. `haicc` is `haicc/goto`.
-- `gated`, on the protocol: it is behind the service's door, offered only
-  once the service is started. Not gated: offered whatever the state.
 
 ## Gate
 
-Where the mrepo is service managed, a request from the inbox is allowed
-when its protocol is loaded, its action configured and its URI one the
-config names. The service's door then closes a selection of protocols, not
-all: a gated one waits for the service to be started; the others, such as
-`runtime` and `help`, stay open, so a closed mrepo can still be inspected
-and tested. The gate reads what the runtime loaded; this layer is its
-record. Without a service there is no gate.
+A request from the inbox is allowed when its protocol is loaded, its
+action configured, what the action needs given, and its URI one the config
+names; and, as it executes, when its protocol is active and, for an action
+that names its states, the service is in one of them. What is not there is
+said with what is. The mrepo's own requests, its hooks among them, are not
+asked whether a protocol is active.
+
+## Hooks
+
+When a protocol is active is decided by hooks, files the package that
+defines the mrepo drops into its runtime layer (`/runtime`):
+
+- at `boot`: what the mrepo always offers. An mrepo without a service
+  offers everything it does this way.
+- at the service's `start` and `stop`: what sits behind its door.
+
+So a closed mrepo can still be inspected and tested: `runtime` and `help`
+are activated at boot. The `protocol` protocol itself is not activated:
+opening and closing is the hooks' business, not a request from outside.
 
 ## Later
 

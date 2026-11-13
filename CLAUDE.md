@@ -21,9 +21,9 @@ history, and each module has its own repository) and brought back when
 the work reaches it.
 
 - `haiccing/`: the packages, each at the path of its repository:
-  `base-package-runtime`, `base-package-help`, `base-package-boot`,
-  `base-package-service`, `base-package-haicc` (one package, one
-  protocol); the components `base-component-boot` (the initial boot mrepo
+  `base-package-runtime`, `base-package-protocol`, `base-package-help`,
+  `base-package-boot`, `base-package-service`, `base-package-haicc` (one
+  package, one protocol); the components `base-component-boot` (the initial boot mrepo
   and the program that puts it in place) and `base-component-haicc`
   (several packages deployed together, `main` empty; a list ends with its
   own package, which states the mrepo's runtime config);
