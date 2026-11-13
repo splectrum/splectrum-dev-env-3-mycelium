@@ -1689,3 +1689,36 @@ is still in the lockfile, and `tools/install.sh` still installs it.
 **Validated**: the six packages' full sets; the boot's test three times
 (91 asserts); the boot run by hand from its bundle; the checks, no
 problems.
+
+## 36. base-component-haicc (2026-11-13)
+
+Step five of building part 32.
+
+- **The component is a package that is only a list**: its
+  `mrepo/packages/layer.json` names the runtime, the boot protocol, the
+  service protocol, the haicc protocol, itself and the documentation
+  packages. No protocol, no code, no data: `main` stays empty.
+- **It lists itself, after the packages that bring structure**, so that
+  its list is the one laid in last and the one the mrepo holds.
+- **A package named without its organisation means `haiccing`**:
+  `boot/deploy host base-component-haicc`.
+- **Tested in the boot package's test**, which can deploy one: the
+  component deployed by a command; booted, its boot protocol behind the
+  service's door; `service/initialise` and `service/start` passed through
+  to it; a node deployed inside it; commands chained through both
+  shortcuts (`haicc /haicc haicc /node-1 help/get /packages`); the
+  component validated in situ; both torn down.
+
+**Found, to raise with the human**
+
+- **Teardown does not cascade.** Tearing down an mrepo that has deployed
+  mrepos of its own stops its runtime and removes its folder, and with it
+  its children's folders, but their runtimes keep running. The test tears
+  the node down first.
+- **The boot package's identity file** (`runtime/mrepo.json`,
+  `local/boot`) is laid into every mrepo that links the boot package;
+  deploy then writes the child's own over it. It works, but the file is
+  the boot mrepo's, not the boot protocol's.
+
+**Validated**: the seven packages' full sets; the boot's test three times
+(108 asserts); the checks, no problems (17 modules, 7 packages).

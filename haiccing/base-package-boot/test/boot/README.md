@@ -38,5 +38,13 @@ the tests: `boot.test.js`. It leaves nothing running.
      state booted and its API closed, its protocols recorded, the service's
      actions each in its state, its API open once started, a protocol it
      does not link not offered, the package validated in situ, torn down;
+   - the haicc component, deployed from `base-component-haicc` (named
+     without its organisation): its packages layer the component's list,
+     its `main` empty; booted, its boot protocol behind the service's door;
+     `haicc /haicc service/initialise` and `service/start` passed through
+     to it; a node deployed inside it by `haicc /haicc boot/deploy node-1`,
+     its shortcut in the haicc mrepo's `xpath` layer only; commands chained
+     through both shortcuts; the component validated in situ; the node,
+     then the component, torn down;
    - both runtimes stopped; the boot run again: already built, nothing
      committed, its runtime started again, nothing repeated.
