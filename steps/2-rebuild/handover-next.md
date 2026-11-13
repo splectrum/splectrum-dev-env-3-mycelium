@@ -115,13 +115,22 @@ Not built yet, and the platform is not deployed until the first two are
      opened at the position, and it comes with the first demo;
    - a node's unique URI, `<swarm>/<node>`: a child takes its parent's
      swarm today, so everything is `local/<name>`;
-   - teardown does not cascade: an mrepo torn down leaves its own
-     children's runtimes running (part 36);
    - into a node's container: mapped inbox and outbox folders, or an
      equivalent, secure; `base-manager-host`, `base-manager-node`;
-   - where our packages are published: `haicc sources download` fetches
-     Bare only, and the mrepos do not fetch over https (the backup is
-     recorded and passed on, nothing reads it);
+   - publishing (the human, 2026-11-13): a release is created on each
+     package's own repository, not in a repository of sources; signing is
+     off, we are not set up for it; what cannot be done from the cloud
+     session (creating a GitHub release) is done on the local machine.
+     For now: a local build into local sources, the repositories pushed
+     for completeness; the network is not good enough for many downloads.
+     Not built: `haicc sources download` fetches Bare only, and the
+     mrepos do not fetch over https (the backup is recorded and passed
+     on, nothing reads it). To settle: the sources folder structured to
+     take everything (proposed: a folder an organisation, ours or third
+     party, each with its manifest; addons by hash);
+   - teardown (the human): not a worry now, it will sort itself out;
+   - structure in `main` (the human): functionality to create it is
+     needed before a deeper position can be used;
    - the main data of a linked mrepo seen through its shortcut;
    - composite actions (an action resuming at a label after a child
      request; `boot/install` as one), fan-out, a time limit for a child
