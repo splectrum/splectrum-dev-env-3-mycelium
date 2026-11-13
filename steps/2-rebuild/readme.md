@@ -2150,3 +2150,44 @@ no longer passing); the `haicc` test, 107 of 107; the READMEs, no
 problems; the code rules, none; the package check, the eight lines above
 (a package can lack two things). Nothing left running. Committed red, on
 `execute/main` only, not merged into `main`: for the human's check first.
+
+## 48. The template up to standard: a folder for every test (2026-11-14)
+
+The human: every test needs a named folder in the haiccing package's
+`test/` folder, a folder a test or a test group, the generic ones too
+(one existed, `test/modules/run.js`, and was removed by us in part 22).
+Apart from the generic tests the naming is local. If the folders are part
+of the template structure they are there from the start: a new package is
+created by cloning it from the template. The model: packages
+self-contained, pinned to a commit of the template, upgraded explicitly;
+for now the blanket approach, because the test coverage is insufficient.
+First: the template brought up to standard and committed.
+
+- **`haiccing/package-docs-template/test/`**: a folder for each generic
+  test, `help`, `code`, `mrepo`, `package`, `modules` (a group),
+  `help-in-situ`, `mrepo-in-situ`, each with its `run.js` (it runs the
+  test, whose code is in a module the package carries) and its README
+  (what it checks). Each runs on its own, `bare test/<name>/run.js`. Its
+  `full` set holds `modules` too.
+- **The standard written there** (`test/README.md`): a folder each,
+  nothing runs that has no folder; the generic ones come with the
+  template; a test of the package's own is named as the package likes and
+  can be as large as it needs.
+- **The dispatcher** (`tools/lib/dispatcher.js`) finds a test from its
+  folder; `test/modules/` is the group, its units the modules'. A generic
+  test without its folder, in a package not yet brought to the template,
+  is still found in the module that carries it.
+- **The package check** (`pkgm-base-check`, `internal/package`): every
+  test a set names has its folder, with its `run.js` and README, said
+  once a test; the fixed name for a protocol's test (part 47) is gone: a
+  package that provides a protocol, a program, hooks or an mrepo of its
+  own has at least one test of its own, whatever its name.
+
+**Validated**: the template alone. Its `full` set from its bundle, 6
+units, passes; each folder's `run.js` run on its own passes (the in-situ
+ones skip without an mrepo); the check's own tests, 6 in the module's 12;
+the READMEs, 132, no problems (the rule caught the template's own page,
+its summary 117 words: shortened). The nine other bundle packages were
+not rebuilt: `tools/bare tools/code-check.js` lists what each lacks, 68
+lines (`tasks.md`). On `execute/main` only.
+

@@ -16,21 +16,25 @@ import { join, dirname } from 'bare-path'
 const ENTRIES = ['run', 'protocol', 'deploy']
 const q = s => JSON.stringify(s)
 
-// The test units: the package's own tests (test/<name>/run.js) and each
-// carried module's unit tests (modules/<org>/<module>/test/*.test.js).
+// The test units: the package's tests, a folder each (test/<name>/run.js),
+// the generic ones among them; and each carried module's unit tests
+// (modules/<org>/<module>/test/*.test.js). test/modules/ is the group of
+// the latter: its units are the modules', not its run.js.
+// A generic test without its folder (a package not yet brought to the
+// template) is still found in the module that carries it.
 function unitsOf (folder) {
   const units = {}
   const test = join(folder, 'test')
   if (existsSync(test)) {
     for (const n of readdirSync(test).sort()) {
-      if (existsSync(join(test, n, 'run.js'))) units[`/test/${n}`] = [`./test/${n}/run.js`]
+      if (n !== 'modules' && existsSync(join(test, n, 'run.js'))) units[`/test/${n}`] = [`./test/${n}/run.js`]
     }
   }
   // The help tests, every package that carries mrepo-base-help: its help
   // extracted from its own files (/test/help), or as a running mrepo's
   // runtime extracted it (/test/help-in-situ: MREPO, PACKAGE).
   const validate = join(folder, 'modules', 'pear-full-square', 'mrepo-base-help', 'validate')
-  for (const n of ['help', 'help-in-situ']) if (existsSync(join(validate, `${n}.test.js`))) units[`/test/${n}`] = [`./modules/pear-full-square/mrepo-base-help/validate/${n}.test.js`]
+  for (const n of ['help', 'help-in-situ']) if (!units[`/test/${n}`] && existsSync(join(validate, `${n}.test.js`))) units[`/test/${n}`] = [`./modules/pear-full-square/mrepo-base-help/validate/${n}.test.js`]
   // The code test, every package that carries pkgm-base-check: its modules
   // and its own code against the code rules (/test/code).
   // and its mrepo side: on its own (/test/mrepo), and as a running mrepo
@@ -38,7 +42,7 @@ function unitsOf (folder) {
   // and its structure: its files, its sets, its tests, a test of its own
   // for what it provides (/test/package).
   const checks = join(folder, 'modules', 'pear-full-square', 'pkgm-base-check', 'validate')
-  for (const n of ['code', 'mrepo', 'mrepo-in-situ', 'package']) if (existsSync(join(checks, `${n}.test.js`))) units[`/test/${n}`] = [`./modules/pear-full-square/pkgm-base-check/validate/${n}.test.js`]
+  for (const n of ['code', 'mrepo', 'mrepo-in-situ', 'package']) if (!units[`/test/${n}`] && existsSync(join(checks, `${n}.test.js`))) units[`/test/${n}`] = [`./modules/pear-full-square/pkgm-base-check/validate/${n}.test.js`]
   const modules = join(folder, 'modules')
   if (existsSync(modules)) {
     for (const org of readdirSync(modules).filter(n => n !== 'node_modules' && statSync(join(modules, n)).isDirectory()).sort()) {

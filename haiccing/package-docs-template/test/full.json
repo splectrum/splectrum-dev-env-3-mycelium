@@ -1,9 +1,10 @@
 {
-  "description": "Every test.",
+  "description": "Every test: the package's, and the modules' own (the code it carries).",
   "tests": [
     "help",
     "code",
     "mrepo",
-    "package"
+    "package",
+    "modules"
   ]
 }

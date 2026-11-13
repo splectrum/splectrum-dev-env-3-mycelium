@@ -1,9 +1,9 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-13, part 47). Read `CLAUDE.md`
+Kept current by the cloud session (last: 2026-11-14, part 48). Read `CLAUDE.md`
 first (what is here, how to validate), then this, then `readme.md` here
 (each part's record; the latest parts last: 30 to 45 are the haicc work; 46 is a note on future design; 47 the
-package check).
+package check; 48 the template up to standard).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -47,13 +47,17 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   Its notes come back in `local-note.md`: fetch and read them when told.
 - **No release yet**: on the human's word, created by the local agent
   (`handover-local.md`, "Releases").
-- **Red on purpose, and not in `main`** (2026-11-13): `execute/main` is
-  ahead of `main` by the package check (part 47). Seven packages fail
-  their `validate` on `/test/package`, each lacking the test of what it
-  provides, and `base-component-boot`'s `boot` test with them. The human
-  checks step 1 first; then the packages get their tests one at a time,
-  each shown to the human (`tasks.md`, "First"). Merge into `main` and
-  push the product repositories only on the human's word.
+- **Red on purpose, and not in `main`** (2026-11-14): `execute/main` is
+  ahead of `main` by the package check (part 47) and the template brought
+  up to standard (part 48: a folder for every test, the generic ones
+  too). The other nine bundle packages are not yet brought in line, and
+  six lack a test of their own: `tools/bare tools/code-check.js` lists it
+  all, and `tasks.md` ("First") says what is left. One step at a time,
+  each shown to the human. Merge into `main` and push the product
+  repositories only on the human's word.
+- **This session's focus** (the human, 2026-11-14): the generic tests and
+  tests that need no test mrepo, so a new implementation is known to
+  adhere to the rules; the packages' own tests in running mrepos after.
 - **A package tests what it provides** (the human, firmly: it was skipped
   and that was very disappointing): custom tests in each package for its
   functionality; for a protocol a test mrepo with test data, its actions,

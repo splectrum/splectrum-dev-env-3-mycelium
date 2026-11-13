@@ -79,32 +79,57 @@ change of every command in task 1 is made with these tests in place.
   the haiccing packages as well. On the list; its implementation is
   looked at later ("Coverage", below).
 
-**Step 1, built** (part 47 in `readme.md`; on `execute/main` only, not
-merged into `main`: for the human's check first)
+- **The template is the start of every package** (2026-11-14): if the
+  folders are part of the template structure they are there from the
+  start; a new package is created by cloning it from the template.
+- **Pinned, upgraded explicitly** (the model; not built, and not how we
+  work right now): haiccing packages are self-contained, each pinned to a
+  commit of the template. Upgrading a package's template is an explicit
+  step, done as and when appropriate, never set off by a change of the
+  template (no blanket retest): blanket changes are often unnecessary and
+  expensive in resources.
+- **For now the blanket approach**, because our test coverage is
+  insufficient and it costs us.
 
-- The rule, in `haiccing/package-docs-template/test/README.md`, "Its own
-  tests"; the check, `/test/package`, in every package's `validate` and
-  `full`; the same over all packages from `tools/bare tools/code-check.js`.
-- Ours, for the human to check: a protocol's test is named
-  `test/protocol-<name>/` (the plain name would collide with the generic
-  `help`); a package with a program, hooks or a list needs at least one
-  test of its own, by any name; a documentation package none.
-- The list it fails, the work that is left:
+**Built so far** (on `execute/main` only, not merged into `main`: each
+step shown to the human first)
 
-  | package | what it lacks |
-  |---|---|
-  | `base-package-runtime` | `test/protocol-runtime/` |
-  | `base-package-protocol` | `test/protocol-protocol/` |
-  | `base-package-service` | `test/protocol-service/` (its hooks and its list with it) |
-  | `base-package-help` | `test/protocol-help/` |
-  | `base-package-haicc` | `test/protocol-haicc/` |
-  | `base-package-boot` | `test/protocol-boot/` |
-  | `base-component-haicc` | a test of its own (its hooks, its list) |
+- Part 47: the rule that a package tests what it provides, and the check,
+  `/test/package`, in every package's `validate` and `full`; the same
+  over all packages from `tools/bare tools/code-check.js`.
+- Part 48: the template up to standard. Every generic test a named
+  folder in `haiccing/package-docs-template/test/` (`help`, `code`,
+  `mrepo`, `package`, `modules`, `help-in-situ`, `mrepo-in-situ`), each
+  its `run.js` and README; the dispatcher finds a test from its folder;
+  the check asks a folder for every test a set names, and no longer a
+  fixed name for a protocol's test (naming is local).
+- **What is left, as the check lists it** (68 lines, by package):
 
-  `base-component-boot`'s `boot` test is red with them: it runs the
-  runtime package's `validate` in a running mrepo and expects it to pass.
-  It turns green with `test/protocol-runtime/`: a reason to do the
-  runtime first.
+  | package | the generic folders | a test of its own |
+  |---|---|---|
+  | `package-docs-template` | there | none asked |
+  | `package-docs-mrepo` | to bring in | none asked |
+  | `base-package-runtime` | to bring in | has one (`start`) |
+  | `base-component-boot` | to bring in | has one (`boot`) |
+  | `base-package-protocol`, `-service`, `-help`, `-haicc`, `-boot` | to bring in | lacking |
+  | `base-component-haicc` | to bring in | lacking |
+  | `base-linux-haicc` | not a bundle: carries no generic test, its own is `test/run.sh`; to settle |
+
+  The nine other bundle packages were not rebuilt in part 48: they carry
+  the check as of part 47 until each is brought in line. Their own
+  validation (part 47) is red on `/test/package`; `base-component-boot`'s
+  `boot` test red with the runtime's.
+
+**Open**
+
+- Whether the template itself is what is cloned (reshaped so a clone is a
+  clean, working, empty package: today its folders hold documentation,
+  an `example/` and a placeholder `name/`), or a skeleton kept inside it.
+  Put to the human, not answered.
+- Where a package states its pin, and which commit (ours: the template's
+  own repository, `haiccing/package-docs-template`). Whether the modules
+  a package carries follow the same rule (kept until it is upgraded). Put
+  to the human; the answer: blanket for now.
 
 **Proposed** (step 2 on: one package at a time, each shown to the human)
 
@@ -117,7 +142,7 @@ merged into `main`: for the human's check first)
 - One helper that makes a test mrepo from a list of packages and test
   data, starts it, sends requests, compares the history and stops it,
   shared by these tests (the runtime package's `start` test is the
-  model). The package check can then ask that a protocol's test uses it.
+  model).
 - What each test covers:
   - `base-package-runtime`: `runtime/run` (a linked package's test, a dry
     run, `/run` refused), its boot hooks, the internal requests first;

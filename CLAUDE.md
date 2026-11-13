@@ -30,8 +30,9 @@ the work reaches it.
   own package, which states the mrepo's runtime config);
   `base-linux-haicc` (the `haicc` command: sh scripts, no bundle); and the
   documentation packages `package-docs-template` (the package structure,
-  the README rules, modules and methods, tests) and `package-docs-mrepo`
-  (the mrepo, layer by layer).
+  the README rules, modules and methods, tests; the template a package
+  starts from: its `test/` holds the generic tests, a folder each) and
+  `package-docs-mrepo` (the mrepo, layer by layer).
 - `pear-full-square/`: the modules those packages carry, and
   `pkgm-base-manager`, which the tools use. A documented method is a
   directory, under `external/` (protocol actions) or `internal/`.

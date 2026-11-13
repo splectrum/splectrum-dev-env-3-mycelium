@@ -45,10 +45,12 @@ The package itself:
 
 - **Files**: its README, its LICENSE, its `package.json`.
 - **Sets**: `validate`, `validate-in-situ` and `full`, the generic tests
-  in the sets they belong to, every name a test that is there.
-- **Its own tests**: each a unit; one for each protocol it provides,
-  `test/protocol-<name>/`; at least one where it has a program, hooks or
-  an mrepo of its own. A documentation package is asked for none.
+  in the sets they belong to.
+- **A folder for every test**: each test a set names, the generic ones
+  too, is `test/<name>/` with its `run.js` and README.
+- **Its own tests**: at least one where it provides a protocol, a
+  program, hooks or an mrepo of its own; their names are the package's.
+  A documentation package is asked for none.
 
 ## Tests
 

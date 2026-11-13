@@ -1,20 +1,34 @@
 # test/
 
-The package's tests, a folder each, and the sets that select them. Run
-through the package's dispatcher (`main.js`, its bundle's main), every one
-by path.
+The package's tests, a folder each, and the sets that select them.
 
 ```
 test/
-  run.js          bare test/run.js [<set>]   validate by default
-  validate.json   the deployment checked
-  full.json       every test
-  <name>/         a test: a structure unit, its entry run.js
+  run.js                  bare test/run.js [<set>]   validate by default
+  validate.json           the package on its own
+  validate-in-situ.json   the package where it is deployed
+  full.json               every test
+  <name>/                 a test or a test group: its run.js, its README
 ```
 
 | | |
 |---|---|
-| [name/](name/) | one test, and its README: what it checks |
+| [help/](help/) | generic: the READMEs against the README rules |
+| [code/](code/) | generic: the code against the code rules |
+| [mrepo/](mrepo/) | generic: the integrity of the mrepo side |
+| [package/](package/) | generic: the package against this structure |
+| [modules/](modules/) | generic, a group: every carried module's own tests |
+| [help-in-situ/](help-in-situ/) | generic: the help where it is deployed |
+| [mrepo-in-situ/](mrepo-in-situ/) | generic: the package as an mrepo holds it |
+| [name/](name/) | a test of the package's own |
+
+## A folder each
+
+Every test has its folder here, the generic ones too: nothing runs that
+has no folder. The generic tests are the same in every package and come
+with this template; a test of the package's own is named as the package
+likes. Run through the package's dispatcher (`main.js`, its bundle's
+main), every one by path.
 
 A package's `test/README.md` lists its sets and links to each test's
 README.
@@ -23,7 +37,7 @@ README.
 
 | target | runs |
 |---|---|
-| `/test/<name>` | a test folder: its `*.test.js` |
+| `/test/<name>` | a test folder: its `run.js` |
 | `/test/modules/<org>/<module>` | a carried module's own tests (`modules/<org>/<module>/test/*.test.js`) |
 | `/test/modules` | the generic modules test: every carried module's own tests |
 | `/test/help` | the package's help, extracted from its own files, checked against the README rules |
@@ -55,25 +69,27 @@ package) and `full` (everything: also `modules`). More sets as needed.
 ## Its own tests
 
 A package tests what it provides, in tests of its own: nothing it brings
-is left to another package's test. Which it must have follows from what
-it is:
+is left to another package's test. Their names are the package's own. A
+test can be as large as it needs: a test mrepo made for it with test
+data, a whole deployment, several swarms.
 
 | the package | its tests |
 |---|---|
-| provides a protocol (`protocol.js`) | one for each protocol, `test/protocol-<name>/`: a test mrepo made for it, with test data; the protocol's actions, its hooks and its configs tested there |
-| has a program (`run.js`), brings hooks, or lists the packages of an mrepo of its own | at least one, by any name |
-| is a documentation package | none |
+| provides a protocol (`protocol.js`), has a program (`run.js`), brings hooks, or lists the packages of an mrepo of its own | at least one of its own |
+| is a documentation package | none of its own |
+
+For a protocol: a test mrepo with test data, the protocol's actions, its
+hooks and its configs tested there.
 
 A test of its own is a folder with its `run.js`, its `README.md` and a
-`*.test.js`, named in `validate` and in `full`, and never under a generic
-test's name (`help`, `code`, `mrepo`, `package`, `modules`).
+`*.test.js`, named in `validate` and in `full`.
 
 `/test/package` checks all of this in every package: one that provides
 something and does not test it fails its own validation.
 
 ## Modules test
 
-Every package has it, written for it: nothing to add. A package carries
+Every package has it, in `test/modules/`: nothing to add. A package carries
 its modules (`modules/<org>/<module>/`, ours copied whole); each module's
 own tests come with it and run there, against the package's copies, the
 code the package really runs. A module's tests stand on their own: what
