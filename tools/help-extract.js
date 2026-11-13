@@ -37,7 +37,7 @@ if (args.includes('--files')) {
 const sources = resolve(flag('sources', join(dev, 'sources')))
 const out = resolve(flag('out', join(dev, 'sources', 'help')))
 let list = args.filter(a => !a.startsWith('--'))
-if (!list.length) list = JSON.parse(readFileSync(join(dev, 'haiccing', 'base-package-boot', 'mrepo', 'packages', 'layer.json'))).packages
+if (!list.length) list = JSON.parse(readFileSync(join(dev, 'haiccing', 'base-component-boot', 'mrepo', 'packages', 'layer.json'))).packages
 const files = extract(list.map(pkg => {
   const b = Bundle.from(readFileSync(join(sources, `${pkg}.bundle`)))
   const readmes = {}

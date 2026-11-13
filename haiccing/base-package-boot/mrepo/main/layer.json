@@ -1,4 +1,0 @@
-{
-  "mode": "atomic",
-  "description": "The boot mrepo's content: what installs the host (its definition), the host linked in once installed."
-}

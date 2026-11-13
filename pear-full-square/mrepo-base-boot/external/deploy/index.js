@@ -4,7 +4,8 @@ import { join, dirname } from 'bare-path'
 import { tmpdir } from 'bare-os'
 import { start } from 'mrepo-base-runtime'
 import { build } from '../../internal/build/index.js'
-import { fetch, structureOf, parseSource } from '../../internal/fetch/index.js'
+import { parseSource } from '../../internal/fetch/index.js'
+import { lay } from '../../internal/lay/index.js'
 import { place } from '../../internal/place/index.js'
 import { child } from '../../internal/child.js'
 
@@ -25,24 +26,11 @@ export async function deploy (exec, { uri, args = [] }) {
   if (!mine?.store) throw new Error('no store: the parent\'s packages manifest names none')
   const store = mine.store
   const sources = (mine.sources || []).map(parseSource)
-  // The target's list, in order, from its own structure.
-  fetch({ store, sources, pkg: target })
-  const listed = structureOf({ store, pkg: target })['packages/layer.json']
-  if (!listed) throw new Error(`${target} lists no packages (mrepo/packages/layer.json)`)
-  const list = JSON.parse(listed.toString()).packages || []
-  // Each package's mrepo/ part laid in, in that order; built inside the parent.
+  // The target's list laid in: each package's mrepo/ part, in that order,
+  // runtime config from the last only; built inside the parent.
   const tmp = mkdtempSync(join(tmpdir(), `deploy-${c.name}-`))
   try {
-    for (const pkg of list) {
-      // a documentation package (docs in its manifest entry): no structure,
-      // its READMEs only (the runtime extracts them into the help layer)
-      if (fetch({ store, sources, pkg }).docs) continue
-      for (const [p, bytes] of Object.entries(structureOf({ store, pkg }))) {
-        if (p.endsWith('README.md')) continue // documentation: the help layer's, never a layer's
-        mkdirSync(dirname(join(tmp, p)), { recursive: true })
-        writeFileSync(join(tmp, p), bytes)
-      }
-    }
+    const { list } = lay({ store, sources, target, into: tmp })
     // Its identity, in its runtime layer (where it has one): its unique URI.
     if (existsSync(join(tmp, 'runtime', 'layer.json'))) writeFileSync(join(tmp, 'runtime', 'mrepo.json'), JSON.stringify({ uri: c.mrepo }, null, 2) + '\n')
     mkdirSync(dirname(c.dir), { recursive: true })

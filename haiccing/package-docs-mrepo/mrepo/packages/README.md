@@ -27,10 +27,15 @@ its manifest records each one's hash and entry points.
 - **What a child is made of**: the target package's
   `mrepo/packages/layer.json`, in order. Each package's `mrepo/` part is
   laid in, a later file replacing an earlier one.
+- **The last package of a list defines the mrepo**: a list ends with its
+  own package. Runtime config, what a package drops into the runtime
+  layer, is laid in from that last package only. A protocol package's own
+  counts only when it is itself the one deployed.
 - **Documentation packages**, marked `docs` in their `package.json`, bring no structure,
   only READMEs, which the runtime extracts into the help layer.
 - **Put in place by `boot deploy`**, the parent's, and for the initial
-  boot mrepo by its release before it runs. Changing them is a `redeploy`.
+  boot mrepo by the boot component's program, the same way. Changing them
+  is a `redeploy`.
 - **The runtime is started from here**, by the mrepo's directory:
   `bare <dir>/packages/haiccing/base-package-runtime.bundle <dir>`.
 - **Its tests run from here**: `runtime run
@@ -38,5 +43,6 @@ its manifest records each one's hash and entry points.
   in a floating instance; the result is the request's output.
 - **What each package contributes**: `base-package-runtime` the engine,
   in every mrepo; `base-package-boot` the `boot` protocol, in an mrepo that
-  deploys others; `package-docs-mrepo` and `package-docs-template` the
+  deploys others; a component, such as `base-component-boot`, the list
+  and the runtime config of the mrepo it defines; `package-docs-mrepo` and `package-docs-template` the
   help; an application's package its `main` and its protocol.

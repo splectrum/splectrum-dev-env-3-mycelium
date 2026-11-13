@@ -1,4 +1,0 @@
-{
-  "mode": "non-atomic",
-  "description": "The outbox: completed forms sent back."
-}

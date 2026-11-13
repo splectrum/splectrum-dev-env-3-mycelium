@@ -32,11 +32,12 @@ Only its note is committed.
 >    `# checks = <n>/<n> pass` and `# ok`; exit 0 passed, 1 failed. It
 >    leaves nothing running: check with `pgrep -fa "bin/bare"`.
 > 5. **Run the packages' own tests**, each from its bundle, from the clone's
->    folder, for each of `base-package-runtime`, `base-package-boot`,
->    `base-package-service`, `base-package-haicc`, `base-component-haicc`,
->    `package-docs-mrepo`, `package-docs-template`:
+>    folder, for each of `base-package-runtime`, `base-package-help`,
+>    `base-package-boot`, `base-package-service`, `base-package-haicc`,
+>    `base-component-boot`, `base-component-haicc`, `package-docs-mrepo`,
+>    `package-docs-template`:
 >    `SOURCES=$PWD/sources tools/bare sources/haiccing/<package>.bundle /test/full`
->    (exit 0 passed; the boot package's takes a few minutes).
+>    (exit 0 passed; the boot component's takes a few minutes).
 > 6. **Install it for the human**, in their home folder:
 >    `sh haiccing/base-linux-haicc/haicc-install.sh` (it puts the scripts in
 >    `~/.haicc` and registers `haicc` in `/usr/local/bin` when that can be

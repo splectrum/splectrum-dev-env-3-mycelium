@@ -1980,3 +1980,37 @@ The first step of building part 42.
 
 **Validated**: the eight packages' full sets; the `haicc` test, 104 of
 104; the checks, no problems (17 modules, 9 packages).
+
+## 44. The boot split; runtime config from the last package (2026-11-13)
+
+The second step of building part 42.
+
+- **`base-package-boot`** is the boot protocol only: its `protocol.js`,
+  no structure, no program.
+- **`base-component-boot`** is the initial boot mrepo: its list (the
+  runtime, help, the boot protocol, haicc, the documentation packages,
+  itself last), the program that puts it in place (`run.js`), and the
+  end-to-end test, moved there with it. The `haicc` scripts run its
+  bundle.
+- **The boot mrepo is built as any mrepo is.** One routine,
+  `mrepo-base-boot`'s `lay`, is used by deploy for a child and by the
+  boot component for the boot mrepo: the target's list fetched into the
+  store, each package's part of the structure laid in, in order. The
+  component has no layers of its own, and the boot package's copy of
+  every layer is gone.
+- **Runtime config comes from the last package of a list only**: what a
+  package drops into the runtime layer (the layer's own definition is
+  structure, and comes from whichever package brings it). So the haicc
+  component now carries its own `runtime/service.json`; the service
+  package's is laid in only when it is itself deployed.
+- **A list ends with its own package**, so "the last" and "the one
+  deployed" say the same. The lists are reordered, and the package check
+  (`/test/mrepo`) refuses a list that does not.
+- **Identities are written by whoever builds**: the boot's program writes
+  `local/boot`, deploy writes the child's. No package carries one, so the
+  boot's identity is no longer laid into every mrepo that links the boot
+  protocol (noted in part 36).
+
+**Validated**: the nine bundle packages' full sets, the boot component's
+among them (110 asserts); the `haicc` test, 104 of 104; the checks, no
+problems (17 modules, 10 packages).

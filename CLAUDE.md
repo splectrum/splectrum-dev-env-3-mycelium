@@ -21,13 +21,14 @@ history, and each module has its own repository) and brought back when
 the work reaches it.
 
 - `haiccing/`: the packages, each at the path of its repository:
-  `base-package-boot`, `base-package-runtime`, `base-package-service`,
-  `base-package-haicc`, `base-package-help` (one package, one protocol),
-  the component
-  `base-component-haicc` (several packages deployed together, `main`
-  empty), `base-linux-haicc` (the `haicc` command: sh scripts, no bundle),
-  and the documentation
-  packages `package-docs-template` (the package structure, the README
+  `base-package-runtime`, `base-package-help`, `base-package-boot`,
+  `base-package-service`, `base-package-haicc` (one package, one
+  protocol); the components `base-component-boot` (the initial boot mrepo
+  and the program that puts it in place) and `base-component-haicc`
+  (several packages deployed together, `main` empty; a list ends with its
+  own package, which states the mrepo's runtime config);
+  `base-linux-haicc` (the `haicc` command: sh scripts, no bundle); and the
+  documentation packages `package-docs-template` (the package structure, the README
   rules, modules and methods, tests) and `package-docs-mrepo` (the mrepo,
   layer by layer).
 - `pear-full-square/`: the modules those packages carry, and
@@ -63,8 +64,8 @@ the work reaches it.
   `SOURCES=$PWD/sources tools/bare sources/haiccing/<package>.bundle /test/full`.
 - `tools/bare tools/help-extract.js` (and `--files`) and
   `tools/bare tools/code-check.js`: no problems.
-- When the runtime or the repository code changed, the boot's test several
-  times: a race shows one run in a few. Nothing left running after.
+- When the runtime or the repository code changed, the boot's test
+  (`base-component-boot`: `test/boot/run.js`) several times: a race shows one run in a few. Nothing left running after.
 - The `haicc` command end to end, when anything it touches changed (the
   scripts, the boot, the component, the request form):
   `sh haiccing/base-linux-haicc/test/run.sh`.
