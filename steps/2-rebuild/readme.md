@@ -2277,3 +2277,25 @@ test from its own folder passes. Neither documentation package has a
 line in `tools/bare tools/code-check.js` any more; the eight others, 78
 (each now also lacking the pin). Both repositories pushed.
 
+## 51. base-package-runtime brought to the template (2026-11-14)
+
+The human: go on with `base-package-runtime`; we work our way up the
+protocol stack one by one. And: keep the tools well structured, soon
+packages are built for them so they run on the haicc platform as well.
+
+- **`base-package-runtime`** brought to the template, pinned to
+  `haiccing/package-docs-template@deb7ed6` (`sh tools/package-template.sh`):
+  the generic tests' folders, `test-reports/`; its `test/README.md`
+  linking each test's folder, its own, `start`, first; its README linking
+  `test-reports/`.
+- **`tools/README.md`**: the tools by what they are for (setting up; a
+  package built, tested, brought to the template; all packages; the
+  product repositories; `lib/`), and how they are kept: one tool one
+  concern, what is shared in `lib/`, a line of JSON a result.
+
+**Validated**: its pre-release: 21 units, 226 tests, 1067 asserts passed,
+the report written (two minutes). `base-component-boot`'s `boot` test,
+which runs the runtime package's `validate` in a running mrepo: 119 of
+119 again (red since part 47). The READMEs, 147, no problems. Nothing
+left running. Its repository pushed.
+

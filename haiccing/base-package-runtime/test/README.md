@@ -1,13 +1,22 @@
 # test/
 
-The runtime package's tests: its sets and its one test, `start`.
+The runtime package's tests: one of its own, `start`, and the generic ones, a folder each.
+
+| | |
+|---|---|
+| [start/](start/) | its own: the runtime started over an mrepo, answering, stopped |
+| [help/](help/) | generic: the READMEs against the README rules |
+| [code/](code/) | generic: the code against the code rules |
+| [mrepo/](mrepo/) | generic: the integrity of the mrepo side |
+| [package/](package/) | generic: the package against the template's structure |
+| [modules/](modules/) | generic: every carried module's own tests |
+| [help-in-situ/](help-in-situ/) | generic: the help where it is deployed |
+| [mrepo-in-situ/](mrepo-in-situ/) | generic: the package as a running mrepo holds it |
+
+## Sets
 
 | set | tests |
 |---|---|
 | `validate` | `start`, `help`, `code`, `mrepo`, `package` |
 | `validate-in-situ` | `help-in-situ`, `mrepo-in-situ`: run in a running mrepo with `runtime run` |
 | `full` | `start`, `help`, `code`, `mrepo`, `package`, `modules` |
-
-| | |
-|---|---|
-| [start/](start/) | the runtime started over an mrepo, answering, stopped |

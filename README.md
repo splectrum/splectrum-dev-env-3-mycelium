@@ -6,8 +6,9 @@ SPLectrum: mycelium repositories on a swarm, on the HAICC platform.
 - `haiccing/`: the packages, each at the path of its repository.
 - `pear-full-square/`: the modules the packages carry, each at the path of
   its repository.
-- `tools/`: assembling and bundling packages, the release into the local
-  sources, the product repositories, the checks.
+- [tools/](tools/): assembling, bundling and testing packages, bringing
+  one to the package template, the release into the local sources, the
+  product repositories, the checks.
 - `rules.md`: how to work in this repository (branches, layers, commits,
   URIs, records and topics, data names).
 - `vision.md`: directions that are not settled, for information.

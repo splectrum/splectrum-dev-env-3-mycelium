@@ -109,6 +109,9 @@ step shown to the human first)
   package to the template (`sh tools/package-template.sh <package>`, then
   its pages by hand, then `tools/bare tools/package-test.js`), and
   `package-docs-mrepo` brought to it.
+- Part 51: `base-package-runtime` brought to the template; the boot
+  component's `boot` test green again. The order from here (the human):
+  up the protocol stack, one by one.
 - **What is left, as the check lists it** (78 lines, by package; each of
   the eight also lacks `test-reports/` and the pin):
 
@@ -116,7 +119,7 @@ step shown to the human first)
   |---|---|---|
   | `package-docs-template` | there | none asked |
   | `package-docs-mrepo` | there (part 50, pinned) | none asked |
-  | `base-package-runtime` | to bring in | has one (`start`) |
+  | `base-package-runtime` | there (part 51, pinned) | has one (`start`) |
   | `base-component-boot` | to bring in | has one (`boot`) |
   | `base-package-protocol`, `-service`, `-help`, `-haicc`, `-boot` | to bring in | lacking |
   | `base-component-haicc` | to bring in | lacking |
