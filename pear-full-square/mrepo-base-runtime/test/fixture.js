@@ -53,7 +53,8 @@ export async function bootedHost (work, { preload = true, storage = 'p2p' } = {}
 export async function sendForm (work, form, { wait = 10000, to } = {}) {
   const { storage, name } = setting(work)
   const disk = storage === 'git' ? nativeBackend(gitdirOf(work, name)) : p2pgitBackend(gitdirOf(work, name), { fs })
-  const core = record('/haicc/terminal', { ...form }, guid())
+  // a form, or a command as typed (a string, an array of parts)
+  const core = record('/haicc/terminal', typeof form === 'string' || Array.isArray(form) ? form : { ...form }, guid())
   const envelope = wrap(to ?? `/${name}/inbox`, core)
   const id = core.key
   if (storage === 'git') await post({ work, backend: disk, writer: writer(disk), repo: openRepo(disk) }, envelope, id)

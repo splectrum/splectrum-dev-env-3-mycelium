@@ -15,7 +15,7 @@ export const protocols = {
     gated: true, // behind the service's door, where the mrepo has a service
     description: 'Deploys and tears down child mrepos; executed by the parent.',
     actions: {
-      deploy: { ...CHILD, description: 'A child mrepo built inside this one from a target package, its packages linked, its runtime started; body { package }.' },
+      deploy: { ...CHILD, description: 'A child mrepo built inside this one from a target package, its packages linked, its runtime started; its argument the package.' },
       teardown: { ...CHILD, description: 'The child\'s runtime stopped, the child and its record removed.' },
       redeploy: { ...CHILD, description: 'Teardown, then deploy.' }
     }

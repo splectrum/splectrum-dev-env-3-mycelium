@@ -9,11 +9,11 @@ in, in that order, and the child is built at `<parent>/main/<name>/`.
 
 ## Signature
 
-`deploy(exec, { uri, body })`: `uri` is `/<name>`, one segment.
+`deploy(exec, { uri, args })`: `uri` is `/<name>`, one segment.
 
-## Body
+## Arguments
 
-- `package`: the target package, `<org>/<package>`. Required.
+1. The target package, `<org>/<package>`. Required.
 
 ## Returns
 
@@ -23,7 +23,7 @@ The same record, without `deployed`, is written at `/main/<name>.json`.
 ## Errors
 
 - The child is deployed already, or its folder is in the way.
-- No package in the body; the parent's packages manifest names no store.
+- No package given; the parent's packages manifest names no store.
 - The target lists no packages; its runtime does not start.
 
 ## Design

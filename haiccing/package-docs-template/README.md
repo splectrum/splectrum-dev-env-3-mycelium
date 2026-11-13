@@ -115,7 +115,7 @@ Inside one of our modules, a documented method is a directory: its
 Only the methods that matter are documented. Smaller ones live in the
 method they belong to, listed in its README under "Also exported"; a
 helper with nothing to document is a plain file. A method's README: the
-one-liner, the summary, then `Signature`, `Body` for an action, `Returns`,
+one-liner, the summary, then `Signature`, `Arguments` for an action, `Returns`,
 `Errors`, as they apply. The module's `index.js` exports its methods.
 
 ## package.json
