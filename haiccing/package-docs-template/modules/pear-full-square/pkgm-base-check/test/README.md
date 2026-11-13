@@ -21,4 +21,5 @@ The tests of pkgm-base-check, a section per file, each test by its name.
 - every test has its folder: a generic test named in a set without one
 - a documentation package: no test of its own asked, a folder documenting one left alone
 - a package that breaks each: its files, its sets, a test that is not a unit
+- the template itself has no pin
 - full holds modules where modules are carried

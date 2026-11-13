@@ -23,7 +23,7 @@ const base = {
   'README.md': '# p\n',
   'test-reports/README.md': '# test-reports/\n',
   LICENSE: 'MIT\n',
-  'package.json': { name: 'p', description: 'Package: p.', license: 'MIT', type: 'module', main: 'main.js', modules: ['org/m'] },
+  'package.json': { name: 'p', description: 'Package: p.', license: 'MIT', type: 'module', main: 'main.js', modules: ['org/m'], template: { repository: 'haiccing/package-docs-template', commit: 'a'.repeat(40) } },
   'modules/org/m/package.json': { name: 'm' }
 }
 const PROTOCOL = 'export const protocols = { p: { actions: { a: {} } }, q: { actions: {} } }\nexport const actions = {}\n'
@@ -59,7 +59,7 @@ test('every test has its folder: a generic test named in a set without one', asy
 })
 
 test('a documentation package: no test of its own asked, a folder documenting one left alone', async (t) => {
-  await within({ ...base, 'package.json': { name: 'd', description: 'Docs package: d.', license: 'MIT', type: 'module', docs: true, modules: ['org/m'] }, ...sets([], false), 'test/name/README.md': '# name\n' }, async d => {
+  await within({ ...base, 'package.json': { name: 'd', description: 'Docs package: d.', license: 'MIT', type: 'module', docs: true, modules: ['org/m'], template: { commit: 'b'.repeat(40) } }, ...sets([], false), 'test/name/README.md': '# name\n' }, async d => {
     t.alike(await details(d), [])
   })
 })
@@ -81,6 +81,7 @@ test('a package that breaks each: its files, its sets, a test that is not a unit
       'package.json: modules, the list of our modules it starts from',
       'package.json: no description',
       'package.json: no license',
+      'package.json: template, the commit of the package template it was brought to',
       'package.json: type commonjs (module)',
       'test-reports/: not there, or without its README.md',
       'test/full.json: tests, a list of names',
@@ -94,6 +95,12 @@ test('a package that breaks each: its files, its sets, a test that is not a unit
       'test/validate.json: package is not in it',
       'the gone test: no folder (test/gone/)'
     ].sort())
+  })
+})
+
+test('the template itself has no pin', async (t) => {
+  await within({ ...base, 'package.json': { name: 'package-docs-template', description: 'Docs package: the template.', license: 'MIT', type: 'module', docs: true, modules: ['org/m'] }, ...sets([], false) }, async d => {
+    t.alike(await details(d), [])
   })
 })
 

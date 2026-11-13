@@ -15,6 +15,9 @@ export const SETS = {
   full: ['help', 'code', 'mrepo', 'package']
 }
 
+// The package template: every other package is pinned to a commit of it.
+export const TEMPLATE = 'package-docs-template'
+
 const json = f => JSON.parse(readFileSync(f, 'utf8'))
 const dirs = d => existsSync(d) ? readdirSync(d).sort().filter(n => statSync(join(d, n)).isDirectory()) : []
 
@@ -45,7 +48,7 @@ export const ownTests = pkg => testFolders(pkg).filter(n => !GENERIC.includes(n)
 
 // Its files: a README and a LICENSE; the folder its test report goes in;
 // its package.json's description, license and type; the modules it starts
-// from, a list.
+// from, a list; its pin to the package template.
 export function checkFiles (pkg) {
   const out = []
   const at = detail => out.push({ check: 'package', detail })
@@ -59,6 +62,9 @@ export function checkFiles (pkg) {
   if (!pj.license) at('package.json: no license')
   if (pj.type !== 'module') at(`package.json: type ${pj.type} (module)`)
   if (!Array.isArray(pj.modules)) at('package.json: modules, the list of our modules it starts from')
+  // its pin: the commit of the package template it was brought to (the
+  // template itself has none)
+  if (pj.name !== TEMPLATE && !/^[0-9a-f]{40}$/.test(pj.template?.commit ?? '')) at('package.json: template, the commit of the package template it was brought to')
   return out
 }
 

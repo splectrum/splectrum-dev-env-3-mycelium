@@ -7,4 +7,4 @@
 //               provides (/test/package)
 export { checkModule, checkPackage, jsFiles } from './internal/rules/index.js'
 export { checkStructure, checkProtocol, checkCarried, leaves, contributions } from './internal/mrepo/index.js'
-export { checkOwn, provides, checkFiles, checkSets, checkTests, testFolders, ownTests, GENERIC, SETS } from './internal/package/index.js'
+export { checkOwn, provides, checkFiles, checkSets, checkTests, testFolders, ownTests, GENERIC, SETS, TEMPLATE } from './internal/package/index.js'

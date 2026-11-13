@@ -131,12 +131,28 @@ one-liner, the summary, then `Signature`, `Arguments` for an action, `Returns`,
   "type": "module",
   "main": "run.js",
   "modules": ["<org>/<module>"],
+  "template": { "repository": "haiccing/package-docs-template", "commit": "<commit>" },
   "scripts": { "test": "bare test/run.js" }
 }
 ```
 
 `modules`: our modules the unit starts from; what they use is worked out
 from them ("Modules", above).
+
+`template`: the commit of this template the package was brought to ("From
+the template", below).
+
+## From the template
+
+A package starts from this template and is self-contained: it holds its
+own copies of what the template gives every package, the generic tests'
+folders in `test/` and the folder `test-reports/`.
+
+It is pinned: its `package.json` names the commit of the template those
+copies were taken from. A change of the template changes no package.
+Bringing a package to a newer template is an explicit step, taken for
+that package when appropriate: the copies taken again, the pin moved, the
+package tested.
 
 ## Running
 

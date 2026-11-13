@@ -31,6 +31,8 @@ carries modules of ours.
 - **Files**: `README.md`, `LICENSE`, `package.json` with its
   `description`, `license`, `type` `module` and `modules`, a list; the
   folder `test-reports/` with its README, where its test report goes.
+- **Its pin**: `template.commit` in its `package.json`, the commit of the
+  package template it was brought to. The template itself has none.
 - **Sets**: `validate`, `validate-in-situ` and `full`, each with a
   description and its tests by name. `validate` and `full` hold `help`,
   `code`, `mrepo` and `package`; `full` also `modules` where modules are
@@ -50,3 +52,4 @@ carries modules of ours.
 - `SETS`: the sets every package has, with the generic tests of each.
 - `testFolders(pkg)`: the folders of its `test/`, by name.
 - `ownTests(pkg)`: those that are not a generic test's.
+- `TEMPLATE`: the package template's name.
