@@ -1,0 +1,28 @@
+{
+  "name": "mycelium-git",
+  "id": "7cadb8e9-88c5-4b56-8baf-5988072a0cc8",
+  "description": "The repository rules over a backend contract",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./test/*": "./test/*"
+  },
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "child_process": "npm:bare-node-child-process@1.0.1",
+    "crypto": "npm:bare-node-crypto@1.0.0",
+    "fs": "npm:bare-node-fs@1.0.2",
+    "isomorphic-git": "1.44.8",
+    "p2p-git": "github:pear-full-square/p2p-git",
+    "pako": "1.0.11",
+    "path": "npm:bare-node-path@1.0.1",
+    "process": "npm:bare-node-process@1.0.1"
+  },
+  "devDependencies": {
+    "corestore": "7.16.1",
+    "hyperdrive": "13.3.4"
+  }
+}

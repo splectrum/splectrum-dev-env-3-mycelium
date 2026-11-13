@@ -3,12 +3,13 @@
 The mrepo boot protocol: deploy, tear down and redeploy a child mrepo, executed by its parent.
 
 A child lives inside its parent, at `main/<name>/`, the shadow of `main`;
-the parent holds a shortcut for it in its `xpath` layer. Deploy builds it from a
-target package's list of packages, links its packages and starts its
-runtime. Teardown stops the runtime and removes the child; redeploy does
-both in turn. The module also holds the install routine: building an mrepo
-from its structure and placing its packages. Carried by
-`haiccing/base-package-boot`, whose `protocol.js` offers the actions.
+the parent holds a shortcut for it in its `xpath` layer. Deploy builds it
+from a target package's list, links its packages and starts its runtime.
+Teardown stops the runtime and removes the child; redeploy does both. The
+module also holds the install routine. Carried by
+`haiccing/base-package-boot`, which offers the actions, and by
+`haiccing/base-component-boot`, which builds the boot mrepo with the same
+routine.
 
 | | |
 |---|---|

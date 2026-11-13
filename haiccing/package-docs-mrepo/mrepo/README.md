@@ -52,8 +52,8 @@ storage.
 
 ## The mrepo's folder
 
-An mrepo is a folder, `<dir>`. The first, the boot mrepo, is
-`<work>/mrepos/boot/`; every other lives inside its parent, at
+An mrepo is a folder, `<dir>`. The first, the boot mrepo, put in place by
+`base-component-boot`, is `<work>/mrepos/boot/`; every other lives inside its parent, at
 `<parent>/main/<position>/` (the host: `boot/main/host/`). That `main/`
 folder is a shadow structure of the `main` layer: what is linked at a
 position sits there at the same path. The parent has a shortcut for it in
@@ -126,7 +126,8 @@ of, in order.
 
 1. **Laid in**: each listed package's `mrepo/` part, read from its bundle,
    in that order (a later file replaces an earlier one), into
-   `<parent>/main/<name>/`.
+   `<parent>/main/<name>/`. Runtime config comes from the last package of
+   the list only: the one that defines the mrepo.
 2. **Built**: each layer committed; the boxes' folders made.
 3. **Its packages linked**, individually, from the work folder's store.
 4. **Its runtime started**, from its own `packages/`, by its folder:

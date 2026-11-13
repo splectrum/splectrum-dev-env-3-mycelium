@@ -9,13 +9,11 @@ import { spawn } from './modules/node_modules/bare-subprocess/index.js'
 
 // The entry points.
 const ENTRIES = {
-  "/run": () => import("./run.js"),
   "/protocol": () => import("./protocol.js"),
 }
 // The test units, each run in one process: the package's tests, each
 // carried module's unit tests.
 const UNITS = {
-  "/test/boot": () => Promise.all([import("./test/boot/run.js")]),
   "/test/help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/validate/help.test.js")]),
   "/test/help-in-situ": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/validate/help-in-situ.test.js")]),
   "/test/code": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/code.test.js")]),
@@ -39,7 +37,7 @@ const UNITS = {
   "/test/modules/pear-full-square/pkgm-base-check": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/test/mrepo.test.js"), import("./modules/pear-full-square/pkgm-base-check/test/rules.test.js")]),
 }
 // The test sets: their tests by name (modules: every module's unit tests).
-const SETS = {"/test/full":["boot","help","code","mrepo","modules"],"/test/validate-in-situ":["help-in-situ","mrepo-in-situ"],"/test/validate":["boot","help","code","mrepo"]}
+const SETS = {"/test/full":["help","code","mrepo","modules"],"/test/validate-in-situ":["help-in-situ","mrepo-in-situ"],"/test/validate":["help","code","mrepo"]}
 
 // What a target runs: its units (a set, /test/modules, a unit); null: none.
 export function expand (target) {

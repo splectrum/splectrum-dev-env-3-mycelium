@@ -49,7 +49,9 @@ built is in the packages: `haiccing/package-docs-template` and
   its code (`modules/`, assembled), its tests and its READMEs; its main a
   generated dispatcher running every entry by path (`/run`, `/protocol`,
   `/deploy`, `/test/...`). Assembly options per package (`assemble.omit`).
-- **The boot** (`base-package-boot`): run with Bare from its bundle, the
+- **The boot** (`base-component-boot`, the initial boot mrepo and its
+  program; `base-package-boot`, the boot protocol alone): run with Bare
+  from its bundle, the
   boot mrepo built, its packages placed, its runtime started; nothing
   deployed by it, no executable. Its protocol: `boot deploy`, `teardown`,
   `redeploy` of a child, inside its parent (`main/<name>/`, the shadow of

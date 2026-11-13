@@ -1,0 +1,11 @@
+{
+  "name": "mrepo-base-execute",
+  "version": "0.1.0",
+  "description": "Module: the mrepo execute protocol, an action run in execution branches, committed or rolled back.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

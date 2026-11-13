@@ -1,16 +1,12 @@
 # test/
 
-The boot package's tests: its sets and its one test, `boot`.
+The boot package's tests: the generic ones, and its module's own.
 
 | set | tests |
 |---|---|
-| `validate` | `boot`, `help`, `code`, `mrepo` |
+| `validate` | `help`, `code`, `mrepo` |
 | `validate-in-situ` | `help-in-situ`, `mrepo-in-situ`: run in a running mrepo with `runtime run` |
-| `full` | `boot`, `help`, `code`, `mrepo`, `modules` |
+| `full` | `help`, `code`, `mrepo`, `modules` |
 
-| | |
-|---|---|
-| [boot/](boot/) | the boot end to end: the boot mrepo and its runtime, the host deployed by a command, redeployed, torn down, deployed again; haicc; the runtime protocol |
-
-`SOURCES`: the sources folder `boot/` needs (the packages' bundles); else
-the development repository's `sources/`; without it, skipped.
+The boot protocol between running mrepos, a host deployed, redeployed and
+torn down by commands, is tested by `haiccing/base-component-boot`.

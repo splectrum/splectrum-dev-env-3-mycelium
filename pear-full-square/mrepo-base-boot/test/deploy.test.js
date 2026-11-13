@@ -74,7 +74,7 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
   const pkgs = mkdtempSync(join(tmpdir(), 'deploy-src-'))
   try {
     source(pkgs, {
-      'haiccing/base': { 'runtime/layer.json': { mode: 'atomic' }, 'runtime/kind.json': { kind: 'base' }, 'inbox/layer.json': { mode: 'non-atomic' } },
+      'haiccing/base': { 'runtime/layer.json': { mode: 'atomic' }, 'runtime/kind.json': { kind: 'base' }, 'runtime/hooks/boot/base.json': ['x/y'], 'inbox/layer.json': { mode: 'non-atomic' } },
       'haiccing/target': { 'main/layer.json': { mode: 'atomic' }, 'runtime/kind.json': { kind: 'target' }, 'packages/layer.json': { mode: 'replicated', packages: ['haiccing/base', 'haiccing/target'] } }
     })
     const dir = await parent(work, [parseSource(`folder:${pkgs}`)])
@@ -97,7 +97,9 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
     t.ok(existsSync(join(host, '.git')), 'built inside the parent: main/host/')
     t.alike(Object.keys(d.layers).sort(), ['inbox', 'main', 'packages', 'runtime'], 'the layers of every listed package')
     const child = openRepo(p2pgitBackend(join(host, '.git'), { fs }))
-    t.alike(json(await child.read('/runtime/kind.json')), { kind: 'target' }, 'laid in in order: a later package\'s file replaces')
+    t.alike(json(await child.read('/runtime/kind.json')), { kind: 'target' }, 'its runtime config: the last package\'s, the one that defines the mrepo')
+    t.is(await child.read('/runtime/hooks/boot/base.json').catch(() => null), null, 'runtime config from the last package only: another\'s is not laid in')
+    t.ok(await child.read('/runtime/layer.json').then(() => true, () => false), 'the runtime layer itself is structure: from whichever package brings it')
     t.alike(d.packages, ['haiccing/base', 'haiccing/target'], 'its packages, in order')
     t.is(statSync(join(work, 'packages', 'haiccing', 'base.bundle')).ino, statSync(join(host, 'packages', 'haiccing', 'base.bundle')).ino, 'each linked from the store')
     t.alike(json(await repo.read('/xpath/host/shortcut.json')), { mrepo: 'local/host', package: 'haiccing/target', packages: d.packages, layers: d.layers }, 'its shortcut, in the xpath layer: the mrepo linked there (its unique URI, in its parent\'s swarm), what was deployed')

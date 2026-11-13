@@ -56,3 +56,11 @@ test('a package that breaks each', async (t) => {
     t.alike(checkCarried(d).map(p => p.detail).sort(), ['package.json: main gone.js not there', 'x: 2.0.0 carried, 1.0.0 recorded', 'y: omitted, yet carried (1.0.0)', 'z: carried, not recorded'].sort(), 'carried')
   } finally { rmSync(d, { recursive: true, force: true }) }
 })
+
+test('a list that does not end with its own package', (t) => {
+  const d = mkdtempSync(join(tmpdir(), 'mrepo-'))
+  try {
+    write(d, { ...good, 'mrepo/packages/layer.json': { mode: 'replicated', description: 'The packages.', packages: ['org/p', 'org/docs'] } })
+    t.alike(checkStructure(d).map(p => p.detail), ['mrepo/packages/layer.json: its list ends with org/docs, not with the package itself (p)'], 'the last package of a list defines the mrepo: its own')
+  } finally { rmSync(d, { recursive: true, force: true }) }
+})

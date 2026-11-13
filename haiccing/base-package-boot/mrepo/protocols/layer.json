@@ -1,4 +1,0 @@
-{
-  "mode": "atomic",
-  "description": "Protocols: the config of each protocol the mrepo offers, recorded by its runtime as it starts."
-}

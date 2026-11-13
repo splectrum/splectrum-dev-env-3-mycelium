@@ -1,13 +1,12 @@
 {
   "name": "base-package-boot",
-  "description": "HAICC's boot: the boot mrepo, the root, and the code to start it. Its release is its bundle (base-package-boot.bundle, run with Bare).",
+  "description": "Package: the boot protocol, deploying, tearing down and redeploying the mrepos linked in an mrepo.",
   "private": true,
   "license": "MIT",
   "type": "module",
   "main": "main.js",
   "modules": [
     "pear-full-square/mrepo-base-boot",
-    "pear-full-square/mrepo-base-runtime",
     "pear-full-square/mrepo-base-help",
     "pear-full-square/pkgm-base-check"
   ],

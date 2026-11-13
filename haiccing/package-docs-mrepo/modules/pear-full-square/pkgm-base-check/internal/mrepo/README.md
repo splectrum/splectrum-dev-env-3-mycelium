@@ -4,7 +4,9 @@ Checks the integrity of a package's mrepo side: its structure, its protocols, wh
 
 ## Signature
 
-- `checkStructure(pkg)`: its `mrepo/` part.
+- `checkStructure(pkg)`: its `mrepo/` part; among it, that its list of
+  packages ends with the package itself: the last package of a list
+  defines the mrepo.
 - `checkProtocol(pkg)`: its `protocol.js`, imported; asynchronous.
 - `checkCarried(pkg)`: its `package.json` and `modules/third-party.json`
   against what is there.

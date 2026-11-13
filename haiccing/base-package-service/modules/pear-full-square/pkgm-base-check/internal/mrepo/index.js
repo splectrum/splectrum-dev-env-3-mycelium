@@ -48,6 +48,12 @@ export function checkStructure (pkg) {
       try { json(join(root, l, f)) } catch (err) { at(`mrepo/${l}/${f}: ${err.message}`) }
     }
     if (l === 'packages' && !(Array.isArray(cfg.packages) && cfg.packages.every(p => /^[a-z0-9-]+\/[a-z0-9-]+$/.test(p)))) at('mrepo/packages/layer.json: packages, a list of <org>/<package>')
+    // its list ends with the package itself: the last package of a list
+    // defines the mrepo (its runtime config is the one laid in)
+    else if (l === 'packages') {
+      const name = (() => { try { return json(join(pkg, 'package.json')).name } catch { return null } })()
+      if (name && cfg.packages.at(-1)?.split('/')[1] !== name) at(`mrepo/packages/layer.json: its list ends with ${cfg.packages.at(-1)}, not with the package itself (${name})`)
+    }
     if (l.startsWith('request/pending/')) {
       for (const f of files.filter(f => f !== 'layer.json' && f.endsWith('.json'))) {
         let r = null

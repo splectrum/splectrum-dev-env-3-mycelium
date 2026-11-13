@@ -1,0 +1,11 @@
+{
+  "name": "mycelium-value-json",
+  "version": "0.1.0",
+  "description": "An encoding, as a handler: one value to bytes and back, as JSON",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

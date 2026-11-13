@@ -1,4 +1,0 @@
-{
-  "mode": "non-atomic",
-  "description": "Requests waiting to execute, in order; preloaded with the boot's first request."
-}
