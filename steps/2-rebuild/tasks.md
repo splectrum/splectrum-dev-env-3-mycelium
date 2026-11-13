@@ -1,7 +1,7 @@
 # Tasks: discussed, waiting to be built
 
 Tasks discussed with the human and stacked here, to be built later in
-batches, in this order: "First", then 1, 2, 3. A task is removed from this file when it is built:
+batches, in this order: "First", "Coverage", then 1, 2, 3. A task is removed from this file when it is built:
 its record is then a part in `readme.md`.
 
 How to read a task:
@@ -60,6 +60,24 @@ change of every command in task 1 is made with these tests in place.
   early. The reason: the platform is so flexible that without full
   coverage testing in place it becomes hell; when everything is checked
   by default, one can be relaxed about it.
+
+- **Naming is local** (2026-11-14): apart from the generic tests, a
+  test's name is the package's own, a lot of freedom. A test can be a
+  full deployment package, with several swarms if needed: as integration
+  tests they can be very powerful.
+- **Every test has a named folder** in the haiccing package's `test/`
+  folder, a folder a test or a test group, the generic ones included. One
+  existed (`test/modules/run.js`, in the runtime's and the boot's
+  packages) and was removed by us in `fb547c9` (part 22), when the
+  dispatcher took the generic tests over: against this rule.
+- **This session**: the generic tests, and tests that run without
+  building a test mrepo. The aim: confidence that a new implementation
+  adheres to the rules and standards; with it the implementation speed is
+  high. There are complex items on the roadmap that can only succeed with
+  full test coverage in place.
+- **A generic test of the test coverage** is added, on the modules and on
+  the haiccing packages as well. On the list; its implementation is
+  looked at later ("Coverage", below).
 
 **Step 1, built** (part 47 in `readme.md`; on `execute/main` only, not
 merged into `main`: for the human's check first)
@@ -135,6 +153,33 @@ merged into `main`: for the human's check first)
   requests).
 - Each protocol's module tests, to see what is covered as functions:
   `pear-full-square/mrepo-base-*/test/`.
+
+## Coverage: a generic test of the test coverage
+
+The human, 2026-11-14: wanted, on the modules and on the haiccing
+packages as well; put on the list, the implementation looked at later.
+
+**What was found** (2026-11-14)
+
+- The test runner measures it on Bare: `brittle --coverage` (`bare-cov`
+  1.2.3, here already): statements, branches, functions and lines a file,
+  as text and as JSON (`coverage-final.json`).
+- Each module's own unit tests today, functions called: 100% in 13 of 19
+  modules; `mrepo-base-boot` 95.8, `mrepo-base-execute` 91.9, `p2p-mrepo`
+  94.4, `pkgm-base-manager` 97.5, `mrepo-base-request` 64.4,
+  `mrepo-base-runtime` 56.3. Lines: 97 to 100 for most, 66 and 55 for the
+  last two. Branches: 69 to 100.
+- Code run in a separate process (the runtime a test starts) is not
+  measured as it stands: the last two are higher in truth. Following
+  child processes is part of the work.
+
+**Open** (put to the human, not answered: implementation later)
+
+- The bar: every function called by a test as the hard rule, lines and
+  branches reported with the uncovered lines listed; or every line run.
+  Ours: the first to start, tightened to the second once green.
+- What coverage means for a haiccing package: its own tests against the
+  code it carries and its own entry points.
 
 ## 1. Relative URIs
 
