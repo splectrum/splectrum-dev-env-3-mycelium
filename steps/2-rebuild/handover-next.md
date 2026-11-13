@@ -210,7 +210,7 @@ Then, as discussed:
   is no executable and no `tools/haicc-try.sh` any more. The sources are
   built with `tools/bare tools/release.js`, and the whole flow is tried
   with `sh haiccing/base-linux-haicc/test/run.sh` (`--keep` to inspect).
-  Its prompt and handover still describe the earlier way.
+  Its prompt and handover are rewritten for it (2026-11-13).
 - **The seed `dev-env-3-mrepo-native`** is on `splectrum/roadmap-1`
   (`seeds/dev-env-3-mrepo-native/`, a copy in `seed-dev-env-3-mrepo-native/`
   here): the mrepo framework on native git, standalone. Its repository,

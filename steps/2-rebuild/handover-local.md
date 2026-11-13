@@ -1,99 +1,52 @@
-# For the local agent: building, testing and publishing a release
+# For the local agent: what the release is now
 
-Updated 2026-11-10 by the cloud session (the first release, 2026-11-09, is in
-`local-run.md`), for the local agent (a Linux x86-64 machine with git and
-curl (no Node.js needed), and `gh` authenticated with push access to
-github.com/haiccing). Publishing (section 4) is on the human's word.
+Updated 2026-11-13 by the cloud session, for the local agent (a Linux
+x86-64 machine with git, curl and tar; no Node.js needed). The task itself
+is in `prompt-local.md`; this is its background. The earlier releases (a
+setup file, three signed bundles, an executable) are in `local-run.md`,
+`local-note.md` and this file's history: none of that applies any more.
 
-What this release is: the thin path of step 2 to part 6 (`readme.md` here).
-From one downloaded file, `haicc-setup.sh` (Bare fetched and checked by the
-setup; three bundles: the boot, HAICC, the mrepo framework; their native
-addons by hash; the publisher's signed manifest), a work folder is booted
-into the host's repository, `host`, of type `haicc`: its layers (`main`,
-`packages`, `runtime` in the Corestore; `inbox`, `outbox`,
-`request/*` and the execution branches in git on disk, `mrepos/host/.git`), its packages installed, the
-runtime started, which runs the preloaded `service initialise /`. Then every
-`haicc` command is a request: posted to `/inbox`, queued, executed, merged,
-recorded in `request/done`, answered.
+## What changed
 
-## 1. The development repository
+- **No executable, no setup file.** The boot is its bundle, run with Bare.
+  `tools/boot-release.js` and `tools/haicc-try.sh` are gone.
+- **No signing, no publishing.** Nothing is signed; the publisher's key is
+  not used. The sources are built locally and linked locally.
+- **The `haicc` command** is sh scripts (`haiccing/base-linux-haicc`),
+  installed by one file, `haicc-install.sh`.
 
-```sh
-git clone https://github.com/splectrum/splectrum-dev-env-3-mycelium.git && cd splectrum-dev-env-3-mycelium
-git checkout main
-sh tools/install.sh
-```
-
-## 2. The publisher's key (made once, kept)
-
-`~/haicc-publisher/publisher.secret` signs every release: on this machine
-only, never in a repository, never printed; backed up. Made for the first
-release (`tools/bare tools/setup/keygen.js ~/haicc-publisher`, which never
-overwrites an existing key); a new key would mean a new key in every setup.
-
-## 3. Build and check, not published
+## What a run is
 
 ```sh
-sh tools/publish.sh ~/haicc-release --key-dir="$HOME/haicc-publisher"
+tools/bare tools/release.js                  # the sources, built into sources/
+sh haiccing/base-linux-haicc/test/run.sh     # the whole flow, in a temporary folder
 ```
 
-It writes the three packages from the commit checked out (signed, each
-package's tests run first), builds `~/haicc-release/out/haicc-setup.sh`, then
-checks it as a user would: a fresh folder (`~/haicc-release/check`),
-Node.js off the PATH, the setup run (the boot; the runtime started), then
-the cycle, each printing its completed form (a record: the request with
-its `output`): `start /` (`"service": "started"`),
-`put /main/notes/hello.json`, `get /main/notes/hello.json` (`"text":
-"hello"`), `get /` (the repository `host`, `"service": "started"`, its eight
-layers, three packages), `stop /`, `shutdown /`; then "the cycle: answered;
-shut down, the runtime ended"; the requests done, in order (the boot, `initialise`, the cycle), each a record; and `not published (setup-<12 hex>)`.
-
-By hand, in the checked folder (the runtime started again by the first
-request, ended by `shutdown /`):
+and, for the human, in their own home:
 
 ```sh
-B=~/haicc-release/check/mrepos/host/packages/haiccing/base-package-haicc.bundle
-~/haicc-release/check/setup/bare $B initialise /
-~/haicc-release/check/setup/bare $B start /
-~/haicc-release/check/setup/bare $B get /
-~/haicc-release/check/setup/bare $B get /request/done
-~/haicc-release/check/setup/bare $B get /runtime/api.json
-~/haicc-release/check/setup/bare $B put /main/x.json '{"a":1}'
-~/haicc-release/check/setup/bare $B put /packages/x.json 1      # refused: not offered
-~/haicc-release/check/setup/bare $B stop /
-~/haicc-release/check/setup/bare $B shutdown /
+sh haiccing/base-linux-haicc/haicc-install.sh
+haicc sources link <clone>/sources
+haicc prereq
+haicc boot
+haicc / boot/deploy host base-component-haicc
+haicc /host service/initialise
+haicc /host service/start
 ```
 
-## 4. Publish, with the human's word
+- `haicc`'s own folder is `~/.haicc`: its scripts, the pins, the sources
+  list, Bare (unpacked by `haicc prereq` from the sources) and the work
+  folder (`~/.haicc/work`: the boot mrepo, the package store).
+- Only `haicc sources download` reaches the network; nothing in a run
+  above does, once `tools/release.js` has fetched Bare's tarball.
+- A runtime is a process that keeps running: the boot mrepo's after
+  `haicc boot`, one more for each mrepo deployed. To stop them all:
+  `pkill -f "bin/bare $HOME/.haicc/"`. To start over: stop them, then
+  remove `~/.haicc/work`.
 
-```sh
-sh tools/publish.sh ~/haicc-release --key-dir="$HOME/haicc-publisher" --push
-```
+## Where things stand
 
-It does 1 to 3 again, then publishes the setup and the manifest as the
-release `setup-<12 hex>` of `haiccing/base-package-boot` (latest). The tag
-comes from the packages' identities: the same packages, the same tag
-(published once).
-
-## 5. Check it from GitHub, as a user would
-
-In a new folder, Node.js off the PATH:
-
-```sh
-curl -fL -o haicc-setup.sh https://github.com/haiccing/base-package-boot/releases/latest/download/haicc-setup.sh
-sh haicc-setup.sh ~/haicc-work
-B=~/haicc-work/mrepos/host/packages/haiccing/base-package-haicc.bundle
-~/haicc-work/setup/bare $B start /
-~/haicc-work/setup/bare $B put /main/notes/hello.json '{"text":"hello"}'
-~/haicc-work/setup/bare $B get /main/notes/hello.json
-~/haicc-work/setup/bare $B get /
-~/haicc-work/setup/bare $B stop /
-~/haicc-work/setup/bare $B shutdown /
-```
-
-## 6. Record it
-
-In `steps/2-rebuild/local-run.md`, a new section: the commit, the tag, the
-commands, each result, how long the setup and the boot took, what was not
-checked, and anything found (for the implementer, not fixed there). Commit
-on `execute/main`, merge into `main`, push both.
+`readme.md`, parts 30 to 37, and `handover-next.md`. Known and not built:
+our packages are not published, so `haicc sources download` fetches Bare
+only; a position deeper inside `main` is refused by `haicc`; teardown does
+not cascade (tear down a node before its host).
