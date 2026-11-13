@@ -19,7 +19,9 @@
     "pear-full-square/p2p-mrepo",
     "pear-full-square/pkgm-base-manager",
     "pear-full-square/pkgm-base-check",
-    "pear-full-square/mrepo-base-service"
+    "pear-full-square/mrepo-base-service",
+    "pear-full-square/mrepo-base-xpath",
+    "pear-full-square/mrepo-base-haicc"
   ],
   "dependencies": {
     "bare-bundle": "1.11.0",

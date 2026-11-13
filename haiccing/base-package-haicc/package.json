@@ -1,0 +1,16 @@
+{
+  "name": "base-package-haicc",
+  "description": "Package: the haicc protocol, a command executed at a node position or sent on where the node is a shortcut.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "main.js",
+  "modules": [
+    "pear-full-square/mrepo-base-haicc",
+    "pear-full-square/mrepo-base-help",
+    "pear-full-square/pkgm-base-check"
+  ],
+  "scripts": {
+    "test": "bare test/run.js"
+  }
+}

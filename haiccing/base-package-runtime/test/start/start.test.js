@@ -52,7 +52,7 @@ test('the runtime: started, answering, stopped', { timeout: 60000 }, async (t) =
     const child = spawn(os.execPath(), [entry, `--work=${work}`], { stdio: 'ignore' })
     let s = null
     for (let i = 0; i < 100 && !s; i++) { s = await ask({ work, op: 'status' }); if (!s) await wait(100) }
-    t.alike(s?.repository, { name: 'test', storage: 'filesystem', id: null, key: null }, 'running: the mrepo, on the filesystem')
+    t.alike(s?.repository, { name: 'test', uri: 'test', storage: 'filesystem', id: null, key: null }, 'running: the mrepo, on the filesystem; no unique URI of its own: its name')
     // its own protocols, registered as it started (an internal request)
     const repo = openRepo(backend)
     let registered = null

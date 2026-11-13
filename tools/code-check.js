@@ -9,7 +9,8 @@ import { fileURLToPath } from 'bare-url'
 import { checkModule, checkPackage } from '../pear-full-square/pkgm-base-check/index.js'
 
 const dev = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const packages = ['base-package-boot', 'base-package-runtime', 'base-package-service', 'package-docs-mrepo', 'package-docs-template']
+// every package here: a folder of haiccing/ with a package.json
+const packages = readdirSync(join(dev, 'haiccing')).sort().filter(p => existsSync(join(dev, 'haiccing', p, 'package.json')))
 const carried = new Set()
 for (const p of packages) {
   const m = join(dev, 'haiccing', p, 'modules', 'pear-full-square')

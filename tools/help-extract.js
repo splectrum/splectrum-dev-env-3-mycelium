@@ -7,7 +7,7 @@
 // The packages: by default the boot mrepo's list (base-package-boot's
 // mrepo/packages/layer.json), from sources/ here. The out folder (default
 // sources/help/): the help tree, its index.json and problems.json.
-// --files: the rules on this repository's own READMEs (the four haiccing
+// --files: the rules on this repository's own READMEs (the haiccing
 // packages, the modules they carry), by file. Exit 1 when there is a problem.
 import process from 'bare-process'
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, readdirSync, statSync } from 'bare-fs'
@@ -21,8 +21,10 @@ const args = process.argv.slice(2)
 const flag = (n, d) => args.find(a => a.startsWith(`--${n}=`))?.slice(n.length + 3) ?? d
 
 if (args.includes('--files')) {
-  const roots = ['pear-full-square/mrepo-base-help', 'pear-full-square/pkgm-base-check', 'haiccing/base-package-service', 'haiccing/base-package-boot', 'haiccing/base-package-runtime', 'haiccing/package-docs-mrepo', 'haiccing/package-docs-template',
-    ...readdirSync(join(dev, 'haiccing', 'base-package-boot', 'modules', 'pear-full-square')).map(m => `pear-full-square/${m}`)]
+  // every package here, and every module a package carries
+  const packages = readdirSync(join(dev, 'haiccing')).sort().filter(n => statSync(join(dev, 'haiccing', n)).isDirectory())
+  const carried = new Set(packages.flatMap(p => { const m = join(dev, 'haiccing', p, 'modules', 'pear-full-square'); return existsSync(m) ? readdirSync(m) : [] }))
+  const roots = [...packages.map(p => `haiccing/${p}`), ...[...carried].sort().map(m => `pear-full-square/${m}`)]
   const found = []
   const walk = d => { for (const n of readdirSync(join(dev, d)).sort()) { const p = `${d}/${n}`; if (n === 'node_modules' || n === 'modules' || n === '.git') continue; if (statSync(join(dev, p)).isDirectory()) walk(p); else if (n === 'README.md') found.push(p) } }
   for (const r of roots) walk(r)

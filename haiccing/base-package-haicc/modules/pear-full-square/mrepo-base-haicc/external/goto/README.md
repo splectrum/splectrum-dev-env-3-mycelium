@@ -1,0 +1,41 @@
+# goto
+
+Goes to a node position and executes the command that follows there, or sends it on where the node is a shortcut.
+
+`haicc` alone is `haicc/goto`: the protocol's default action. The command
+that follows is the action's arguments, its parts as typed. It can be a
+`haicc` itself, so commands concatenate, each URI local to the mrepo it
+is in.
+
+## Signature
+
+`goto(exec, { uri, args })`: requested as `haicc <URI> <command>`.
+
+## Arguments
+
+The command that follows, its parts: `<protocol>/<action> <URI>
+<argument>...`.
+
+## Returns
+
+What the command returns: executed here, its value; sent on, the response
+of the mrepo it was sent to.
+
+## Errors
+
+- No command follows.
+- The URI runs through a shortcut.
+- A position inside `main` other than the root: not built yet.
+- Those of the command itself.
+
+## Design
+
+- **At a shortcut** the command is sent on unchanged: the hop takes its
+  own `haicc <URI>` off and nothing is rewritten. This request waits for
+  the response.
+- **At an ordinary node** the command is executed here, in the context of
+  the position: forward visibility only, nothing above it is reachable.
+  For now the root only.
+- **Local and remote at once**: `haicc / boot/teardown host` is a command
+  at the root about the shortcut as an item; `haicc /host service/start`
+  goes through it.

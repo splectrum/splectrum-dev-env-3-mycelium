@@ -129,6 +129,12 @@ export async function admit (ctx, core, { origin, name = core?.key ?? guid() }) 
   // a command as typed (its parts): interpreted here, the form filled in
   // with its protocol, action, URI and arguments (lib/command.js)
   if (core && (typeof form === 'string' || Array.isArray(form))) { form = { command: form }; core = { ...core, value: form } }
+  // a response collected by the mrepo itself (a completed form, for a
+  // request waiting here): not a request to interpret or check; queued
+  if (origin === 'internal' && isComplete(core)) {
+    await layer(ctx, PENDING).put(name, wrap(`/${PENDING}`, core), `Response ${name}`)
+    return { name, queued: true }
+  }
   try {
     const filled = formOf(form, ctx.protocols ?? {})
     if (filled !== form) { form = filled; core = { ...core, value: form } }
@@ -203,17 +209,19 @@ export async function request (ctx) {
   const pending = layer(ctx, PENDING)
   const execute = layer(ctx, EXECUTE)
   const done = layer(ctx, DONE)
+  // where a response to a request waiting here is addressed: that request's
+  // own branch, by this mrepo's unique URI (its name where it has none)
+  const mine = `/${ctx.uri ?? ctx.name}/execute/`
 
   // The waiting principals' responses collected: each child's completed
-  // form, from its outbox folder (a child in view: main/<name>/), through
+  // form, from its outbox folder (the linked mrepo's: remote.folder), through
   // the handler into pending, as the mrepo's own.
   const all = await principals(ctx)
   if (ctx.dir) {
     const queuedNow = await pending.list()
     for (const p of all) {
       if (!p.waits || p.response || queuedNow.includes(p.waits)) continue
-      const { at } = p.core.value.remote
-      const file = join(ctx.dir, at.slice(1), 'outbox', `${p.waits}.json`)
+      const file = join(ctx.dir, p.core.value.remote.folder, 'outbox', `${p.waits}.json`)
       if (!existsSync(file)) continue
       const back = JSON.parse(readFileSync(file, 'utf8')).value
       if (back?.key === p.waits && isComplete(back)) await admit(ctx, back, { origin: 'internal', name: p.waits })
@@ -226,7 +234,7 @@ export async function request (ctx) {
   const head = (await branches(ctx)).inbox
   if (head && head !== ctx.seen.inbox && ctx.intake !== false) {
     const box = layer(ctx, 'inbox')
-    const here = `/${ctx.name}${INBOX}`
+    const here = `/${ctx.uri ?? ctx.name}${INBOX}`
     for (const name of await untaken(ctx)) {
       let envelope = null
       try { envelope = await box.read(name) } catch {}
@@ -251,7 +259,7 @@ export async function request (ctx) {
     await execute.remove(name, `Done ${name}: out of execute`)
     // a child's response, merged in with its principal: kept in done, not
     // sent on (it arrived where it was addressed: a request's branch here)
-    if (!(typeof core.topic === 'string' && core.topic.startsWith(`/${ctx.name}/execute/`))) await sendBack(ctx, name, core)
+    if (!(typeof core.topic === 'string' && core.topic.startsWith(mine))) await sendBack(ctx, name, core)
   }
 
   // The next pending request begun on its own branch (a move half done
@@ -270,7 +278,7 @@ export async function request (ctx) {
     // request's branch, /<mrepo>/execute/<key>): not begun as a request:
     // added to that branch, a record of its own beside the principal; the
     // execute protocol then returns the principal with it.
-    const id = isComplete(core) && typeof core.topic === 'string' && core.topic.startsWith(`/${ctx.name}/execute/`) ? core.topic.slice(`/${ctx.name}/execute/`.length) : null
+    const id = isComplete(core) && typeof core.topic === 'string' && core.topic.startsWith(mine) ? core.topic.slice(mine.length) : null
     if (id !== null) {
       const p = now.find(x => x.id === id)
       if (p?.waits === core.key) {

@@ -14,6 +14,7 @@ Each layer, its README:
 | [packages/](packages/) | the code it runs |
 | [protocols/](protocols/) | its external API |
 | [help/](help/) | its documentation |
+| [xpath/](xpath/) | its navigation directives: the shortcuts |
 | [inbox/](inbox/) | records posted to it |
 | [outbox/](outbox/) | records it sends |
 | [request/](request/) | the request layers: pending, executing, done |
@@ -34,7 +35,7 @@ Each layer has a mode, in its `layer.json`:
 
 | mode | written | layers |
 |---|---|---|
-| atomic | one commit at a time, by the runtime | `main`, `runtime`, `protocols`, `help` |
+| atomic | one commit at a time, by the runtime | `main`, `runtime`, `protocols`, `help`, `xpath` |
 | replicated | as atomic, also copied out as files | `packages` |
 | non-atomic | its own writers, in parallel | `inbox`, `outbox`, `request/*`, `execute/*` |
 
@@ -53,10 +54,16 @@ storage.
 
 An mrepo is a folder, `<dir>`. The first, the boot mrepo, is
 `<work>/mrepos/boot/`; every other lives inside its parent, at
-`<parent>/main/<name>/` (the host: `boot/main/host/`). A running mrepo
-sees only forward (a URI has no `..`); outside is reached through a
-mapping (the work folder's package store, named in its packages
-manifest).
+`<parent>/main/<position>/` (the host: `boot/main/host/`). That `main/`
+folder is a shadow structure of the `main` layer: what is linked at a
+position sits there at the same path. The parent has a shortcut for it in
+its `xpath` layer and nothing in `main`. A running mrepo sees only forward
+(a URI has no `..`); outside is reached through a mapping (the work
+folder's package store, named in its packages manifest).
+
+Every mrepo has a unique URI, `<swarm>/<node>`, in its runtime layer. What
+the boot mrepo creates is `local/<name>`: the boot mrepo is `local/boot`,
+the host `local/host`. Its inbox is addressed by it: `/local/host/inbox`.
 
 ```
 <dir>/
@@ -64,7 +71,7 @@ manifest).
   inbox/         input through the filesystem: a record written here is committed
   outbox/        output: each record committed is written here too (there from the start)
   packages/      its packages, hard linked, for Bare to run
-  main/<name>/   a child, inside it
+  main/<name>/   the shadow of main: an mrepo linked at that position, inside it
   runtime.sock   its runtime's local connection (status, stop)
 ```
 
@@ -77,7 +84,7 @@ going). Its key, a GUID, names its document in every layer.
 
 ```json
 {
-  "topic": "/boot/inbox",
+  "topic": "/local/boot/inbox",
   "key": "7b0c1f4e-2d3a-4c5b-9e6f-0a1b2c3d4e5f",
   "timestamp": "2026-11-10T00:00:00.000Z",
   "headers": {},
@@ -96,14 +103,25 @@ form goes back. Each move replaces the envelope; the core never changes.
 Processing completes the form: its `output`, or the `error` that stopped
 it.
 
+The request itself is a form, `{ protocol, action, uri, args }`, the
+arguments a list, unnamed. It can also be given as a command, as it is
+typed: its parts in order, `<protocol>/<action> <URI> <argument>...`.
+
+```json
+"value": ["haicc", "/host", "service/start"]
+```
+
+The mrepo interprets it on its way in. The protocol alone takes its
+default action: `haicc` is `haicc/goto`.
+
 Its way: `inbox` → `request/pending/default` → `request/execute` →
 `request/done`, and back through the `outbox`. Order is the commit chain.
 Requests are checked at the inbox, and again as they execute.
 
 ## Deploying an mrepo
 
-`boot deploy /<name>`, executed by the parent, names a target package; the
-target's `mrepo/packages/layer.json` lists the packages the mrepo is made
+`boot deploy /<name> <package>`, executed by the parent, names a target
+package; the target's `mrepo/packages/layer.json` lists the packages the mrepo is made
 of, in order.
 
 1. **Laid in**: each listed package's `mrepo/` part, read from its bundle,
@@ -113,5 +131,6 @@ of, in order.
 3. **Its packages linked**, individually, from the work folder's store.
 4. **Its runtime started**, from its own `packages/`, by its folder:
    `bare <dir>/packages/haiccing/base-package-runtime.bundle <dir>`.
+5. **Its shortcut placed** in the parent's `xpath` layer, at its position.
 
 

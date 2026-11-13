@@ -27,20 +27,23 @@
 // by the request protocol, straight from pending), which only ever adds: its
 // principal, what it waits for, a child's response, its completion; merged
 // into request/execute then, and removed.
-// A wrapped remote command (lib/remote.js): a request whose URI leads into
-// another mrepo is passed on whole. Its processing ends there: what it waits
-// for is added to its principal; a request branch not being processed has a
+// A command sent on (lib/remote.js): an action that finds its position a
+// shortcut sends the command that follows to the mrepo linked there
+// (exec.forward). The request's processing ends there: what it waits for is
+// added to its principal; a request branch not being processed has a
 // waiting principal. The request protocol adds the child's response to the
 // branch; the principal is then returned with it here.
+// A command executed here (exec.run): interpreted, checked as this request
+// is, its action run in this same execution.
 // lib/actions.js: the generic rest actions, the tests' own.
-import { wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runtimeData, isInternal, principals } from 'mrepo-base-request'
+import { wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runtimeData, isInternal, principals, formOf } from 'mrepo-base-request'
 import { ACTIONS } from './lib/actions.js'
-import { remoteOf, pass } from './lib/remote.js'
+import { pass } from './lib/remote.js'
 
 export { ACTIONS }
 // The targets an action writes, those the mrepo has: main, runtime, help,
-// protocols.
-export const TARGETS = ['main', 'runtime', 'help', 'protocols']
+// protocols, xpath.
+export const TARGETS = ['main', 'runtime', 'help', 'protocols', 'xpath']
 
 const heads = async backend => Object.fromEntries(await backend.listBranches())
 
@@ -88,6 +91,8 @@ export async function failed (ctx, why) {
 // The runtime's context as an execution reads it: read-only, no writer.
 const runtimeView = ctx => Object.freeze({
   name: ctx.name,
+  // its unique URI (<swarm>/<node>); its name where it has none
+  uri: ctx.uri ?? ctx.name,
   work: ctx.work ?? null,
   dir: ctx.dir ?? null,
   branches: async () => (await ctx.backend.listBranches()).map(([b]) => b),
@@ -144,6 +149,10 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
     // mrepo's threshold (/runtime/log.json's level, else info).
     const threshold = await repo.read('/runtime/log.json').then(b => JSON.parse(b.toString()).level, () => 'info')
     const { log, entries } = logger(threshold)
+    // internal (no record of it in the inbox): no API, no state gate
+    const internal = await isInternal(ctx, name)
+    // what the action sent on, if it did (exec.forward): { to, command }
+    let forwarded = null
     const flush = async (what = message) => {
       for (const [t, list] of edits) {
         await ensure(t)
@@ -187,41 +196,58 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       // Everything of this execution ditched, its local commits too: back to
       // where it started; the action goes on.
       reset: () => rollbackAll(),
+      // A command executed here, in this execution: its parts interpreted,
+      // checked as this request is, its action run; its value.
+      run: async command => {
+        const inner = formOf(Array.isArray(command) || typeof command === 'string' ? { command } : command, ctx.protocols ?? {})
+        const why = check(inner, await runtimeData(ctx), { internal })
+        if (why) throw new Error(why)
+        const fn = actions[inner.protocol]?.[inner.action]
+        if (!fn) throw new Error(`no action: ${inner.protocol} ${inner.action}`)
+        return (await fn(exec, inner)) ?? null
+      },
+      // The command sent on to the mrepo a shortcut leads to (to: xpath's
+      // resolve): this request waits for its response, nothing of it is
+      // executed here. The action returns what this returns.
+      forward: (to, command) => {
+        if (forwarded) throw new Error('sent on already')
+        forwarded = { to, command }
+        return null
+      },
       // An entry in the request's log: log(level, event, data), level one of
       // error, warn, info, debug; kept at or above the threshold.
       log
     })
     let result
-    // Its URI leading into another mrepo: passed on whole, this request
-    // waiting (its state kept on its own branch of request/execute); nothing
-    // of it executed here, the other mrepo checks it.
-    let to = null
-    try { to = await remoteOf(exec, form.uri) } catch {}
-    if (to) {
-      try {
-        // what it waits for, added to its principal on its branch: it stays
-        // there, waiting; the branch not being processed any more
-        const c = await w.change(await open(w, backend, name, EXECUTE))
-        await c.put(`/${name}.json`, Buffer.from(JSON.stringify(wrap(`/${EXECUTE}`, { ...core, value: pass(ctx, name, core, to) })) + '\n'))
-        await c.commit(`${name}: passed on to ${to.at}, waiting`, { author: AUTHOR })
-      } catch (err) {
-        await executed(ctx, name, wrap(`/${EXECUTE}`, complete(core, { ok: false, error: err.message })))
-      }
-      continue
-    }
     try {
       // Checked again as it executes: the state now, not as it was queued
       // (two queued while booted: the second initialise refused here).
-      // internal (no record of it in the inbox): no API, no state gate
-      const why = check(form, await runtimeData(ctx), { internal: await isInternal(ctx, name) })
+      const why = check(form, await runtimeData(ctx), { internal })
       if (why) throw new Error(why)
       const fn = actions[protocol]?.[action]
       if (!fn) throw new Error(`no action: ${protocol} ${action}`)
       result = { ok: true, value: (await fn(exec, form)) ?? null }
-      await flush()
+      if (!forwarded) await flush()
     } catch (err) {
       result = { ok: false, error: err.message }
+      forwarded = null
       await rollbackAll()
+    }
+    // Sent on (exec.forward): nothing of it executed here, its writes
+    // dropped; what it waits for added to its principal on its branch: it
+    // stays there, waiting; the branch not being processed any more.
+    if (forwarded) {
+      await rollbackAll()
+      for (const t of made.keys()) await close(backend, name, t)
+      try {
+        const value = pass(ctx, name, core, forwarded.to, forwarded.command)
+        const c = await w.change(await open(w, backend, name, EXECUTE))
+        await c.put(`/${name}.json`, Buffer.from(JSON.stringify(wrap(`/${EXECUTE}`, { ...core, value })) + '\n'))
+        await c.commit(`${name}: sent on to ${forwarded.to.at}, waiting`, { author: AUTHOR })
+      } catch (err) {
+        await executed(ctx, name, wrap(`/${EXECUTE}`, complete(core, { ok: false, error: err.message })))
+      }
+      continue
     }
     // Merged back, each execution branch that moved (main first); then
     // removed, merged or discarded.

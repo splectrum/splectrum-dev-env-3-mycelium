@@ -51,6 +51,7 @@ import { openRepo, writer } from 'mycelium-git'
 import { nativeBackend, p2pgitBackend } from 'mycelium-git'
 import { INBOX, OUTBOX, inboxFolder, post, viewOf, gitdirOf, setting, request, layer, internal, DONE } from 'mrepo-base-request'
 import { execute, failed } from 'mrepo-base-execute'
+import { IDENTITY } from 'mrepo-base-xpath'
 export { run as runtimeRun, register as runtimeRegister } from './lib/protocol.js'
 import { pathToFileURL } from 'bare-url'
 import pkg from './package.json' with { type: 'json' }
@@ -136,6 +137,9 @@ export async function run ({ work: w, repo: given = null, every = 200, own = nul
   // No log of its own: what happens to a request is in its document and the
   // commits that moved it.
   const ctx = { work, dir, name: repo.name, backend: repo.backend, repo: openRepo(repo.backend), writer: writer(repo.backend), seen: {} }
+  // Its unique URI (<swarm>/<node>), from its runtime layer; its name where
+  // it has none: how it is addressed (its inbox's topic, its requests').
+  ctx.uri = await ctx.repo.read(IDENTITY).then(b => JSON.parse(b.toString()).uri, () => null) ?? repo.name
   // The protocols its packages offer: each linked package with a protocol
   // entry, loaded from its bundle in the mrepo's packages/ (its dispatcher's
   // run('/protocol')), its actions beside the framework's.
@@ -155,7 +159,7 @@ export async function run ({ work: w, repo: given = null, every = 200, own = nul
   // its help, extracted from its packages
   if (await has('help') && actions.help?.extract) starting.push((await internal(ctx, { protocol: 'help', action: 'extract', uri: '/' })).name)
   ctx.intake = !starting.length
-  const status = () => ({ ok: true, pid: process.pid, started, repository: { name: repo.name, storage: repo.storage, id: repo.id, key: repo.key }, version })
+  const status = () => ({ ok: true, pid: process.pid, started, repository: { name: repo.name, uri: ctx.uri, storage: repo.storage, id: repo.id, key: repo.key }, version })
   let stopping = null
   let stopped = false
   let server = null

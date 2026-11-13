@@ -37,10 +37,13 @@ export async function deploy (exec, { uri, args = [] }) {
         writeFileSync(join(tmp, p), bytes)
       }
     }
+    // Its identity, in its runtime layer (where it has one): its unique URI.
+    if (existsSync(join(tmp, 'runtime', 'layer.json'))) writeFileSync(join(tmp, 'runtime', 'mrepo.json'), JSON.stringify({ uri: c.mrepo }, null, 2) + '\n')
     mkdirSync(dirname(c.dir), { recursive: true })
     const { layers } = await build({ from: tmp, dir: c.dir, setting: false })
     const { packages } = await place({ dir: c.dir, store, sources, list })
-    const record = { name: c.name, package: target, packages: Object.keys(packages), dir: `main/${c.name}`, layers }
+    // Its shortcut: the link, in the xpath layer; nothing of it in main.
+    const record = { mrepo: c.mrepo, package: target, packages: Object.keys(packages), layers }
     // Its runtime started, from its own packages/ (its pinned runtime), by
     // its directory: its inbox operational. Not when it has no runtime.
     const runtime = join(c.dir, 'packages', 'haiccing', 'base-package-runtime.bundle')

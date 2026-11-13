@@ -1,9 +1,16 @@
 # /runtime
 
-The runtime's data: the service state, in `service.json`.
+The runtime's data: the mrepo's identity, in `mrepo.json`, and the service state, in `service.json`.
 
 The layer is atomic. Its data gates the protocols where the mrepo has a
 service.
+
+## Identity
+
+`mrepo.json` holds the mrepo's unique URI, `{ "uri": "local/host" }`:
+`<swarm>/<node>`, with `local` as the swarm of what the boot mrepo creates.
+It is written when the mrepo is deployed. The runtime addresses the mrepo
+by it: its inbox is `/<uri>/inbox`. Without one, the mrepo's name is used.
 
 ## Service states
 

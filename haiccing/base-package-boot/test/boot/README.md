@@ -17,16 +17,20 @@ the tests: `boot.test.js`. It leaves nothing running.
      PATH, `--yes`), the boot mrepo built, its packages placed and linked,
      its request handed over, its runtime started;
    - the preloaded `boot deploy /host`: the host built inside it
-     (`main/host/`), its runtime running, its record at `main/host.json`;
+     (`main/host/`), its runtime running, its shortcut at `/xpath/host/shortcut.json`,
+     nothing of it in `main`, its unique URI `local/host`;
      the records followed, the request history in `request/done`, the
      outbox; its runtime's own requests as it started, internal: its
      protocols registered, its help extracted;
    - requests posted to the boot mrepo's inbox: `boot redeploy /host` (the
      old runtime stopped, a new one), `boot teardown /host` (its runtime
-     ended, its folder and record gone), `boot deploy /host` again;
-   - a wrapped remote command: `help get /main/host/packages` sent to the
-     boot mrepo is passed on to the host, waits, and is completed with the
-     host's response; a URI with no mrepo linked there stays here;
+     ended, its folder and shortcut gone), `boot deploy /host` again;
+   - `haicc`, commands as typed: `haicc /host help/get /packages` sent to
+     the boot mrepo goes to the shortcut, the command that follows is sent
+     on to the host unchanged, the request waits and is completed with the
+     host's response; `haicc / ...` is executed here; a URI running through
+     a shortcut and a position inside `main` are refused; a chained `haicc`
+     is the linked mrepo's to execute; a plain command at the root;
    - the runtime protocol: `runtime run` on the runtime package, a dry run
      of `test/full` (what it would run), a run of `test/validate` (passed,
      in a floating instance, a line a unit in its log), `/run` refused;

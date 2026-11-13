@@ -1583,3 +1583,72 @@ Settled just before the go, and to be built in those steps:
 
 **Validated**: the five packages' full sets; the boot's test four times
 (93 asserts); the checks, no problems.
+
+## 34. XPath, the xpath layer, the haicc protocol (2026-11-13)
+
+Steps two and three of building part 32, built together: the shortcut
+replaces the record in `main` that the earlier passing on read.
+
+**XPath, internal to the runtime** (`pear-full-square/mrepo-base-xpath`)
+
+- `resolve(exec, uri)`: a local URI resolved to a node position, an
+  ordinary node or a shortcut. A shortcut is its entry in the new `xpath`
+  layer, `/xpath/<position>/shortcut.json`; it has no presence in `main`.
+- The linked mrepo's folder is found by logic, local linking only: the
+  shadow of `main`, `<dir>/main/<position>/`, its inbox and outbox folders
+  inside.
+- The simple rule for now: a URI does not run through a shortcut. It is
+  refused, and the message names the way across, a `haicc` at the
+  shortcut.
+- The `xpath` layer comes with the runtime package (and is in the boot
+  mrepo's own structure); an action can write it.
+
+**Unique URIs**
+
+- An mrepo's identity is in its runtime layer, `/runtime/mrepo.json`:
+  `{ uri }`, `<swarm>/<node>`. The boot mrepo is `local/boot`; what it
+  deploys is `local/<name>`. Deploy writes it into the child.
+- The runtime reads it as it starts and is addressed by it: its inbox is
+  `/<uri>/inbox`, a response to a request waiting in it goes to
+  `/<uri>/execute/<key>`. Without one, the mrepo's name is used.
+- Open, for the demos: a child takes its parent's swarm. How the haicc
+  mrepo gives a node `<swarm>/<node>` from the folder it is deployed in is
+  not decided.
+
+**The boot protocol manages the shortcut**: `boot deploy` writes it (the
+linked mrepo's unique URI, and what was deployed: the package, its
+packages, its runtime's process), `boot teardown` deletes it. Nothing is
+written in `main`.
+
+**The haicc protocol** (`pear-full-square/mrepo-base-haicc`,
+`haiccing/base-package-haicc`)
+
+- `goto`, its default action: `haicc <URI> <command>`. At a shortcut the
+  command that follows is sent on unchanged; at the root it is executed
+  here. A position deeper inside `main` is refused for now: it comes with
+  the first demo.
+- Not behind the service's door: the command that follows is checked
+  where it is executed.
+- The package has no structure of its own. The boot mrepo links it.
+
+**In the execute protocol**
+
+- `exec.forward(to, command)`: the command sent on to the mrepo a shortcut
+  leads to; nothing of the request is executed here, its principal waits
+  on its branch, and is returned with the response (as built in part 29).
+- `exec.run(command)`: a command executed in the same execution,
+  interpreted and checked as the request is.
+- The URI rewrite (`/main/<name>/<rest>` to `/<rest>`) is gone.
+
+**A defect found and fixed**: a response collected from a linked mrepo
+came in through the same handler as a request and was checked as one. In
+a service managed mrepo it could be refused for its service state. A
+response is now queued without being interpreted or checked.
+
+**The checks** (`tools/code-check.js`, `tools/help-extract.js --files`)
+now take every package in `haiccing/` and every module a package carries,
+in place of fixed lists.
+
+**Validated**: the six packages' full sets; the boot's test four times
+(100 asserts), `haicc` going through a real shortcut between two running
+mrepos; the checks, no problems (17 modules, 6 packages).

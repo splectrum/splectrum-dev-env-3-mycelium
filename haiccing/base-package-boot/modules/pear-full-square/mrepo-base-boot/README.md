@@ -2,7 +2,8 @@
 
 The mrepo boot protocol: deploy, tear down and redeploy a child mrepo, executed by its parent.
 
-A child lives inside its parent, at `main/<name>/`. Deploy builds it from a
+A child lives inside its parent, at `main/<name>/`, the shadow of `main`;
+the parent holds a shortcut for it in its `xpath` layer. Deploy builds it from a
 target package's list of packages, links its packages and starts its
 runtime. Teardown stops the runtime and removes the child; redeploy does
 both in turn. The module also holds the install routine: building an mrepo
