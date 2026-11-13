@@ -61,8 +61,24 @@ export function matches (pattern, uri) {
   return p.length === u.length
 }
 
+// What an action's config asks for and the request does not give: null, or
+// `missing argument: <name>`.
+//   target    a target is needed: the URI is not / (the mrepo itself, which
+//             one cannot deploy or tear down); left out, the URI is /
+//   args      the arguments by name, in order; one ending in ? is optional
+export function missing (cfg, uri, args = []) {
+  if (!cfg) return null
+  if (cfg.target && uri === '/') return 'missing argument: target'
+  for (const [i, n] of (cfg.args || []).entries()) {
+    if (n.endsWith('?')) continue
+    if (args?.[i] === undefined || args[i] === '') return `missing argument: ${n}`
+  }
+  return null
+}
+
 // A request checked: null when allowed, else why not.
-//   always             a form, its URI canonical
+//   always             a form, its URI canonical; what its action's config
+//                      asks for given (missing): a target, its arguments
 //   without service    no more (no /runtime/service.json: no gate)
 //   with service       offered: its protocol loaded, its action configured,
 //                      its URI one the action's config names; and now (state:
@@ -80,14 +96,19 @@ export function check (value, { service, protocols }, { state = true, internal =
   let uri
   try { uri = canonical(value.uri ?? '') } catch (err) { return err.message }
   if (uri !== value.uri) return `not canonical: ${value.uri} (${uri})`
-  if (!service) return null
   const { protocol, action } = value
   const cfg = protocols?.[protocol]?.actions?.[action]
+  const lacks = missing(cfg, uri, value.args)
+  if (!service) return lacks
   if (!internal) {
     if (!protocols?.[protocol]) return `not offered: ${protocol}`
     if (!cfg) return `not offered: ${protocol} ${action}`
+    // (before its URI is looked at: a target left out is / and would only
+    // be said not offered there)
+    if (lacks) return lacks
     if (!(cfg.uris || []).some(p => matches(p, uri))) return `not offered: ${protocol} ${action} at ${uri}`
   }
+  if (lacks) return lacks
   if (!state) return null
   if (cfg?.states) return cfg.states.includes(service.state) ? null : `not now: ${protocol} ${action} (the service is ${service.state})`
   if (internal || !protocols?.[protocol]?.gated) return null

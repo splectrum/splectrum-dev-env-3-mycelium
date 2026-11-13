@@ -55,7 +55,8 @@ built is in the packages: `haiccing/package-docs-template` and
   `redeploy` of a child, inside its parent (`main/<name>/`, the shadow of
   `main`), its shortcut in the parent's `xpath` layer.
 - **The haicc command** (`base-linux-haicc`, sh): one installer file;
-  `haicc sources`, `haicc prereq`, `haicc boot`; `haicc <URI>
+  `haicc sources`, `haicc prereq`, `haicc boot/deploy` and
+  `haicc boot/teardown` (the machine level); `haicc <URI>
   <protocol>/<action> <args>` writes a record into the boot mrepo's inbox
   folder and prints the response.
 - **Commands** (parts 33, 34): a request is protocol, action, URI and a

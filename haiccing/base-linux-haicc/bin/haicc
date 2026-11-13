@@ -1,11 +1,16 @@
 #!/bin/sh
 # haicc: the command. It only dispatches.
-#   haicc <URI> <protocol>/<action> <argument>...   an mrepo command: a URI
-#       starts with / (the local root), so a first part starting with / is a
-#       command for the mrepos; it goes to the boot mrepo's inbox
-#       (haicc-request)
+#   haicc [--output] <URI> <protocol>/<action> <argument>...   an mrepo
+#       command: a URI starts with / (the local root), so a first part
+#       starting with / is a command for the mrepos; it goes to the boot
+#       mrepo's inbox (haicc-request). --output: the completed form's output
+#       alone printed, not the response record
+#   haicc <protocol>/<action> <argument>...          a command without a
+#       URI: the machine level, above the root mrepo, in the same form
+#       (boot/deploy, boot/teardown): the script haicc-<protocol>, its
+#       action its first argument
 #   haicc <name> <argument>...                      a script command: the
-#       script haicc-<name> beside this one (boot, prereq, sources)
+#       script haicc-<name> beside this one (sources, prereq)
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 HAICC_HOME=${HAICC_HOME:-$(cd "$here/.." && pwd)}
@@ -16,7 +21,15 @@ usage () {
 haicc <URI> <protocol>/<action> <argument>...   a command for the mrepos:
                                                 go to this node position and
                                                 execute the command that
-                                                follows
+                                                follows; its response record
+                                                printed whole
+haicc --output <URI> <protocol>/<action> ...    the same, the completed
+                                                form's output alone
+haicc boot/deploy                               the machine level: the boot
+                                                mrepo put in place at the
+                                                root, its runtime started
+haicc boot/teardown                             every runtime stopped, what
+                                                boot/deploy put in place removed
 haicc sources                                   the sources registered
 haicc sources link <folder>                     a local folder linked as a source
 haicc sources unlink <folder>
@@ -25,20 +38,36 @@ haicc sources download [<what>...]              fetched over https: bare,
 haicc sources https | no-https                  https as the backup, or not
 haicc prereq [--check]                          what a boot needs, checked and
                                                 put in place (--check: only checked)
-haicc boot                                      the boot mrepo, at the root
 
+  haicc boot/deploy
   haicc / boot/deploy host base-component-haicc
   haicc /host service/initialise
   haicc /host service/start
+  haicc /host boot/deploy node-1 base-package-runtime
+  haicc /host haicc /node-1 help/get /
+  haicc /host boot/teardown node-1
+  haicc / boot/teardown host
+  haicc boot/teardown
+
+Help in an mrepo: haicc / help/get /, haicc /host help/get /protocols
 USAGE
 }
 
 case "${1:-}" in
   /*) exec sh "$here/haicc-request" "$@" ;;
+  --output) shift; HAICC_OUTPUT=1; export HAICC_OUTPUT
+    case "${1:-}" in /*) exec sh "$here/haicc-request" "$@" ;; esac
+    echo "haicc: --output goes before a URI" >&2; exit 2 ;;
   ''|help|--help|-h) usage; exit 0 ;;
 esac
 name=$1; shift
 case "$name" in
+  # the machine level: <protocol>/<action>
+  */*)
+    protocol=${name%%/*}; action=${name#*/}
+    case "$protocol$action" in *[!a-z0-9-]*|'') echo "haicc: no command '$name' (haicc --help)" >&2; exit 2 ;; esac
+    [ -n "$protocol" ] && [ -n "$action" ] && [ -f "$here/haicc-$protocol" ] || { echo "haicc: no command '$name' (haicc --help)" >&2; exit 2; }
+    exec sh "$here/haicc-$protocol" "$action" "$@" ;;
   *[!a-z0-9-]*|-*) echo "haicc: no command '$name' (haicc --help)" >&2; exit 2 ;;
 esac
 [ -f "$here/haicc-$name" ] || { echo "haicc: no command '$name' (haicc --help)" >&2; exit 2; }

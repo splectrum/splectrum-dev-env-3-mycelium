@@ -24,8 +24,13 @@ same record, without `deployed`, is the child's shortcut, written at
 
 ## Errors
 
+- No target, or a target of `/`: `missing argument: target`. One cannot
+  deploy the mrepo itself.
+- No package: `missing argument: package`.
 - The child is deployed already, or its folder is in the way.
-- No package given; the parent's packages manifest names no store.
+- The position exists locally, as data in `main`: the boot protocol
+  cannot target it.
+- The parent's packages manifest names no store.
 - The target lists no packages; its runtime does not start.
 
 ## Design

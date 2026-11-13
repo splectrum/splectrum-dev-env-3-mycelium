@@ -45,6 +45,12 @@ export { ACTIONS }
 // protocols, xpath.
 export const TARGETS = ['main', 'runtime', 'help', 'protocols', 'xpath']
 
+// What is not there, said with what is: the protocol (the mrepo's
+// protocols), or the action (the protocol's actions).
+const unknown = (actions, protocol, action) => actions[protocol]
+  ? `no action: ${protocol} ${action} (${Object.keys(actions[protocol]).sort().join(', ')})`
+  : `no protocol: ${protocol} (${Object.keys(actions).sort().join(', ')})`
+
 const heads = async backend => Object.fromEntries(await backend.listBranches())
 
 // A request's execution branches: its own, by its key, one a target it
@@ -203,7 +209,7 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
         const why = check(inner, await runtimeData(ctx), { internal })
         if (why) throw new Error(why)
         const fn = actions[inner.protocol]?.[inner.action]
-        if (!fn) throw new Error(`no action: ${inner.protocol} ${inner.action}`)
+        if (!fn) throw new Error(unknown(actions, inner.protocol, inner.action))
         return (await fn(exec, inner)) ?? null
       },
       // The command sent on to the mrepo a shortcut leads to (to: xpath's
@@ -225,7 +231,7 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       const why = check(form, await runtimeData(ctx), { internal })
       if (why) throw new Error(why)
       const fn = actions[protocol]?.[action]
-      if (!fn) throw new Error(`no action: ${protocol} ${action}`)
+      if (!fn) throw new Error(unknown(actions, protocol, action))
       result = { ok: true, value: (await fn(exec, form)) ?? null }
       if (!forwarded) await flush()
     } catch (err) {

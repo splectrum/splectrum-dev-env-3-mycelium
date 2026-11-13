@@ -30,13 +30,19 @@ One package, one protocol, except the runtime's, which brings its own two.
   "package": "haiccing/base-package-service",
   "description": "...",
   "actions": {
-    "start": { "uris": ["/"], "states": ["initialised"], "description": "..." }
+    "start": { "uris": ["/"], "states": ["initialised"], "description": "..." },
+    "deploy": { "uris": ["/<name>"], "target": true, "args": ["package"], "description": "..." }
   }
 }
 ```
 
 - `uris`: where the action is offered: `/`, `/<name>` any one segment,
   `/main/**` everything below, `/**` anywhere.
+- `target`: the action needs a target. `/` is the mrepo itself, which one
+  cannot deploy or tear down; a URI left out is `/`. Without one:
+  `missing argument: target`.
+- `args`: the action's arguments by name, in order; one ending in `?` is
+  optional. One not given: `missing argument: <name>`.
 - `states`: the service states that allow the action, for one that moves
   the state: the service's own.
 - `default`, on the protocol: the action taken when a command names the

@@ -16,7 +16,9 @@ it stopped is logged.
 
 ## Errors
 
-- The child is not deployed.
+- No target, or a target of `/`: `missing argument: target`.
+- The child is not deployed; or the position exists locally, which the
+  boot protocol cannot target.
 - Its runtime does not stop.
 
 ## Design

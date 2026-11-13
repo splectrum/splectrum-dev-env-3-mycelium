@@ -61,7 +61,7 @@ test('the runtime: started, answering, stopped', { timeout: 60000 }, async (t) =
     t.ok(await repo.read('/protocols/help.json').then(() => true, () => false), 'and help')
     // answering through its inbox
     t.alike((await send(work, backend, { protocol: 'runtime', action: 'register', uri: '/' }))?.output, { registered: ['help', 'runtime'] }, 'a request through its inbox: answered')
-    t.ok(/no such|not offered|no action/.test((await send(work, backend, { protocol: 'rest', action: 'get', uri: '/main' }))?.error ?? ''), 'a protocol it does not offer: refused as it executes')
+    t.is((await send(work, backend, { protocol: 'rest', action: 'get', uri: '/main' }))?.error, 'no protocol: rest (help, runtime)', 'a protocol it does not offer: refused as it executes, said with the protocols there')
     t.ok((await ask({ work, op: 'stop' }))?.stopping, 'asked to stop')
     for (let i = 0; i < 100 && alive(child.pid); i++) await wait(100)
     t.absent(alive(child.pid), 'its process ended')

@@ -29,12 +29,17 @@ bin=$(cd "$bin" && pwd)
 cat > "$home/bin/haicc" <<'HAICC_INSTALL_FILE_END'
 #!/bin/sh
 # haicc: the command. It only dispatches.
-#   haicc <URI> <protocol>/<action> <argument>...   an mrepo command: a URI
-#       starts with / (the local root), so a first part starting with / is a
-#       command for the mrepos; it goes to the boot mrepo's inbox
-#       (haicc-request)
+#   haicc [--output] <URI> <protocol>/<action> <argument>...   an mrepo
+#       command: a URI starts with / (the local root), so a first part
+#       starting with / is a command for the mrepos; it goes to the boot
+#       mrepo's inbox (haicc-request). --output: the completed form's output
+#       alone printed, not the response record
+#   haicc <protocol>/<action> <argument>...          a command without a
+#       URI: the machine level, above the root mrepo, in the same form
+#       (boot/deploy, boot/teardown): the script haicc-<protocol>, its
+#       action its first argument
 #   haicc <name> <argument>...                      a script command: the
-#       script haicc-<name> beside this one (boot, prereq, sources)
+#       script haicc-<name> beside this one (sources, prereq)
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 HAICC_HOME=${HAICC_HOME:-$(cd "$here/.." && pwd)}
@@ -45,7 +50,15 @@ usage () {
 haicc <URI> <protocol>/<action> <argument>...   a command for the mrepos:
                                                 go to this node position and
                                                 execute the command that
-                                                follows
+                                                follows; its response record
+                                                printed whole
+haicc --output <URI> <protocol>/<action> ...    the same, the completed
+                                                form's output alone
+haicc boot/deploy                               the machine level: the boot
+                                                mrepo put in place at the
+                                                root, its runtime started
+haicc boot/teardown                             every runtime stopped, what
+                                                boot/deploy put in place removed
 haicc sources                                   the sources registered
 haicc sources link <folder>                     a local folder linked as a source
 haicc sources unlink <folder>
@@ -54,20 +67,36 @@ haicc sources download [<what>...]              fetched over https: bare,
 haicc sources https | no-https                  https as the backup, or not
 haicc prereq [--check]                          what a boot needs, checked and
                                                 put in place (--check: only checked)
-haicc boot                                      the boot mrepo, at the root
 
+  haicc boot/deploy
   haicc / boot/deploy host base-component-haicc
   haicc /host service/initialise
   haicc /host service/start
+  haicc /host boot/deploy node-1 base-package-runtime
+  haicc /host haicc /node-1 help/get /
+  haicc /host boot/teardown node-1
+  haicc / boot/teardown host
+  haicc boot/teardown
+
+Help in an mrepo: haicc / help/get /, haicc /host help/get /protocols
 USAGE
 }
 
 case "${1:-}" in
   /*) exec sh "$here/haicc-request" "$@" ;;
+  --output) shift; HAICC_OUTPUT=1; export HAICC_OUTPUT
+    case "${1:-}" in /*) exec sh "$here/haicc-request" "$@" ;; esac
+    echo "haicc: --output goes before a URI" >&2; exit 2 ;;
   ''|help|--help|-h) usage; exit 0 ;;
 esac
 name=$1; shift
 case "$name" in
+  # the machine level: <protocol>/<action>
+  */*)
+    protocol=${name%%/*}; action=${name#*/}
+    case "$protocol$action" in *[!a-z0-9-]*|'') echo "haicc: no command '$name' (haicc --help)" >&2; exit 2 ;; esac
+    [ -n "$protocol" ] && [ -n "$action" ] && [ -f "$here/haicc-$protocol" ] || { echo "haicc: no command '$name' (haicc --help)" >&2; exit 2; }
+    exec sh "$here/haicc-$protocol" "$action" "$@" ;;
   *[!a-z0-9-]*|-*) echo "haicc: no command '$name' (haicc --help)" >&2; exit 2 ;;
 esac
 [ -f "$here/haicc-$name" ] || { echo "haicc: no command '$name' (haicc --help)" >&2; exit 2; }
@@ -75,34 +104,71 @@ exec sh "$here/haicc-$name" "$@"
 HAICC_INSTALL_FILE_END
 cat > "$home/bin/haicc-boot" <<'HAICC_INSTALL_FILE_END'
 #!/bin/sh
-# haicc boot: the boot mrepo put in place at the root, its runtime started.
-# The boot package's bundle, from the sources, run with the Bare put in
-# place: it builds the boot mrepo the first time, places its packages and
-# starts its runtime (already there: kept, its runtime started again where
-# it was stopped). Nothing is deployed by it: commands come next
-# (haicc / boot/deploy host base-component-haicc).
-# The prerequisites are checked first, never fetched or fixed here: one
-# missing stops it (exit 3), pointing to haicc prereq.
-#   haicc boot
-# What the boot prints: its request, completed (a record), then its
-# runtime's status. Exit: the boot's own.
+# haicc boot/<action>: the machine level, above the root mrepo.
+#   haicc boot/deploy     the boot mrepo put in place at the root, its
+#       runtime started. The boot package's bundle, from the sources, run
+#       with the Bare put in place: it builds the boot mrepo the first time,
+#       places its packages and starts its runtime (already there: kept,
+#       its runtime started again where it was stopped). Nothing is
+#       deployed by it: commands come next (haicc / boot/deploy host
+#       base-component-haicc). The prerequisites are checked first, never
+#       fetched or fixed here: one missing stops it (exit 3), pointing to
+#       haicc prereq. What the boot prints: its request, completed (a
+#       record), then its runtime's status. Exit: the boot's own.
+#   haicc boot/teardown   the undo of boot/deploy: every runtime under the
+#       work folder stopped (the boot mrepo's and those of every mrepo
+#       deployed below it), then what boot/deploy put in place removed: the
+#       mrepos, the package store, the work folder's setting. Bare, the
+#       sources and the scripts stay (haicc prereq, haicc sources). No boot
+#       mrepo there: exit 3.
 set -u
 . "$(dirname "$0")/haicc-lib.sh"
-[ $# -eq 0 ] || fail "haicc boot (no arguments)" 2
+action=${1:-}
+[ $# -gt 0 ] && shift
+[ $# -eq 0 ] || fail "haicc boot/$action (no arguments)" 2
 
-if ! out=$(sh "$(dirname "$0")/haicc-prereq" --check); then
-  printf '%s\n' "$out" | grep '^missing' >&2
-  fail "a prerequisite is missing: haicc prereq" 3
-fi
-bundle=$(in_sources "$HAICC_ORG/$BOOT_PACKAGE.bundle")
-# the sources, in order, as the boot takes them
-set --
-while IFS= read -r s; do
-  [ -n "$s" ] && set -- "$@" "--sources=$s"
-done <<LIST
+# The runtimes running under the work folder: their process ids. A runtime
+# is Bare running an mrepo's own runtime bundle, by the mrepo's folder.
+runtimes () {
+  for p in /proc/[0-9]*; do
+    [ -r "$p/cmdline" ] || continue
+    case "$(tr '\0' ' ' < "$p/cmdline" 2>/dev/null)" in
+      *"/packages/$HAICC_ORG/base-package-runtime.bundle $HAICC_WORK/mrepos/"*) printf '%s\n' "${p#/proc/}" ;;
+    esac
+  done
+}
+
+case "$action" in
+  deploy)
+    if ! out=$(sh "$(dirname "$0")/haicc-prereq" --check); then
+      printf '%s\n' "$out" | grep '^missing' >&2
+      fail "a prerequisite is missing: haicc prereq" 3
+    fi
+    bundle=$(in_sources "$HAICC_ORG/$BOOT_PACKAGE.bundle")
+    # the sources, in order, as the boot takes them
+    set --
+    while IFS= read -r s; do
+      [ -n "$s" ] && set -- "$@" "--sources=$s"
+    done <<LIST
 $(sources)
 LIST
-exec "$HAICC_BARE" "$bundle" "--work=$HAICC_WORK" "$@" --no-follow
+    exec "$HAICC_BARE" "$bundle" "--work=$HAICC_WORK" "$@" --no-follow ;;
+  teardown)
+    [ -d "$HAICC_ROOT" ] || fail "no boot mrepo at $HAICC_WORK (nothing to tear down)" 3
+    n=0
+    for pid in $(runtimes); do kill "$pid" 2>/dev/null && n=$((n + 1)); done
+    i=0
+    while [ -n "$(runtimes)" ] && [ "$i" -lt 100 ]; do sleep 0.1 2>/dev/null || sleep 1; i=$((i + 1)); done
+    for pid in $(runtimes); do kill -9 "$pid" 2>/dev/null; done
+    [ -z "$(runtimes)" ] || fail "a runtime under $HAICC_WORK did not stop" 1
+    # what boot/deploy put in place, by name: nothing else in the work folder
+    rm -rf "$HAICC_WORK/mrepos" "$HAICC_WORK/packages" "$HAICC_WORK/mrepo.json"
+    printf '{"tornDown":"/","runtimes":%s,"work":"%s"}\n' "$n" "$HAICC_WORK" ;;
+  '')
+    fail "haicc boot/deploy, haicc boot/teardown" 2 ;;
+  *)
+    fail "no action: boot $action (deploy, teardown)" 2 ;;
+esac
 HAICC_INSTALL_FILE_END
 cat > "$home/bin/haicc-lib.sh" <<'HAICC_INSTALL_FILE_END'
 # haicc-lib.sh: what the haicc scripts share; sourced, never run.
@@ -227,14 +293,16 @@ cat > "$home/bin/haicc-request" <<'HAICC_INSTALL_FILE_END'
 #                  resolves the position:
 #                    haicc /host service/start    ->  haicc /host service/start
 # The parts go as typed, unnamed; the mrepo interprets them.
-# Prints the command's output (JSON) and exits 0; its error on stderr, exit 1.
+# Prints the response record whole, as it is in the outbox folder; exit 0
+# when its completed form holds an output, 1 an error (also said on stderr).
 #   HAICC_TIMEOUT   seconds to wait for the response (120); none in time:
 #                   exit 4 (the request stays; its key is said)
-#   HAICC_RECORD=1  the whole response record printed, not its output alone
+#   HAICC_OUTPUT=1  the completed form's output alone printed, not the
+#                   record (haicc --output)
 set -u
 . "$(dirname "$0")/haicc-lib.sh"
 [ $# -ge 2 ] || fail "haicc <URI> <protocol>/<action> <argument>... (a command follows the URI)" 2
-[ -d "$HAICC_ROOT/inbox" ] || fail "no boot mrepo at $HAICC_WORK (haicc boot)" 3
+[ -d "$HAICC_ROOT/inbox" ] || fail "no boot mrepo at $HAICC_WORK (haicc boot/deploy)" 3
 
 uri=$1; shift
 if [ "$uri" = / ]; then :; else set -- haicc "$uri" "$@"; fi
@@ -273,8 +341,8 @@ while [ ! -f "$back" ]; do
   sleep 0.2 2>/dev/null || sleep 1
   waited=$((waited + 1))
 done
-if [ "${HAICC_RECORD:-}" = 1 ]; then cat "$back"; fi
-awk -f "$(dirname "$0")/haicc-response.awk" -v quiet="${HAICC_RECORD:-}" "$back"
+if [ "${HAICC_OUTPUT:-}" = 1 ]; then quiet=''; else quiet=1; cat "$back"; fi
+awk -f "$(dirname "$0")/haicc-response.awk" -v quiet="$quiet" "$back"
 HAICC_INSTALL_FILE_END
 cat > "$home/bin/haicc-response.awk" <<'HAICC_INSTALL_FILE_END'
 # haicc-response.awk: a response record read, its completed form's output or

@@ -5,6 +5,6 @@ export const CONFIG = {
   description: 'A command executed at a node position, or sent on where the node is a shortcut.',
   default: 'goto',
   actions: {
-    goto: { uris: ['/**'], description: 'Go to this node position and execute the command that follows; at a shortcut, the command is sent to the mrepo linked there.' }
+    goto: { uris: ['/**'], args: ['command'], description: 'Go to this node position and execute the command that follows; at a shortcut, the command is sent to the mrepo linked there.' }
   }
 }

@@ -20,7 +20,7 @@ test('goto: at the root executed here; at a shortcut sent on; no command, a deep
   t.is(await goto(exec, { uri: '/host', args: ['haicc', '/swarms/swarm-1', 'boot/deploy', 'node-1'] }), null, 'a shortcut: sent on')
   t.alike(seen.sent, [{ to: { at: '/host', mrepo: 'local/host', folder: 'main/host', dir: '/work/mrepos/boot/main/host' }, command: ['haicc', '/swarms/swarm-1', 'boot/deploy', 'node-1'] }], 'the command that follows, unchanged, to the mrepo linked there')
   t.is(seen.ran.length, 1, 'nothing of it executed here')
-  await t.exception(goto(exec, { uri: '/host' }), /haicc \/host: no command to execute there/)
+  await t.exception(goto(exec, { uri: '/host' }), /missing argument: command/)
   await t.exception(goto(exec, { uri: '/swarms/swarm-1', args: ['boot/deploy', 'node-1'] }), /a position inside main is not built yet/)
   await t.exception(goto(exec, { uri: '/host/swarms', args: ['service/start'] }), /\/host is a shortcut/)
 })
@@ -28,6 +28,7 @@ test('goto: at the root executed here; at a shortcut sent on; no command, a deep
 test('the config: goto at any position, the default action', (t) => {
   t.is(CONFIG.default, 'goto')
   t.alike(CONFIG.actions.goto.uris, ['/**'])
+  t.alike(CONFIG.actions.goto.args, ['command'], 'its argument, named: the command that follows')
   t.absent(CONFIG.gated, 'not behind the service\'s door')
   t.ok(CONFIG.description && CONFIG.actions.goto.description)
 })

@@ -28,7 +28,8 @@ created.
 ## Deploying
 
 By the boot mrepo, with a command at the root. The mrepo starts `booted`:
-its boot protocol is behind the service's door until it is started.
+its boot protocol is behind the service's door until it is started. Each
+service command answers what was done and the state now.
 
 ```
 haicc / boot/deploy host base-component-haicc

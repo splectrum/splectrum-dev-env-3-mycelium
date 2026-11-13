@@ -11,14 +11,16 @@
 #                  resolves the position:
 #                    haicc /host service/start    ->  haicc /host service/start
 # The parts go as typed, unnamed; the mrepo interprets them.
-# Prints the command's output (JSON) and exits 0; its error on stderr, exit 1.
+# Prints the response record whole, as it is in the outbox folder; exit 0
+# when its completed form holds an output, 1 an error (also said on stderr).
 #   HAICC_TIMEOUT   seconds to wait for the response (120); none in time:
 #                   exit 4 (the request stays; its key is said)
-#   HAICC_RECORD=1  the whole response record printed, not its output alone
+#   HAICC_OUTPUT=1  the completed form's output alone printed, not the
+#                   record (haicc --output)
 set -u
 . "$(dirname "$0")/haicc-lib.sh"
 [ $# -ge 2 ] || fail "haicc <URI> <protocol>/<action> <argument>... (a command follows the URI)" 2
-[ -d "$HAICC_ROOT/inbox" ] || fail "no boot mrepo at $HAICC_WORK (haicc boot)" 3
+[ -d "$HAICC_ROOT/inbox" ] || fail "no boot mrepo at $HAICC_WORK (haicc boot/deploy)" 3
 
 uri=$1; shift
 if [ "$uri" = / ]; then :; else set -- haicc "$uri" "$@"; fi
@@ -57,5 +59,5 @@ while [ ! -f "$back" ]; do
   sleep 0.2 2>/dev/null || sleep 1
   waited=$((waited + 1))
 done
-if [ "${HAICC_RECORD:-}" = 1 ]; then cat "$back"; fi
-awk -f "$(dirname "$0")/haicc-response.awk" -v quiet="${HAICC_RECORD:-}" "$back"
+if [ "${HAICC_OUTPUT:-}" = 1 ]; then quiet=''; else quiet=1; cat "$back"; fi
+awk -f "$(dirname "$0")/haicc-response.awk" -v quiet="$quiet" "$back"

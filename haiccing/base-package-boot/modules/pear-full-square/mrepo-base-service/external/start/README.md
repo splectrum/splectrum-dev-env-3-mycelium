@@ -8,7 +8,8 @@ Moves the service from initialised to started: the external API open.
 
 ## Returns
 
-`{ service: "started" }`.
+`{ service: "started", state: "started" }`: what was done, and the state the
+service is in now.
 
 ## Errors
 

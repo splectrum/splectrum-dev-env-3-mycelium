@@ -18,7 +18,7 @@ scripted. Plain POSIX sh.
 sh haicc-install.sh
 haicc sources link <folder>
 haicc prereq
-haicc boot
+haicc boot/deploy
 haicc / boot/deploy host base-component-haicc
 haicc /host service/initialise
 haicc /host service/start
@@ -35,6 +35,9 @@ haicc /host service/start
 - **A first part starting with `/`** is a command for the mrepos:
   `haicc <URI> <protocol>/<action> <argument>...`. Go to this node
   position and execute the command that follows.
+- **A `<protocol>/<action>` without a URI** is the machine level, above
+  the root mrepo, in the same form: `haicc boot/deploy`,
+  `haicc boot/teardown`.
 - **Anything else** is a script command: `haicc <name> <argument>...`.
 
 | script command | |
@@ -45,13 +48,15 @@ haicc /host service/start
 | `haicc sources download [<what>...]` | fetched over https, checked against its pin: `bare`, `third-party`, `<org>`, `<org>/<package>`; nothing named: all |
 | `haicc sources https`, `no-https` | https as the backup for what the folders lack, the default, or not |
 | `haicc prereq [--check]` | what a boot needs, checked; Bare unpacked from the sources |
-| `haicc boot` | the boot mrepo at the root, its runtime started |
+| `haicc boot/deploy` | the boot mrepo put in place at the root, its runtime started; there already: kept, its runtime started again |
+| `haicc boot/teardown` | every runtime under the work folder stopped; what `boot/deploy` put in place removed: the mrepos, the package store. Bare, the sources and the scripts stay |
 
 ## Mrepo commands
 
 The script writes a record into the boot mrepo's inbox folder, waits for
-the response in its outbox folder, and prints the command's output, JSON.
-An error goes to stderr, exit 1.
+the response in its outbox folder, and prints the response record whole,
+as it is there. The exit code comes from its completed form: 0 an output,
+1 an error, which is also said on stderr.
 
 There is no mrepo context at the command line, so one rule of its own:
 
@@ -66,7 +71,16 @@ go as typed, unnamed; the mrepo interprets them.
 
 - `HAICC_TIMEOUT`: seconds to wait for the response, 120; none in time:
   exit 4, and the request stays.
-- `HAICC_RECORD=1`: the whole response record printed.
+- `haicc --output <URI> ...`, or `HAICC_OUTPUT=1`: the completed form's
+  output alone printed, not the record.
+
+Tearing down, bottom up:
+
+```
+haicc /host boot/teardown node-1
+haicc / boot/teardown host
+haicc boot/teardown
+```
 
 ## Folders
 

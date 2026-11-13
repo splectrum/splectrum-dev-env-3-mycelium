@@ -38,7 +38,7 @@ test('execute: execution branches from their targets, the record completed, merg
     await bootedHost(work, { preload: false })
     await withHost(work, async ctx => {
       let r = await run(ctx, { protocol: 'service', action: 'initialise', uri: '/' })
-      t.alike(r, { ok: true, value: { service: 'initialised' } })
+      t.alike(r, { ok: true, value: { service: 'initialised', state: 'initialised' } })
       t.is((await json(ctx.repo, '/runtime/service.json')).state, 'initialised', 'merged back into runtime')
       r = await run(ctx, { protocol: 'service', action: 'start', uri: '/' })
       r = await run(ctx, { protocol: 'rest', action: 'put', uri: '/main/a/b.json', args: ['{"n":1}'] })
@@ -234,7 +234,7 @@ test('exec.run: a command executed here; exec.forward: sent on, the principal wa
       const done = async name => (await json(ctx2.repo, `/${EXECUTE}/${name}.json`)).value.value
       const ran = await done(await one({ protocol: 'rest', action: 'here', uri: '/', args: ['rest/get', '/main/x.json'] }))
       t.alike(ran.output, { n: 1 }, 'exec.run: the command interpreted and its action run in the same execution, its value returned')
-      t.is((await done(await one({ protocol: 'rest', action: 'here', uri: '/', args: ['rest/post', '/main/x.json'] }))).error, 'no action: rest post', 'checked as the request is (internal: no API gate), and its action looked up')
+      t.is((await done(await one({ protocol: 'rest', action: 'here', uri: '/', args: ['rest/post', '/main/x.json'] }))).error, 'no action: rest post (delete, get, here, put, there)', 'checked as the request is (internal: no API gate), and its action looked up')
 
       const name = await one({ protocol: 'rest', action: 'there', uri: '/other', args: ['service/start'] })
       const [p] = (await principals(ctx2)).filter(x => x.id === name)

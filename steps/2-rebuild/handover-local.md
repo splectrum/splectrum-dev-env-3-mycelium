@@ -30,7 +30,7 @@ and, for the human, in their own home:
 sh haiccing/base-linux-haicc/haicc-install.sh
 haicc sources link <clone>/sources
 haicc prereq
-haicc boot
+haicc boot/deploy
 haicc / boot/deploy host base-component-haicc
 haicc /host service/initialise
 haicc /host service/start
@@ -42,9 +42,12 @@ haicc /host service/start
 - Only `haicc sources download` reaches the network; nothing in a run
   above does, once `tools/release.js` has fetched Bare's tarball.
 - A runtime is a process that keeps running: the boot mrepo's after
-  `haicc boot`, one more for each mrepo deployed. To stop them all:
-  `pkill -f "bin/bare $HOME/.haicc/"`. To start over: stop them, then
-  remove `~/.haicc/work`.
+  `haicc boot/deploy`, one more for each mrepo deployed. To stop them all
+  and start over: `haicc boot/teardown` (every runtime under the work
+  folder stopped, the mrepos and the package store removed; Bare, the
+  sources and the scripts stay), then `haicc boot/deploy` again.
+- A command prints its response record whole; `haicc --output <URI> ...`
+  prints the output alone.
 
 ## Releases: created on the local machine
 

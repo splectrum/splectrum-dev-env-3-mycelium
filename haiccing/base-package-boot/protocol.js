@@ -7,7 +7,9 @@
 // The work is mrepo-base-boot's; here only what the package offers.
 import { deploy, teardown, redeploy } from './modules/pear-full-square/mrepo-base-boot/index.js'
 
-const CHILD = { uris: ['/<name>'] }
+// A target is needed: / is the mrepo itself, which one cannot deploy or
+// tear down.
+const CHILD = { uris: ['/<name>'], target: true }
 
 export const protocols = {
   boot: {
@@ -15,9 +17,9 @@ export const protocols = {
     gated: true, // behind the service's door, where the mrepo has a service
     description: 'Deploys and tears down child mrepos; executed by the parent.',
     actions: {
-      deploy: { ...CHILD, description: 'A child mrepo built inside this one from a target package, its packages linked, its runtime started; its argument the package.' },
+      deploy: { ...CHILD, args: ['package'], description: 'A child mrepo built inside this one from a target package, its packages linked, its runtime started; its argument the package.' },
       teardown: { ...CHILD, description: 'The child\'s runtime stopped, the child and its record removed.' },
-      redeploy: { ...CHILD, description: 'Teardown, then deploy.' }
+      redeploy: { ...CHILD, args: ['package?'], description: 'Teardown, then deploy.' }
     }
   }
 }

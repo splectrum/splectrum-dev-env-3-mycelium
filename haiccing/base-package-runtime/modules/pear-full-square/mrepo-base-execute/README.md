@@ -29,6 +29,9 @@ branch is merged back into its target; a failure resets instead. The runtime,
   processed has a waiting principal. Once the request protocol has added
   the other mrepo's response to the branch, the principal is returned with
   it here.
+- **What is not there is said with what is**: `no protocol: <name>`, with
+  the mrepo's protocols; `no action: <protocol> <action>`, with the
+  protocol's actions.
 - **A command executed here** (`exec.run(command)`): its parts
   interpreted, checked as the request itself is, its action run in the
   same execution; its value returned.
