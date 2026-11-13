@@ -1,4 +1,4 @@
-// deploy(exec, { uri, body: { package } }): the boot protocol's deploy (README.md beside it).
+// deploy(exec, { uri, args: [package] }): the boot protocol's deploy (README.md beside it).
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'bare-fs'
 import { join, dirname } from 'bare-path'
 import { tmpdir } from 'bare-os'
@@ -8,12 +8,12 @@ import { fetch, structureOf, parseSource } from '../../internal/fetch/index.js'
 import { place } from '../../internal/place/index.js'
 import { child } from '../../internal/child.js'
 
-export async function deploy (exec, { uri, body }) {
+export async function deploy (exec, { uri, args = [] }) {
   const c = child(exec, uri)
   if (await c.recorded()) throw new Error(`deployed already: ${uri}`)
   if (existsSync(c.dir)) throw new Error(`in the way: ${c.dir}`)
-  const target = body?.package
-  if (!target) throw new Error(`no package to deploy ${uri} from (the body's package)`)
+  const [target] = args
+  if (!target) throw new Error(`no package to deploy ${uri} from (its first argument)`)
   // The store and the sources: the mapping the parent's packages manifest records.
   const mine = await exec.read('/packages/manifest.json').then(b => JSON.parse(b.toString()), () => null)
   if (!mine?.store) throw new Error('no store: the parent\'s packages manifest names none')

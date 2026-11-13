@@ -15,7 +15,7 @@ export const protocols = {
     package: 'haiccing/base-package-runtime',
     description: 'Runs a linked package\'s entry by path, its tests above all.',
     actions: {
-      run: { uris: ['/packages/**'], description: 'A linked package\'s target, through its dispatcher; body { dryRun }.' },
+      run: { uris: ['/packages/**'], description: 'A linked package\'s target, through its dispatcher; with dry-run, what it would run.' },
       register: { uris: ['/'], description: 'The protocols the runtime loaded, recorded in the protocols layer; placed by the runtime as it starts.' }
     }
   },
@@ -23,7 +23,7 @@ export const protocols = {
     package: 'haiccing/base-package-runtime',
     description: 'The mrepo\'s help, read by URI.',
     actions: {
-      get: { ...ANY, description: 'The README documenting a URI, at a level; body { level, section }.' },
+      get: { ...ANY, description: 'The README documenting a URI, at a level (oneliner, summary, detail) or one section, by its title.' },
       extract: { uris: ['/'], description: 'The help layer extracted from the linked packages\' READMEs; placed by the runtime as it starts.' }
     }
   }

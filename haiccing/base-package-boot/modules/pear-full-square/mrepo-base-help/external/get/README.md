@@ -8,13 +8,15 @@ that has help.
 
 ## Signature
 
-`get(exec, { uri, body })`: `uri` as the mrepo knows it, such as
+`get(exec, { uri, args })`: `uri` as the mrepo knows it, such as
 `/packages/haiccing/base-package-boot`, or under `/help`.
 
-## Body
+## Arguments
 
-- `level`: `oneliner`, `summary` (the default) or `detail`.
-- `section`: one section, by its title.
+One of two, the summary when none is given.
+
+- A level: `oneliner`, `summary` (the default) or `detail`.
+- A section's title, its words: that one section.
 
 ## Returns
 

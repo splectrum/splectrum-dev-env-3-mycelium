@@ -2,15 +2,15 @@
 
 Tears a child mrepo down, commits that locally, then deploys it again.
 
-The package deployed is the body's, else the one recorded for the child.
+The package deployed is the one given, else the one recorded for the child.
 
 ## Signature
 
-`redeploy(exec, { uri, body })`.
+`redeploy(exec, { uri, args })`.
 
-## Body
+## Arguments
 
-- `package`: optional; the recorded package when absent.
+1. The package: optional; the recorded package when absent.
 
 ## Returns
 

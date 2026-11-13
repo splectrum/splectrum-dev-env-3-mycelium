@@ -12,7 +12,7 @@
       "protocol": "boot",
       "action": "deploy",
       "uri": "/host",
-      "body": { "package": "haiccing/base-package-runtime" }
+      "args": ["haiccing/base-package-runtime"]
     }
   }
 }

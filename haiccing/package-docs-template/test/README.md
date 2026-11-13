@@ -73,8 +73,8 @@ result: an instance that floats, attached to nothing.
 ```
 bare test/run.js [<set>]                        from the package's folder
 bare <package>.bundle /test/<target> [--dry-run]  from its bundle
-runtime run /packages/<org>/<package>/test/<target>   in a running mrepo,
-                                                  body { dryRun }
+runtime run /packages/<org>/<package>/test/<target> [dry-run]
+                                                  in a running mrepo
 ```
 
 Imported: `run(target, { dryRun })`. A dry run returns the units the

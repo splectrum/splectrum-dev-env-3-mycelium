@@ -41,7 +41,7 @@ test('execute: execution branches from their targets, the record completed, merg
       t.alike(r, { ok: true, value: { service: 'initialised' } })
       t.is((await json(ctx.repo, '/runtime/service.json')).state, 'initialised', 'merged back into runtime')
       r = await run(ctx, { protocol: 'service', action: 'start', uri: '/' })
-      r = await run(ctx, { protocol: 'rest', action: 'put', uri: '/main/a/b.json', body: { n: 1 } })
+      r = await run(ctx, { protocol: 'rest', action: 'put', uri: '/main/a/b.json', args: ['{"n":1}'] })
       t.alike(r, { ok: true, value: { put: '/main/a/b.json' } }, 'completed: its form filled in, merged into request/execute')
       t.alike(await json(ctx.repo, '/main/a/b.json'), { n: 1 }, 'in main')
       t.alike((await ctx.backend.listBranches()).map(([b]) => b).filter(b => b.startsWith('execute/')), [], 'its execution branches, its own by its key: merged back and removed')
@@ -91,7 +91,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
       const at = async (repo, p) => (await repo.select(p)).length > 0
       const one = async (fail) => {
         const name = guid()
-        await begin(ctx, name, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name))
+        await begin(ctx, name, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', args: ['1'] }, name))
         await execute(ctx, { actions: go(fail) })
         return (await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value
       }
@@ -120,7 +120,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
         return after
       } } }
       const name = guid()
-      await begin(ctx, name, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, name))
+      await begin(ctx, name, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', args: ['1'] }, name))
       await execute(ctx, { actions: back })
       t.alike((await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value.output, { committed: 1, dropped: 0, undone: 0 }, 'discard dropped the uncommitted; rollback undid the last commit, not the one before')
       t.ok(await at(ctx.repo, '/main/committed.json'), 'merged: what stayed committed')
@@ -138,7 +138,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
         return { after }
       } } }
       const n2 = guid()
-      await begin(ctx, n2, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', body: 1 }, n2))
+      await begin(ctx, n2, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', args: ['1'] }, n2))
       await execute(ctx, { actions: ditch })
       t.alike((await json(ctx.repo, `/${EXECUTE}/${n2}.json`)).value.value.output, { after: 0 }, 'reset: back to the start, its local commit undone')
       t.absent(await at(ctx.repo, '/main/first.json'), 'nothing before the reset merged')

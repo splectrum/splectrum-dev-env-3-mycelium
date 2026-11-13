@@ -8,5 +8,5 @@ export async function redeploy (exec, form) {
   const was = await c.recorded()
   const down = await teardown(exec, form)
   await exec.commit('torn down')
-  return { ...down, ...(await deploy(exec, { ...form, body: { package: form.body?.package ?? was?.package } })) }
+  return { ...down, ...(await deploy(exec, { ...form, args: [form.args?.[0] ?? was?.package] })) }
 }

@@ -30,9 +30,10 @@ export const ACTIONS = {
       }
       return { entries: (await exec.select(uri === '/' ? '/*' : `${uri}/*`)).map(([p]) => p.slice(p.lastIndexOf('/') + 1)) }
     },
-    // A JSON document put at a URI the caller names (created or replaced).
-    async put (exec, { uri, body }) {
-      exec.put(uri, json.encode(body))
+    // A JSON document put at a URI the caller names (created or replaced):
+    // its first argument, the document as JSON text.
+    async put (exec, { uri, args = [] }) {
+      exec.put(uri, json.encode(JSON.parse(args[0])))
       return { put: uri }
     },
     async delete (exec, { uri }) {

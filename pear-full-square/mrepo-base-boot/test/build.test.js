@@ -18,7 +18,7 @@ for (const l of ['main', 'runtime', 'inbox', 'outbox', 'packages', 'request/pend
   mkdirSync(join(BOOT, l), { recursive: true })
   writeFileSync(join(BOOT, l, 'layer.json'), JSON.stringify({ mode: l.startsWith('request') || l.endsWith('box') ? 'non-atomic' : 'atomic', description: l }))
 }
-const preloaded = { api: 'boot', protocol: 'boot', action: 'deploy', uri: '/host', body: { package: 'haiccing/base-package-runtime' } }
+const preloaded = { api: 'boot', protocol: 'boot', action: 'deploy', uri: '/host', args: ['haiccing/base-package-runtime'] }
 writeFileSync(join(BOOT, 'request', 'pending', 'default', `${PRELOADED}.json`), JSON.stringify({ topic: '/request/pending/default', key: PRELOADED, timestamp: '2026-11-11T00:00:00.000Z', headers: {}, value: { topic: null, key: PRELOADED, timestamp: '2026-11-11T00:00:00.000Z', headers: {}, value: preloaded } }))
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
@@ -61,7 +61,7 @@ test('the boot mrepo running, without its packages: no service gate; its preload
     const r = await open(work)
     const repo = openRepo(r.backend)
     const done = JSON.parse((await repo.read(`/request/done/${PRELOADED}.json`)).toString()).value.value
-    t.alike([done.protocol, done.action, done.uri, done.body], ['boot', 'deploy', '/host', { package: 'haiccing/base-package-runtime' }], 'the preloaded request: boot deploy /host, the runtime its target')
+    t.alike([done.protocol, done.action, done.uri, done.args], ['boot', 'deploy', '/host', ['haiccing/base-package-runtime']], 'the preloaded request: boot deploy /host, the runtime its target')
     t.is(done.error, 'no action: boot deploy', 'done, refused here: no boot protocol linked (the package\'s test runs it with its packages)')
     t.alike((await repo.select('/request/pending/default/*')).map(([p]) => p), ['/request/pending/default/layer.json'], 'nothing pending')
   } finally {

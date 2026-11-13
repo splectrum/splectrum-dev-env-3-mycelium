@@ -43,6 +43,14 @@ setting.
   each record as it arrives in an mrepo's request layers and its children's
   in view, one compact line a record, its topic the full path; `settled()`:
   every request done (none pending or executing in any of them).
+- **A request's form**: `{ protocol, action, uri, args }`, the arguments a
+  list, unnamed. A request may also be given as a command, as it is typed:
+  its parts in order, `<protocol>/<action> <URI> <argument>...`, an array
+  or a string (`{ command }`, or the value itself). It is interpreted on
+  its way into pending (`interpret(command, protocols)`, `formOf`): the
+  protocol alone takes its default action (its config's `default`); no URI
+  is `/`; a URI without its leading `/` gets it. The command stays in the
+  form, beside what it was interpreted as.
 - **One way into pending** (`admit(ctx, core, { origin })`): the inbox's
   records and internal requests (`internal(ctx, form)`, the mrepo's own)
   pass the same handler, validated by where they come from; refused, the

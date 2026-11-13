@@ -38,7 +38,7 @@ result.
 - **Where a URI leads**: `/main/<name>/<rest>` enters the child linked at
   `/main/<name>`; inside it the URI is `/<rest>`. A child may pass it on
   again: a request can travel through several mrepos.
-- **Passed on**: a child request, the same protocol, action and body, is
+- **Passed on**: a child request, the same protocol, action and arguments, is
   delivered to the other mrepo's inbox. On the same node that is direct: a
   file dropped into its inbox folder. Another node needs dispatch, which is
   not built.

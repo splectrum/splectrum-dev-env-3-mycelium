@@ -11,7 +11,8 @@ import { bootedHost, send, sendForm } from './fixture.js'
 const here = join(dirname(fileURLToPath(import.meta.url)), '..')
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
-const req = (protocol, action, uri, body) => ({ protocol, action, uri, ...(body !== undefined ? { body } : {}) })
+// its fourth: a document, the rest put's argument (JSON text)
+const req = (protocol, action, uri, doc) => ({ protocol, action, uri, ...(doc !== undefined ? { args: [JSON.stringify(doc)] } : {}) })
 
 // The same cycle on both storages: the p2p host and a repository on native git.
 for (const storage of ['p2p', 'git']) {
@@ -27,6 +28,9 @@ for (const storage of ['p2p', 'git']) {
       t.alike(await send(work, req('rest', 'put', '/main/notes/hello.json', { text: 'hi' })), { ok: true, value: { put: '/main/notes/hello.json' } })
       t.alike(await send(work, req('rest', 'get', '/main/notes/hello.json')), { ok: true, value: { text: 'hi' } }, 'read back')
       t.alike(await send(work, req('rest', 'get', '/main/notes')), { ok: true, value: { entries: ['hello.json'] } })
+      t.alike(await send(work, ['rest/get', '/main/notes/hello.json']), { ok: true, value: { text: 'hi' } }, 'a request sent as a command, its parts: interpreted on its way in')
+      t.alike(await send(work, { command: 'rest/get main/notes' }), { ok: true, value: { entries: ['hello.json'] } }, 'as a string; a URI without its leading /')
+      t.alike(await send(work, ['rest']), { ok: false, error: 'no action: rest (rest has no default action)' }, 'not a command that can be told: refused')
       const status = await send(work, req('rest', 'get', '/'))
       t.is(status.value.service, 'started')
       t.alike(status.value.layers, ['inbox', 'main', 'outbox', 'packages', 'request/done', 'request/execute', 'request/pending/default', 'runtime'], 'the layers (the execution branches not among them)')
@@ -51,14 +55,14 @@ for (const storage of ['p2p', 'git']) {
       try {
         const repo = openRepo(r.backend)
         const done = await repo.select('/request/done/*')
-        t.is(done.length, 15, 'every request done, the refused ones too')
+        t.is(done.length, 18, 'every request done, the refused ones too')
         const recs = await Promise.all(done.map(async ([p]) => JSON.parse((await repo.read(p)).toString())))
         t.ok(recs.every(x => x.topic === '/request/done' && ('output' in x.value.value || 'error' in x.value.value)), 'each in its envelope at its topic, its form completed')
         t.ok(recs.filter(x => x.value.topic === null).length === 1, 'the preloaded one: no sender')
         t.alike(await repo.select('/request/execute/*'), [], 'nothing left executing')
         t.alike(await repo.select('/main/*'), [], 'main: the note deleted again')
-        t.is((await repo.select('/inbox/*')).length, 14, 'the inbox: every envelope posted, kept (housekeeping later)')
-        t.is((await repo.select('/outbox/*')).length, 14, 'the outbox: every completed form sent back')
+        t.is((await repo.select('/inbox/*')).length, 17, 'the inbox: every envelope posted, kept (housekeeping later)')
+        t.is((await repo.select('/outbox/*')).length, 17, 'the outbox: every completed form sent back')
         t.is(JSON.parse((await repo.read('/runtime/service.json')).toString()).state, 'booted')
       } finally { await r.close() }
       t.absent(existsSync(join(work, 'mrepos', 'host', 'log')), 'no log folder')

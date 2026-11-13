@@ -9,4 +9,4 @@ In the release it is embedded. What is its own:
 - **Its packages** (`packages/layer.json`): `haiccing/base-package-runtime`,
   `haiccing/base-package-boot`.
 - **One request preloaded** (`request/pending/default/`): `boot deploy
-  /host`, body `{ "package": "haiccing/base-package-runtime" }`.
+  /host haiccing/base-package-runtime`.

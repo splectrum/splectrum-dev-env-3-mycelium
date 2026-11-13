@@ -12,4 +12,5 @@ The tests of mrepo-base-request, a section per file, each test by its name.
 - check: not misdelivered, canonical, offered, and now
 - check: the service state gates the API
 - check at the inbox: not the state (the queue may change it first)
+- a command interpreted: its parts, the default action, the URI
 - a record: topic, key, timestamp, headers (empty), value; the onion; a form completed

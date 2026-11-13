@@ -3,11 +3,11 @@
 // an entry of a package the mrepo has linked, through that package's
 // dispatcher (its bundle in the mrepo's packages/, imported: nothing runs
 // but what is asked).
-//   runtime run /packages/<org>/<package><target>   body: { dryRun }
+//   runtime run /packages/<org>/<package><target> [dry-run]
 //     a test (/test/<set>, /test/<name>, /test/modules[/<org>/<module>]):
 //     run self-contained (a floating instance of the package, each unit its
 //     own process, removed after), its result the output, a summary logged;
-//     /protocol, /deploy: what the entry offers (its names); with dryRun:
+//     /protocol, /deploy: what the entry offers (its names); with dry-run:
 //     what the target would run. /run: refused (a package's program is not
 //     run inside the runtime's process).
 import { existsSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'bare-fs'
@@ -24,7 +24,7 @@ function target (uri) {
   return { pkg: `${m[1]}/${m[2]}`, target: m[3] ?? '/' }
 }
 
-export async function run (exec, { uri, body }) {
+export async function run (exec, { uri, args = [] }) {
   const { pkg, target: t } = target(uri)
   if (t === '/run') throw new Error(`not run here: ${uri} (a package's program)`)
   const listed = await exec.read('/packages/manifest.json').then(b => JSON.parse(b.toString()).packages || {}, () => ({}))
@@ -33,7 +33,7 @@ export async function run (exec, { uri, body }) {
   if (!existsSync(bundle)) throw new Error(`its bundle missing: ${bundle}`)
   const dispatcher = await import(pathToFileURL(bundle).href)
   if (typeof dispatcher.run !== 'function') throw new Error(`${pkg} has no dispatcher`)
-  const dryRun = Boolean(body?.dryRun)
+  const dryRun = args.includes('dry-run')
   // the in-situ tests: which mrepo (MREPO), which package (PACKAGE), and the
   // mrepo's state handed over (SITU: a file, removed after): its help as
   // extracted, its layers, its packages manifest, each linked bundle's hash

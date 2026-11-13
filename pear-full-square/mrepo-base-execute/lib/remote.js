@@ -7,7 +7,7 @@
 //                         left: /main/<name>/<rest> -> /<rest>, /main/<name>
 //                         -> /  => { name, at: '/main/<name>', dir, uri }
 //   pass(ctx, name, core, to)   the child request issued: the same protocol,
-//                         action and body, the URI inside the child; its core
+//                         action and arguments, the URI inside the child; its core
 //                         addressed back to this request's own branch
 //                         (/<mrepo>/execute/<key>); delivered into the
 //                         child's inbox folder (the same node: direct; another
@@ -27,9 +27,9 @@ export async function remoteOf (exec, uri) {
 
 export function pass (ctx, name, core, to) {
   if (!existsSync(join(to.dir, 'inbox'))) throw new Error(`not reachable: ${to.at} (no inbox at ${to.dir})`)
-  const { protocol, action, body } = core.value
+  const { protocol, action, args } = core.value
   const key = guid()
-  const child = record(`/${ctx.name}/execute/${name}`, { protocol, action, uri: to.uri, ...(body !== undefined ? { body } : {}) }, key)
+  const child = record(`/${ctx.name}/execute/${name}`, { protocol, action, uri: to.uri, ...(args !== undefined ? { args } : {}) }, key)
   inboxOf(to.dir).write(key, wrap(`/${to.name}/inbox`, child))
   return { ...core.value, remote: { at: to.at, uri: to.uri, key } }
 }

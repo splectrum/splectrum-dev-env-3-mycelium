@@ -1537,3 +1537,49 @@ not include the prerequisites.
 
 **Open**: the package argument's default organisation; whether `/host`
 gets `base-manager-host` in the end.
+
+## 33. Commands as parts (2026-11-13)
+
+The first step of building part 32, after the human's go. The remaining
+steps, in order: XPath and the `xpath` layer; `base-package-haicc`; the
+boot package; `base-component-haicc`; `base-linux-haicc`.
+
+Settled just before the go, and to be built in those steps:
+
+- A shortcut is `/xpath/<position>/shortcut.json`, in a layer of its own,
+  `xpath` (navigation directives). It has no presence in `main`. The boot
+  protocol manages it: deploy creates it, teardown deletes it.
+- The linked mrepo's folder is found by logic, local linking only: the
+  `main/` folder on disk is a shadow structure of `main` (which sits in
+  the Corestore), and a child deployed at a position sits there at the
+  same path, its inbox and outbox folders inside.
+- The main data of a linked repository is to be visible through XPath in
+  the mrepo that links to it, without that repository's shortcut data.
+  The first implementation gives no visibility of shortcuts in linked
+  mrepos.
+- An mrepo needs a unique URI (or its id from the Corestore):
+  `<swarm>/<node>`, extended with `local/host` for the host mrepo created
+  in the boot mrepo, `local/<mrepo>` for the others created there. A rule
+  for the `base-` packages wherever required (the context of an
+  implementation family).
+
+**Built**
+
+- **A request's form** is `{ protocol, action, uri, args }`: the
+  arguments a list, unnamed, in place of the named body.
+- **A request given as a command**, as it is typed: its parts in order,
+  `<protocol>/<action> <URI> <argument>...`, an array or a string (the
+  value itself, or `{ command }`). Interpreted on its way into pending
+  (`mrepo-base-request`: `interpret`, `formOf`, in `lib/command.js`): the
+  protocol alone takes its default action (its config's `default`); no
+  URI is `/`; a URI without its leading `/` gets it. The command stays in
+  the form beside what it was interpreted as. A command that cannot be
+  told is refused, like any request.
+- **The actions moved over**: `boot deploy` and `redeploy` (the package
+  the first argument), `help get` (one argument: a level, or a section's
+  title), `runtime run` (`dry-run`), the tests' `rest put` (the document
+  as JSON text); the wrapped remote command passes the arguments on.
+- **A method's README**: `Arguments` in place of `Body`.
+
+**Validated**: the five packages' full sets; the boot's test four times
+(93 asserts); the checks, no problems.

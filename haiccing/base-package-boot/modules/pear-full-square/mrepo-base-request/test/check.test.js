@@ -1,5 +1,5 @@
 import test from 'brittle'
-import { check, matches, record, wrap, guid, complete, isComplete } from '../index.js'
+import { check, matches, record, wrap, guid, complete, isComplete, interpret, formOf } from '../index.js'
 
 // The protocols as a runtime loaded them: each action's URIs, and the
 // states that allow it where it names them (the service's own).
@@ -10,7 +10,24 @@ const protocols = {
   help: { actions: { get: { uris: ['/**'] } } }
 }
 const at = state => ({ service: { state }, protocols })
-const req = (protocol, action, uri, body) => ({ protocol, action, uri, ...(body !== undefined ? { body } : {}) })
+// its fourth: a document, the rest put's argument (JSON text)
+const req = (protocol, action, uri, doc) => ({ protocol, action, uri, ...(doc !== undefined ? { args: [JSON.stringify(doc)] } : {}) })
+
+test('a command interpreted: its parts, the default action, the URI', (t) => {
+  t.alike(interpret(['boot/deploy', '/host', 'haiccing/base-component-haicc']), { protocol: 'boot', action: 'deploy', uri: '/host', args: ['haiccing/base-component-haicc'] }, 'an array of parts')
+  t.alike(interpret('help/get /packages oneliner'), { protocol: 'help', action: 'get', uri: '/packages', args: ['oneliner'] }, 'a string, split at its spaces')
+  t.alike(interpret(['service/initialise']), { protocol: 'service', action: 'initialise', uri: '/', args: [] }, 'no URI: /')
+  t.alike(interpret(['boot/deploy', 'host', 'x']), { protocol: 'boot', action: 'deploy', uri: '/host', args: ['x'] }, 'a name: its leading / added')
+  t.alike(interpret(['haicc', '/host', 'service/start'], { haicc: { default: 'goto' } }), { protocol: 'haicc', action: 'goto', uri: '/host', args: ['service/start'] }, 'the protocol alone: its default action; what follows, its arguments')
+  t.exception(() => interpret(['service']), /no action: service \(service has no default action\)/)
+  t.exception(() => interpret([]), /not a command/)
+  t.exception(() => interpret(['a/b/c']), /not a command: a\/b\/c/)
+  t.exception(() => interpret(['boot/deploy', 7]), /not a command/)
+  t.alike(formOf('service/start'), { command: 'service/start', protocol: 'service', action: 'start', uri: '/', args: [] }, 'a value given as a command: the form filled in, the command kept')
+  t.alike(formOf({ command: ['service/start'] }), { command: ['service/start'], protocol: 'service', action: 'start', uri: '/', args: [] })
+  const form = { protocol: 'service', action: 'start', uri: '/' }
+  t.is(formOf(form), form, 'a form given filled in: kept as it is')
+})
 
 test('matches: a URI against a config\'s pattern', (t) => {
   t.ok(matches('/', '/') && !matches('/', '/a'))

@@ -14,7 +14,7 @@ always matches the packages actually linked.
 
 ## Usage
 
-- **Read with `help get <uri>`**, body `{ level, section }`: the
+- **Read with `help get <uri> [<level> | <section>]`**: the
   README documenting that URI, with each link's one-liner. Levels:
   `oneliner`, `summary` (the default), `detail`.
 - **The index is generated**: each README's one-liner and its links,

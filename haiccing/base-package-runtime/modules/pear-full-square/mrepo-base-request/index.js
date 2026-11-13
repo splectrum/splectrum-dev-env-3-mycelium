@@ -31,9 +31,10 @@ import { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX } from './l
 import { record, wrap, guid, complete, isComplete, logger, LEVELS } from './lib/record.js'
 import { layer, AUTHOR } from './lib/layer.js'
 import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
+import { interpret, formOf } from './lib/command.js'
 
 export { follow } from './lib/follow.js'
-export { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING }
+export { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING, interpret, formOf }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'
@@ -111,9 +112,11 @@ const branches = async ctx => Object.fromEntries(await ctx.backend.listBranches(
 // The inbox's records not yet taken in, in the order they arrived (its commit
 // chain): in no request layer (every one taken in ends in request/done, a
 // refused one too).
-// The way into pending, the one handler every request passes: validated by
-// where it comes from, then queued; or refused (its form completed with the
-// error, in request/done, sent back). The inbox itself checks nothing.
+// The way into pending, the one handler every request passes: a command as
+// typed interpreted (its parts: <protocol>/<action> <URI> <arguments>),
+// validated by where it comes from, then queued; or refused (its form
+// completed with the error, in request/done, sent back). The inbox itself
+// checks nothing.
 //   origin 'inbox'      the external checks: the API, the state as known now
 //   origin 'internal'   the mrepo's own (its runtime's, an action's):
 //                       trusted, its URI canonical only
@@ -122,8 +125,15 @@ const branches = async ctx => Object.fromEntries(await ctx.backend.listBranches(
 // -> { name, queued, refused }
 export async function admit (ctx, core, { origin, name = core?.key ?? guid() }) {
   let why = null
-  const form = core?.value
-  try { why = check(form, await runtimeData(ctx), origin === 'internal' ? { internal: true } : { state: false }) } catch (err) { why = `runtime: ${err.message}` }
+  let form = core?.value
+  // a command as typed (its parts): interpreted here, the form filled in
+  // with its protocol, action, URI and arguments (lib/command.js)
+  if (core && (typeof form === 'string' || Array.isArray(form))) { form = { command: form }; core = { ...core, value: form } }
+  try {
+    const filled = formOf(form, ctx.protocols ?? {})
+    if (filled !== form) { form = filled; core = { ...core, value: form } }
+    why = check(form, await runtimeData(ctx), origin === 'internal' ? { internal: true } : { state: false })
+  } catch (err) { why = form?.command !== undefined && form.protocol === undefined ? err.message : `runtime: ${err.message}` }
   if (why) {
     const refused = complete(core ?? record(null, null, name), { ok: false, error: why })
     await layer(ctx, DONE).put(name, wrap(`/${DONE}`, refused), `Refused ${name}`)
