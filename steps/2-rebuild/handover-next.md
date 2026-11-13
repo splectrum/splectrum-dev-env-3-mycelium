@@ -47,8 +47,9 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
 - **No release yet**: on the human's word, created by the local agent
   (`handover-local.md`, "Releases").
 - **Tasks stacked, to be built in batches** (the human, 2026-11-13):
-  `tasks.md` here holds what was discussed and waits: relative URIs, the
-  `crud` protocol, the rest actions removed. Each says what
+  `tasks.md` here holds what was discussed and waits: first every package
+  testing what it provides (a debt, the human disappointed it was
+  skipped), then relative URIs, the `crud` protocol, the rest actions removed. Each says what
   the human settled and what is only proposed: confirm the proposed with
   the human before building. More are added as they are discussed; build
   when the human says so.

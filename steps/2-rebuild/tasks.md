@@ -1,7 +1,7 @@
 # Tasks: discussed, waiting to be built
 
 Tasks discussed with the human and stacked here, to be built later in
-batches, in this order. A task is removed from this file when it is built:
+batches, in this order: "First", then 1, 2, 3. A task is removed from this file when it is built:
 its record is then a part in `readme.md`.
 
 How to read a task:
@@ -17,6 +17,93 @@ How to read a task:
 
 Validation, the commit, the merge and the product repositories: as
 `CLAUDE.md` and `handover-next.md` say, for every task.
+
+## First: every package tests what it provides
+
+Raised by the human, 2026-11-13, on seeing haiccing packages without
+tests of their own: "very disappointing that this was skipped". A debt in
+what is built, not a new feature. Proposed order: before task 1, so the
+change of every command in task 1 is made with these tests in place.
+
+**What was found** (checked 2026-11-13)
+
+- The four generic tests are in every package (`help`, `code`, `mrepo`,
+  `modules`); their code is in the carried modules, so a package's
+  `test/` shows only the sets and the runner.
+- A test of its own: only `base-package-runtime` (`start`) and
+  `base-component-boot` (`boot`). None in `base-package-boot`, `-haicc`,
+  `-help`, `-protocol`, `-service`, nor in `base-component-haicc`.
+- The protocols are tested by their modules' unit tests (the actions
+  called as functions) and by two end to end tests that live elsewhere
+  (the boot component's, the `haicc` command's). A protocol package's
+  README says so itself ("tested by the boot package, which can deploy
+  one"). It came about when the protocols were split into packages of
+  their own (parts 28, 37, 43 to 45): the tests stayed where they were.
+- No test validates a package against the structure
+  `haiccing/package-docs-template` documents, and no rule says which
+  tests of its own a package must have: a package with none passes.
+
+**Settled** (the human)
+
+- For each package there are custom tests, at the haiccing level (the
+  package's own, in its `test/`), for the functionality it provides.
+- For a protocol: a test mrepo is created, with some test data, and the
+  actions are tested. The hooks are tested. The specific configs are
+  tested.
+- Not the way: adding tests package by package by hand, as an
+  afterthought ("that is not how we do it"). The structure of a haiccing
+  package is in a package in haiccing; the question the human asked:
+  where is the test that validates the structure of a haiccing package?
+  There is none.
+
+**Proposed** (put to the human; the human went on from it without
+objecting, not confirmed in words)
+
+- The rule is stated once, in `package-docs-template` (`test/`): which
+  tests of its own a package must have, by what it is: one for each
+  protocol its `protocol.js` provides; one for its `run.js`; a component,
+  its deployment with its hooks and configs; a documentation package,
+  none.
+- A fifth generic test, the package's structure, in every package's
+  `validate`: the package checked against the template (its
+  `package.json`, its sets, each test a unit with its `run.js` and
+  README, its entry points) and against that rule. In `pkgm-base-check`,
+  beside `code` and `mrepo`.
+- The packages it fails are then brought in line:
+  - `base-package-protocol`: activate and deactivate through requests,
+    the active set, a request for a protocol that is not active refused,
+    its config (at the mrepo itself, its argument);
+  - `base-package-service`: the states and each transition, the actions
+    refused in the wrong state, each transition's hooks run in order, a
+    failing hook failing the transition and rolling it back;
+  - `base-package-help`: a test mrepo with READMEs to extract; `extract`,
+    `get` at its three levels and one section, nothing extracted yet;
+  - `base-package-haicc`: `goto` at the root executed there, at a
+    shortcut sent on (a linked child as test data), no command, a chain;
+  - `base-package-boot`: a child deployed, redeployed and torn down in a
+    test mrepo, its shortcut, its runtime started and stopped;
+  - `base-component-haicc`: deployed whole: what its `boot` hooks
+    activate, help extracted on `initialise`, `boot` activated on `start`
+    and deactivated on `stop`, its door;
+  - `base-package-runtime` (`start`) and `base-component-boot` (`boot`):
+    reviewed against the same standard (their hooks, their configs).
+- One helper that makes a test mrepo from a list of packages and test
+  data, starts it, sends requests and stops it, shared by these tests
+  (the runtime package's `start` test is the model).
+- The READMEs that say "tested by the boot package" are corrected.
+
+**Where**
+
+- `haiccing/package-docs-template/README.md` and `test/README.md` (the
+  structure, the sets, the targets); `pear-full-square/pkgm-base-check`
+  (`internal/rules`, `internal/mrepo`, `validate/`); `tools/lib/dispatcher.js`
+  (which generic units a package gets).
+- `haiccing/base-package-runtime/test/start/` (a test mrepo written,
+  the runtime started, answering, stopped);
+  `haiccing/base-component-boot/test/boot/` (the lifecycle through
+  requests).
+- Each protocol's module tests, to see what is covered as functions:
+  `pear-full-square/mrepo-base-*/test/`.
 
 ## 1. Relative URIs
 
