@@ -2,8 +2,9 @@
 // it. For each package: assembled and bundled into the sources; when its
 // test report (test-reports/full.json) names the bundle's content and
 // passed, it is current and nothing is run. Else its full set is run from
-// the bundle, the report written (passed or not), and the package bundled
-// again with it: a release holds the report of its own pre-release.
+// the bundle, the report written (passed or not; full.json, and full.md, the
+// same to read), and the package bundled again with it: a release holds the
+// report of its own pre-release.
 // Nothing changed, nothing rerun: the same bundle comes out.
 //   tools/bare tools/package-test.js <package folder>... [--out=<folder>] [--force]
 //     --force   run the set even when the report is current
@@ -11,11 +12,11 @@
 // current (nothing run), written; a failing unit named on stderr. Exit 1
 // when one did not pass.
 import process from 'bare-process'
-import { readFileSync, writeFileSync, mkdirSync } from 'bare-fs'
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'bare-fs'
 import { join, resolve, dirname, basename } from 'bare-path'
 import { fileURLToPath } from 'bare-url'
 import { spawnSync } from 'bare-subprocess'
-import { REPORT, statusOf } from './lib/report.js'
+import { REPORT, READABLE, statusOf, reportOf, render } from './lib/report.js'
 
 const dev = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
@@ -42,17 +43,26 @@ for (const folder of folders) {
   if (force || statusOf(folder, entry.content) !== 'current') {
     // the full set, from the bundle, each unit its own process: its result the last line
     const env = { ...Object.fromEntries(Object.keys(process.env).map(k => [k, process.env[k]])), SOURCES: out }
-    const r = spawnSync(bare, [join(out, entry.file), '/test/full'], { stdio: ['ignore', 'pipe', 'inherit'], env })
+    const ran = spawnSync(bare, [join(out, entry.file), '/test/full'], { stdio: ['ignore', 'pipe', 'inherit'], env })
     let result = null
-    try { result = JSON.parse(r.stdout.toString().trim().split('\n').at(-1)) } catch { result = { ok: false, units: [] } }
+    try { result = JSON.parse(ran.stdout.toString().trim().split('\n').at(-1)) } catch { result = { ok: false, units: [] } }
     mkdirSync(join(folder, 'test-reports'), { recursive: true })
-    writeFileSync(join(folder, REPORT), JSON.stringify({ package: name, content: entry.content, bare: Bare.version, date: new Date().toISOString(), set: 'full', ok: result.ok === true, units: result.units ?? [] }, null, 2) + '\n')
+    const r = { package: name, content: entry.content, bare: Bare.version, date: new Date().toISOString(), set: 'full', ok: result.ok === true, units: result.units ?? [] }
+    writeFileSync(join(folder, REPORT), JSON.stringify(r, null, 2) + '\n')
+    writeFileSync(join(folder, READABLE), render(r))
     report = 'written'
     // bundled again, the report in it: its content the same, by what the hash leaves out
     const again = build(folder)
     if (again.content !== entry.content) throw new Error(`${name}: its content changed by adding the report (${entry.content} -> ${again.content})`)
     entry = again
     for (const u of result.units ?? []) if (!u.ok) console.error(`${name}: ${u.unit}: ${(u.failures ?? []).join('; ') || 'failed'}`)
+  }
+  // the report to read: there, and as the report says (written again when
+  // not, nothing run; the bundle built again to hold it)
+  else {
+    const r = reportOf(folder)
+    const text = render(r)
+    if (!existsSync(join(folder, READABLE)) || readFileSync(join(folder, READABLE), 'utf8') !== text) { writeFileSync(join(folder, READABLE), text); entry = build(folder) }
   }
   const ok = statusOf(folder, entry.content) === 'current'
   if (!ok) failed++

@@ -4,7 +4,8 @@ The proof that the package's tests were run and passed: the report of its last p
 
 | file | holds |
 |---|---|
-| `full.json` | the result of the `full` set: every unit, its tests, its asserts, its failures |
+| `full.md` | the report to read: a sentence, an overview, a table of the units |
+| `full.json` | the same as data: every unit, its tests, its asserts, its failures |
 
 ## The report
 
@@ -24,6 +25,8 @@ The proof that the package's tests were run and passed: the report of its last p
   ]
 }
 ```
+
+`full.md` is written from it, never by hand.
 
 `content` is what the report certifies: a hash of everything in the
 package's bundle but its test reports. It is the same before and after

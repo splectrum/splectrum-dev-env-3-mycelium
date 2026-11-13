@@ -2231,3 +2231,20 @@ also lacking `test-reports/`). `tools/release.js` whole was not run (it
 rebuilds every package): its report part on its own, over the manifest as
 it is. On `execute/main` only.
 
+**The report to read** (the human: a natural language report with a table
+overview): `test-reports/full.md`, beside `full.json` and written from it
+by the pre-release (`render`, `tools/lib/report.js`), never by hand: a
+sentence, an overview table (the result, the units, tests and asserts
+passed, when, on which Bare, the content), a table of the units, the
+failures when there are any. Left out of the content hash as the JSON is.
+A report current whose readable form is missing or differs: written
+again, nothing run.
+
+Found building it: the folder's README linked to `full.md`, so the first
+pre-release of a package failed its help test (a broken link: the file is
+only written after the run) and passed the second time. What is tested
+must not depend on a report, which the content hash leaves out: the README
+names the file without linking it. Validated from no report at all: the
+first pre-release passes, the second runs nothing, the same bundle; the
+three files are in the bundle.
+

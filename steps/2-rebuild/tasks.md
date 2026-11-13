@@ -208,7 +208,12 @@ The human, 2026-11-14. Part of the standard: it is in the template.
 **Built, in the template** (part 49 in `readme.md`)
 
 - `haiccing/package-docs-template/test-reports/`: its README, and the
-  template's own report, `full.json`.
+  template's own report, `full.json`, with `full.md`, the same to read (a
+  sentence, an overview table, a table of the units; the human's wish),
+  written from it by the pre-release.
+- A rule found on the way: what is tested must not depend on a report
+  (the content hash leaves the reports out): no link from a README to a
+  report file.
 - `tools/package-test.js <package folder>...`: a package's pre-release.
   `tools/package-bundle.js` gives every bundle its `content` (a hash of
   everything in it but its test reports), in the manifest;
