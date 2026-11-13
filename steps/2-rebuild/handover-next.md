@@ -109,6 +109,13 @@ Not built yet, and the platform is not deployed until the first two are
    **Next, the human's priority**: the host's haicc mrepo is there; then a
    node's haicc mrepo, then a swarm going, the demos on top of the
    component (they bring the folders in `main`).
+   **After the initial testing** (the human, 2026-11-13): the help
+   protocol moved to a package of its own, `base-package-help`: a proper
+   protocol gets a package, as `haicc` did. It lives in
+   `base-package-runtime` today, beside `runtime` (the module is
+   `mrepo-base-help`). To discuss with it: what the runtime does at start,
+   where it places `help extract /` itself now; which packages then list
+   it (every mrepo needs it); a new repository, created by the human.
    **Open, each to settle with the human first**:
    - a position deeper inside `main` (`haicc /swarms/swarm-1 boot/deploy
      node-1`): `goto` refuses it for now; it needs the execution context
