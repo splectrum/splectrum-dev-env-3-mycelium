@@ -43,12 +43,15 @@ export async function provides (pkg) {
 export const testFolders = pkg => dirs(join(pkg, 'test'))
 export const ownTests = pkg => testFolders(pkg).filter(n => !GENERIC.includes(n))
 
-// Its files: a README and a LICENSE; its package.json's description,
-// license and type; the modules it starts from, a list.
+// Its files: a README and a LICENSE; the folder its test report goes in;
+// its package.json's description, license and type; the modules it starts
+// from, a list.
 export function checkFiles (pkg) {
   const out = []
   const at = detail => out.push({ check: 'package', detail })
   for (const f of ['README.md', 'LICENSE', 'package.json']) if (!existsSync(join(pkg, f))) at(`${f}: not there`)
+  // where its test report goes (the report itself is its pre-release's)
+  if (!existsSync(join(pkg, 'test-reports', 'README.md'))) at('test-reports/: not there, or without its README.md')
   if (!existsSync(join(pkg, 'package.json'))) return out
   let pj = null
   try { pj = json(join(pkg, 'package.json')) } catch (err) { at(`package.json: ${err.message}`); return out }

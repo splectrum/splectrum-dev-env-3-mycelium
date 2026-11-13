@@ -103,7 +103,9 @@ step shown to the human first)
   its `run.js` and README; the dispatcher finds a test from its folder;
   the check asks a folder for every test a set names, and no longer a
   fixed name for a protocol's test (naming is local).
-- **What is left, as the check lists it** (68 lines, by package):
+- Part 49: the test reports, in the template ("Test reports", below).
+- **What is left, as the check lists it** (77 lines, by package; each of
+  the nine also lacks `test-reports/`):
 
   | package | the generic folders | a test of its own |
   |---|---|---|
@@ -181,39 +183,49 @@ step shown to the human first)
 
 ## Test reports: proof of test execution
 
-The human, 2026-11-14. Part of the standard: it belongs in the template.
+The human, 2026-11-14. Part of the standard: it is in the template.
 
 **Settled** (the human)
 
 - We need proof of test execution: each package has a test report that
   shows it passed all the tests within the package, created before any
   release.
-- Its place: a folder `test-reports/` at the package's top (agreed; not
+- Its place: a folder `test-reports/` at the package's top (not
   `test/reports/`: every folder of `test/` is a test).
-- Agreed with it:
-  - what it holds: the result of the `full` set (every unit, its tests
-    and asserts, its failures) and what was tested (the package, the
-    Bare version, the date);
-  - tied to the content: it names a hash of the package's content as
-    tested, so a report for an older state is recognisably stale;
-  - checked at release: the release refuses a package whose report is
-    missing, failed, or for different content;
-  - not inside the bundle it certifies: it lives in the package's folder
-    and repository, and beside the bundle in the sources.
+- What it holds: the result of the `full` set (every unit, its tests and
+  asserts, its failures) and what was tested (the package, the Bare
+  version, the date); tied to the content, so a report for an older state
+  is recognisably stale.
 - **Nothing changed, nothing rerun**: when the content is the same there
   is no need for a new report, and the release build creates the same
   release.
+- **A production pipeline concern**: the release only needs to know that
+  the standards were upheld. The final test run is part of the
+  pre-release; the report is then added and the release built: the bundle
+  contains its pre-release report.
 
-**Proposed** (ours)
+**Built, in the template** (part 49 in `readme.md`)
 
-- The hash is the bundle's own (its sha256, in the manifest already): the
-  tests run from the bundle, the build is the same from the same content,
-  and `test-reports/` is left out of the bundle, so writing the report
-  does not change what it certifies.
-- The runner writes the report when the `full` set is run from a bundle;
-  the release compares the bundle it built with the report's.
-- A README in `test-reports/` (every folder has one), and the folder in
-  the template.
+- `haiccing/package-docs-template/test-reports/`: its README, and the
+  template's own report, `full.json`.
+- `tools/package-test.js <package folder>...`: a package's pre-release.
+  `tools/package-bundle.js` gives every bundle its `content` (a hash of
+  everything in it but its test reports), in the manifest;
+  `tools/lib/report.js` says a report's status against it (current,
+  stale, failed, none); `tools/release.js` states each package's and
+  refuses with `--strict` unless all are current.
+- The package check asks for `test-reports/` with its README.
+
+**Left**
+
+- The nine other bundle packages have no `test-reports/` and no report:
+  each gets them when it is brought to the template ("First").
+- `tools/release.js` as a whole with the report part was not run (it
+  rebuilds every package): its report part was run on its own, over the
+  manifest as it is. It runs whole when the packages are brought in line.
+- A check of the report where the package is deployed (in situ: the
+  bundle a running mrepo holds carries a current, passing report): not
+  built, to discuss.
 
 ## Coverage: a generic test of the test coverage
 

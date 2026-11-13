@@ -29,7 +29,8 @@ carries modules of ours.
 ## Rules
 
 - **Files**: `README.md`, `LICENSE`, `package.json` with its
-  `description`, `license`, `type` `module` and `modules`, a list.
+  `description`, `license`, `type` `module` and `modules`, a list; the
+  folder `test-reports/` with its README, where its test report goes.
 - **Sets**: `validate`, `validate-in-situ` and `full`, each with a
   description and its tests by name. `validate` and `full` hold `help`,
   `code`, `mrepo` and `package`; `full` also `modules` where modules are

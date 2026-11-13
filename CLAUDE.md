@@ -39,7 +39,11 @@ the work reaches it.
 - `tools/`: the dependencies replayed from the lockfile (`install.sh`),
   assembling and bundling a package (`package-assemble.js`,
   `package-bundle.js`), the release into the sources (`release.js`: every
-  package, Bare's tarball, the `haicc` installer), the product
+  package, Bare's tarball, the `haicc` installer; it says each package's
+  test report against the bundle built), a package's pre-release
+  (`package-test.js`: built, its `full` set run from the bundle unless its
+  report is current, the report written into `test-reports/` and bundled
+  with it), the product
   repositories (`products.sh` for the modules, `packages.sh` for the
   packages), the checks (`help-extract.js`, `code-check.js`). `sources/`
   and `node_modules/` are ignored by git: a fresh clone needs
@@ -79,6 +83,11 @@ the work reaches it.
 - The `haicc` command end to end, when anything it touches changed (the
   scripts, the boot, the component, the request form):
   `sh haiccing/base-linux-haicc/test/run.sh`.
+- A package brought to the template (it has `test-reports/`) is validated
+  by its pre-release, one command: `tools/bare tools/package-test.js
+  haiccing/<package>`. It rebuilds, runs the `full` set when the package
+  changed, and writes the report that is committed with it. Nothing
+  changed: nothing run, the same bundle.
 - Rebuild first: `tools/bare tools/package-assemble.js haiccing/<package>`,
   then `tools/bare tools/package-bundle.js haiccing/<package>`; or all of
   it, `tools/bare tools/release.js`. A bundle carries its package's tests:

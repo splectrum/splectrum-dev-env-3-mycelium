@@ -43,7 +43,8 @@ The mrepo side:
 
 The package itself:
 
-- **Files**: its README, its LICENSE, its `package.json`.
+- **Files**: its README, its LICENSE, its `package.json`, the folder its
+  test report goes in.
 - **Sets**: `validate`, `validate-in-situ` and `full`, the generic tests
   in the sets they belong to.
 - **A folder for every test**: each test a set names, the generic ones

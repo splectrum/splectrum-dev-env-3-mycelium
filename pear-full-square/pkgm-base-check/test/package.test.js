@@ -21,6 +21,7 @@ const sets = (own = [], modules = true) => ({
 })
 const base = {
   'README.md': '# p\n',
+  'test-reports/README.md': '# test-reports/\n',
   LICENSE: 'MIT\n',
   'package.json': { name: 'p', description: 'Package: p.', license: 'MIT', type: 'module', main: 'main.js', modules: ['org/m'] },
   'modules/org/m/package.json': { name: 'm' }
@@ -81,6 +82,7 @@ test('a package that breaks each: its files, its sets, a test that is not a unit
       'package.json: no description',
       'package.json: no license',
       'package.json: type commonjs (module)',
+      'test-reports/: not there, or without its README.md',
       'test/full.json: tests, a list of names',
       'test/lone: no README.md',
       'test/lone: no run.js',

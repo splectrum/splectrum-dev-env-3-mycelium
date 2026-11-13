@@ -1,9 +1,10 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-14, part 48). Read `CLAUDE.md`
+Kept current by the cloud session (last: 2026-11-14, part 49). Read `CLAUDE.md`
 first (what is here, how to validate), then this, then `readme.md` here
 (each part's record; the latest parts last: 30 to 45 are the haicc work; 46 is a note on future design; 47 the
-package check; 48 the template up to standard).
+package check; 48 the template up to standard; 49 the test
+reports).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -50,7 +51,9 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
 - **Red on purpose, and not in `main`** (2026-11-14): `execute/main` is
   ahead of `main` by the package check (part 47) and the template brought
   up to standard (part 48: a folder for every test, the generic ones
-  too). The other nine bundle packages are not yet brought in line, and
+  too; part 49: `test-reports/`, a package's pre-release,
+  `tools/package-test.js`). The other nine bundle packages are not yet
+  brought in line, and
   six lack a test of their own: `tools/bare tools/code-check.js` lists it
   all, and `tasks.md` ("First") says what is left. One step at a time,
   each shown to the human. Merge into `main` and push the product

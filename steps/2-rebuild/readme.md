@@ -2191,3 +2191,43 @@ its summary 117 words: shortened). The nine other bundle packages were
 not rebuilt: `tools/bare tools/code-check.js` lists what each lacks, 68
 lines (`tasks.md`). On `execute/main` only.
 
+## 49. Test reports: proof of test execution, in the template (2026-11-14)
+
+The human: we need proof of test execution; each package has a test
+report showing it passed all its tests, created before any release, in a
+folder `test-reports/`. Test reports are a production pipeline concern:
+the release only needs to know the standards were upheld. The final test
+run is part of the pre-release; the report is added and the release
+built, so the bundle contains its pre-release report. Nothing changed:
+no new report, and the release build creates the same release.
+
+- **The content hash** (`tools/package-bundle.js`): every bundle's
+  `content`, in the manifest: a hash of its files, its resolutions and
+  its addons, its test reports (`test-reports/*.json`) left out. It is
+  what a report certifies, the same before and after the report is added:
+  the report can travel in the bundle it proves.
+- **The pre-release** (`tools/package-test.js <package folder>...`): the
+  package assembled and bundled; its report current (it names the
+  bundle's content and passed): nothing run. Else the `full` set run from
+  the bundle, the report written (passed or not), the package bundled
+  again with it. Exit 1 when one did not pass.
+- **The report** (`test-reports/full.json`): the package, the content, the
+  Bare version, the date, the set, its result unit by unit. Its status
+  against a bundle (`tools/lib/report.js`): current, failed, stale (the
+  package changed since), none.
+- **The release** (`tools/release.js`) states each package's report
+  against the bundle it built; `--strict` refuses unless all are current.
+- **The template**: `test-reports/` with its README (what the report is,
+  the pre-release) and its own report; the folder among a unit's parts in
+  its top README. The package check asks for the folder and its README.
+
+**Validated**: the template's pre-release: the report written, 6 units
+passed; run again, nothing changed: current, nothing run, the same bundle
+(sha256 and content the same); the report is in the bundle; a file of the
+package changed: stale; changed back: current again. The check's own
+tests, 12; the READMEs, 133, no problems; the template has no line in
+`tools/bare tools/code-check.js` (77 lines for the nine others, each now
+also lacking `test-reports/`). `tools/release.js` whole was not run (it
+rebuilds every package): its report part on its own, over the manifest as
+it is. On `execute/main` only.
+
