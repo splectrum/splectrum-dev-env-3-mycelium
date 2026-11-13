@@ -186,6 +186,19 @@ item 3), wanted for creating structure in `main`.
     selection, task 1).
   - Why: a step retried or a run replayed does not fail on its own first
     attempt; parallel steps that need the same node do not collide.
+- **`delete` recurses only with a flag**; the default is no (the human).
+  Without it a node that still has children is not removed.
+- **A linked mrepo is data that comes from elsewhere** (the human): a
+  shortcut is a node, and deleting it deletes the link, not what it
+  leads to, as deleting a shortcut does not delete the file. Removing a
+  linked mrepo's link is not a teardown. So `recurse` needs no exception
+  for what is linked below: it removes the nodes and the links, one
+  change to this mrepo, undoable. Whoever wants the linked mrepo itself
+  gone tears it down first (`boot/teardown`): the sender's matter, not
+  something `crud` guards against.
+- **A URI in a result is in the internal format** (the human), from the
+  mrepo's root: `main/swarms`. An action cannot know a sender's
+  standpoint; there are internal requests that never see the outbox.
 - The names (agreed): protocol `crud`, module
   `pear-full-square/mrepo-base-crud`, package
   `haiccing/base-package-crud`.
@@ -204,14 +217,22 @@ item 3), wanted for creating structure in `main`.
 
 - A node's name is a plain name, no extension (`isName`,
   `mycelium-uri`).
-- `delete` refuses a node that still has children, or an mrepo linked
-  below it: creating too much is harmless, removing too much is not. (Put
-  to the human with the whole path for `create`; the human answered on
-  `create` only.)
-- `read` returns, for each node selected, its value and the names of its
-  children.
-- A URI at or through a shortcut is refused, with the way across named
-  (`haicc` at the shortcut).
+- The flag is written as the word `recurse` after the URI:
+  `crud/delete swarms recurse` (an optional argument: commands have no
+  named options yet).
+- A node with children deleted without `recurse`: refused, saying so.
+- The result, an array, an entry for each node (the rule of task 1):
+  `{ "uri": "main/swarms", "value": {}, "children": ["swarm-1"] }` for
+  `read`, the children by name only (`crud/read swarms/*` reads them);
+  `create` and `delete` answer in the same shape, saying for each node
+  what happened: created, already there, deleted.
+- `read` at a shortcut shows a node that is a link, with where it leads.
+  A URI still does not run through a shortcut: the way across is `haicc`
+  at it.
+- A response that leaves through the outbox is not translated back:
+  only the request's own URI is in the sender's terms, translated once
+  on the way in; arguments and output are data, in the mrepo's own terms.
+  From outside, `crud/read swarms` answers with `"uri": "main/swarms"`.
 - Where it is open: in `base-component-haicc`, behind the service's door
   as `boot` is: activated by a `start` hook, deactivated by a `stop`
   hook.
