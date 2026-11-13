@@ -146,7 +146,7 @@ Not built yet, and the platform is not deployed until the first two are
    - the layer routing in the code against the storage rule; the two-way
      sync of a folder with the Corestore;
    - the boot mrepo's identity file laid into every mrepo that links the
-     boot package (part 36); `bare-build` still in the lockfile, unused.
+     boot package (part 36).
 3. **`base-package-crud`** (the human: CRUD, not rest): the generic
    actions on an mrepo's data as a protocol of its own, gated. It gets its
    full meaning with mutable and immutable implemented: an update on the
