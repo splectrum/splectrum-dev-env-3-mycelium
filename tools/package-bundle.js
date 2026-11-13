@@ -14,7 +14,7 @@
 //                                 its size, its main, its entry points, its addons, the commit it
 //                                 was made from, the Bare it was made on; and
 //                                 its content: a hash of everything in it but
-//                                 its test reports (test-reports/*.json), what
+//                                 its test reports (test-reports/<set>.json, <set>.md), what
 //                                 a test report certifies: the same before and
 //                                 after the report is added (tools/package-test.js)
 // Unsigned for now. The package's modules/ assembled first
@@ -46,8 +46,9 @@ function files (dir, at = '') {
 
 const ENTRIES = ['run', 'deploy', 'protocol']
 
-// A test report in a package: test-reports/<set>.json (not its README).
-export const isReport = path => /^\/?test-reports\/[^/]+\.json$/.test(path)
+// A test report in a package: test-reports/<set>.json and the same to
+// read, <set>.md (not the folder's README).
+export const isReport = path => /^\/?test-reports\/[^/]+\.(json|md)$/.test(path) && !/\/?README\.md$/.test(path)
 
 // A bundle's content: a hash over its files (each its path and its bytes'
 // hash, in path order), its resolutions and its addons, its test reports
