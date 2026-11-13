@@ -1,8 +1,8 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-13, part 45). Read `CLAUDE.md`
+Kept current by the cloud session (last: 2026-11-13, part 46). Read `CLAUDE.md`
 first (what is here, how to validate), then this, then `readme.md` here
-(each part's record; the latest parts last: 30 to 45 are the haicc work).
+(each part's record; the latest parts last: 30 to 45 are the haicc work; 46 is a note on future design).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -249,6 +249,20 @@ Then, as discussed:
    until then (part 26). Here because the swarms bring modules back.
 12. Then swarms, nodes, the requests done centralised, the demos; step 3,
    the docs.
+
+On the distant horizon (the human, 2026-11-13; `vision.md`, "Pipelines,
+and mycelium as a database server"; a direction, the practicalities not
+designed):
+
+13. **The pipeline engine**: processing built from the protocols' core
+   actions, each step a request, the pipeline's state its own execute
+   branch of `main`, one commit in `main` at its end; execution plans;
+   compiled pipelines. Then **mycelium as a database server**, which needs
+   it, and **cache management** of replicated stores (a TTL). To take into
+   account when earlier items are built: the headers (item 7: the
+   pipeline and step identifiers), `base-package-crud` (item 3: the core
+   actions), the composite actions (item 2's open list: the pipeline may
+   take their place).
 
 ## Elsewhere
 

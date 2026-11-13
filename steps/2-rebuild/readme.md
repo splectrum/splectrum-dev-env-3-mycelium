@@ -2078,3 +2078,19 @@ their transition, that each is a command.
 **Validated**: the ten bundle packages' full sets; the boot component's
 test three times (119 asserts); the `haicc` test, 107 of 107; the checks,
 no problems (18 modules, 11 packages).
+
+## 46. Future design: pipelines, a database server, local data (the human, 2026-11-13; a note)
+
+A discussion before the next build, nothing built. Recorded in
+`vision.md`, "Pipelines, and mycelium as a database server", and on the
+roadmap's distant horizon (`handover-next.md`, item 13):
+
+- a pipeline engine on our request processing: steps as requests, the
+  pipeline's own execute branch of `main`, one commit in `main` at its
+  end, execution plans, compiled pipelines;
+- mycelium as a database server, which needs that engine;
+- data in p2p is local: replicas as a cache, a TTL on it, applications
+  designed in local data terms, the atomic commits of `main`.
+
+What the human said and what is only proposed or open are kept apart
+there.
