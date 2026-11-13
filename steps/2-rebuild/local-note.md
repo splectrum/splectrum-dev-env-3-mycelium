@@ -2,9 +2,247 @@
 
 Notes from the local machine (Linux x86-64, WSL2), newest first, each
 following `prompt-local.md`. Offline (the connection poor): every download
-kept in a local source, `~/haicc-release/sources/` (npm's tarballs by URL,
-a `curl` that serves them, git URLs to local mirrors), so
-`tools/install.sh` and `tools/boot-release.js` run with no network.
+kept in a local source, `~/haicc-mirror/` since 2026-11-13 (before:
+`~/haicc-release/sources/`; npm's tarballs by URL, a `curl` that serves
+them, git URLs to local mirrors), so `tools/install.sh` and
+`tools/release.js` run with no network.
+
+## 2026-11-13: `381bbae`
+
+The prompt ran as written, every step passed, nothing downloaded. Then the
+human tried `haicc` by hand: four findings (1 to 4), one with a tested
+patch. The code not changed here.
+
+Cleaned up first, on the human's word: the old releases' leftovers (the
+setup file, the executable, `haicc-try.sh`, the old work folders, the old
+`~/.haicc`, `/tmp/haicc-*`, the signed publish of 2026-11-08, Bare
+1.35.0); the local source moved to `~/haicc-mirror/`.
+
+| Step | Result |
+|---|---|
+| 2. `sh tools/install.sh` (from a clean `node_modules/`) | exit 0, 10 s: 236 fetched (from the local source), 1 kept, 18 linked; Bare v1.36.0 there |
+| 3. `tools/bare tools/release.js` | exit 0, 11 s: the seven bundles, the manifest, the addons, `third-party.json`, from `381bbae`, Bare v1.36.0; `git status` clean (the installer as `build.sh` writes it) |
+| 4. `sh haiccing/base-linux-haicc/test/run.sh` | exit 0, 30 s: `# checks = 66/66 pass`, `# ok`; nothing left running |
+| 5. the packages' `/test/full` | all `# ok`, exit 0: `base-package-runtime` 76 s, `base-package-boot` 162 s, `base-package-service`, `base-package-haicc`, `base-component-haicc` 3 s each, `package-docs-mrepo`, `package-docs-template` 1 s each; nothing left running |
+| 6. `haicc-install.sh`, sources, `haicc prereq` | `/usr/local/bin/haicc`, its folder `~/.haicc`; see below for the sources; `prereq`: all ok, Bare 1.36.0 put in place |
+
+On step 6, one difference, the human's choice: the sources tested were
+copied into haicc's own sources folder, `~/.haicc/sources/` (identical,
+`diff -r`), and that folder linked, not the clone's `sources/`: the next
+build then does not change what the human runs. A local publish, before a
+release.
+
+Two smaller things seen:
+
+- `package-lock.json` still has `bare-build` (a dev dependency, about
+  46 MB with this platform's prebuilt) and `tools/install.sh` still
+  installs it; nothing uses it since `tools/boot-release.js` went.
+  Proposal: drop it from `package.json` and the lockfile.
+- `tools/release.js` reports, for `base-package-runtime` and
+  `base-package-boot`, `"unresolved":["pear-full-square/p2p-mrepo:
+  from-native", "...: from-bundle", "...: a"]`. No test failed on it; said
+  in case it is not known.
+
+### 1. `haicc`: the response record by default, the output as the option
+
+The human: the response printed should be the raw record (the
+Kafka-style record, as it is in the outbox folder), not an extract; the
+extract only on request. Today it is the other way round
+(`HAICC_RECORD=1` for the record).
+
+Proposal: `haicc <URI> ...` prints the response record whole, the exit
+code still from its completed form (0 an output, 1 an error, the error
+also on stderr); `haicc --output <URI> ...` (or `HAICC_OUTPUT=1`) the
+output alone, as now; `HAICC_RECORD` dropped. In the test: the exact
+comparisons use `--output`, the two error checks read stderr alone (which
+also checks the record goes to stdout, the error to stderr), five checks
+added. Tested on a worktree of `381bbae` (`sh build.sh`, then the test):
+`# checks = 71/71 pass`, `# ok`. The patch (then `sh build.sh` for
+`haicc-install.sh`):
+
+```diff
+diff --git a/haiccing/base-linux-haicc/README.md b/haiccing/base-linux-haicc/README.md
+--- a/haiccing/base-linux-haicc/README.md
++++ b/haiccing/base-linux-haicc/README.md
+@@ -66,7 +66,11 @@ go as typed, unnamed; the mrepo interprets them.
+ 
+ - `HAICC_TIMEOUT`: seconds to wait for the response, 120; none in time:
+   exit 4, and the request stays.
+-- `HAICC_RECORD=1`: the whole response record printed.
++- The response record is printed whole, as it is in the outbox folder;
++  the exit code from its completed form: 0 an output, 1 an error (also
++  said on stderr).
++- `haicc --output <URI> ...` (or `HAICC_OUTPUT=1`): the completed form's
++  output alone printed, not the record.
+ 
+ ## Folders
+ 
+diff --git a/haiccing/base-linux-haicc/bin/haicc b/haiccing/base-linux-haicc/bin/haicc
+--- a/haiccing/base-linux-haicc/bin/haicc
++++ b/haiccing/base-linux-haicc/bin/haicc
+@@ -1,6 +1,7 @@
+ #!/bin/sh
+ # haicc: the command. It only dispatches.
+-#   haicc <URI> <protocol>/<action> <argument>...   an mrepo command: a URI
++#   haicc [--output] <URI> <protocol>/<action> <argument>...   an mrepo
++#       command (--output: the completed form's output alone): a URI
+ #       starts with / (the local root), so a first part starting with / is a
+ #       command for the mrepos; it goes to the boot mrepo's inbox
+ #       (haicc-request)
+@@ -16,7 +17,10 @@ usage () {
+ haicc <URI> <protocol>/<action> <argument>...   a command for the mrepos:
+                                                 go to this node position and
+                                                 execute the command that
+-                                                follows
++                                                follows; its response record
++                                                printed whole
++haicc --output <URI> <protocol>/<action> ...    the same, the completed
++                                                form's output alone
+ haicc sources                                   the sources registered
+ haicc sources link <folder>                     a local folder linked as a source
+ haicc sources unlink <folder>
+@@ -35,6 +39,9 @@ USAGE
+ 
+ case "${1:-}" in
+   /*) exec sh "$here/haicc-request" "$@" ;;
++  --output) shift; HAICC_OUTPUT=1; export HAICC_OUTPUT
++    case "${1:-}" in /*) exec sh "$here/haicc-request" "$@" ;; esac
++    echo "haicc: --output goes before a URI" >&2; exit 2 ;;
+   ''|help|--help|-h) usage; exit 0 ;;
+ esac
+ name=$1; shift
+diff --git a/haiccing/base-linux-haicc/bin/haicc-request b/haiccing/base-linux-haicc/bin/haicc-request
+--- a/haiccing/base-linux-haicc/bin/haicc-request
++++ b/haiccing/base-linux-haicc/bin/haicc-request
+@@ -11,10 +11,12 @@
+ #                  resolves the position:
+ #                    haicc /host service/start    ->  haicc /host service/start
+ # The parts go as typed, unnamed; the mrepo interprets them.
+-# Prints the command's output (JSON) and exits 0; its error on stderr, exit 1.
++# Prints the response record whole, as it is in the outbox folder; exit 0
++# when its completed form holds an output, 1 an error (also said on stderr).
+ #   HAICC_TIMEOUT   seconds to wait for the response (120); none in time:
+ #                   exit 4 (the request stays; its key is said)
+-#   HAICC_RECORD=1  the whole response record printed, not its output alone
++#   HAICC_OUTPUT=1  the completed form's output alone printed, not the
++#                   record (haicc --output)
+ set -u
+ . "$(dirname "$0")/haicc-lib.sh"
+ [ $# -ge 2 ] || fail "haicc <URI> <protocol>/<action> <argument>... (a command follows the URI)" 2
+@@ -57,5 +59,5 @@ while [ ! -f "$back" ]; do
+   sleep 0.2 2>/dev/null || sleep 1
+   waited=$((waited + 1))
+ done
+-if [ "${HAICC_RECORD:-}" = 1 ]; then cat "$back"; fi
+-awk -f "$(dirname "$0")/haicc-response.awk" -v quiet="${HAICC_RECORD:-}" "$back"
++if [ "${HAICC_OUTPUT:-}" = 1 ]; then quiet=''; else quiet=1; cat "$back"; fi
++awk -f "$(dirname "$0")/haicc-response.awk" -v quiet="$quiet" "$back"
+diff --git a/haiccing/base-linux-haicc/test/run.sh b/haiccing/base-linux-haicc/test/run.sh
+--- a/haiccing/base-linux-haicc/test/run.sh
++++ b/haiccing/base-linux-haicc/test/run.sh
+@@ -47,7 +47,7 @@ out=$(sh "$pkg/haicc-install.sh" --home="$T/home" --bin="$T/bin" 2>&1)
+ is $? 0 "installed: sh haicc-install.sh --home --bin"
+ [ -x "$T/bin/haicc" ] && [ -f "$T/home/pins" ] && ok "the command registered in the bin folder, its scripts and pins in its own" || no "the command registered" "$out"
+ PATH=$T/bin:$PATH; export PATH
+-unset HAICC_HOME HAICC_WORK HAICC_RECORD 2>/dev/null
++unset HAICC_HOME HAICC_WORK HAICC_OUTPUT 2>/dev/null
+ HAICC_TIMEOUT=180; export HAICC_TIMEOUT
+ 
+ # 2. the dispatcher
+@@ -99,12 +99,12 @@ is "$(running | wc -l | tr -d ' ')" 1 "one runtime running: the boot mrepo's"
+ # 7. commands: the host deployed at the root; passed through to it
+ out=$(haicc / boot/deploy host base-component-haicc 2>&1); is $? 0 "haicc / boot/deploy host base-component-haicc"
+ has "$out" '"deployed":"/host","mrepo":"local/host","package":"haiccing/base-component-haicc"' "its output: the haicc mrepo deployed at /host, its unique URI local/host"
+-out=$(haicc / boot/deploy host base-component-haicc 2>&1); is $? 1 "deployed again: exit 1"
++out=$(haicc / boot/deploy host base-component-haicc 2>&1 >/dev/null); is $? 1 "deployed again: exit 1"
+ is "$out" "haicc: deployed already: /host" "its error on stderr: /host is there already"
+-out=$(haicc /host boot/deploy node-1 base-package-runtime 2>&1); is $? 1 "the host booted: its boot protocol behind the service's door"
++out=$(haicc /host boot/deploy node-1 base-package-runtime 2>&1 >/dev/null); is $? 1 "the host booted: its boot protocol behind the service's door"
+ is "$out" "haicc: not now: boot deploy (the service is booted, not started)" "said"
+-is "$(haicc /host service/initialise 2>&1)" '{"service":"initialised"}' "haicc /host service/initialise: passed through to the haicc mrepo"
+-is "$(haicc /host service/start 2>&1)" '{"service":"started"}' "haicc /host service/start"
++is "$(haicc --output /host service/initialise 2>&1)" '{"service":"initialised"}' "haicc /host service/initialise: passed through to the haicc mrepo"
++is "$(haicc --output /host service/start 2>&1)" '{"service":"started"}' "haicc /host service/start"
+ 
+ # 8. a node inside the host; commands chained through both
+ out=$(haicc /host boot/deploy node-1 base-package-runtime 2>&1); is $? 0 "haicc /host boot/deploy node-1: executed by the haicc mrepo"
+@@ -118,12 +118,17 @@ out=$(haicc /host/node-1 help/get 2>&1); is $? 1 "a URI running through a shortc
+ has "$out" "/host is a shortcut: a URI does not run through it" "said, with the way across"
+ out=$(haicc / help/get /packages 'no "such" section' 2>&1); is $? 1 "an argument with spaces and quotes: sent whole"
+ has "$out" 'no section "no "such" section" at /packages' "and back in the error"
+-out=$(HAICC_RECORD=1 haicc /host help/get / oneliner 2>&1); is $? 0 "HAICC_RECORD=1: the whole record"
++out=$(haicc /host help/get / oneliner 2>&1); is $? 0 "by default: the whole record"
+ has "$out" '"topic":"/haicc/terminal"' "printed: the core addressed back to the terminal"
++out=$(haicc --output /host help/get / oneliner 2>&1); is $? 0 "haicc --output: the output alone"
++case "$out" in *'"topic":'*) no "no record around it" "$out" ;; *) ok "no record around it" ;; esac
++out=$(HAICC_OUTPUT=1 haicc /host help/get / oneliner 2>&1); is $? 0 "HAICC_OUTPUT=1: the same"
++case "$out" in *'"topic":'*) no "no record around it, HAICC_OUTPUT=1" "$out" ;; *) ok "no record around it, HAICC_OUTPUT=1" ;; esac
++out=$(haicc --output 2>&1); is $? 2 "haicc --output without a URI: exit 2"
+ 
+ # 9. torn down: the node, then the host
+-is "$(haicc /host boot/teardown node-1 2>&1)" '{"tornDown":"/node-1"}' "haicc /host boot/teardown node-1"
+-is "$(haicc / boot/teardown host 2>&1)" '{"tornDown":"/host"}' "haicc / boot/teardown host: at the root, about the shortcut as an item"
++is "$(haicc --output /host boot/teardown node-1 2>&1)" '{"tornDown":"/node-1"}' "haicc /host boot/teardown node-1"
++is "$(haicc --output / boot/teardown host 2>&1)" '{"tornDown":"/host"}' "haicc / boot/teardown host: at the root, about the shortcut as an item"
+ [ ! -e "$T/home/work/mrepos/boot/main/host" ] && ok "the host's folder removed" || no "the host's folder removed"
+ is "$(running | wc -l | tr -d ' ')" 1 "one runtime left: the boot mrepo's"
+ 
+```
+
+### 2. The service's responses say the state reached, not what was done
+
+The human ran, after `initialise` and `start`:
+
+| Command | Response | Expected |
+|---|---|---|
+| `haicc /host service/stop` | `{"service":"initialised"}` | stopped |
+| `haicc /host service/shutdown` | `{"service":"booted"}` | shut down |
+
+By design today: each action answers `moveTo(exec, <state>)`, the state
+it moved to (`mrepo-base-service/external/stop/index.js`: `initialised`,
+`shutdown/index.js`: `booted`; the machine booted -> initialised ->
+started, and back). Read as an answer to "stop", "initialised" is wrong;
+and the module describes itself otherwise (`internal/state.js`: "The
+service state ...: initialised, started, stopped, shut down").
+
+Proposal (to discuss with the human): the response says what was done,
+and the state now beside it, nothing lost:
+`initialise` `{"service":"initialised","state":"initialised"}`, `start`
+`{"service":"started","state":"started"}`, `stop`
+`{"service":"stopped","state":"initialised"}`, `shutdown`
+`{"service":"shut down","state":"booted"}`. The description in
+`state.js` made to match the machine.
+
+### 3. Teardown: there, but not to be found
+
+The human typed `haicc / deploy/teardown host` (twice): `no action: deploy
+teardown`. The command is `haicc / boot/teardown host` (the test has it,
+section 9). It is not among the commands `prompt-local.md` gives nor in
+`haicc --help`, and `help/get deploy`, `help/get deploy/boot` answered
+`no help at /deploy: nearest /`: nothing led to it.
+
+Proposals: `haicc --help` and the prompt list the teardowns too
+(`haicc /host boot/teardown <name>`, `haicc / boot/teardown host`); the
+error for an unknown protocol says so, with the protocols there
+(`no protocol: deploy (boot, help, service, ...)`), not `no action:
+deploy teardown`; help reachable for a protocol and its actions from
+where the human stands.
+
+### 4. The machine level: `haicc boot/deploy`, `haicc boot/teardown`
+
+The human: there is `haicc boot`, and no undo for it (today: `pkill -f
+"bin/bare $HOME/.haicc/"` and `rm -rf ~/.haicc/work`, from the handover).
+Proposed by the human, to conform: `haicc boot` becomes `haicc
+boot/deploy`, and `haicc boot/teardown` is added. A command without a URI
+is then the machine level, the root mrepo's parent, in the same
+`<protocol>/<action>` form as every command below it.
+
+The local agent's view, for the discussion: agreed. As teardown does not
+cascade (known), `haicc boot/teardown` would take down the whole: every
+runtime under the work folder stopped, the boot mrepo removed (the
+handover's "start over", as one command). To settle with the human:
+whether the package store goes with it, and whether the other script
+commands (`sources`, `prereq`) take the same form.
 
 ## 2026-11-12: `31501e6`
 
