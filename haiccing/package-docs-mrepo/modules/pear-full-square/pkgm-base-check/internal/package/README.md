@@ -29,23 +29,27 @@ carries modules of ours.
 ## Rules
 
 - **Files**: `README.md`, `LICENSE`, `package.json` with its
-  `description`, `license`, `type` `module` and `modules`, a list.
+  `description`, `license`, `type` `module` and `modules`, a list; the
+  folder `test-reports/` with its README, where its test report goes.
+- **Its pin**: `template.commit` in its `package.json`, the commit of the
+  package template it was brought to. The template itself has none.
 - **Sets**: `validate`, `validate-in-situ` and `full`, each with a
-  description and its tests by name. Every name is a test of its own or a
-  generic one. `validate` and `full` hold `help`, `code`, `mrepo` and
-  `package`; `full` also `modules` where modules are carried;
-  `validate-in-situ` holds `help-in-situ` and `mrepo-in-situ`.
-- **A test of its own is a unit**: `test/<name>/` with its `run.js`, its
-  `README.md` and a `*.test.js`, named in `validate` and in `full`, and
-  not under a generic test's name.
-- **It tests what it provides**: a test for each protocol its
-  `protocol.js` configures, `test/protocol-<name>/`; at least one test of
-  its own where it has a `run.js`, hooks, or a list of packages.
+  description and its tests by name. `validate` and `full` hold `help`,
+  `code`, `mrepo` and `package`; `full` also `modules` where modules are
+  carried; `validate-in-situ` holds `help-in-situ` and `mrepo-in-situ`.
+- **Every test has its folder**: each test a set names is `test/<name>/`,
+  the generic ones too, with its `run.js` and its `README.md`.
+- **A test of its own** also has a `*.test.js` and is named in `validate`
+  and in `full`. Its name is the package's own.
+- **It tests what it provides**: at least one test of its own where it
+  provides a protocol, has a `run.js`, brings hooks, or lists the
+  packages of an mrepo.
 - **A documentation package** is asked for no test of its own.
 
 ## Also exported
 
 - `GENERIC`: the names of the generic tests.
 - `SETS`: the sets every package has, with the generic tests of each.
-- `ownTests(pkg)`: the folders of its `test/`, by name.
-- `protocolTest(name)`: the name of a protocol's test, `protocol-<name>`.
+- `testFolders(pkg)`: the folders of its `test/`, by name.
+- `ownTests(pkg)`: those that are not a generic test's.
+- `TEMPLATE`: the package template's name.

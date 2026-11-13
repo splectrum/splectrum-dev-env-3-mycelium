@@ -105,21 +105,25 @@ step shown to the human first)
   the check asks a folder for every test a set names, and no longer a
   fixed name for a protocol's test (naming is local).
 - Part 49: the test reports, in the template ("Test reports", below).
-- **What is left, as the check lists it** (77 lines, by package; each of
-  the nine also lacks `test-reports/`):
+- Part 50: the pin (`template` in `package.json`), the step that brings a
+  package to the template (`sh tools/package-template.sh <package>`, then
+  its pages by hand, then `tools/bare tools/package-test.js`), and
+  `package-docs-mrepo` brought to it.
+- **What is left, as the check lists it** (78 lines, by package; each of
+  the eight also lacks `test-reports/` and the pin):
 
   | package | the generic folders | a test of its own |
   |---|---|---|
   | `package-docs-template` | there | none asked |
-  | `package-docs-mrepo` | to bring in | none asked |
+  | `package-docs-mrepo` | there (part 50, pinned) | none asked |
   | `base-package-runtime` | to bring in | has one (`start`) |
   | `base-component-boot` | to bring in | has one (`boot`) |
   | `base-package-protocol`, `-service`, `-help`, `-haicc`, `-boot` | to bring in | lacking |
   | `base-component-haicc` | to bring in | lacking |
   | `base-linux-haicc` | not a bundle: carries no generic test, its own is `test/run.sh`; to settle |
 
-  The nine other bundle packages were not rebuilt in part 48: they carry
-  the check as of part 47 until each is brought in line. Their own
+  The eight other bundle packages were not rebuilt since part 47: they
+  carry the check as of then until each is brought in line. Their own
   validation (part 47) is red on `/test/package`; `base-component-boot`'s
   `boot` test red with the runtime's.
 
@@ -129,10 +133,11 @@ step shown to the human first)
   clean, working, empty package: today its folders hold documentation,
   an `example/` and a placeholder `name/`), or a skeleton kept inside it.
   Put to the human, not answered.
-- Where a package states its pin, and which commit (ours: the template's
-  own repository, `haiccing/package-docs-template`). Whether the modules
-  a package carries follow the same rule (kept until it is upgraded). Put
-  to the human; the answer: blanket for now.
+- The pin as built (ours, shown to the human with part 50): `template`
+  in `package.json`, `{ repository, commit }`, the commit of the
+  template's own repository, `haiccing/package-docs-template`.
+- Whether the modules a package carries follow the same rule (kept until
+  it is upgraded). Put to the human; the answer: blanket for now.
 
 **Proposed** (step 2 on: one package at a time, each shown to the human)
 
