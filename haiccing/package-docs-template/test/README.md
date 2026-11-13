@@ -136,5 +136,8 @@ target would run, nothing run.
 }
 ```
 
-`failures`: the failed tests' names. From the command line the result is
-printed last, one line; exit 0 all passed, 1 one failed, 2 no such set.
+`failures`: the failed tests' names. A unit that reports no summary ran
+no test, and fails: a test that silently did not run is not a pass. A
+package with nothing to test says so, with its dummy: 0 of 0. From the
+command line the result is printed last, one line; exit 0 all passed, 1
+one failed, 2 no such set.

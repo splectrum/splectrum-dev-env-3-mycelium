@@ -123,6 +123,11 @@ step shown to the human first)
   `external/run/`; every package has a test of its own, a dummy where
   nothing is specific to it (an explicit decision, never from the
   template); `package-docs-mrepo`'s dummy, `test/none/`.
+- Part 53: `base-package-protocol` brought to the template, its own
+  test `mounted` (the pattern for the protocol packages in this session:
+  `protocol.js` loaded, the config value by value, each action on a
+  minimal execution, the last test failing when an action was not run);
+  the runner fails a unit that reports no summary.
 - **What is left, as the check lists it** (78 lines, by package; each of
   the eight also lacks `test-reports/` and the pin):
 
@@ -132,7 +137,8 @@ step shown to the human first)
   | `package-docs-mrepo` | there (part 50, pinned) | none asked |
   | `base-package-runtime` | there (part 51, pinned) | has one (`start`) |
   | `base-component-boot` | to bring in | has one (`boot`) |
-  | `base-package-protocol`, `-service`, `-help`, `-haicc`, `-boot` | to bring in | lacking |
+  | `base-package-protocol` | there (part 53, pinned) | `mounted`: its protocol as mounted, no mrepo; in a running mrepo still to come |
+  | `base-package-service`, `-help`, `-haicc`, `-boot` | to bring in | lacking |
   | `base-component-haicc` | to bring in | lacking |
   | `base-linux-haicc` | not a bundle: carries no generic test, its own is `test/run.sh`; to settle |
 

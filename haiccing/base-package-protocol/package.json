@@ -10,6 +10,10 @@
     "pear-full-square/mrepo-base-help",
     "pear-full-square/pkgm-base-check"
   ],
+  "template": {
+    "repository": "haiccing/package-docs-template",
+    "commit": "e633d074ee15b460b5c31750486561dddcb77641"
+  },
   "scripts": {
     "test": "bare test/run.js"
   }
