@@ -1,7 +1,7 @@
 {
   "name": "pkgm-base-check",
   "version": "0.1.0",
-  "description": "Module: the checks a package runs on itself, its code against the code rules and the integrity of its mrepo side.",
+  "description": "Module: the checks a package runs on itself, its code against the code rules, the integrity of its mrepo side and its own structure.",
   "type": "module",
   "main": "index.js",
   "scripts": {

@@ -19,6 +19,7 @@ const UNITS = {
   "/test/code": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/code.test.js")]),
   "/test/mrepo": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/mrepo.test.js")]),
   "/test/mrepo-in-situ": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/mrepo-in-situ.test.js")]),
+  "/test/package": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/package.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/test/help.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-request": () => Promise.all([import("./modules/pear-full-square/mrepo-base-request/test/boxes.test.js"), import("./modules/pear-full-square/mrepo-base-request/test/check.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-service": () => Promise.all([import("./modules/pear-full-square/mrepo-base-service/test/service.test.js")]),
@@ -27,10 +28,10 @@ const UNITS = {
   "/test/modules/pear-full-square/mycelium-uri": () => Promise.all([import("./modules/pear-full-square/mycelium-uri/test/names.test.js"), import("./modules/pear-full-square/mycelium-uri/test/uri.test.js")]),
   "/test/modules/pear-full-square/mycelium-value-json": () => Promise.all([import("./modules/pear-full-square/mycelium-value-json/test/json.test.js")]),
   "/test/modules/pear-full-square/mycelium-xpath": () => Promise.all([import("./modules/pear-full-square/mycelium-xpath/test/xpath.test.js")]),
-  "/test/modules/pear-full-square/pkgm-base-check": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/test/mrepo.test.js"), import("./modules/pear-full-square/pkgm-base-check/test/rules.test.js")]),
+  "/test/modules/pear-full-square/pkgm-base-check": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/test/mrepo.test.js"), import("./modules/pear-full-square/pkgm-base-check/test/package.test.js"), import("./modules/pear-full-square/pkgm-base-check/test/rules.test.js")]),
 }
 // The test sets: their tests by name (modules: every module's unit tests).
-const SETS = {"/test/full":["help","code","mrepo","modules"],"/test/validate-in-situ":["help-in-situ","mrepo-in-situ"],"/test/validate":["help","code","mrepo"]}
+const SETS = {"/test/full":["help","code","mrepo","package","modules"],"/test/validate-in-situ":["help-in-situ","mrepo-in-situ"],"/test/validate":["help","code","mrepo","package"]}
 
 // What a target runs: its units (a set, /test/modules, a unit); null: none.
 export function expand (target) {

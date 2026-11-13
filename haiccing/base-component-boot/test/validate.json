@@ -4,6 +4,7 @@
     "boot",
     "help",
     "code",
-    "mrepo"
+    "mrepo",
+    "package"
   ]
 }

@@ -59,16 +59,19 @@ the work reaches it.
   generic lives in the documentation packages; a package or a module
   documents only what is its own. A decision and its reason: the step's
   record.
-- **The rules are checked**, not remembered: the README rules and the code
-  rules are in `package-docs-template` and run as tests.
+- **The rules are checked**, not remembered: the README rules, the code
+  rules and a package's structure (among it: a package tests what it
+  provides) are in `package-docs-template` and run as tests.
 
 ## Validation, before every commit
 
 - Each package's `validate` set from its bundle (its own tests, `help`,
-  `code`, `mrepo`), `full` when modules changed:
+  `code`, `mrepo`, `package`), `full` when modules changed:
   `SOURCES=$PWD/sources tools/bare sources/haiccing/<package>.bundle /test/full`.
 - `tools/bare tools/help-extract.js` (and `--files`) and
-  `tools/bare tools/code-check.js`: no problems.
+  `tools/bare tools/code-check.js`: no problems. The second also checks
+  every package's structure: a package that provides something and has no
+  test of its own for it is named there.
 - When the runtime or the repository code changed, the boot's test
   (`base-component-boot`: `test/boot/run.js`) several times: a race shows
   one run in a few. Nothing left running after.

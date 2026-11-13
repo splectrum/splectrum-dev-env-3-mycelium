@@ -31,6 +31,7 @@ README.
 | `/test/code` | the package's code, its modules and its own, checked against the code rules |
 | `/test/mrepo` | the integrity of its mrepo side: its structure, its protocols, what it carries |
 | `/test/mrepo-in-situ` | the package as a running mrepo holds it: linked, its bundle, its layers |
+| `/test/package` | the package against this structure: its files, its sets, its tests, a test of its own for what it provides |
 | `/test/<set>` | a set: its tests, in order (`modules` expands to every module) |
 
 Each a unit, each unit its own process. Beside them the entry points,
@@ -46,10 +47,29 @@ Each a unit, each unit its own process. Beside them the entry points,
 ```
 
 Every package has `validate` (the package on its own, in a floating
-instance: its own tests, `help`, `code` and `mrepo`), `validate-in-situ` (where it is
-deployed: `help-in-situ` and `mrepo-in-situ`, run with `runtime run`, which names the mrepo
-and the package) and `full` (everything: also `modules`). More sets as
-needed.
+instance: its own tests, `help`, `code`, `mrepo` and `package`),
+`validate-in-situ` (where it is deployed: `help-in-situ` and
+`mrepo-in-situ`, run with `runtime run`, which names the mrepo and the
+package) and `full` (everything: also `modules`). More sets as needed.
+
+## Its own tests
+
+A package tests what it provides, in tests of its own: nothing it brings
+is left to another package's test. Which it must have follows from what
+it is:
+
+| the package | its tests |
+|---|---|
+| provides a protocol (`protocol.js`) | one for each protocol, `test/protocol-<name>/`: a test mrepo made for it, with test data; the protocol's actions, its hooks and its configs tested there |
+| has a program (`run.js`), brings hooks, or lists the packages of an mrepo of its own | at least one, by any name |
+| is a documentation package | none |
+
+A test of its own is a folder with its `run.js`, its `README.md` and a
+`*.test.js`, named in `validate` and in `full`, and never under a generic
+test's name (`help`, `code`, `mrepo`, `package`, `modules`).
+
+`/test/package` checks all of this in every package: one that provides
+something and does not test it fails its own validation.
 
 ## Modules test
 

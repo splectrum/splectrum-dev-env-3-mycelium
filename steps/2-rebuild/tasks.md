@@ -54,22 +54,55 @@ change of every command in task 1 is made with these tests in place.
   afterthought ("that is not how we do it"). The structure of a haiccing
   package is in a package in haiccing; the question the human asked:
   where is the test that validates the structure of a haiccing package?
-  There is none.
+  There was none.
+- **Built one by one, and double checked** with the human.
+- **Tests that fail when something is forgotten**, so we are reminded
+  early. The reason: the platform is so flexible that without full
+  coverage testing in place it becomes hell; when everything is checked
+  by default, one can be relaxed about it.
 
-**Proposed** (put to the human; the human went on from it without
-objecting, not confirmed in words)
+**Step 1, built** (part 47 in `readme.md`; on `execute/main` only, not
+merged into `main`: for the human's check first)
 
-- The rule is stated once, in `package-docs-template` (`test/`): which
-  tests of its own a package must have, by what it is: one for each
-  protocol its `protocol.js` provides; one for its `run.js`; a component,
-  its deployment with its hooks and configs; a documentation package,
-  none.
-- A fifth generic test, the package's structure, in every package's
-  `validate`: the package checked against the template (its
-  `package.json`, its sets, each test a unit with its `run.js` and
-  README, its entry points) and against that rule. In `pkgm-base-check`,
-  beside `code` and `mrepo`.
-- The packages it fails are then brought in line:
+- The rule, in `haiccing/package-docs-template/test/README.md`, "Its own
+  tests"; the check, `/test/package`, in every package's `validate` and
+  `full`; the same over all packages from `tools/bare tools/code-check.js`.
+- Ours, for the human to check: a protocol's test is named
+  `test/protocol-<name>/` (the plain name would collide with the generic
+  `help`); a package with a program, hooks or a list needs at least one
+  test of its own, by any name; a documentation package none.
+- The list it fails, the work that is left:
+
+  | package | what it lacks |
+  |---|---|
+  | `base-package-runtime` | `test/protocol-runtime/` |
+  | `base-package-protocol` | `test/protocol-protocol/` |
+  | `base-package-service` | `test/protocol-service/` (its hooks and its list with it) |
+  | `base-package-help` | `test/protocol-help/` |
+  | `base-package-haicc` | `test/protocol-haicc/` |
+  | `base-package-boot` | `test/protocol-boot/` |
+  | `base-component-haicc` | a test of its own (its hooks, its list) |
+
+  `base-component-boot`'s `boot` test is red with them: it runs the
+  runtime package's `validate` in a running mrepo and expects it to pass.
+  It turns green with `test/protocol-runtime/`: a reason to do the
+  runtime first.
+
+**Proposed** (step 2 on: one package at a time, each shown to the human)
+
+- The check goes one level deeper than a test being there, from what the
+  test mrepo records: at the end of a protocol's test, the `done` history
+  is compared with the protocol's config, and an action never requested
+  fails the test; the same for the hooks the package brings (each must
+  have run). An action or a hook added later without a test then fails
+  that package's own test.
+- One helper that makes a test mrepo from a list of packages and test
+  data, starts it, sends requests, compares the history and stops it,
+  shared by these tests (the runtime package's `start` test is the
+  model). The package check can then ask that a protocol's test uses it.
+- What each test covers:
+  - `base-package-runtime`: `runtime/run` (a linked package's test, a dry
+    run, `/run` refused), its boot hooks, the internal requests first;
   - `base-package-protocol`: activate and deactivate through requests,
     the active set, a request for a protocol that is not active refused,
     its config (at the mrepo itself, its argument);
@@ -85,12 +118,10 @@ objecting, not confirmed in words)
   - `base-component-haicc`: deployed whole: what its `boot` hooks
     activate, help extracted on `initialise`, `boot` activated on `start`
     and deactivated on `stop`, its door;
-  - `base-package-runtime` (`start`) and `base-component-boot` (`boot`):
-    reviewed against the same standard (their hooks, their configs).
-- One helper that makes a test mrepo from a list of packages and test
-  data, starts it, sends requests and stops it, shared by these tests
-  (the runtime package's `start` test is the model).
-- The READMEs that say "tested by the boot package" are corrected.
+  - `base-component-boot` (`boot`) and `base-package-runtime` (`start`):
+    reviewed against the same standard.
+- The READMEs that say "tested by the boot package" are corrected as
+  each package gets its test.
 
 **Where**
 

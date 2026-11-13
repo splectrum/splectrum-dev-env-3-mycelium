@@ -2094,3 +2094,59 @@ roadmap's distant horizon (`handover-next.md`, item 13):
 
 What the human said and what is only proposed or open are kept apart
 there.
+
+## 47. The package check: a package tests what it provides (2026-11-13)
+
+The human, on seeing haiccing packages without tests of their own: very
+disappointing that this was skipped. For each package there are custom
+tests, at the haiccing level, for the functionality it provides; for a
+protocol a test mrepo with some test data, its actions, its hooks and its
+specific configs tested. Built one by one and double checked; and tests
+that fail when something is forgotten, so we are reminded early: the
+platform is so flexible that without full coverage testing in place it
+becomes hell; with everything checked by default one can be relaxed.
+
+**What was found**
+
+- Tests of its own: only `base-package-runtime` (`start`) and
+  `base-component-boot` (`boot`). The five protocol packages after the
+  runtime and `base-component-haicc`: none. The protocols were tested by
+  their modules' unit tests and by two end to end tests living elsewhere;
+  the tests stayed where they were when the protocols were split into
+  packages (parts 28, 37, 43 to 45).
+- No test validated a package against the structure
+  `package-docs-template` documents, and no rule said which tests of its
+  own a package must have: a package with none passed.
+
+**Built: the reminder first** (step 1; the packages' tests follow, one at
+a time, `tasks.md`)
+
+- **The rule**, in `haiccing/package-docs-template/test/README.md`, "Its
+  own tests": a package tests what it provides, in tests of its own. One
+  for each protocol its `protocol.js` configures, `test/protocol-<name>/`
+  (the prefix: `help` is a generic test's name too); at least one where
+  it has a program, hooks or a list of packages; a documentation package
+  none.
+- **The check**, a fifth generic test, `/test/package`
+  (`pkgm-base-check`: `internal/package`, `validate/package.test.js`; the
+  dispatcher adds the unit), in every package's `validate` and `full`:
+  its files (README, LICENSE, `package.json`), its three sets (every name
+  a test that is there, the generic ones where they belong), each test of
+  its own a unit (`run.js`, README, a test file, in `validate` and
+  `full`, not under a generic name), and the rule above.
+- **The same over every package** from `tools/bare tools/code-check.js`.
+
+**The list it fails**: `base-package-runtime`, `-protocol`, `-service`,
+`-help`, `-haicc`, `-boot` (each its `test/protocol-<name>/`) and
+`base-component-haicc` (a test of its own). `base-component-boot`'s `boot`
+test is red with them: it runs the runtime package's `validate` in a
+running mrepo and expects it to pass.
+
+**Validated**: the check's own tests (6, in the module's 12); every
+package's `full` set: the two documentation packages pass whole, the
+seven named fail on `/test/package` alone, `base-component-boot` on one
+assert of its `boot` test (118 of 119: the runtime package's `validate`
+no longer passing); the `haicc` test, 107 of 107; the READMEs, no
+problems; the code rules, none; the package check, the eight lines above
+(a package can lack two things). Nothing left running. Committed red, on
+`execute/main` only, not merged into `main`: for the human's check first.

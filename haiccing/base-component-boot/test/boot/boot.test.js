@@ -184,10 +184,10 @@ test('the boot: put in place, its runtime started, nothing deployed; the host de
     // dispatcher; a dry run says what would run, a run returns the results
     const dry = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/test/full', args: ['dry-run'] })
     const runs = dry?.output?.runs ?? []
-    t.ok(!dry?.error && runs.slice(0, 4).join() === '/test/start,/test/help,/test/code,/test/mrepo' && runs.length > 4 && runs.slice(4).every(u => u.startsWith('/test/modules/')), `runtime run, a dry run: what test/full would run, nothing run ${JSON.stringify(dry?.output ?? dry?.error)}`)
+    t.ok(!dry?.error && runs.slice(0, 5).join() === '/test/start,/test/help,/test/code,/test/mrepo,/test/package' && runs.length > 5 && runs.slice(5).every(u => u.startsWith('/test/modules/')), `runtime run, a dry run: what test/full would run, nothing run ${JSON.stringify(dry?.output ?? dry?.error)}`)
     const ran = await sent({ protocol: 'runtime', action: 'run', uri: '/packages/haiccing/base-package-runtime/test/validate' }, 1200)
     t.absent(ran?.error, `runtime run test/validate: done ${ran?.error ?? ''}`)
-    t.alike([ran?.output?.ok, ran?.output?.units?.map(u => u.unit)], [true, ['/test/start', '/test/help', '/test/code', '/test/mrepo']], 'its result: the start test, its help, its code and its mrepo side passed, in a floating instance')
+    t.alike([ran?.output?.ok, ran?.output?.units?.map(u => u.unit)], [true, ['/test/start', '/test/help', '/test/code', '/test/mrepo', '/test/package']], 'its result: the start test, its help, its code, its mrepo side and its structure passed, in a floating instance')
     t.ok(ran?.log?.some(e => e.event === 'unit' && e.unit === '/test/start' && e.ok), 'a summary logged, a line a unit')
     // its help, extracted by its runtime as it started: retrieved by URI
     const root = await sent({ protocol: 'help', action: 'get', uri: '/' })
