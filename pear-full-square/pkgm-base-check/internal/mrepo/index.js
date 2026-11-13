@@ -5,6 +5,8 @@ import { join } from 'bare-path'
 import { pathToFileURL } from 'bare-url'
 
 const MODES = ['atomic', 'replicated', 'non-atomic']
+// The status transitions a hook can hang on: boot (the runtime's), the rest the service's.
+const TRANSITIONS = ['boot', 'initialise', 'start', 'stop', 'shutdown']
 const json = f => JSON.parse(readFileSync(f, 'utf8'))
 
 // The leaves of a structure: each folder holding a layer.json, by its path.
@@ -36,6 +38,20 @@ export function checkStructure (pkg) {
   const ls = leaves(root)
   for (const n of readdirSync(root).sort()) if (!statSync(join(root, n)).isDirectory() && n !== 'README.md') at(`mrepo/${n}: a file outside a layer`)
   for (const c of contributions(root, ls)) if (c.endsWith('.json')) { try { json(join(root, c)) } catch (err) { at(`mrepo/${c}: ${err.message}`) } }
+  // its hooks: runtime/hooks/<transition>/<name>.json, each a command, its
+  // parts (what it drops into the runtime layer for a status transition)
+  const hooksDir = join(root, 'runtime', 'hooks')
+  if (existsSync(hooksDir)) {
+    const walk = rel => readdirSync(join(hooksDir, rel)).sort().flatMap(n => statSync(join(hooksDir, rel, n)).isDirectory() ? walk(rel ? `${rel}/${n}` : n) : [rel ? `${rel}/${n}` : n])
+    for (const f of walk('')) {
+      const [transition, name, ...more] = f.split('/')
+      if (more.length || !name || !name.endsWith('.json')) { at(`mrepo/runtime/hooks/${f}: not a hook's place (hooks/<transition>/<name>.json)`); continue }
+      if (!TRANSITIONS.includes(transition)) { at(`mrepo/runtime/hooks/${f}: no transition ${transition} (${TRANSITIONS.join(', ')})`); continue }
+      let command = null
+      try { command = json(join(hooksDir, f)) } catch { continue } // (said where JSON is checked)
+      if (!Array.isArray(command) || !command.length || command.some(p => typeof p !== 'string' || !p) || !/^[a-z][a-z0-9-]*(\/[a-z][a-z0-9-]*)?$/.test(command[0])) at(`mrepo/runtime/hooks/${f}: not a command (its parts: <protocol>/<action> <URI> <arguments>)`)
+    }
+  }
   for (const l of ls) {
     let cfg = null
     try { cfg = json(join(root, l, 'layer.json')) } catch (err) { at(`mrepo/${l}/layer.json: ${err.message}`); continue }

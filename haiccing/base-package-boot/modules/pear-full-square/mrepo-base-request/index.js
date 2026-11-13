@@ -32,20 +32,28 @@ import { record, wrap, guid, complete, isComplete, logger, LEVELS } from './lib/
 import { layer, AUTHOR } from './lib/layer.js'
 import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
 import { interpret, formOf } from './lib/command.js'
+import { hooks, hooksAt, TRANSITIONS } from './lib/hooks.js'
 
 export { follow } from './lib/follow.js'
-export { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING, interpret, formOf }
+export { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING, interpret, formOf, hooks, hooksAt, TRANSITIONS }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'
 export const DONE = 'request/done'
 
 // The runtime's data the check reads: the service state (where the mrepo
-// has service), and the protocols the runtime loaded, their configs by name
-// (ctx.protocols: { <protocol>: { actions: { <action>: { uris, states } } } }).
+// has a service), the protocols the runtime loaded, their configs by name
+// (ctx.protocols: { <protocol>: { actions: { <action>: { uris, states } } } }),
+// and the active ones: those with their file in the protocols layer
+// (/protocols/<protocol>.json, written by protocol/activate), by name.
 export async function runtimeData ({ repo, protocols = null }) {
   const read = async p => { try { return JSON.parse((await repo.read(p)).toString()) } catch { return null } }
-  return { service: await read('/runtime/service.json'), protocols }
+  const active = {}
+  for (const [p] of await Promise.resolve().then(() => repo.select('/protocols/*')).catch(() => [])) {
+    const name = p.slice(p.lastIndexOf('/') + 1)
+    if (name.endsWith('.json') && name !== 'layer.json') active[name.slice(0, -5)] = await read(p) ?? {}
+  }
+  return { service: await read('/runtime/service.json'), protocols, active }
 }
 
 // A URI against a pattern of an action's config: segments, <name> any one,
@@ -77,42 +85,40 @@ export function missing (cfg, uri, args = []) {
 }
 
 // A request checked: null when allowed, else why not.
-//   always             a form, its URI canonical; what its action's config
-//                      asks for given (missing): a target, its arguments
-//   without service    no more (no /runtime/service.json: no gate)
-//   with service       offered: its protocol loaded, its action configured,
-//                      its URI one the action's config names; and now (state:
-//                      true, as it executes): an action that names its
-//                      states (the service's own), in one of them; a protocol
-//                      behind the service's door (its config: gated), once
-//                      the service is started; any other, always
-//   internal           the mrepo's own (not from the inbox): not asked
-//                      whether offered, not held at the door; its states
-//                      where the action names them
-// At the inbox the state is not checked (state: false): the queue may hold
-// requests that change it first.
-export function check (value, { service, protocols }, { state = true, internal = false } = {}) {
+//   always             a form, its URI canonical
+//   from outside       (the inbox's) its protocol loaded and its action
+//                      configured, said with what is there when not; what
+//                      the action's config asks for given (missing); its URI
+//                      one the config names; and now (state: true, as it
+//                      executes): its protocol active (nothing is by
+//                      default: protocol/activate, from a hook), and an
+//                      action that names its states (the service's own) in
+//                      one of them
+//   internal           the mrepo's own (not from the inbox: a hook, an
+//                      action's): not asked whether active; what its
+//                      action's config asks for given; its states where the
+//                      action names them
+// At the inbox neither the activation nor the state is checked (state:
+// false): the queue may hold requests that change them first.
+export function check (value, { service, protocols, active }, { state = true, internal = false } = {}) {
   if (!value || typeof value !== 'object') return 'not a request'
   let uri
   try { uri = canonical(value.uri ?? '') } catch (err) { return err.message }
   if (uri !== value.uri) return `not canonical: ${value.uri} (${uri})`
   const { protocol, action } = value
   const cfg = protocols?.[protocol]?.actions?.[action]
+  const now = () => (state && cfg?.states && service && !cfg.states.includes(service.state)) ? `not now: ${protocol} ${action} (the service is ${service.state})` : null
+  if (internal) return missing(cfg, uri, value.args) ?? now()
+  if (!protocols?.[protocol]) return `no protocol: ${protocol} (${Object.keys(active ?? {}).sort().join(', ')})`
+  if (!cfg) return `no action: ${protocol} ${action} (${Object.keys(protocols[protocol].actions ?? {}).sort().join(', ')})`
+  // (before its URI is looked at: a target left out is / and would only be
+  // said not offered there)
   const lacks = missing(cfg, uri, value.args)
-  if (!service) return lacks
-  if (!internal) {
-    if (!protocols?.[protocol]) return `not offered: ${protocol}`
-    if (!cfg) return `not offered: ${protocol} ${action}`
-    // (before its URI is looked at: a target left out is / and would only
-    // be said not offered there)
-    if (lacks) return lacks
-    if (!(cfg.uris || []).some(p => matches(p, uri))) return `not offered: ${protocol} ${action} at ${uri}`
-  }
   if (lacks) return lacks
+  if (!(cfg.uris || []).some(p => matches(p, uri))) return `not offered: ${protocol} ${action} at ${uri}`
   if (!state) return null
-  if (cfg?.states) return cfg.states.includes(service.state) ? null : `not now: ${protocol} ${action} (the service is ${service.state})`
-  if (internal || !protocols?.[protocol]?.gated) return null
-  return service.state === 'started' ? null : `not now: ${protocol} ${action} (the service is ${service.state}, not started)`
+  if (!active?.[protocol]) return `not now: ${protocol} ${action} (${protocol} is not active${service ? `; the service is ${service.state}` : ''})`
+  return now()
 }
 
 // The completed form sent back: in the outbox, in its envelope, when its core

@@ -42,7 +42,8 @@ its manifest records each one's hash and entry points.
   /packages/<org>/<package>/test/<set>`, through the package's dispatcher,
   in a floating instance; the result is the request's output.
 - **What each package contributes**: `base-package-runtime` the engine,
-  in every mrepo; `base-package-boot` the `boot` protocol, in an mrepo that
+  in every mrepo; `base-package-protocol` the activation of protocols;
+  `base-package-help` the help; `base-package-boot` the `boot` protocol, in an mrepo that
   deploys others; a component, such as `base-component-boot`, the list
   and the runtime config of the mrepo it defines; `package-docs-mrepo` and `package-docs-template` the
   help; an application's package its `main` and its protocol.

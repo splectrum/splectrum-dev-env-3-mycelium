@@ -5,7 +5,7 @@ The tests of mrepo-base-boot, a section per file, each test by its name.
 ## `build.test.js`
 
 - the boot mrepo: built from its folder, the same twice
-- the boot mrepo running, without its packages: no service gate; its preloaded deploy refused (no boot protocol linked), answered; stopped
+- the boot mrepo running, without its packages: its boot hook run, what it activated answering; its preloaded deploy refused (no boot protocol linked); stopped
 - the structure written for the tests removed
 
 ## `deploy.test.js`

@@ -1,15 +1,18 @@
 import test from 'brittle'
-import { check, matches, missing, record, wrap, guid, complete, isComplete, interpret, formOf } from '../index.js'
+import { check, matches, missing, hooks, record, wrap, guid, complete, isComplete, interpret, formOf } from '../index.js'
 
 // The protocols as a runtime loaded them: each action's URIs, and the
 // states that allow it where it names them (the service's own).
 const at1 = states => ({ uris: ['/'], states })
 const protocols = {
   service: { actions: { initialise: at1(['booted']), start: at1(['initialised']), stop: at1(['started']), shutdown: at1(['initialised']) } },
-  rest: { gated: true, actions: { get: { uris: ['/', '/main/**'] }, put: { uris: ['/main/**'] }, delete: { uris: ['/main/**'] } } },
+  rest: { actions: { get: { uris: ['/', '/main/**'] }, put: { uris: ['/main/**'] }, delete: { uris: ['/main/**'] } } },
   help: { actions: { get: { uris: ['/**'] } } }
 }
-const at = state => ({ service: { state }, protocols })
+// the active ones: service and help always; rest once the service is started
+// (as hooks on boot, start and stop would have it)
+const activeAt = state => Object.fromEntries(['service', 'help', ...(state === 'started' ? ['rest'] : [])].map(n => [n, protocols[n]]))
+const at = state => ({ service: { state }, protocols, active: activeAt(state) })
 // its fourth: a document, the rest put's argument (JSON text)
 const req = (protocol, action, uri, doc) => ({ protocol, action, uri, ...(doc !== undefined ? { args: [JSON.stringify(doc)] } : {}) })
 
@@ -39,11 +42,13 @@ test('missing: what an action\'s config asks for and the request does not give',
   t.is(missing(redeploy, '/host', []), null, 'one ending in ?: optional')
   t.is(missing({ uris: ['/**'] }, '/', []), null, 'no target asked for: / is a target (help get /)')
   t.is(missing(undefined, '/', []), null, 'no config: nothing asked')
-  const p = { boot: { gated: true, actions: { deploy } } }
-  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/' }, { service: null, protocols: p }), 'missing argument: target', 'checked without a service too')
-  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/' }, { service: { state: 'started' }, protocols: p }), 'missing argument: target', 'with a service: said before the URI is said not offered')
-  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/host' }, { service: { state: 'started' }, protocols: p }), 'missing argument: package')
-  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/host', args: ['x'] }, { service: { state: 'started' }, protocols: p }), null)
+  const p = { boot: { actions: { deploy } } }
+  const open = { service: null, protocols: p, active: p }
+  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/' }, open), 'missing argument: target', 'said before the URI is said not offered')
+  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/' }, { ...open, active: {} }), 'missing argument: target', 'and before the protocol is said not active')
+  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/host' }, open), 'missing argument: package')
+  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/host', args: ['x'] }, open), null)
+  t.is(check({ protocol: 'boot', action: 'deploy', uri: '/' }, open, { internal: true }), 'missing argument: target', 'the mrepo\'s own too')
 })
 
 test('matches: a URI against a config\'s pattern', (t) => {
@@ -53,39 +58,65 @@ test('matches: a URI against a config\'s pattern', (t) => {
   t.ok(matches('/**', '/') && matches('/**', '/anything/at/all'))
 })
 
-test('check: canonical, offered, and now', (t) => {
+test('check: canonical, loaded, offered there', (t) => {
   t.is(check(req('rest', 'get', '/'), at('started')), null)
   t.is(check(req('rest', 'put', '/main/a/b.json', 1), at('started')), null, 'deep')
   t.is(check(req('rest', 'get', '/Main'), at('started')), 'not canonical: /Main (/main)')
   t.ok(check(req('rest', 'get', '/a_b'), at('started')), 'a bad URI: refused')
   t.is(check(req('rest', 'put', '/', 1), at('started')), 'not offered: rest put at /')
   t.is(check(req('rest', 'get', '/packages'), at('started')), 'not offered: rest get at /packages')
-  t.is(check(req('rest', 'post', '/main/x.json', 1), at('started')), 'not offered: rest post')
-  t.is(check(req('other', 'get', '/'), at('started')), 'not offered: other')
+  t.is(check(req('rest', 'post', '/main/x.json', 1), at('started')), 'no action: rest post (delete, get, put)', 'an action that is not there: said with those that are')
+  t.is(check(req('other', 'get', '/'), at('started')), 'no protocol: other (help, rest, service)', 'a protocol that is not loaded: said with the active ones')
   t.is(check(null, at('started')), 'not a request')
-  t.is(check(req('other', 'get', '/'), { service: null, protocols }), null, 'without service: no gate')
 })
 
-test('check: the service\'s door: closed for the protocols behind it, not for the others', (t) => {
-  t.is(check(req('help', 'get', '/main'), at('booted')), null, 'not gated: open whatever the state')
+test('check: nothing is active by default; a request from outside only for an active protocol', (t) => {
+  t.is(check(req('rest', 'get', '/'), { service: null, protocols, active: {} }), 'not now: rest get (rest is not active)', 'loaded, not active: not from outside; no service')
+  t.is(check(req('rest', 'get', '/'), { service: null, protocols }), 'not now: rest get (rest is not active)', 'no protocols layer at all: nothing active')
+  t.is(check(req('rest', 'get', '/'), { service: null, protocols, active: { rest: protocols.rest } }), null, 'activated (a boot hook): accepted, without any service')
+  t.is(check(req('help', 'get', '/main'), at('booted')), null, 'active from boot: open whatever the service\'s state')
   t.is(check(req('help', 'get', '/main'), at('started')), null)
+  t.is(check(req('rest', 'get', '/'), at('booted')), 'not now: rest get (rest is not active; the service is booted)', 'behind the service\'s door: activated by its start')
+  t.is(check(req('rest', 'get', '/'), at('initialised')), 'not now: rest get (rest is not active; the service is initialised)')
+  t.is(check(req('rest', 'get', '/'), at('started')), null, 'started: active')
+})
+
+test('check: the service\'s own actions, each in its state', (t) => {
   t.is(check(req('service', 'initialise', '/'), at('booted')), null)
   t.is(check(req('service', 'start', '/'), at('booted')), 'not now: service start (the service is booted)')
-  t.is(check(req('rest', 'get', '/'), at('booted')), 'not now: rest get (the service is booted, not started)')
   t.is(check(req('service', 'start', '/'), at('initialised')), null)
   t.is(check(req('service', 'shutdown', '/'), at('initialised')), null)
-  t.is(check(req('rest', 'get', '/'), at('initialised')), 'not now: rest get (the service is initialised, not started)')
   t.is(check(req('service', 'stop', '/'), at('started')), null)
   t.is(check(req('service', 'shutdown', '/'), at('started')), 'not now: service shutdown (the service is started)')
   t.is(check(req('service', 'start', '/main'), at('initialised')), 'not offered: service start at /main')
 })
 
-test('check at the inbox: not the state (the queue may change it first)', (t) => {
+test('check at the inbox: neither the activation nor the state (the queue may change them first)', (t) => {
   const inbox = { state: false }
   t.is(check(req('service', 'start', '/'), at('booted'), inbox), null, 'start behind a queued initialise')
-  t.is(check(req('rest', 'put', '/main/x.json', 1), at('booted'), inbox), null, 'offered; the state not checked yet')
-  t.is(check(req('rest', 'put', '/', 1), at('initialised'), inbox), 'not offered: rest put at /', 'not offered: refused at once')
-  t.is(check(req('service', 'fly', '/'), at('booted'), inbox), 'not offered: service fly')
+  t.is(check(req('rest', 'put', '/main/x.json', 1), at('booted'), inbox), null, 'loaded and offered there; not active yet: not checked until it executes')
+  t.is(check(req('rest', 'put', '/', 1), at('initialised'), inbox), 'not offered: rest put at /', 'not offered there: refused at once')
+  t.is(check(req('service', 'fly', '/'), at('booted'), inbox), 'no action: service fly (initialise, shutdown, start, stop)')
+  t.is(check(req('other', 'get', '/'), at('booted'), inbox), 'no protocol: other (help, service)', 'not loaded: refused at once')
+})
+
+test('hooks: the commands of a transition, files in its folder, in name order', async (t) => {
+  const files = {
+    '/runtime/hooks/boot/b-help.json': ['help/extract'],
+    '/runtime/hooks/boot/a-activate.json': ['protocol/activate', '/', 'help'],
+    '/runtime/hooks/boot/notes.txt': 'x',
+    '/runtime/hooks/start/activate-boot.json': ['protocol/activate', '/', 'boot']
+  }
+  const reader = {
+    select: async pattern => Object.keys(files).filter(p => p.startsWith(pattern.slice(0, -1))).map(p => [p, {}]),
+    read: async p => Buffer.from(JSON.stringify(files[p]))
+  }
+  t.alike(await hooks(reader, 'boot'), [{ name: 'a-activate', command: ['protocol/activate', '/', 'help'] }, { name: 'b-help', command: ['help/extract'] }], 'each file a command, its parts; by name')
+  t.alike(await hooks(reader, 'stop'), [], 'none dropped in: none')
+  t.alike(await hooks({ select: async () => { throw new Error('no layer') }, read: reader.read }, 'boot'), [], 'no runtime layer: none')
+  await t.exception(hooks(reader, 'reboot'), /not a transition: reboot \(boot, initialise, start, stop, shutdown\)/)
+  files['/runtime/hooks/stop/bad.json'] = { command: 'x' }
+  await t.exception(hooks(reader, 'stop'), /not a hook: \/runtime\/hooks\/stop\/bad.json/)
 })
 
 test('a record: topic, key, timestamp, headers (empty), value; the onion; a form completed', (t) => {
@@ -105,12 +136,13 @@ test('a record: topic, key, timestamp, headers (empty), value; the onion; a form
   t.alike(complete(core, { ok: false, error: 'x' }).value.error, 'x')
 })
 
-test('check: an internal request, the mrepo\'s own: not asked whether offered, not waiting for started; an action that names its states still by them', (t) => {
+test('check: an internal request, the mrepo\'s own: not asked whether active; an action that names its states still by them', (t) => {
   const extract = { protocol: 'help', action: 'extract', uri: '/' }
-  t.is(check(extract, at('initialised'), { internal: true }), null, 'before it is started, not offered: allowed')
+  t.is(check(extract, at('initialised'), { internal: true }), null, 'an action its config does not even name: allowed, the mrepo\'s own')
+  t.is(check(req('rest', 'get', '/'), at('booted'), { internal: true }), null, 'a protocol that is not active: allowed')
   t.is(check(extract, { service: null, protocols: null }, { internal: true }), null, 'without service too')
   t.ok(/not canonical/.test(check({ ...extract, uri: '/A' }, at('started'), { internal: true })), 'its URI still checked')
-  t.is(check(extract, at('initialised')), 'not offered: help extract', 'not internal: asked whether offered')
+  t.is(check(extract, at('initialised')), 'no action: help extract (get)', 'not internal: asked')
   t.is(check(req('service', 'initialise', '/'), at('initialised'), { internal: true }), 'not now: service initialise (the service is initialised)', 'a service action: its states, internal or not')
   t.is(check(req('service', 'start', '/'), at('initialised'), { internal: true }), null, 'and allowed when its state allows')
 })

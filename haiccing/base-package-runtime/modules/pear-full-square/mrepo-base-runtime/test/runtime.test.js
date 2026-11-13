@@ -46,7 +46,7 @@ test('the runtime: started detached, the store held, asked over its connection, 
     await ro.close()
     // A request posted to /inbox: taken in, refused as it executes
     // (initialised, not started), answered.
-    t.alike(await send(work, { protocol: 'rest', action: 'get', uri: '/' }), { ok: false, error: 'not now: rest get (the service is initialised, not started)' }, 'taken in and answered: the preloaded initialise ran first')
+    t.alike(await send(work, { protocol: 'rest', action: 'get', uri: '/' }), { ok: false, error: 'not now: rest get (rest is not active; the service is initialised)' }, 'taken in and answered: the preloaded initialise ran first')
     t.alike(await ask({ work, op: 'nothing' }), { ok: false, error: 'not a request (status, stop)' })
     t.ok((await ask({ work, op: 'stop' }))?.stopping)
     const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
@@ -62,7 +62,7 @@ test('the runtime: started detached, the store held, asked over its connection, 
     const r = await (await import('../index.js')).open(work)
     try {
       const done = await openRepo(r.backend).select('/request/done/*')
-      t.is(done.length, 2, 'in request/done: the preloaded one, the posted one')
+      t.is(done.length, 3, 'in request/done: the preloaded one, the boot hook, the posted one')
     } finally { await r.close() }
   } finally { rmSync(work, { recursive: true, force: true }) }
 })

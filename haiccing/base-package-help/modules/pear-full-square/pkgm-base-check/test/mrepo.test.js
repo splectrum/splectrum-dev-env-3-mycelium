@@ -64,3 +64,29 @@ test('a list that does not end with its own package', (t) => {
     t.alike(checkStructure(d).map(p => p.detail), ['mrepo/packages/layer.json: its list ends with org/docs, not with the package itself (p)'], 'the last package of a list defines the mrepo: its own')
   } finally { rmSync(d, { recursive: true, force: true }) }
 })
+
+test('hooks: in their place, on a transition, each a command', (t) => {
+  const d = mkdtempSync(join(tmpdir(), 'mrepo-'))
+  try {
+    write(d, {
+      ...good,
+      'mrepo/runtime/hooks/boot/activate-p.json': ['protocol/activate', '/', 'p'],
+      'mrepo/runtime/hooks/initialise/extract.json': ['help/extract']
+    })
+    t.alike(checkStructure(d), [], 'well formed: none')
+    write(d, {
+      'mrepo/runtime/hooks/reboot/x.json': ['a/b'],
+      'mrepo/runtime/hooks/boot/deep/x.json': ['a/b'],
+      'mrepo/runtime/hooks/start/named.json': { command: 'a/b' },
+      'mrepo/runtime/hooks/stop/empty.json': [],
+      'mrepo/runtime/hooks/shutdown/odd.json': ['Not A Command']
+    })
+    t.alike(checkStructure(d).map(p => p.detail).sort(), [
+      'mrepo/runtime/hooks/boot/deep/x.json: not a hook\'s place (hooks/<transition>/<name>.json)',
+      'mrepo/runtime/hooks/reboot/x.json: no transition reboot (boot, initialise, start, stop, shutdown)',
+      'mrepo/runtime/hooks/shutdown/odd.json: not a command (its parts: <protocol>/<action> <URI> <arguments>)',
+      'mrepo/runtime/hooks/start/named.json: not a command (its parts: <protocol>/<action> <URI> <arguments>)',
+      'mrepo/runtime/hooks/stop/empty.json: not a command (its parts: <protocol>/<action> <URI> <arguments>)'
+    ])
+  } finally { rmSync(d, { recursive: true, force: true }) }
+})

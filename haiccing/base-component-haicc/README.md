@@ -21,6 +21,7 @@ created.
 |---|---|
 | `base-package-runtime` | the runtime, its layers, the `runtime` protocol |
 | `base-package-help` | the `help` protocol and the help layer |
+| `base-package-protocol` | the `protocol` protocol: activate, deactivate |
 | `base-package-boot` | the `boot` protocol: deploy, teardown, redeploy |
 | `base-package-service` | the `service` protocol and the service state |
 | `base-package-haicc` | the `haicc` protocol: goto |
@@ -29,8 +30,9 @@ created.
 ## Deploying
 
 By the boot mrepo, with a command at the root. The mrepo starts `booted`:
-its boot protocol is behind the service's door until it is started. Each
-service command answers what was done and the state now.
+its boot protocol is behind the service's door, activated by a hook on
+`start`. Its help is extracted by a hook on `initialise`. Each service
+command answers what was done and the state now.
 
 ```
 haicc / boot/deploy host base-component-haicc

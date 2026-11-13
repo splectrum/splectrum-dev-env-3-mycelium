@@ -14,7 +14,7 @@ bare <dir>/packages/haiccing/base-package-runtime.bundle <dir>
 The mrepo at `<dir>` (on the filesystem storage), started from its own
 `packages/` (its pinned runtime): by the boot for the boot mrepo, by a
 parent's `boot deploy` for a child. It loads the protocols its linked
-packages offer. Stopped over its local connection (`<dir>/runtime.sock`;
+packages offer and fires its `boot` hooks; it names no protocol itself. Stopped over its local connection (`<dir>/runtime.sock`;
 a short path in the temporary folder when that is too long), by SIGTERM or
 SIGINT; it runs until then. (`--work=<folder>`: the
 mrepo a work folder's setting names, as the p2p host.)
@@ -25,8 +25,8 @@ mrepo a work folder's setting names, as the p2p host.)
 - `main.js`: the dispatcher, the bundle's main (generated): every entry and
   test by path, `run(target, { dryRun })`.
 - `run.js`: the entry, the runtime's process.
-- `protocol.js`: its protocol, `runtime` (run, register), its actions and
-  config passed to the runtime by `run.js`.
+- `protocol.js`: its protocol, `runtime` (run), its action and config
+  passed to the runtime by `run.js`.
 - [modules/](modules/): the code, assembled: ours and the third-party code.
 - [test/](test/): its tests.
 

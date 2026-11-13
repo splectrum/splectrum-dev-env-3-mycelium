@@ -1,11 +1,20 @@
 # mrepo/
 
-The runtime's part of every mrepo's structure, laid in first when an mrepo
-is deployed. What is its own:
+The runtime's part of every mrepo's structure, laid in when an mrepo is deployed: its layers.
 
-- **The `xpath` layer** (`xpath/layer.json`): the mrepo's navigation
-  directives, its shortcuts. XPath is the runtime's own, internal
-  functionality, so the layer comes with it.
+- **The layers** every mrepo has: `main`, `runtime`, `packages`,
+  `protocols`, `xpath`, the boxes and the request layers.
+- **The `xpath` layer**: the mrepo's navigation directives, its
+  shortcuts. XPath is the runtime's own, internal functionality.
+- **The `protocols` layer**: the active protocols, one file each.
+
+## Deployed alone
+
+Deployed as the target, the runtime package makes an mrepo with a runtime
+and its help, and no other protocol:
+
 - **Its packages** (`packages/layer.json`): the help protocol, the
-  documentation packages, and itself last. Deployed as the target, it
-  makes an mrepo with a runtime and its help, and no other protocol.
+  protocol protocol, the documentation packages, and itself last.
+- **Its hooks** (`runtime/hooks/boot/`): `help` and `runtime` activated,
+  its help extracted. Runtime config: laid in only when this package is
+  the one deployed.

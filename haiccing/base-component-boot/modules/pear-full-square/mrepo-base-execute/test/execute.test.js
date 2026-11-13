@@ -8,12 +8,14 @@ import { openRepo, writer } from 'mycelium-git'
 import { layer, record, wrap, complete, guid, begin, request, principals, EXECUTE } from 'mrepo-base-request'
 import { bootedHost } from 'mrepo-base-runtime/test/fixture.js'
 import { initialise, start, stop, shutdown, CONFIG } from 'mrepo-base-service'
+import { activate, deactivate, CONFIG as PROTOCOL } from 'mrepo-base-protocol'
 import { execute, executed, failed, ACTIONS } from '../index.js'
 
-// The protocols as packages would offer them: rest (this module's), service.
-const ALL = { ...ACTIONS, service: { initialise, start, stop, shutdown } }
+// The protocols as packages would offer them: rest (this module's), service,
+// protocol (the fixture's hooks activate with it).
+const ALL = { ...ACTIONS, service: { initialise, start, stop, shutdown }, protocol: { activate, deactivate } }
 const any = { uris: ['/**'] }
-const PROTOCOLS = { service: CONFIG, rest: { gated: true, actions: { get: any, put: any, delete: any } } }
+const PROTOCOLS = { service: CONFIG, protocol: PROTOCOL, rest: { actions: { get: any, put: any, delete: any } } }
 
 // The runtime's context over a booted host, in this process.
 async function withHost (work, fn) {
@@ -224,7 +226,7 @@ test('exec.run: a command executed here; exec.forward: sent on, the principal wa
         // sent on, after a write that must not stay
         there: (exec, { args }) => { exec.put('/main/dropped.json', Buffer.from('1')); return exec.forward(to, args) }
       } }
-      const ctx2 = { ...ctx, dir: work, uri: 'local/host', protocols: { ...PROTOCOLS, rest: { gated: true, actions: { ...PROTOCOLS.rest.actions, here: any, there: any } } } }
+      const ctx2 = { ...ctx, dir: work, uri: 'local/host', protocols: { ...PROTOCOLS, rest: { actions: { ...PROTOCOLS.rest.actions, here: any, there: any } } } }
       const one = async (form) => {
         const name = guid()
         await begin(ctx2, name, record(null, form, name))

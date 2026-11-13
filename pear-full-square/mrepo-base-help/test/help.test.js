@@ -40,7 +40,7 @@ test('help get: the levels, a section, the nearest when nothing is there', async
   t.ok(typeof s.summary === 'string')
   t.alike(Object.keys(await help(exec, { uri: '/help/', args: ['oneliner'] })), ['uri', 'title', 'oneliner', 'links'], 'the root, by /help too; one-liners only')
   await t.exception(help(exec, { uri: '/packages/haiccing/app/test/nothing' }), /no help at .*: nearest \/packages\/haiccing\/app\/test/)
-  await t.exception(help({ read: async () => { throw new Error('none') } }, { uri: '/' }), /no help in this mrepo/)
+  await t.exception(help({ read: async () => { throw new Error('none') } }, { uri: '/' }), /no help extracted in this mrepo yet \(help\/extract\)/)
 })
 
 test('the rules: a README against them, and a tree with a broken link, an unlinked folder, an unreached README', (t) => {

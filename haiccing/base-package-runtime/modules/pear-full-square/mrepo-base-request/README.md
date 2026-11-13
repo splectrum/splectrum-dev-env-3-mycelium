@@ -75,13 +75,16 @@ setting.
   itself) and its arguments (`args`, by name, `?` optional). One not
   given: `missing argument: <name>`, with or without a service, before
   the URI is looked at.
-- **Checked** (`check`): its URI canonical; where the mrepo has a
-  service, against the protocols the runtime loaded (`ctx.protocols`):
-  the protocol loaded, the action configured, the URI one its config names
-  (`matches`); an action that names its states, in one of them; a gated
-  protocol, once the service is started. An internal request is not asked
-  whether it is offered and is not held at the door. Without a service: no
-  gate.
+- **Checked** (`check`): its URI canonical; from outside, against the
+  protocols the runtime loaded (`ctx.protocols`): the protocol loaded, the
+  action configured, the URI one its config names (`matches`); and, as it
+  executes, the protocol active (its file in the `protocols` layer:
+  `runtimeData` reads the active set) and an action that names its states
+  in one of them. Nothing is active by default. An internal request is not
+  asked whether its protocol is active.
+- **Hooks** (`hooks(reader, transition)`, `lib/hooks.js`): the commands
+  of a status transition, the files in `/runtime/hooks/<transition>/`, in
+  name order. The runtime fires `boot`; the service the other four.
 - **A layer's records** (`layer(ctx, branch)`): one JSON document a
   record, `<name>.json`, listed in the order they arrived (the commit
   chain). A layer's config, `layer.json` (committed with it when built from

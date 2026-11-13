@@ -14,7 +14,7 @@ is for.
 | `run.js` | can be executed on its own: `bare run.js [arguments]` |
 | `main.js` | its dispatcher, the bundle's main (generated): `run(target, { dryRun })`, every entry by path (`/run`, `/protocol`, `/deploy`, the tests: [test/](test/)); as the program, the target named, else `/run`; imported, nothing runs |
 | `deploy.js` | brings structure beyond its protocols: its part of the mrepo and its requirements, to the parent's `boot deploy` |
-| `protocol.js` | provides protocols: their configs and actions; linked into an mrepo, its protocols are registered, the actions loaded by the runtime |
+| `protocol.js` | provides protocols: their configs and actions; linked into an mrepo, its protocols are loaded by the runtime; they are offered to the outside once activated |
 | `modules/`, `package.json` | carries its own dependencies |
 | `mrepo/` | comes with an mrepo, by layers |
 | `test/` | has tests and test sets |

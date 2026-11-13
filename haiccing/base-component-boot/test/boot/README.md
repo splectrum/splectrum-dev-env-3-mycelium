@@ -15,8 +15,10 @@ the tests: `boot.test.js`. It leaves nothing running.
    - the boot: the boot mrepo built, its packages placed and linked, its
      request handed over, its runtime started on the Bare that ran it (none
      put in place); nothing deployed by it;
-   - its runtime's own requests as it started, internal: its protocols
-     registered, its help extracted;
+   - its boot hooks, placed by its runtime as its own requests as it
+     started, in name order: its protocols activated (not the `protocol`
+     protocol itself, which stays closed to the outside), its help
+     extracted;
    - the host deployed by a command at the root, `boot/deploy host
      <package>`: built inside the boot mrepo (`main/host/`), its runtime
      running, its shortcut at `/xpath/host/shortcut.json`, nothing of it in
@@ -35,16 +37,19 @@ the tests: `boot.test.js`. It leaves nothing running.
      of `test/full` (what it would run), a run of `test/validate` (passed,
      in a floating instance, a line a unit in its log), `/run` refused;
    - an mrepo with a service, deployed from `base-package-service`: its
-     state booted and its API closed, its protocols recorded, the service's
-     actions each in its state, its API open once started, a protocol it
-     does not link not offered, the package validated in situ, torn down;
+     state booted, its protocols active by its boot hooks, no help yet;
+     the service's actions each in its state; `initialise` running its
+     hook, its help extracted in the same request; a protocol it does not
+     link said so; the package validated in situ; torn down;
    - the haicc component, deployed from `base-component-haicc` (named
      without its organisation): its packages layer the component's list,
-     its `main` empty; booted, its boot protocol behind the service's door;
+     its `main` empty; booted, its boot protocol behind the service's door,
+     not active;
      `haicc /haicc service/initialise` and `service/start` passed through
      to it; a node deployed inside it by `haicc /haicc boot/deploy node-1`,
      its shortcut in the haicc mrepo's `xpath` layer only; commands chained
-     through both shortcuts; the component validated in situ; the node,
-     then the component, torn down;
+     through both shortcuts; the component validated in situ; the node
+     torn down; `service/stop`, its boot protocol deactivated by the stop
+     hook, the door closed again; the component torn down;
    - both runtimes stopped; the boot run again: already built, nothing
      committed, its runtime started again, nothing repeated.

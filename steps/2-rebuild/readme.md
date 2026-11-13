@@ -2014,3 +2014,67 @@ The second step of building part 42.
 **Validated**: the nine bundle packages' full sets, the boot component's
 among them (110 asserts); the `haicc` test, 104 of 104; the checks, no
 problems (17 modules, 10 packages).
+
+## 45. Hooks, activation, the protocol protocol (2026-11-13)
+
+The third and last step of building part 42.
+
+**The protocol protocol** (`pear-full-square/mrepo-base-protocol`,
+`haiccing/base-package-protocol`)
+
+- `protocol/activate / <protocol>` writes a loaded protocol's config into
+  the `protocols` layer; `protocol/deactivate / <protocol>` removes it.
+  The layer is the active set, and no longer a copy nothing reads.
+- The `protocol` protocol itself is not activated for the outside:
+  opening and closing is the hooks' business.
+
+**The gate reads the active set**
+
+- A request from outside is checked against the protocols loaded (the
+  protocol, the action, what it needs, its URI); and as it executes, its
+  protocol must be active. Nothing is by default. What is not there is
+  said with what is.
+- At the inbox neither the activation nor the service state is checked:
+  the queue may hold requests that change them first.
+- The mrepo's own requests are not asked whether a protocol is active.
+- Gone: the `gated` flag, the rule "no service, no gate", `runtime
+  register`.
+
+**Hooks**
+
+- Files, one folder a transition, each a command, its parts:
+  `/runtime/hooks/<transition>/<name>.json`, run in name order
+  (`mrepo-base-request`: `hooks`).
+- `boot`: the runtime places them as its own requests each time it
+  starts, and takes nothing from the inbox until they are done. It names
+  no protocol any more.
+- `initialise`, `start`, `stop`, `shutdown`: the service action runs its
+  transition's hooks in its own execution (`exec.run(command, { own:
+  true })`: as the mrepo's own), then moves the state. A hook that fails
+  fails the transition, and the whole execution rolls back.
+
+**Who drops them** (runtime config: the last package of a list)
+
+| package | at boot | on the service's transitions |
+|---|---|---|
+| `base-component-boot` | `boot`, `haicc`, `help`, `runtime` activated; help extracted | none: not a service |
+| `base-component-haicc` | `haicc`, `help`, `runtime`, `service` activated | `initialise`: help extracted; `start`: `boot` activated; `stop`: `boot` deactivated |
+| `base-package-service`, deployed alone | `help`, `runtime`, `service` activated | `initialise`: help extracted |
+| `base-package-runtime`, deployed alone | `help`, `runtime` activated; help extracted | none |
+
+**Consequences seen in the tests**
+
+- A service-managed mrepo has no help while `booted`: `help/get` says
+  nothing is extracted yet; it is there from `initialise` on.
+- The door of the haicc mrepo is two files: stopped, its boot protocol is
+  refused again (`boot is not active; the service is initialised`).
+- An mrepo that links no package (the runtime package's own test) has
+  nothing active: its boot hooks each say the protocol they name is not
+  there.
+
+**The package check** (`/test/mrepo`) checks hook files: their place,
+their transition, that each is a command.
+
+**Validated**: the ten bundle packages' full sets; the boot component's
+test three times (119 asserts); the `haicc` test, 107 of 107; the checks,
+no problems (18 modules, 11 packages).
