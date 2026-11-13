@@ -2340,3 +2340,37 @@ running. The packages that carry `mrepo-base-runtime` and are not yet
 brought to the template (`base-component-boot`, `base-package-boot`) keep
 their copy of it until they are.
 
+## 53. base-package-protocol brought to the template; a unit that runs nothing fails (2026-11-14)
+
+The human: go on with `base-package-protocol`. Its own test, agreed for
+this session: one that needs no mrepo.
+
+- **`base-package-protocol`** brought to the template, pinned to
+  `haiccing/package-docs-template@e633d07`.
+- **Its own test, `test/mounted/`**: the package's `protocol.js`, what a
+  runtime loads, checked without an mrepo: what it provides (one
+  protocol, a function for every action configured and no other); its
+  config value by value (both actions at the mrepo itself, each one
+  argument, the protocol's name; no default, no state, no target); each
+  action run on a minimal execution in memory (what `activate` writes,
+  what `deactivate` removes, what each returns, each refusal, a refusal
+  writing nothing); and a last test that fails when the config names an
+  action that was not run. Its README says what is not there: the
+  protocol in a running mrepo, the hooks, the gate.
+- **Found: a unit that ran nothing was reported as passed.** The test
+  first imported the package's dispatcher, which was running it: the two
+  waited on each other, the process ended without a word, exit 0, and the
+  report said passed with no tests. Fixed twice: the test imports
+  `protocol.js` itself; and the runner (`tools/lib/dispatcher.js`) fails
+  a unit that reports no summary (`no test ran: no summary reported`). A
+  package with nothing to test has its dummy, which reports 0 of 0. Said
+  in the template's `test/README.md`, "The result".
+
+**Validated**: `base-package-protocol`'s pre-release: 8 units, its own
+test 6 tests and 30 asserts, 32 tests in all. A unit emptied on purpose:
+failed, as it must. The three packages brought to the template before,
+with the new runner: the template, `package-docs-mrepo` (7 units),
+`base-package-runtime` (21 units), each report written again. The
+READMEs, 157, no problems (the rule caught the new test's page, its
+summary 129 words). Nothing left running.
+

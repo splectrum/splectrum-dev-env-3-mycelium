@@ -1,12 +1,12 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-14, part 52). Read `CLAUDE.md`
+Kept current by the cloud session (last: 2026-11-14, part 53). Read `CLAUDE.md`
 first (what is here, how to validate), then this, then `readme.md` here
 (each part's record; the latest parts last: 30 to 45 are the haicc work; 46 is a note on future design; 47 the
 package check; 48 the template up to standard; 49 the test
 reports; 50 the pin, `package-docs-mrepo` brought to the template; 51
 `base-package-runtime`; 52 an action a documented method, a test of its
-own always).
+own always; 53 `base-package-protocol`).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -57,10 +57,13 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   on the human's word once the template passed its own full set. The
   template's repository (`haiccing/package-docs-template`) and the check
   module's (`pear-full-square/pkgm-base-check`) are pushed.
-  `package-docs-mrepo` (part 50) and `base-package-runtime` (part 51)
-  are brought to the template and pinned, their repositories pushed; the
-  human's order from here: up the protocol stack, one by one. The other
-  seven bundle packages are not yet
+  `package-docs-mrepo` (part 50), `base-package-runtime` (part 51) and
+  `base-package-protocol` (part 53) are brought to the template and
+  pinned, their repositories pushed; the human's order from here: up the
+  protocol stack, one by one (next `base-package-help`, `-service`,
+  `-boot`, `-haicc`, then the components). A protocol package's own test
+  in this session: `test/mounted/` in `base-package-protocol` is the
+  pattern (no mrepo). The other six bundle packages are not yet
   brought to the template (`sh tools/package-template.sh <package>`, its
   pages by hand, `tools/bare tools/package-test.js`), and six lack
   a test of their own: `tools/bare tools/code-check.js` lists it all, and

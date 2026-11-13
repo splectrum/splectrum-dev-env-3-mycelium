@@ -119,7 +119,9 @@ async function runEach (target, units, program, print, extra) {
       let out = ''
       child.stdout.on('data', d => { out += d; if (print) for (const l of d.toString().split('\n')) if (l) print(l) })
       child.stderr.on('data', d => { out += d })
-      child.on('exit', code => { const s = summary(out); resolve({ unit: u, ok: code === 0 && !s.failures.length, ...s }) })
+      // a unit that reports no summary ran no test: not a pass (one that has
+      // nothing to test says so: a dummy, reported as 0 of 0)
+      child.on('exit', code => { const s = summary(out); if (!s.tests) s.failures.push('no test ran: no summary reported'); resolve({ unit: u, ok: code === 0 && !s.failures.length, ...s }) })
     }))
   }
   return { target, ok: results.every(r => r.ok), units: results }
