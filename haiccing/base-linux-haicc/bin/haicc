@@ -1,0 +1,45 @@
+#!/bin/sh
+# haicc: the command. It only dispatches.
+#   haicc <URI> <protocol>/<action> <argument>...   an mrepo command: a URI
+#       starts with / (the local root), so a first part starting with / is a
+#       command for the mrepos; it goes to the boot mrepo's inbox
+#       (haicc-request)
+#   haicc <name> <argument>...                      a script command: the
+#       script haicc-<name> beside this one (boot, prereq, sources)
+set -u
+here=$(cd "$(dirname "$0")" && pwd)
+HAICC_HOME=${HAICC_HOME:-$(cd "$here/.." && pwd)}
+export HAICC_HOME
+
+usage () {
+  cat <<'USAGE'
+haicc <URI> <protocol>/<action> <argument>...   a command for the mrepos:
+                                                go to this node position and
+                                                execute the command that
+                                                follows
+haicc sources                                   the sources registered
+haicc sources link <folder>                     a local folder linked as a source
+haicc sources unlink <folder>
+haicc sources download [<what>...]              fetched over https: bare,
+                                                third-party, <org>, <org>/<package>
+haicc sources https | no-https                  https as the backup, or not
+haicc prereq [--check]                          what a boot needs, checked and
+                                                put in place (--check: only checked)
+haicc boot                                      the boot mrepo, at the root
+
+  haicc / boot/deploy host base-component-haicc
+  haicc /host service/initialise
+  haicc /host service/start
+USAGE
+}
+
+case "${1:-}" in
+  /*) exec sh "$here/haicc-request" "$@" ;;
+  ''|help|--help|-h) usage; exit 0 ;;
+esac
+name=$1; shift
+case "$name" in
+  *[!a-z0-9-]*|-*) echo "haicc: no command '$name' (haicc --help)" >&2; exit 2 ;;
+esac
+[ -f "$here/haicc-$name" ] || { echo "haicc: no command '$name' (haicc --help)" >&2; exit 2; }
+exec sh "$here/haicc-$name" "$@"

@@ -1,0 +1,29 @@
+#!/bin/sh
+# haicc boot: the boot mrepo put in place at the root, its runtime started.
+# The boot package's bundle, from the sources, run with the Bare put in
+# place: it builds the boot mrepo the first time, places its packages and
+# starts its runtime (already there: kept, its runtime started again where
+# it was stopped). Nothing is deployed by it: commands come next
+# (haicc / boot/deploy host base-component-haicc).
+# The prerequisites are checked first, never fetched or fixed here: one
+# missing stops it (exit 3), pointing to haicc prereq.
+#   haicc boot
+# What the boot prints: its request, completed (a record), then its
+# runtime's status. Exit: the boot's own.
+set -u
+. "$(dirname "$0")/haicc-lib.sh"
+[ $# -eq 0 ] || fail "haicc boot (no arguments)" 2
+
+if ! out=$(sh "$(dirname "$0")/haicc-prereq" --check); then
+  printf '%s\n' "$out" | grep '^missing' >&2
+  fail "a prerequisite is missing: haicc prereq" 3
+fi
+bundle=$(in_sources "$HAICC_ORG/$BOOT_PACKAGE.bundle")
+# the sources, in order, as the boot takes them
+set --
+while IFS= read -r s; do
+  [ -n "$s" ] && set -- "$@" "--sources=$s"
+done <<LIST
+$(sources)
+LIST
+exec "$HAICC_BARE" "$bundle" "--work=$HAICC_WORK" "$@" --no-follow

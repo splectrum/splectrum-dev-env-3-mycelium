@@ -1,0 +1,61 @@
+#!/bin/sh
+# haicc <URI> <protocol>/<action> <argument>...: a command for the mrepos.
+# Go to this node position and execute the command that follows. A record is
+# written into the boot mrepo's inbox folder, its response waited for in its
+# outbox folder and printed.
+# There is no mrepo context at the command line, so one rule of its own:
+#   at the root    the command is written plain:
+#                    haicc / boot/deploy host x   ->  boot/deploy host x
+#                  (the mrepo joins the name to the position: /host)
+#   anywhere else  the haicc command is written as it is; the boot mrepo
+#                  resolves the position:
+#                    haicc /host service/start    ->  haicc /host service/start
+# The parts go as typed, unnamed; the mrepo interprets them.
+# Prints the command's output (JSON) and exits 0; its error on stderr, exit 1.
+#   HAICC_TIMEOUT   seconds to wait for the response (120); none in time:
+#                   exit 4 (the request stays; its key is said)
+#   HAICC_RECORD=1  the whole response record printed, not its output alone
+set -u
+. "$(dirname "$0")/haicc-lib.sh"
+[ $# -ge 2 ] || fail "haicc <URI> <protocol>/<action> <argument>... (a command follows the URI)" 2
+[ -d "$HAICC_ROOT/inbox" ] || fail "no boot mrepo at $HAICC_WORK (haicc boot)" 3
+
+uri=$1; shift
+if [ "$uri" = / ]; then :; else set -- haicc "$uri" "$@"; fi
+
+# A part as a JSON string.
+tab=$(printf '\t')
+json_string () {
+  case "$1" in *"
+"*) fail "an argument with a line break cannot be sent" 2 ;; esac
+  printf '"%s"' "$(printf '%s' "$1" | tr -d '\001-\010\013\014\016-\037' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e "s/$tab/\\\\t/g")"
+}
+parts=''
+for p in "$@"; do
+  parts="$parts${parts:+,}$(json_string "$p")"
+done
+
+if [ -r /proc/sys/kernel/random/uuid ]; then key=$(cat /proc/sys/kernel/random/uuid)
+elif command -v uuidgen >/dev/null 2>&1; then key=$(uuidgen | tr 'A-Z' 'a-z')
+else fail "no way to make a key (no /proc/sys/kernel/random/uuid, no uuidgen)" 3; fi
+now=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+
+# The record: the command, in its core (where the completed form goes back:
+# the terminal), in an envelope addressed to the root's inbox. Written
+# whole, then renamed into place: the runtime never sees half of one.
+file=$HAICC_ROOT/inbox/$key.json
+printf '{"topic":"/%s/inbox","key":"%s","timestamp":"%s","headers":{},"value":{"topic":"/haicc/terminal","key":"%s","timestamp":"%s","headers":{},"value":[%s]}}\n' \
+  "$ROOT_URI" "$key" "$now" "$key" "$now" "$parts" > "$file.part" || fail "could not write into $HAICC_ROOT/inbox" 3
+mv "$file.part" "$file"
+
+# Its response: the completed form, in the outbox folder under the same key.
+back=$HAICC_ROOT/outbox/$key.json
+limit=${HAICC_TIMEOUT:-120}
+waited=0
+while [ ! -f "$back" ]; do
+  [ "$waited" -lt $((limit * 5)) ] || fail "no response in $limit s (the request stays: $key)" 4
+  sleep 0.2 2>/dev/null || sleep 1
+  waited=$((waited + 1))
+done
+if [ "${HAICC_RECORD:-}" = 1 ]; then cat "$back"; fi
+awk -f "$(dirname "$0")/haicc-response.awk" -v quiet="${HAICC_RECORD:-}" "$back"

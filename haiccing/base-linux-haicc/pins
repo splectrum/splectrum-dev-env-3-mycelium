@@ -1,0 +1,14 @@
+# pins: what the haicc scripts are pinned to; sourced by them.
+# Bare's runtime, third party: written by the development repository's
+# tools/release.js from its lockfile, the Bare the packages are built with.
+BARE_VERSION=1.36.0
+BARE_PLATFORM=linux-x64
+BARE_FILE=holepunchto/bare-runtime-linux-x64-1.36.0.tgz
+BARE_URL=https://registry.npmjs.org/bare-runtime-linux-x64/-/bare-runtime-linux-x64-1.36.0.tgz
+BARE_SHA512=3c1cb0a7b58e3408eeaac29ce153ea966af7dc88f8ba06cd3ddff1c3693020ee8ec6c5a1453dedd8790786fc928dac6aed1e850f26de73f7ef796d04701a4a41
+# Ours: the organisation, the boot package, the root mrepo (the boot mrepo:
+# its name, its unique URI).
+HAICC_ORG=haiccing
+BOOT_PACKAGE=base-package-boot
+ROOT_NAME=boot
+ROOT_URI=local/boot

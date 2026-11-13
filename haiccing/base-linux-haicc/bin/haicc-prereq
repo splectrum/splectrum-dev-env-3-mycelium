@@ -1,0 +1,67 @@
+#!/bin/sh
+# haicc prereq: what a boot needs, checked, and put in place where it is
+# missing. Nothing is fetched: Bare is unpacked from the sources.
+#   haicc prereq           checked; Bare put in place from the sources
+#   haicc prereq --check   checked only, nothing changed
+# A line a prerequisite: ok, or missing with how to get it. Exit 0 when all
+# are there, 3 when one is missing.
+#   platform   this machine's, the one the pinned Bare is for
+#   tools      what the scripts use: tar, sha512sum
+#   work       the work folder: can be made and written
+#   sources    a folder registered that holds the boot package
+#   bare       the pinned Bare, in haicc's folder, as pinned (its tarball's
+#              sha512 recorded beside it)
+set -u
+. "$(dirname "$0")/haicc-lib.sh"
+check=no
+for a in "$@"; do
+  case "$a" in --check) check=yes ;; *) fail "haicc prereq [--check]" 2 ;; esac
+done
+missing=0
+ok () { printf 'ok       %s\n' "$1"; }
+miss () { printf 'missing  %s\n' "$1"; missing=1; }
+
+# platform
+if [ "$(platform)" = "$BARE_PLATFORM" ]; then ok "platform: $BARE_PLATFORM"
+else miss "platform: this is $(platform), the pinned Bare is for $BARE_PLATFORM"; fi
+
+# tools
+for t in tar sha512sum; do
+  if command -v "$t" >/dev/null 2>&1; then ok "tool: $t"; else miss "tool: $t (install it)"; fi
+done
+
+# work
+if [ "$check" = yes ]; then
+  w=$HAICC_WORK; while [ ! -e "$w" ] && [ "$w" != / ] && [ "$w" != . ]; do w=$(dirname "$w"); done
+  if [ -d "$w" ] && [ -w "$w" ]; then ok "work: $HAICC_WORK"; else miss "work: $HAICC_WORK cannot be written"; fi
+elif mkdir -p "$HAICC_WORK" 2>/dev/null && [ -w "$HAICC_WORK" ]; then ok "work: $HAICC_WORK"
+else miss "work: $HAICC_WORK cannot be written"; fi
+
+# sources
+boot=$(in_sources "$HAICC_ORG/$BOOT_PACKAGE.bundle")
+if [ -n "$boot" ] && [ -f "$(dirname "$boot")/manifest.json" ]; then ok "sources: $(dirname "$(dirname "$boot")")"
+else miss "sources: no folder registered holds $HAICC_ORG/$BOOT_PACKAGE.bundle (haicc sources link <folder>)"; fi
+
+# bare
+if [ -x "$HAICC_BARE" ] && [ -f "$HAICC_HOME/bare/tarball.sha512" ] && [ "$(cat "$HAICC_HOME/bare/tarball.sha512")" = "$BARE_SHA512" ]; then
+  ok "bare: $BARE_VERSION, as pinned"
+else
+  tarball=$(in_sources "$BARE_FILE")
+  if [ -z "$tarball" ]; then miss "bare: $BARE_FILE in no source (haicc sources download bare, or link a folder that has it)"
+  elif [ "$(sha512_of "$tarball")" != "$BARE_SHA512" ]; then miss "bare: $tarball is not as pinned (sha512)"
+  elif [ "$check" = yes ]; then miss "bare: not put in place yet (haicc prereq)"
+  else
+    rm -rf "$HAICC_HOME/bare"
+    mkdir -p "$HAICC_HOME/bare"
+    if tar -xzf "$tarball" -C "$HAICC_HOME/bare" --strip-components=1 && [ -f "$HAICC_BARE" ]; then
+      chmod +x "$HAICC_BARE"
+      printf '%s\n' "$BARE_SHA512" > "$HAICC_HOME/bare/tarball.sha512"
+      ok "bare: $BARE_VERSION, put in place from $tarball"
+    else
+      rm -rf "$HAICC_HOME/bare"
+      miss "bare: $tarball could not be unpacked"
+    fi
+  fi
+fi
+
+[ "$missing" -eq 0 ] || exit 3

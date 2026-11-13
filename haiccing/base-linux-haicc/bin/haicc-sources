@@ -1,0 +1,80 @@
+#!/bin/sh
+# haicc sources: where packages and third-party components come from.
+#   haicc sources                     the sources registered, in order
+#   haicc sources link <folder>       a local folder linked as a source (not
+#                                     copied): our packages (<org>/<package>
+#                                     .bundle, <org>/manifest.json, addons/)
+#                                     and the third-party components
+#   haicc sources unlink <folder>
+#   haicc sources download [<what>...]  fetched over https into haicc's own
+#                                     sources folder, each checked against
+#                                     its pin: bare, third-party, <org>,
+#                                     <org>/<package>; nothing named: all
+#   haicc sources https | no-https    https as the backup for what is not in
+#                                     the folders (the default), or not
+# This is the only haicc command that reaches the network.
+set -u
+. "$(dirname "$0")/haicc-lib.sh"
+own=$HAICC_HOME/sources
+
+register () {
+  sources | grep -Fxq "$1" && return 0
+  printf '%s\n' "$1" >> "$HAICC_LIST"
+}
+unregister () {
+  [ -f "$HAICC_LIST" ] || return 0
+  grep -Fxv "$1" "$HAICC_LIST" > "$HAICC_LIST.part" || true
+  mv "$HAICC_LIST.part" "$HAICC_LIST"
+}
+
+download_bare () {
+  command -v curl >/dev/null 2>&1 || fail "curl is needed to download" 3
+  to=$own/$BARE_FILE
+  if [ -f "$to" ] && [ "$(sha512_of "$to")" = "$BARE_SHA512" ]; then echo "bare: there, as pinned ($BARE_VERSION)"; return 0; fi
+  mkdir -p "$(dirname "$to")"
+  echo "bare: fetching $BARE_URL"
+  curl -fsSL --retry 3 --connect-timeout 20 -o "$to.part" "$BARE_URL" || { rm -f "$to.part"; fail "could not fetch Bare's runtime: $BARE_URL" 3; }
+  [ "$(sha512_of "$to.part")" = "$BARE_SHA512" ] || { rm -f "$to.part"; fail "Bare's runtime is not as pinned (sha512): $BARE_URL" 3; }
+  mv "$to.part" "$to"
+  echo "bare: downloaded, as pinned ($BARE_VERSION)"
+}
+
+cmd=${1:-list}
+[ $# -gt 0 ] && shift
+case "$cmd" in
+  list)
+    sources ;;
+  link)
+    [ $# -eq 1 ] || fail "haicc sources link <folder>" 2
+    [ -d "$1" ] || fail "no folder: $1" 2
+    register "folder:$(cd "$1" && pwd)"
+    sources ;;
+  unlink)
+    [ $# -eq 1 ] || fail "haicc sources unlink <folder>" 2
+    if [ -d "$1" ]; then unregister "folder:$(cd "$1" && pwd)"; else unregister "folder:$1"; fi
+    sources ;;
+  https)
+    register "github:$HAICC_ORG"; sources ;;
+  no-https)
+    unregister "github:$HAICC_ORG"; sources ;;
+  download)
+    [ $# -gt 0 ] || set -- third-party "$HAICC_ORG"
+    missed=0
+    for what in "$@"; do
+      case "$what" in
+        bare|third-party)
+          download_bare; register "folder:$own" ;;
+        "$HAICC_ORG"|"$HAICC_ORG"/*)
+          # Our packages are not published anywhere yet (release and
+          # sourcing: signed bundles and their manifest, to come).
+          echo "haicc: $what: not published yet; link a sources folder (haicc sources link <folder>)" >&2
+          missed=1 ;;
+        *)
+          echo "haicc: nothing to download for '$what' (bare, third-party, $HAICC_ORG, $HAICC_ORG/<package>)" >&2
+          missed=1 ;;
+      esac
+    done
+    [ "$missed" -eq 0 ] || exit 3 ;;
+  *)
+    fail "haicc sources [link <folder> | unlink <folder> | download [<what>...] | https | no-https]" 2 ;;
+esac
