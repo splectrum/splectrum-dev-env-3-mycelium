@@ -19,7 +19,8 @@ created.
 
 | package | brings |
 |---|---|
-| `base-package-runtime` | the runtime, its layers, `runtime` and `help` |
+| `base-package-runtime` | the runtime, its layers, the `runtime` protocol |
+| `base-package-help` | the `help` protocol and the help layer |
 | `base-package-boot` | the `boot` protocol: deploy, teardown, redeploy |
 | `base-package-service` | the `service` protocol and the service state |
 | `base-package-haicc` | the `haicc` protocol: goto |

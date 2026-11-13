@@ -1,0 +1,15 @@
+{
+  "name": "base-package-help",
+  "description": "Package: the help protocol, an mrepo's help extracted from its packages' READMEs and read by URI.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "main.js",
+  "modules": [
+    "pear-full-square/mrepo-base-help",
+    "pear-full-square/pkgm-base-check"
+  ],
+  "scripts": {
+    "test": "bare test/run.js"
+  }
+}

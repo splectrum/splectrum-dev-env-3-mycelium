@@ -1962,3 +1962,21 @@ layer, one file a protocol holding its config (the layer stops being a
 copy nothing reads); a hook file is one command; hooks run as the mrepo's
 own, not held at the door; the `protocol` protocol itself is not
 activated for the outside by default.
+
+## 43. base-package-help (2026-11-13)
+
+The first step of building part 42.
+
+- **The `help` protocol in a package of its own**, `haiccing/base-package-help`:
+  its `protocol.js` mounts `get` and `extract` from `mrepo-base-help`; its
+  structure brings the `help` layer. The runtime package keeps one
+  protocol, `runtime`. One package, one protocol, with no exception left.
+- **Every list has it**: the boot mrepo's, the haicc component's, the
+  service package's and the runtime package's own. Behaviour unchanged:
+  the runtime still places `help extract /` as it starts, where the mrepo
+  has the protocol and the layer (that goes with the hooks, next).
+- **The boot test's count of requests done** replaced by a check of what a
+  second start adds, by name: it no longer goes stale when a test is added.
+
+**Validated**: the eight packages' full sets; the `haicc` test, 104 of
+104; the checks, no problems (17 modules, 9 packages).

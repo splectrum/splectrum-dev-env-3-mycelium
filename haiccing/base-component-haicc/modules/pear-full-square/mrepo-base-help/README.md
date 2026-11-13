@@ -20,7 +20,7 @@ carrying the module validates its own help with the tests in `validate/`.
 - **The README rules** are mechanical: the one-liner, the summary's
   length, self-containment, section titles; on the whole tree, links,
   cascade, reach. No AI needed.
-- **Mounted by `base-package-runtime`**, whose `protocol.js` offers `help`.
+- **Mounted by `base-package-help`**, whose `protocol.js` offers `help`.
 - **Next, on the roadmap**: the external API structured, protocols and
   actions; URI dismantling; the help flag, a command rewritten as a help
   command with the original request as its input.

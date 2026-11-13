@@ -22,7 +22,8 @@ the work reaches it.
 
 - `haiccing/`: the packages, each at the path of its repository:
   `base-package-boot`, `base-package-runtime`, `base-package-service`,
-  `base-package-haicc` (one package, one protocol), the component
+  `base-package-haicc`, `base-package-help` (one package, one protocol),
+  the component
   `base-component-haicc` (several packages deployed together, `main`
   empty), `base-linux-haicc` (the `haicc` command: sh scripts, no bundle),
   and the documentation
