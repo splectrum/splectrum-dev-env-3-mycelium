@@ -46,9 +46,15 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   Its notes come back in `local-note.md`: fetch and read them when told.
 - **No release yet**: on the human's word, created by the local agent
   (`handover-local.md`, "Releases").
+- **Tasks stacked, to be built in batches** (the human, 2026-11-13):
+  `tasks.md` here holds what was discussed and waits: relative URIs in
+  commands, the `crud` protocol, the rest actions removed. Each says what
+  the human settled and what is only proposed: confirm the proposed with
+  the human before building. More are added as they are discussed; build
+  when the human says so.
 - **Next, in the human's order** (each discussed first): creating
-  structure in `main` (the start of `base-package-crud`), with the
-  execution context opened at a position, so that
+  structure in `main` (the start of `base-package-crud`: `tasks.md`, 1
+  and 2), with the execution context opened at a position, so that
   `haicc /swarms/swarm-1 boot/deploy node-1` works; a node's unique URI;
   then the first demo. The list is under "The roadmap", item 2.
 - **A leftover branch**: `claude/vigilant-gates-b1r8rn` on the remote
