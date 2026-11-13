@@ -77,12 +77,19 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
     records where, `remote.at`). So every jump adds its position as a
     chunk, and the array is the chain of jumps:
     `haicc host haicc node-1 crud/read swarms` answers with the URI
-    `swarms` and the prefix `[]` inside `node-1`, `["node-1"]` back in
-    `host`, `["host", "node-1"]` back in the boot mrepo and out. Nothing
-    is rewritten on the way back: each jump puts its own chunk in front.
+    `swarms` and the jumps `[]` inside `node-1`, `["node-1"]` back in
+    `host`, `["host", "node-1"]` back in the boot mrepo. Nothing is
+    rewritten on the way back: each jump puts its own chunk in front.
     A jump to an ordinary position adds a chunk the same way:
     `haicc test/mydata/users ...` gives `["test/mydata/users"]`. The
     execution's current root is the sum of its jumps.
+  - **There is still the internal layer prefix** (the human): inside an
+    mrepo a URI names its layer, so the layer (`main`) is part of the
+    prefix there, in front of the jumps: `["main"]` inside `node-1`,
+    `["main", "node-1"]` in `host`, `["main", "host", "node-1"]` in the
+    boot mrepo.
+  - **The prefix is in the request's data structure** (the human), not
+    in a header. The headers stay empty.
 - The flag `error-on-empty` is not in this round: "Future additions",
   below.
 
@@ -125,13 +132,10 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   `*` can occur until predicates are built. A command executed at
   several positions runs in the one execution: one failure, nothing
   merged.
-- The prefix's place: a header on the envelope, not part of the data
-  (every hand-over already makes a new envelope around the unchanged
-  core). It would be the first planned use of the record's headers: put
-  to the human, not answered.
-- The prefix in the form inside an mrepo, for a request the mrepo places
-  itself (no jump: it stands at the root, its URIs name the layer): ours
-  to work out.
+- The prefix's exact shape in the form (one array whose first chunk is
+  the layer, or the layer beside it), and how a tool shows it to a sender
+  outside, who stands at `main` and does not write the layer: ours to
+  work out.
 - A leading slash is refused in a request's URI.
 - `./` is accepted wherever a URI is written and is not part of its
   canonical form (`./host` is `host`).
