@@ -60,7 +60,8 @@ the work reaches it.
 - `steps/`: the records. Where work stands: `steps/2-rebuild/readme.md`
   and, after a context reset, `steps/2-rebuild/handover-next.md`: how the
   human works with us, what is done, what is open, the roadmap. Tasks
-  discussed and waiting to be built: `steps/2-rebuild/tasks.md`.
+  discussed and waiting to be built: `steps/2-rebuild/tasks.md`. A design
+  in discussion: `steps/2-rebuild/xpath.md`.
 
 ## Documentation
 

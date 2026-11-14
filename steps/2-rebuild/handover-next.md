@@ -2,7 +2,7 @@
 
 Kept current by the cloud session (last: 2026-11-14, part 64). Read `CLAUDE.md` first (what is here, how to
 validate), then this, then `tasks.md` here (what is planned and waits to
-be built: the next work), then `readme.md` (each part's record, the
+be built: the next work) and `xpath.md` (a design in discussion), then `readme.md` (each part's record, the
 latest last: 30 to 45 the haicc work; 46 a note on future design; 47 to
 59 the tests: the package check, the template, the test reports, the
 pin, every package brought to the template one by one; 60 the `haicc`
@@ -93,6 +93,15 @@ is what they left, each to come with what needs it:
 - "Deployed tests" and "Coverage": after swarm nodes run;
 - "Future additions": the `error-on-empty` flag, predicates, how-tos.
 
+**In discussion, started 2026-11-14: XPath** (`xpath.md` here, the
+design, nothing built; the human brought it to the planning round). A
+query that comes in is rewritten into a pipeline of `haicc` segments and
+merges; each mrepo rewrites the part it sees and answers with one merged
+node set (no cascading); two scenarios, juxtaposed (a link along the URI)
+and stacked (several layers at one position); the aim full coverage of
+the operations, in steps. Its steps are our proposal, not yet put to the
+human; its "To settle" is the list to go through, point by point.
+
 **Then, the human's priority: swarm nodes up and running** ("The
 roadmap", item 2): a command at a deeper position (the execution's
 current root), a node's unique URI, a node in its container, a swarm.
@@ -122,12 +131,15 @@ with the human first, unless the task says it is ours ("Left to us").
 
 **With the human, open**
 
-- Testing by hand on the local machine: the human is asking the local
-  agent to test `main` as of part 64 (2026-11-14); it last ran `381bbae`.
-  Its prompt, `prompt-local.md`, and its background, `handover-local.md`,
-  are current for parts 60 to 64. Its notes come back in
-  `local-note.md`: fetch and read them when told, and act on what they
-  report.
+- Testing by hand on the local machine: the local agent built and
+  tested `main` as of part 64 (`6ebec98`, 2026-11-14): every step
+  passed, `haicc` installed for the human; nothing to act on. It found
+  the older sources copy (`~/.haicc/sources/`, of `381bbae`) first in
+  `sources.list`, where it could shadow the new bundles, and unlinked
+  it. Its prompt, `prompt-local.md`, and its background,
+  `handover-local.md`, are current for parts 60 to 64. Its notes come
+  back in `local-note.md`: fetch and read them when told, and act on
+  what they report.
 - No release yet: on the human's word, created by the local agent
   (`handover-local.md`, "Releases").
 - Settled since (2026-11-14): only the link goes into `.shortcuts.json`
