@@ -1,7 +1,7 @@
 // child(exec, uri): the child mrepo a boot action names: { name, at, dir,
 // node, mrepo, recorded(), local() }; shared by the actions (not documented:
 // a helper).
-//   uri       the request's, from the mrepo's root: main/<name>
+//   uri       the request's, its segments: ['main', '<name>']
 //   at        its position as written at main: <name>
 //   dir       its folder: in the shadow of main, at its position
 //   node      its shortcut, in the xpath layer (no presence in main)
@@ -12,11 +12,13 @@
 // A target is needed: main itself, or the root, is the mrepo, which one
 // cannot deploy or tear down.
 import { join } from 'bare-path'
-import { within, ROOT } from 'mycelium-uri'
+import { segmented, joined, within, ROOT } from 'mycelium-uri'
 import { shortcutOf, shadowOf, uriOf } from 'mrepo-base-xpath'
 
-export function child (exec, uri) {
-  if (uri === undefined || uri === ROOT || uri === 'main') throw new Error('missing argument: target')
+export function child (exec, segments) {
+  if (segments === undefined || segmented(segments).at(-1) === ROOT) throw new Error('missing argument: target')
+  const uri = joined(segments)
+  if (uri === 'main') throw new Error('missing argument: target')
   const at = within('main', uri)
   if (at === null) throw new Error(`not a position in main: ${uri} (main/<name>)`)
   if (!/^[a-z][a-z0-9-]*$/.test(at)) throw new Error(`not a name for an mrepo: ${at} (one segment: lowercase letters, digits, hyphens)`)

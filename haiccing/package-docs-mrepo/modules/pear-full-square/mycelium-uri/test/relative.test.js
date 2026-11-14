@@ -1,5 +1,5 @@
 import test from 'brittle'
-import { relative, from, within, slashed, unslashed, ROOT } from '../index.js'
+import { relative, from, within, slashed, unslashed, segmented, joined, positionOf, ROOT } from '../index.js'
 
 test('relative: no leading slash, . the position itself, ./ allowed in front', (t) => {
   t.is(ROOT, '.')
@@ -31,4 +31,17 @@ test('from, within: to and from a position', (t) => {
 test('slashed, unslashed: the slash-led paths', (t) => {
   t.alike([slashed('.'), slashed('main/host'), slashed('runtime/service.json')], ['/', '/main/host', '/runtime/service.json'])
   t.alike([unslashed('/'), unslashed('/packages/x')], ['.', 'packages/x'])
+})
+
+test('a URI as data: an array of segments, each a relative URI', (t) => {
+  for (const u of [['main', 'host'], ['main', '.'], ['.'], ['main', 'swarms/swarm-1/node-1'], ['runtime/hooks']]) t.is(segmented(u), u, `${JSON.stringify(u)}: as it is`)
+  t.exception(() => segmented('main/host'), /not a URI: its segments, an array/, 'one string: not the type')
+  t.exception(() => segmented([]), /not a URI: its segments, an array/, 'no segment')
+  t.exception(() => segmented(['main', 7]), /not a URI: a segment is a string/)
+  t.exception(() => segmented(['main', '']), /not a URI: a segment is a string/)
+  t.exception(() => segmented(['main', '/host']), /not a relative URI: \/host/)
+  t.exception(() => segmented(['main', 'Host']), /not canonical: Host \(host\)/)
+  t.exception(() => segmented(['main', './host']), /not canonical: \.\/host \(host\)/, 'a segment is in its canonical form')
+  t.alike([joined(['main', 'host']), joined(['main', '.']), joined(['.']), joined(['main', 'a/b', 'c']), joined(['.', 'runtime'])], ['main/host', 'main', '.', 'main/a/b/c', 'runtime'], 'joined: the one relative URI they make')
+  t.alike([positionOf(['main', '.']), positionOf(['.']), positionOf(['main', 'host'])], [['main'], [], ['main', 'host']], 'positionOf: without the segments that are .')
 })

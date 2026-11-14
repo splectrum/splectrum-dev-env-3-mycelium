@@ -9,8 +9,8 @@ path. Only the mrepo that owns a shortcut knows it is one.
 ## Signature
 
 `resolve(exec, uri)`: `exec` reads the mrepo, `exec.read(path)`; `uri` is
-local to it, relative from its root as a request's form holds it, and
-addresses a position in `main`: `main` itself, `main/host`. `.` is the
+local to it, its segments as a request's form holds it, and addresses a
+position in `main`: `["main", "."]`, `["main", "host"]`. `["."]` is the
 mrepo itself, above its layers: no shortcut there.
 
 ## Returns
@@ -29,7 +29,8 @@ ordinary node. For a shortcut it is its entry and where it leads:
 
 ## Errors
 
-- The URI is not canonical, or has a leading slash.
+- The URI is not an array of segments, a segment is not canonical or
+  has a leading slash.
 - The URI is not in `main`.
 - The URI runs through a shortcut: a URI stays inside its mrepo. The
   message names the shortcut and the way across, a `haicc` at it.

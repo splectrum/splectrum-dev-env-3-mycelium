@@ -37,10 +37,11 @@
 // is, its action run in this same execution. Its URI is read as written
 // where it stands: at the root for the mrepo's own (a hook), at main for
 // one from outside, at the position a haicc command went to.
-// A request's URI is relative, from the mrepo's root (main/host); the
-// paths the execution reads and writes by are still slash-led (/main/x).
+// A request's URI is an array of segments, a prefix then the URI as
+// written (['main', 'host']); the paths the execution reads and writes by
+// are still slash-led (/main/x).
 // lib/actions.js: the generic rest actions, the tests' own.
-import { wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runtimeData, isInternal, principals, formOf, ROOT, MAIN } from 'mrepo-base-request'
+import { wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runtimeData, isInternal, principals, formOf, joined, OUTSIDE, OWN } from 'mrepo-base-request'
 import { ACTIONS } from './lib/actions.js'
 import { pass } from './lib/remote.js'
 
@@ -154,7 +155,7 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
     }
     const inside = uri => uri.slice(uri.indexOf('/', 1) < 0 ? uri.length : uri.indexOf('/', 1)) || '/'
     const { protocol, action } = form
-    const message = `${name}: ${protocol} ${action} ${form.uri}`
+    const message = `${name}: ${protocol} ${action} ${joined(form.uri)}`
     // Its log: entries into the request's own record, at or above the
     // mrepo's threshold (/runtime/log.json's level, else info).
     const threshold = await repo.read('/runtime/log.json').then(b => JSON.parse(b.toString()).level, () => 'info')
@@ -208,12 +209,12 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       reset: () => rollbackAll(),
       // A command executed here, in this execution: its parts interpreted,
       // checked as this request is, its action run; its value. own: as the
-      // mrepo's own (a hook: not held at the door). at: where it stands,
-      // its URI read from there (the root for the mrepo's own, main for one
-      // from outside, by default).
-      run: async (command, { own = false, at = internal || own ? ROOT : MAIN } = {}) => {
+      // mrepo's own (a hook: not held at the door). at: where it stands, a
+      // prefix its URI is read behind (none for the mrepo's own, main for
+      // one from outside, by default).
+      run: async (command, { own = false, at = internal || own ? OWN : OUTSIDE } = {}) => {
         const inner = formOf(Array.isArray(command) || typeof command === 'string' ? { command } : command, ctx.protocols ?? {}, at)
-        const why = check(inner, await runtimeData(ctx), { internal: internal || own, at })
+        const why = check(inner, await runtimeData(ctx), { internal: internal || own })
         if (why) throw new Error(why)
         const fn = actions[inner.protocol]?.[inner.action]
         if (!fn) throw new Error(unknown(actions, inner.protocol, inner.action))

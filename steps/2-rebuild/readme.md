@@ -2701,3 +2701,77 @@ packages, no problems. The READMEs: 224 in the sources, 425 in the help
 tree, no problems. `base-component-boot`'s `validate` twice more, its
 `boot` test 119 of 119 each time. The `haicc` test, 117 of 117. Nothing
 left running.
+
+## 62. A URI inside is an array of segments (2026-11-14)
+
+Piece C of task 1 was shown to the human with every answer wrapped in an
+array. Their answers, in order, and what was built from them:
+
+- **"No, response can contain any data type."** Nothing wraps an action's
+  answer. What reads nodes will answer with an array of them, by what it
+  is; `service/start` answers its object as before. Nothing built for
+  this: it is how it was.
+- **"URI is of type Array of Namepart strings"**, corrected: **"name part
+  uri segments rather than individual name parts"**. A URI as data is an
+  array of segments, each a relative URI of one or more name parts; not
+  split into single names, not one joined string.
+- **"Request form one segment per command."** The form's URI is of that
+  type too.
+- **"What exists now should run as the uri as is with prefix main, 2
+  segments. For external just one segment. So implement an array
+  internally. Multi segment will become clear with haicc commands."**
+
+Built:
+
+- **The type, in `mycelium-uri`** (`lib/relative.js`): `segmented(uri)`,
+  the array checked (at least one segment, each a relative URI in its
+  canonical form); `joined(uri)`, the one relative URI the segments make
+  (`['main', 'host']` is `main/host`, `['main', '.']` is `main`);
+  `positionOf(uri)`, its segments without those that are `.`.
+- **The request's form holds its URI as segments**: the prefix where its
+  writer stands, then the URI as written. From outside (`OUTSIDE`) the
+  prefix `main` and one segment: `["main", "host"]`; no URI, `["main",
+  "."]`. The mrepo's own (`OWN`: a hook, its own request) has no prefix:
+  `["."]`. A form whose URI is one string is refused inside (`not a URI:
+  its segments, an array`).
+- **Outside, a URI is one segment, as it is written**: the command as
+  typed, a form given filled in (an array there is refused: `one segment,
+  as it is written`), and what an action says back (`"deployed":"host"`,
+  help's `"uri":"packages"`). Nothing of what the `haicc` command sends
+  or prints changed, except that the form in a response record shows its
+  URI as held: `"uri":["main","host"]`.
+- **`check`**: a target is missing when the URI as written, the last
+  segment, is `.`; so it no longer needs to be told where the request
+  was written. From outside an action is offered where the URI is the
+  prefix `main` and one segment that its config's `uris` name.
+- **`exec.run(command, { at })`**: `at` is a prefix, the segments the
+  command's URI is put behind. `goto` passes its position
+  (`positionOf`), `['main']` at main's root, none at the root.
+- **`resolve`, the boot's `child`, `help/extract`, the rest actions**
+  take the segments and work on what they make (`joined`).
+- **Not built, on the human's word**: more segments than the prefix and
+  the URI (a jump's, a command executed at a deeper position), the
+  prefix on what an answer returns. They come with the `haicc` commands
+  that need them.
+
+**Validated**: the `haicc` test first, 117 of 117 after the rebuild.
+The pre-release of all eleven packages, each passing, its report
+written; units, tests, asserts: `base-app-haicc` 22, 254, 1342;
+`base-component-boot` 22, 238, 1316; `base-component-haicc` 8, 48, 256;
+`base-package-boot` 22, 243, 1250; `base-package-haicc` 10, 52, 284;
+`base-package-help` 8, 49, 265; `base-package-protocol` 9, 51, 265;
+`base-package-runtime` 21, 232, 1146; `base-package-service` 14, 188,
+861; `package-docs-mrepo` 8, 42, 222; `package-docs-template` 7, 42, 222.
+Three failed first, each a test still handing an action a URI in the old
+shape, which the code now refuses: `base-component-haicc`'s `configured`
+(its stand-in for running a hook), `base-package-boot`'s `mounted` and
+`mrepo-base-boot`'s deploy test (a name with a capital or `..` is now
+stopped as a segment, before it is looked at as a name);
+`base-component-boot`'s `boot` once more for a slip in its own helper.
+The tests corrected, nothing in the code. Then
+`tools/bare tools/release.js --strict`: eleven packages, every report
+current. `tools/bare tools/code-check.js`: 19 modules, 12 packages, no
+problems. The READMEs: 224 in the sources, 425 in the help tree, no
+problems. `base-component-boot`'s `validate` twice more, its `boot` test
+119 of 119 each time. The `haicc` test again, 117 of 117. Nothing left
+running.

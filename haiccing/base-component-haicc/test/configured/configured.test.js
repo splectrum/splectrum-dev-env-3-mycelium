@@ -110,7 +110,8 @@ function world () {
       const [p, a] = first.split('/')
       commands.push(command.join(' '))
       if (!actions[p]?.[a]) throw new Error(`no action: ${first}`)
-      return actions[p][a](exec, { protocol: p, action: a, uri, args })
+      // (a hook is the mrepo's own: its URI one segment, no prefix)
+      return actions[p][a](exec, { protocol: p, action: a, uri: [uri], args })
     },
     log: () => {}
   }

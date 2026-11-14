@@ -33,7 +33,7 @@ async function layers (backend, { preload }) {
   await r.commit('Booted', { author })
   if (preload) {
     const q = await w.change(PENDING)
-    const core = record(null, { protocol: 'service', action: 'initialise', uri: '.' }, guid())
+    const core = record(null, { protocol: 'service', action: 'initialise', uri: ['.'] }, guid())
     await q.put(`/${core.key}.json`, Buffer.from(JSON.stringify(wrap(`/${PENDING}`, core))))
     await q.commit('Preloaded', { author })
   }

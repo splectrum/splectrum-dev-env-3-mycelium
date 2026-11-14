@@ -420,17 +420,17 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   2026-11-14, asked whether the type applies to the form too: "Request
   form one segment per command"). So the form's URI is of that type too,
   and each command in a chain gives one segment, its URI whole as typed.
-  Our reading of the details, put to the human, not yet answered:
-  - the layer the writer stands at comes first, as a segment of its own
-    (`main` from outside), then one segment for the command:
-    `haicc host service/start` is `["main", "host"]`;
-  - a command executed at a position has the position's segments, then
-    its own: `haicc test/mydata/users users/check-addresses a/b` runs
-    `users/check-addresses` with `["main", "test/mydata/users", "a/b"]`;
-  - exactly one each, `.` included (`service/start` with no URI:
-    `["main", "."]`), so the last segment is always the command's own
-    URI and those between the layer and it are the jumps: the chain of
-    commands can be read back from the array.
+  The human, on our reading of the details: "What exists now should
+  run as the uri as is with prefix main, 2 segments. For external just
+  one segment. So implement an array internally. Multi segment will
+  become clear with haicc commands." So, to build now:
+  - inside, a form's URI is an array: for a request from outside the
+    prefix `main` and the URI as it is written, two segments:
+    `["main", "host"]`, `["main", "."]`;
+  - outside, a URI is one segment, as it is written today;
+  - more segments than that (jumps, a command executed at a deeper
+    position) are not designed now: they come with the `haicc` commands
+    that need them.
 - **An empty selection is not an error** inside: it gives an empty
   array, also for a plain path with a typo in it. Whether that is an
   error is for the one who submits the request to check. No rule of ours
@@ -552,13 +552,15 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   (relative, `.`); `exec.read`, `select`, `put`, `remove` and the
   repository's reads take `runtime/service.json` as
   `/runtime/service.json`.
-- **Piece C, selections as arrays, the URI's type, the prefix**:
-  `resolve` an array, `goto` at each; a URI as data an array of name
-  parts; the prefix in the form, the layer first, then the jumps. Shown
-  to the human 2026-11-14 with every answer wrapped in an array: refused
-  ("response can contain any data type"), so an action's answer is not
-  wrapped. Not built until the human has confirmed our reading of the
-  URI's type and where it applies ("Settled", above).
+- **Piece C, in part built** (`readme.md`, part 62): inside, a URI is an
+  array of segments, the prefix `main` and the URI as written for a
+  request from outside; outside it is one segment; an action's answer is
+  not wrapped. **Left of it**, to come with the `haicc` commands that
+  need them (the human: "Multi segment will become clear with haicc
+  commands"): `resolve` giving an array of positions and `goto`
+  executing at each; a command executed at a deeper position (its prefix
+  the position's segments); the jumps as segments and the prefix on what
+  an answer returns.
 
 **Where**
 

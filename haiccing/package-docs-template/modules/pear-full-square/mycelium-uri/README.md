@@ -71,3 +71,17 @@ given; `./x` is `x`.
 - `slashed(uri)`, `unslashed(path)` → to and from the slash-led paths the
   code still reads and writes by: `.` is `/`.
 - `ROOT`: `.`.
+
+## Segments
+
+A URI as data is an array of segments, each a relative URI of one or more
+name parts: `["main", "host"]`, `["main", "swarms/swarm-1"]`. The
+segments are the fixed chunks it is made of: a prefix, then the URI as it
+was written. A string is how one segment is written.
+
+- `segmented(uri)` → the array, checked: at least one segment, each a
+  relative URI in its canonical form.
+- `joined(uri)` → the one relative URI the segments make: `main/host`;
+  `["main", "."]` is `main`.
+- `positionOf(uri)` → its segments without those that are `.`: where it
+  points, as the prefix for what is written there.

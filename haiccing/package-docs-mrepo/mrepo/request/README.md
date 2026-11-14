@@ -53,7 +53,7 @@ becomes the request's result.
 
 ```json
 { "command": ["haicc", "host", "help/get", ".", "packages"],
-  "protocol": "haicc", "action": "goto", "uri": "main/host",
+  "protocol": "haicc", "action": "goto", "uri": ["main", "host"],
   "args": ["help/get", "/packages"],
   "remote": { "at": "host", "folder": "main/host", "key": "…" },
   "output": { } }

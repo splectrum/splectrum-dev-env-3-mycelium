@@ -10,8 +10,8 @@ in, in that order, and the child is built at `<parent>/main/<name>/`.
 ## Signature
 
 `deploy(exec, { uri, args })`: requested as `boot/deploy <name>
-<package>`. `uri` is the child's position from the mrepo's root,
-`main/<name>`, one segment below `main`.
+<package>`. `uri` is the child's position as the form holds it,
+`["main", "<name>"]`: one name below `main`.
 
 ## Arguments
 

@@ -126,7 +126,10 @@ given; `./x` is `x`.
   root, above the layers, and names the layer first: `protocol/activate .
   help`.
 
-The form holds the URI from the root, `main/host`. What an action is
+Inside, in the form, a URI is an array of segments: the prefix where
+its writer stands, then the URI as written. From outside that is the
+prefix `main` and one segment: `["main", "host"]`, `["main", "."]`.
+Outside, a URI is one segment, as it is written. What an action is
 about, when that is not where it is executed, is an argument: `help/get .
 packages`, `runtime/run . packages/<org>/<package>/test/validate`.
 

@@ -28,3 +28,4 @@ The tests of mycelium-uri, a section per file, each test by its name.
 - relative: no leading slash, . the position itself, ./ allowed in front
 - from, within: to and from a position
 - slashed, unslashed: the slash-led paths
+- a URI as data: an array of segments, each a relative URI

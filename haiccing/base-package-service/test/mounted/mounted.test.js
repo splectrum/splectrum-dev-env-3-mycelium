@@ -16,7 +16,7 @@ import * as mounted from '../../protocol.js'
 const pkg = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const json = (...p) => JSON.parse(readFileSync(join(pkg, ...p), 'utf8'))
 const ran = new Set()
-const act = (name, exec) => { ran.add(name); return mounted.actions.service[name](exec, { uri: '.' }) }
+const act = (name, exec) => { ran.add(name); return mounted.actions.service[name](exec, { uri: ['.'] }) }
 
 // The hooks the package brings, as they are in its structure: by
 // <transition>/<name>, each its command.
@@ -66,12 +66,12 @@ test('its config in effect: a request checked on each state, allowed only where 
   const active = { service: protocols.service }
   const allowed = { booted: ['initialise'], initialised: ['shutdown', 'start'], started: ['stop'] }
   for (const [state, can] of Object.entries(allowed)) {
-    const now = Object.keys(protocols.service.actions).filter(action => check({ protocol: 'service', action, uri: 'main' }, { service: { state }, protocols, active }) === null).sort()
+    const now = Object.keys(protocols.service.actions).filter(action => check({ protocol: 'service', action, uri: ['main', '.'] }, { service: { state }, protocols, active }) === null).sort()
     t.alike(now, can, `${state}: ${can.join(', ')} allowed, the others refused`)
   }
-  t.is(check({ protocol: 'service', action: 'start', uri: 'main' }, { service: { state: 'booted' }, protocols, active }), 'not now: service start (the service is booted)', 'a refusal says the state the service is in')
-  t.is(check({ protocol: 'service', action: 'start', uri: 'main/host' }, { service: { state: 'initialised' }, protocols, active }), 'not offered: service start at host', 'anywhere but the mrepo itself: not offered')
-  t.is(check({ protocol: 'service', action: 'start', uri: 'main' }, { service: { state: 'initialised' }, protocols, active: {} }), 'not now: service start (service is not active; the service is initialised)', 'not activated: refused whatever the state')
+  t.is(check({ protocol: 'service', action: 'start', uri: ['main', '.'] }, { service: { state: 'booted' }, protocols, active }), 'not now: service start (the service is booted)', 'a refusal says the state the service is in')
+  t.is(check({ protocol: 'service', action: 'start', uri: ['main', 'host'] }, { service: { state: 'initialised' }, protocols, active }), 'not offered: service start at host', 'anywhere but the mrepo itself: not offered')
+  t.is(check({ protocol: 'service', action: 'start', uri: ['main', '.'] }, { service: { state: 'initialised' }, protocols, active: {} }), 'not now: service start (service is not active; the service is initialised)', 'not activated: refused whatever the state')
 })
 
 test('its structure: the state it starts in, and its list of packages', (t) => {

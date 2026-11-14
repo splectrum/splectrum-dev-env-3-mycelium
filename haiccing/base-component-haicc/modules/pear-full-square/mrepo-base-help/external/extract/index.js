@@ -5,13 +5,15 @@
 import { readFileSync, existsSync } from 'bare-fs'
 import { join } from 'bare-path'
 import Bundle from 'bare-bundle'
+import { joined } from 'mycelium-uri'
 import { extract } from '../../internal/extract/index.js'
 
 const LAYER = { mode: 'atomic', description: 'Help: the READMEs of the packages the mrepo links, at the URIs they document, and their index (extracted as the mrepo starts).' }
 const json = async (exec, uri) => exec.read(uri).then(b => JSON.parse(b.toString()), () => null)
 
 export async function extractAction (exec, { uri }) {
-  if (uri !== '.' && uri !== 'main') throw new Error(`help extract: the whole mrepo only, . (not ${uri})`)
+  const at = joined(uri)
+  if (at !== '.' && at !== 'main') throw new Error(`help extract: the whole mrepo only, . (not ${at})`)
   const listed = (await json(exec, '/packages/manifest.json'))?.packages
   if (!listed) return { readmes: 0, changed: false, problems: 0 }
   const dir = exec.runtime.dir

@@ -3,7 +3,7 @@
 import test from 'brittle'
 import { unpack, outcome } from '../index.js'
 
-const form = { command: ['haicc', 'host', 'service/start'], protocol: 'haicc', action: 'goto', uri: 'main/host', args: ['service/start'], remote: { at: 'host', folder: 'main/host', key: '0c1d4c6e-6a52-4e0a-9b4a-0d7c2f0e2f11' }, output: { service: 'started', state: 'started' } }
+const form = { command: ['haicc', 'host', 'service/start'], protocol: 'haicc', action: 'goto', uri: ['main', 'host'], args: ['service/start'], remote: { at: 'host', folder: 'main/host', key: '0c1d4c6e-6a52-4e0a-9b4a-0d7c2f0e2f11' }, output: { service: 'started', state: 'started' } }
 const core = { topic: '/haicc/terminal', key: 'f949ad01-34db-4dd9-a5bc-bf438a21028c', timestamp: '2026-11-13T02:02:29.000Z', headers: {}, value: form }
 const stored = v => JSON.stringify({ topic: '/outbox', key: core.key, timestamp: '2026-11-13T02:02:31.745Z', headers: {}, value: v }) + '\n'
 // packed again: line breaks, indentation and the space after an opened
@@ -26,7 +26,7 @@ test('unpack: what fits stays as stored, what does not is opened, an entry a lin
       "command": ["haicc","host","service/start"],
       "protocol": "haicc",
       "action": "goto",
-      "uri": "main/host",
+      "uri": ["main","host"],
       "args": ["service/start"],
       "remote": {
         "at": "host",
