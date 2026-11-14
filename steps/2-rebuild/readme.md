@@ -2467,3 +2467,14 @@ problems. Nothing left running.
 test 6 tests and 24 asserts, the report written. The READMEs, 189, no
 problems.
 
+
+## 58. base-component-boot brought to the template (2026-11-14)
+
+- **`base-component-boot`** brought to the template, pinned to
+  `haiccing/package-docs-template@6f78874`. Its own test is the one it
+  had, `boot`: the boot end to end, between running mrepos. Its
+  `test/README.md` links each test's folder; its README `test-reports/`.
+
+**Validated**: its pre-release: 22 units, 233 tests, 1235 asserts, the
+report written (four minutes; its `boot` test 119 asserts). The READMEs,
+196, no problems. Nothing left running.

@@ -1,22 +1,10 @@
-// The runtime protocol:
-// the runtime's own, in every mrepo it runs. run:
-// an entry of a package the mrepo has linked, through that package's
-// dispatcher (its bundle in the mrepo's packages/, imported: nothing runs
-// but what is asked).
-//   runtime run /packages/<org>/<package><target> [dry-run]
-//     a test (/test/<set>, /test/<name>, /test/modules[/<org>/<module>]):
-//     run self-contained (a floating instance of the package, each unit its
-//     own process, removed after), its result the output, a summary logged;
-//     /protocol, /deploy: what the entry offers (its names); with dry-run:
-//     what the target would run. /run: refused (a package's program is not
-//     run inside the runtime's process).
+// run: runtime/run /packages/<org>/<package><target>, an entry of a package
+// the mrepo has linked, through that package's dispatcher (README.md beside it).
 import { existsSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'bare-fs'
 import crypto from 'bare-crypto'
 import { tmpdir } from 'bare-os'
 import { join } from 'bare-path'
 import { pathToFileURL } from 'bare-url'
-
-export const PROTOCOL = 'runtime'
 
 function target (uri) {
   const m = uri.match(/^\/packages\/([^/]+)\/([^/]+)(\/.*)?$/)
@@ -61,4 +49,3 @@ export async function run (exec, { uri, args = [] }) {
   return r
 }
 
-export const ACTIONS = { [PROTOCOL]: { run } }
