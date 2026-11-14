@@ -88,7 +88,11 @@ crud/read */swarms/*
 
 - "The aim is full coverage, but in steps."
 - **No parent step (`..`)**: "we don't need it as ours is forward
-  looking only." Full coverage is of what looks forward.
+  looking only."
+- **Full coverage is of what looks forward** (our reading, confirmed:
+  "yes"): everything of XPath that looks forward (children,
+  descendants, filters, set operations), nothing that looks back or up
+  (the parent, the ancestors, the siblings before a node).
 
 **Proposed** (ours: the list shown to the human, the points not
 answered one by one). "Attribute" read as a field of the node's
@@ -119,8 +123,10 @@ document.
 - **A selection by position (`[1]`, the last)**: it needs an order, and a
   merged set has none unless the merge defines one (our first opinion:
   left out for now).
-- What full coverage is measured against: XPath as it is written
-  elsewhere (which version), or the list above grown.
+- Which XPath the forward part is taken from (its version), and its
+  functions (on strings, numbers, node sets): which are wanted.
+- The siblings after a node: forward, but they need the same order a
+  position does.
 
 ## The steps
 
