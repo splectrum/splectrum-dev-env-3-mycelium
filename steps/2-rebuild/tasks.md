@@ -600,15 +600,19 @@ item 3), wanted for creating structure in `main`.
     structure while keeping both separate.
   - **XPath processing has become simpler** (the human): with `haicc`
     for the segments, a path is resolved inside one mrepo.
-  - Ours, put to the human, not answered: only what is true for everyone
-    goes in the file (each source's unique URI); what is local to the
-    machine that deployed a child (its folder, its runtime's pid, the
-    packages placed) stays out, `main` replicates. What is seen at such a
-    node is the combination of its sources and the local data, each kept
-    where it is stored; a write goes to the local side only. Built first:
-    the file a list from the start, one source in use (a deployed child,
-    as today); combining several sources and local data when a real case
-    comes.
+  - Confirmed by the human (our reading): what is seen at such a node is
+    the combination of its sources and the local data, an overlay, each
+    kept where it is stored; a write goes to the local side only. Built
+    first: the file a list from the start, one source in use (a deployed
+    child, as today); combining several sources and local data when a
+    real case comes, as a demo first.
+  - Ours, not answered: only what is true for everyone goes in the file
+    (each source's unique URI); what is local to the machine that
+    deployed a child (its folder, its runtime's pid, the packages placed)
+    stays out, `main` replicates. To settle when combining is built: the
+    rule when two sources, or a source and the local side, hold the same
+    name; reading through a link (a local read of a replica) beside the
+    `haicc` jump (a command executed in the other mrepo).
   - What follows in the code: the `xpath` layer can go; `resolve`, the
     boot protocol's actions, `goto` and their tests
     (`pear-full-square/mrepo-base-xpath`,
