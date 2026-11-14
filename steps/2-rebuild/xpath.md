@@ -213,7 +213,14 @@ moved.
   passed (a message, a shared buffer). Nothing of ours uses threads: an
   mrepo's runtime is a process (`bare-subprocess`). Starting one costs
   the same either way: 20 empty processes 660 ms, 20 empty threads
-  648 ms, started together.
+  648 ms, started together. **Running, no difference to speak of** (the
+  human's question: do two processes in parallel perform better than
+  two threads; three runs each, a shared machine, the spread between
+  runs larger than the gap): a plain loop, 2 at once: processes 1021 to
+  1188 ms, threads 1015 to 1164; 4 at once: 943 to 1070 against 993 to
+  1083. Work that allocates (node sets built, as JSON and back,
+  filtered, sorted), 2 at once: processes 1510 to 2033, threads 1216 to
+  1616; 4 at once: 1786 to 2747 against 1925 to 2120.
 - `vision.md`, "Pipelines, and mycelium as a database server" and
   "Overlays"; `tasks.md`, task 1 (the prefix, the jumps, selections as
   arrays) and "Predicates in a URI".
