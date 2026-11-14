@@ -495,6 +495,63 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
 | `haicc /host help/get /` | `haicc host help/get` |
 | a hook: `protocol/activate / help` | `protocol/activate . help` |
 
+**The build** (ours; analysed 2026-11-14, nothing built yet)
+
+By the method: the demo first. `haiccing/base-linux-haicc/test/run.sh` is
+the commands as typed, 107 checks: rewrite it in the new form first, see
+it fail, then build until it passes.
+
+- **Piece A, requests relative** (one part, validated whole):
+  - `mrepo-base-request/lib/command.js`: `interpret`: no URI is `.`;
+    `./x` is `x`; a leading slash refused; the segments validated
+    (`mycelium-uri` validates slash-led only: validate `'/' + rel`).
+    `formOf` takes where the writer stands.
+  - The standpoint: `admit` (`mrepo-base-request/index.js`) knows the
+    origin. `inbox`: the writer stands at `main`: `.` becomes `main`,
+    `host` becomes `main/host`; a form given filled in is treated the
+    same. `internal` (the runtime's boot hooks, a preloaded request):
+    the root, `.` stays, the layer first. A command sent on through a
+    shortcut arrives in the linked mrepo's inbox: outside there, as it
+    should be.
+  - `exec.run` (`mrepo-base-execute/index.js`): a hook (`own`) stands at
+    the root; the command `goto` executes stands at its position.
+  - `check`, `matches`, `missing`: the form's URI is from the root; a
+    config's `uris` are patterns from `main`, where the outside stands
+    (`.`, `<name>`, `**`), matched against the part after `main`;
+    `target`: the URI is not the position itself. Internal requests are
+    not matched against `uris`, as now.
+  - The configs' `uris`, in each protocol's module or package: `.` for
+    `/`, `<name>` for `/<name>`, `**` for `/**`.
+  - The actions that read the URI: `resolve` (`mrepo-base-xpath`), `goto`
+    (its messages name the way across in the new form), `child`
+    (`mrepo-base-boot/internal/child.js`: the name from `main/<name>`),
+    `help/extract` (the mrepo itself: `.` or `main`), `help/get` and
+    `runtime/run` (the subject their first argument; for `get` a first
+    argument that is a level word means the root).
+  - Inside, `exec.read`, `put` and the others keep slash-led paths in
+    this piece.
+  - The hooks: `"/"` becomes `"."` in every file of the components' and
+    the service package's `mrepo/runtime/hooks/`.
+  - The `haicc` scripts (`haiccing/base-linux-haicc/bin/haicc`,
+    `haicc-request`): the first word, `.`, the usage text.
+  - The tests: the modules' (`mrepo-base-request` check and command,
+    `-execute` whose rest forms use `/main/...`, `-haicc`, `-xpath`,
+    `-boot`, `-runtime`, `-service`, `-protocol`); the packages'
+    `mounted` and `configured`; `base-component-boot/test/boot/boot.test.js`;
+    `run.sh`. The READMEs that show commands: read them, no check finds
+    a stale command.
+  - Then every package's pre-release, the release strict, the `haicc`
+    test, the boot's test several times.
+- **Piece B, the interface accepts both**: `mycelium-uri`'s `validate`
+  (relative, `.`); `exec.read`, `select`, `put`, `remove` and the
+  repository's reads take `runtime/service.json` as
+  `/runtime/service.json`.
+- **Piece C, selections and results as arrays, the prefix**: `resolve`
+  an array, `goto` at each; a result an array; the prefix in the form,
+  the layer first, then the jumps. It changes what every command
+  answers (`haicc host service/start`: an array of one): show the human
+  the new answers before building it.
+
 **Where**
 
 - `pear-full-square/mrepo-base-request/lib/command.js`: `interpret` adds

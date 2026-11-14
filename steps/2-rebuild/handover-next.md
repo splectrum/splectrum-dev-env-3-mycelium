@@ -1,12 +1,12 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-14, part 59). Read `CLAUDE.md`
-first (what is here, how to validate), then this, then `readme.md` here
-(each part's record; the latest parts last: 30 to 45 are the haicc work; 46 is a note on future design; 47 the
-package check; 48 the template up to standard; 49 the test
-reports; 50 the pin, `package-docs-mrepo` brought to the template; 51
-`base-package-runtime`; 52 an action a documented method, a test of its
-own always; 53 to 59 the other packages, one by one, up the stack).
+Kept current by the cloud session (last: 2026-11-14, part 59, and the
+planning after it). Read `CLAUDE.md` first (what is here, how to
+validate), then this, then `tasks.md` here (what is planned and waits to
+be built: the next work), then `readme.md` (each part's record, the
+latest last: 30 to 45 the haicc work; 46 a note on future design; 47 to
+59 the tests: the package check, the template, the test reports, the
+pin, every package brought to the template one by one).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -39,64 +39,69 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
 
 ## Right now
 
-- **Built and pushed**: everything through part 45. The `haicc` command
-  installs, boots, deploys a host from `base-component-haicc`, starts its
-  service, deploys a node inside it and chains commands through both.
-  Hooks and activation decide what an mrepo offers; every protocol has
-  its own package; the boot is a component.
-- **With the human**: testing by hand on the local machine. The local
-  agent ran `381bbae` (its note, 2026-11-13) and has not yet run what
-  came after (parts 39 to 45): its prompt, `prompt-local.md`, is current.
-  Its notes come back in `local-note.md`: fetch and read them when told.
-- **No release yet**: on the human's word, created by the local agent
+**The state** (2026-11-14, everything in `main`, every repository pushed)
+
+- The `haicc` command installs, boots, deploys a host from
+  `base-component-haicc`, starts its service, deploys a node inside it
+  and chains commands through both (parts 30 to 45).
+- All ten bundle packages are brought to the package template and
+  pinned, each with a test of its own and a current, passing report
+  (parts 47 to 59). `tools/bare tools/release.js --strict` passes;
+  `tools/bare tools/code-check.js` and the README checks have no
+  problems; the `haicc` test 107 of 107; `base-component-boot`'s `boot`
+  test 119 of 119.
+
+**Next: build what is planned** (the human, 2026-11-14: what remains to
+plan depends heavily on having floating mrepo tests, so the planned work
+is implemented first). In `tasks.md`, in this order:
+
+1. **Relative URIs** (task 1). Settled with the human point by point;
+   the build is planned there in pieces ("The build"): begin with piece
+   A. Nothing of it is built yet.
+2. **The `crud` protocol** (task 2), on top of it; with it the shortcuts
+   moved into `main` (`.shortcuts.json` beside `.node.json`), the `xpath`
+   layer gone. Its two repositories exist.
+3. **The rest actions removed** (task 3).
+4. On towards swarm nodes up and running: the execution's current root,
+   a node's unique URI, a node in its container, a swarm (not planned
+   yet: "The roadmap", item 2). Then "Deployed tests" and "Coverage".
+
+A task's **Settled** is built as written. Its **Proposed** is confirmed
+with the human first, unless the task says it is ours ("Left to us").
+
+**How a feature is built from now on** (the human, 2026-11-14)
+
+- **A POC demo first, then the real thing, then the demo turned into the
+  how-to.** A package's deployed test is its how-to: it lives where the
+  functionality is made; there are no how-to packages, the selection is
+  extracted as help is. Until deployed tests exist (they come after
+  swarm nodes run): a new feature starts as a demo run with the `haicc`
+  tool, kept as its first how-to.
+- **The two end to end tests stay green** and are extended where the
+  behaviour changes: `base-component-boot`'s `boot`
+  (`haiccing/base-component-boot/test/boot/`) and the `haicc` command's
+  (`haiccing/base-linux-haicc/test/run.sh`). They are still what proves a
+  package inside a running mrepo.
+- **A package that changes is validated by its pre-release**
+  (`tools/bare tools/package-test.js haiccing/<package>`), its report
+  committed with it; a module that changes, by the pre-release of every
+  package that carries it.
+
+**With the human, open**
+
+- Testing by hand on the local machine: the local agent ran `381bbae`
+  (its note, 2026-11-13) and nothing after; its prompt, `prompt-local.md`,
+  predates parts 47 to 59 (`tools/package-test.js`, the reports). Its
+  notes come back in `local-note.md`: fetch and read them when told.
+- No release yet: on the human's word, created by the local agent
   (`handover-local.md`, "Releases").
-- **All ten bundle packages are brought to the template** (2026-11-14,
-  parts 47 to 59), pinned, each with a test of its own and a current,
-  passing report; `tools/bare tools/release.js --strict` passes and
-  `tools/bare tools/code-check.js` has no problems. All in `main`, every
-  package's and changed module's repository pushed. What that gave: a
-  folder for every test (the generic ones from the template), the package
-  check (`/test/package`), an action a documented method, the test report
-  (`test-reports/`, a package's pre-release, `tools/package-test.js`),
-  the pin and the step that brings a package to the template
-  (`tools/package-template.sh`), the runner failing a unit that reports
-  nothing.
-- **Left from it** (`tasks.md`, "First"): the packages' tests in a
-  running mrepo (a test mrepo with test data; each `mounted` or
-  `configured` test's README says what is "Not here"); whether
-  `base-linux-haicc` gets the generic tests; then "Coverage", and the
-  tasks 1 to 3.
-- **A dummy test is a decision, not a default** (the human, 2026-11-14):
-  a package with nothing of its own to test says so with a dummy (0 of
-  0), written for it after asking: is there anything package specific
-  that needs testing? Never copied, never in the template. A protocol
-  package has something specific: no dummy there.
-- **The tools are kept well structured** (the human, 2026-11-14): soon
-  packages are built for them, so they run on the haicc platform as well.
-  `tools/README.md` says what each is for and how they are kept.
-- **This session's focus** (the human, 2026-11-14): the generic tests and
-  tests that need no test mrepo, so a new implementation is known to
-  adhere to the rules; the packages' own tests in running mrepos after.
-- **A package tests what it provides** (the human, firmly: it was skipped
-  and that was very disappointing): custom tests in each package for its
-  functionality; for a protocol a test mrepo with test data, its actions,
-  hooks and configs. Tests that fail when something is forgotten: the
-  platform is so flexible that without full coverage it becomes hell.
-  Never leave a package's functionality to another package's test.
-- **Tasks stacked, to be built in batches** (the human, 2026-11-13):
-  `tasks.md` here holds what was discussed and waits: first every package
-  testing what it provides (a debt, the human disappointed it was
-  skipped), then relative URIs, the `crud` protocol, the rest actions removed. Each says what
-  the human settled and what is only proposed: confirm the proposed with
-  the human before building. More are added as they are discussed; build
-  when the human says so.
-- **Next, in the human's order** (each discussed first): creating
-  structure in `main` (the start of `base-package-crud`: `tasks.md`, 1
-  and 2), with the execution context opened at a position, so that
-  `haicc /swarms/swarm-1 boot/deploy node-1` works; a node's unique URI;
-  then the first demo. The list is under "The roadmap", item 2.
-- **A leftover branch**: `claude/vigilant-gates-b1r8rn` on the remote
-  holds nothing that is not in `main`; the human may delete it.
+- Small points to settle (`tasks.md`): whether `base-linux-haicc` (shell
+  scripts, no bundle) gets the generic tests and a report; whether the
+  template itself becomes a clean thing to clone; in task 2, that only
+  the link goes into `.shortcuts.json` (what is local to a machine stays
+  out of `main`).
+- A leftover branch: `claude/vigilant-gates-b1r8rn` on the remote holds
+  nothing that is not in `main`; the human may delete it.
 
 ## How the human works with us
 
@@ -138,8 +143,34 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   keep it so.
 - **A test waits for a runtime's process to end** (signal 0, `kill -0`), not
   only for it to stop answering.
+- **Long stretches of planning, then a batch built** (2026-11-13): the
+  human prefers to discuss and plan in longer stretches; what settles is
+  stacked in `tasks.md` and built when the human says so, then worked
+  through to the end without stopping at each step ("I trust we have the
+  tests in place").
+- **A package tests what it provides** (the human, firmly, 2026-11-13: it
+  had been skipped, "very disappointing"): a test of its own in every
+  package for its functionality; never left to another package's test.
+  Tests that fail when something is forgotten, so we are reminded early:
+  the platform is so flexible that without full coverage it becomes
+  hell; with everything checked by default one can be relaxed.
+- **A dummy test is a decision, not a default**: a package with nothing
+  of its own to test says so with a dummy (0 of 0), written for it after
+  asking: is there anything package specific that needs testing? Never
+  copied, never in the template.
+- **Naming is local** apart from the generic tests. Every test has a
+  named folder in the package's `test/`.
+- **Self-contained and pinned**: a package is pinned to a commit of the
+  template and upgraded explicitly, one at a time; blanket changes are
+  avoided as expensive. (For now modules are still blanket: a module
+  that changes means the pre-release of every package carrying it.)
+- **The tools are kept well structured** (`tools/README.md`): they are to
+  become packages running on the haicc platform.
+- **A file removal by variable is refused here**: `rm -rf "$VAR/..."`
+  is blocked by a safety check; make a fresh folder with `mktemp -d`
+  instead of clearing one.
 
-## What is built (`readme.md`, parts 13 to 45)
+## What is built (`readme.md`, parts 13 to 59)
 
 - **Packages**: a package is one bundle carrying its structure (`mrepo/`),
   its code (`modules/`, assembled), its tests and its READMEs; its main a
@@ -183,6 +214,24 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
 - **The service** (`base-package-service`): an mrepo that links it is
   service managed: a state machine (booted, initialised, started) whose
   actions each run the hooks of their transition, then move the state.
+- **The tests** (parts 47 to 59): every package starts from the template
+  (`haiccing/package-docs-template`: its `test/` holds the generic tests,
+  a folder each: `help`, `code`, `mrepo`, `package`, `modules`, and the
+  two in situ) and is pinned to a commit of it (`template` in its
+  `package.json`; `sh tools/package-template.sh <package>` brings one to
+  it). The package check (`/test/package`, `pkgm-base-check`): its files,
+  its sets, a folder for every test, a test of its own. An action a
+  protocol configures is a documented method (`external/<action>/`, its
+  README with its signature, returns, errors). The runner fails a unit
+  that reports no summary. A package's own test without an mrepo:
+  `test/mounted/` (its `protocol.js` loaded, the config value by value,
+  each action on a minimal execution, a last test failing when an action
+  was not run), `test/configured/` in `base-component-haicc` (its list
+  and hooks, run with the listed packages' own actions).
+- **Test reports** (part 49): `test-reports/full.json` and `full.md` in
+  every package, written by its pre-release, naming the bundle's
+  `content` (a hash of everything in it but its reports), carried in the
+  bundle; nothing changed, nothing rerun, the same bundle.
 - **Hooks and activation** (parts 42 to 45): a request from outside is
   accepted only for an active protocol; nothing is active by default.
   `protocol/activate` and `protocol/deactivate` (`base-package-protocol`)
@@ -217,6 +266,10 @@ Not built yet, and the platform is not deployed until the first two are
    **Next, the human's priority**: the host's haicc mrepo is there; then a
    node's haicc mrepo, then a swarm going, the demos on top of the
    component (they bring the folders in `main`).
+   **Planned since** (`tasks.md`): relative URIs; `crud` (structure in
+   `main`, a node a folder with `.node.json`); the shortcuts moved from
+   the `xpath` layer into `main` (`.shortcuts.json`, several sources for
+   one node, local data beside them: overlays).
    **Open, each to settle with the human first**:
    - a position deeper inside `main` (`haicc /swarms/swarm-1 boot/deploy
      node-1`): `goto` refuses it for now; it needs the execution context
