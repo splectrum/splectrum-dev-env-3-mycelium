@@ -1,0 +1,11 @@
+{
+  "name": "mrepo-base-request",
+  "version": "0.1.0",
+  "description": "Module: the mrepo request protocol, a request from the inbox through pending, execute and done.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

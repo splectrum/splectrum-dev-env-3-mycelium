@@ -1,0 +1,11 @@
+{
+  "name": "haicc-base-app",
+  "version": "0.1.0",
+  "description": "Module: the haicc command's app, the command line that boots the local root and sends commands to the mrepos.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

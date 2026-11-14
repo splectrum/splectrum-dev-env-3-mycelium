@@ -1,79 +1,66 @@
 #!/bin/sh
-# haicc: the command. It only dispatches.
-#   haicc [--raw | --output] <URI> <protocol>/<action> <argument>...   an
-#       mrepo command: a URI starts with / (the local root), so a first part
-#       starting with / is a command for the mrepos; it goes to the boot
-#       mrepo's inbox (haicc-request). Its response record is printed
-#       unpacked, across lines. --raw: as it is stored, one line.
-#       --output: the completed form's output alone
-#   haicc <protocol>/<action> <argument>...          a command without a
-#       URI: the machine level, above the root mrepo, in the same form
-#       (boot/deploy, boot/teardown): the script haicc-<protocol>, its
-#       action its first argument
-#   haicc <name> <argument>...                      a script command: the
-#       script haicc-<name> beside this one (sources, prereq)
+# haicc: the command, on Linux. The command itself is an app, run with Bare
+# (the package $APP_PACKAGE, its bundle in the sources); this script is the
+# first step: what has to work before Bare is on the machine, then the
+# app's start.
+#   haicc sources link <folder>     its own: a folder linked as a source
+#   haicc sources download bare     its own: Bare fetched over https
+#   haicc prereq [--check]          its own: what the app needs to start,
+#                                   checked; Bare put in place
+#   haicc --help                    its own commands said, then the app's
+#   haicc <anything else>           the app: <bare> <app's bundle> /run
+#                                   <anything else>. Not startable yet:
+#                                   what is missing said, exit 3
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 HAICC_HOME=${HAICC_HOME:-$(cd "$here/.." && pwd)}
 export HAICC_HOME
+. "$here/haicc-lib.sh"
 
 usage () {
   cat <<'USAGE'
-haicc <URI> <protocol>/<action> <argument>...   a command for the mrepos:
-                                                go to this node position and
-                                                execute the command that
-                                                follows; its response record
-                                                printed, unpacked across lines
-haicc --raw <URI> <protocol>/<action> ...       the record as it is stored,
-                                                one line
-haicc --output <URI> <protocol>/<action> ...    the completed form's output
-                                                alone
-haicc boot/deploy                               the machine level: the boot
-                                                mrepo put in place at the
-                                                root, its runtime started
-haicc boot/teardown                             every runtime stopped, what
-                                                boot/deploy put in place removed
-haicc sources                                   the sources registered
-haicc sources link <folder>                     a local folder linked as a source
-haicc sources unlink <folder>
-haicc sources download [<what>...]              fetched over https: bare,
-                                                third-party, <org>, <org>/<package>
-haicc sources https | no-https                  https as the backup, or not
-haicc prereq [--check]                          what a boot needs, checked and
-                                                put in place (--check: only checked)
-
-  haicc boot/deploy
-  haicc / boot/deploy host base-component-haicc
-  haicc /host service/initialise
-  haicc /host service/start
-  haicc /host boot/deploy node-1 base-package-runtime
-  haicc /host haicc /node-1 help/get /
-  haicc /host boot/teardown node-1
-  haicc / boot/teardown host
-  haicc boot/teardown
-
-Help in an mrepo: haicc / help/get /, haicc /host help/get /protocols
+Before anything else, Bare and the sources:
+haicc sources link <folder>                     a local folder linked as a
+                                                source: Bare's runtime and
+                                                the packages come from it
+haicc sources download bare                     Bare's runtime fetched over
+                                                https, checked against its pin
+haicc prereq [--check]                          what the command needs to
+                                                start, checked; Bare put in
+                                                place from the sources
+                                                (--check: only checked)
 USAGE
 }
 
+# The app, when it can be started: its bundle's path; else nothing.
+app () {
+  [ -x "$HAICC_BARE" ] || return 0
+  in_sources "$HAICC_ORG/$APP_PACKAGE.bundle"
+}
+# Is every part after the first one of bare, third-party (and one there)?
+only_bare () {
+  [ $# -gt 0 ] || return 1
+  for _w in "$@"; do case "$_w" in bare|third-party) ;; *) return 1 ;; esac; done
+}
+
 case "${1:-}" in
-  /*) exec sh "$here/haicc-request" "$@" ;;
-  --output|--raw)
-    if [ "$1" = --output ]; then HAICC_OUTPUT=1; export HAICC_OUTPUT; else HAICC_RAW=1; export HAICC_RAW; fi
-    option=$1; shift
-    case "${1:-}" in /*) exec sh "$here/haicc-request" "$@" ;; esac
-    echo "haicc: $option goes before a URI" >&2; exit 2 ;;
-  ''|help|--help|-h) usage; exit 0 ;;
+  prereq) shift; exec sh "$here/haicc-prereq" "$@" ;;
+  sources)
+    case "${2:-}" in
+      link) shift; exec sh "$here/haicc-sources" "$@" ;;
+      download) if (shift 2; only_bare "$@"); then shift; exec sh "$here/haicc-sources" "$@"; fi ;;
+    esac ;;
+  ''|help|--help|-h)
+    usage
+    bundle=$(app)
+    if [ -n "$bundle" ]; then echo; echo "Then:"; exec "$HAICC_BARE" "$bundle" /run --help; fi
+    echo
+    echo "Then, once haicc prereq says all is there: haicc --help says the rest."
+    exit 0 ;;
 esac
-name=$1; shift
-case "$name" in
-  # the machine level: <protocol>/<action>
-  */*)
-    protocol=${name%%/*}; action=${name#*/}
-    case "$protocol$action" in *[!a-z0-9-]*|'') echo "haicc: no command '$name' (haicc --help)" >&2; exit 2 ;; esac
-    [ -n "$protocol" ] && [ -n "$action" ] && [ -f "$here/haicc-$protocol" ] || { echo "haicc: no command '$name' (haicc --help)" >&2; exit 2; }
-    exec sh "$here/haicc-$protocol" "$action" "$@" ;;
-  *[!a-z0-9-]*|-*) echo "haicc: no command '$name' (haicc --help)" >&2; exit 2 ;;
-esac
-[ -f "$here/haicc-$name" ] || { echo "haicc: no command '$name' (haicc --help)" >&2; exit 2; }
-exec sh "$here/haicc-$name" "$@"
+bundle=$(app)
+if [ -z "$bundle" ]; then
+  sh "$here/haicc-prereq" --check | grep '^missing' >&2
+  fail "a prerequisite is missing: haicc prereq" 3
+fi
+exec "$HAICC_BARE" "$bundle" /run "$@"

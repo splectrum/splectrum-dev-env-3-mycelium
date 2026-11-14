@@ -1,0 +1,10 @@
+{
+  "description": "The package on its own, in a floating instance: its program run as a command line, and its help, its code, its mrepo side and its structure check without problems.",
+  "tests": [
+    "command",
+    "help",
+    "code",
+    "mrepo",
+    "package"
+  ]
+}

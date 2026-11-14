@@ -28,238 +28,81 @@ home=$(cd "$home" && pwd)
 bin=$(cd "$bin" && pwd)
 cat > "$home/bin/haicc" <<'HAICC_INSTALL_FILE_END'
 #!/bin/sh
-# haicc: the command. It only dispatches.
-#   haicc [--raw | --output] <URI> <protocol>/<action> <argument>...   an
-#       mrepo command: a URI starts with / (the local root), so a first part
-#       starting with / is a command for the mrepos; it goes to the boot
-#       mrepo's inbox (haicc-request). Its response record is printed
-#       unpacked, across lines. --raw: as it is stored, one line.
-#       --output: the completed form's output alone
-#   haicc <protocol>/<action> <argument>...          a command without a
-#       URI: the machine level, above the root mrepo, in the same form
-#       (boot/deploy, boot/teardown): the script haicc-<protocol>, its
-#       action its first argument
-#   haicc <name> <argument>...                      a script command: the
-#       script haicc-<name> beside this one (sources, prereq)
+# haicc: the command, on Linux. The command itself is an app, run with Bare
+# (the package $APP_PACKAGE, its bundle in the sources); this script is the
+# first step: what has to work before Bare is on the machine, then the
+# app's start.
+#   haicc sources link <folder>     its own: a folder linked as a source
+#   haicc sources download bare     its own: Bare fetched over https
+#   haicc prereq [--check]          its own: what the app needs to start,
+#                                   checked; Bare put in place
+#   haicc --help                    its own commands said, then the app's
+#   haicc <anything else>           the app: <bare> <app's bundle> /run
+#                                   <anything else>. Not startable yet:
+#                                   what is missing said, exit 3
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 HAICC_HOME=${HAICC_HOME:-$(cd "$here/.." && pwd)}
 export HAICC_HOME
+. "$here/haicc-lib.sh"
 
 usage () {
   cat <<'USAGE'
-haicc <URI> <protocol>/<action> <argument>...   a command for the mrepos:
-                                                go to this node position and
-                                                execute the command that
-                                                follows; its response record
-                                                printed, unpacked across lines
-haicc --raw <URI> <protocol>/<action> ...       the record as it is stored,
-                                                one line
-haicc --output <URI> <protocol>/<action> ...    the completed form's output
-                                                alone
-haicc boot/deploy                               the machine level: the boot
-                                                mrepo put in place at the
-                                                root, its runtime started
-haicc boot/teardown                             every runtime stopped, what
-                                                boot/deploy put in place removed
-haicc sources                                   the sources registered
-haicc sources link <folder>                     a local folder linked as a source
-haicc sources unlink <folder>
-haicc sources download [<what>...]              fetched over https: bare,
-                                                third-party, <org>, <org>/<package>
-haicc sources https | no-https                  https as the backup, or not
-haicc prereq [--check]                          what a boot needs, checked and
-                                                put in place (--check: only checked)
-
-  haicc boot/deploy
-  haicc / boot/deploy host base-component-haicc
-  haicc /host service/initialise
-  haicc /host service/start
-  haicc /host boot/deploy node-1 base-package-runtime
-  haicc /host haicc /node-1 help/get /
-  haicc /host boot/teardown node-1
-  haicc / boot/teardown host
-  haicc boot/teardown
-
-Help in an mrepo: haicc / help/get /, haicc /host help/get /protocols
+Before anything else, Bare and the sources:
+haicc sources link <folder>                     a local folder linked as a
+                                                source: Bare's runtime and
+                                                the packages come from it
+haicc sources download bare                     Bare's runtime fetched over
+                                                https, checked against its pin
+haicc prereq [--check]                          what the command needs to
+                                                start, checked; Bare put in
+                                                place from the sources
+                                                (--check: only checked)
 USAGE
 }
 
+# The app, when it can be started: its bundle's path; else nothing.
+app () {
+  [ -x "$HAICC_BARE" ] || return 0
+  in_sources "$HAICC_ORG/$APP_PACKAGE.bundle"
+}
+# Is every part after the first one of bare, third-party (and one there)?
+only_bare () {
+  [ $# -gt 0 ] || return 1
+  for _w in "$@"; do case "$_w" in bare|third-party) ;; *) return 1 ;; esac; done
+}
+
 case "${1:-}" in
-  /*) exec sh "$here/haicc-request" "$@" ;;
-  --output|--raw)
-    if [ "$1" = --output ]; then HAICC_OUTPUT=1; export HAICC_OUTPUT; else HAICC_RAW=1; export HAICC_RAW; fi
-    option=$1; shift
-    case "${1:-}" in /*) exec sh "$here/haicc-request" "$@" ;; esac
-    echo "haicc: $option goes before a URI" >&2; exit 2 ;;
-  ''|help|--help|-h) usage; exit 0 ;;
+  prereq) shift; exec sh "$here/haicc-prereq" "$@" ;;
+  sources)
+    case "${2:-}" in
+      link) shift; exec sh "$here/haicc-sources" "$@" ;;
+      download) if (shift 2; only_bare "$@"); then shift; exec sh "$here/haicc-sources" "$@"; fi ;;
+    esac ;;
+  ''|help|--help|-h)
+    usage
+    bundle=$(app)
+    if [ -n "$bundle" ]; then echo; echo "Then:"; exec "$HAICC_BARE" "$bundle" /run --help; fi
+    echo
+    echo "Then, once haicc prereq says all is there: haicc --help says the rest."
+    exit 0 ;;
 esac
-name=$1; shift
-case "$name" in
-  # the machine level: <protocol>/<action>
-  */*)
-    protocol=${name%%/*}; action=${name#*/}
-    case "$protocol$action" in *[!a-z0-9-]*|'') echo "haicc: no command '$name' (haicc --help)" >&2; exit 2 ;; esac
-    [ -n "$protocol" ] && [ -n "$action" ] && [ -f "$here/haicc-$protocol" ] || { echo "haicc: no command '$name' (haicc --help)" >&2; exit 2; }
-    exec sh "$here/haicc-$protocol" "$action" "$@" ;;
-  *[!a-z0-9-]*|-*) echo "haicc: no command '$name' (haicc --help)" >&2; exit 2 ;;
-esac
-[ -f "$here/haicc-$name" ] || { echo "haicc: no command '$name' (haicc --help)" >&2; exit 2; }
-exec sh "$here/haicc-$name" "$@"
-HAICC_INSTALL_FILE_END
-cat > "$home/bin/haicc-boot" <<'HAICC_INSTALL_FILE_END'
-#!/bin/sh
-# haicc boot/<action>: the machine level, above the root mrepo.
-#   haicc boot/deploy     the boot mrepo put in place at the root, its
-#       runtime started. The boot package's bundle, from the sources, run
-#       with the Bare put in place: it builds the boot mrepo the first time,
-#       places its packages and starts its runtime (already there: kept,
-#       its runtime started again where it was stopped). Nothing is
-#       deployed by it: commands come next (haicc / boot/deploy host
-#       base-component-haicc). The prerequisites are checked first, never
-#       fetched or fixed here: one missing stops it (exit 3), pointing to
-#       haicc prereq. What the boot prints: its request, completed (a
-#       record), then its runtime's status. Exit: the boot's own.
-#   haicc boot/teardown   the undo of boot/deploy: every runtime under the
-#       work folder stopped (the boot mrepo's and those of every mrepo
-#       deployed below it), then what boot/deploy put in place removed: the
-#       mrepos, the package store, the work folder's setting. Bare, the
-#       sources and the scripts stay (haicc prereq, haicc sources). No boot
-#       mrepo there: exit 3.
-set -u
-. "$(dirname "$0")/haicc-lib.sh"
-action=${1:-}
-[ $# -gt 0 ] && shift
-[ $# -eq 0 ] || fail "haicc boot/$action (no arguments)" 2
-
-# The runtimes running under the work folder: their process ids. A runtime
-# is Bare running an mrepo's own runtime bundle, by the mrepo's folder.
-runtimes () {
-  for p in /proc/[0-9]*; do
-    [ -r "$p/cmdline" ] || continue
-    case "$(tr '\0' ' ' < "$p/cmdline" 2>/dev/null)" in
-      *"/packages/$HAICC_ORG/base-package-runtime.bundle $HAICC_WORK/mrepos/"*) printf '%s\n' "${p#/proc/}" ;;
-    esac
-  done
-}
-
-case "$action" in
-  deploy)
-    if ! out=$(sh "$(dirname "$0")/haicc-prereq" --check); then
-      printf '%s\n' "$out" | grep '^missing' >&2
-      fail "a prerequisite is missing: haicc prereq" 3
-    fi
-    bundle=$(in_sources "$HAICC_ORG/$BOOT_PACKAGE.bundle")
-    # the sources, in order, as the boot takes them
-    set --
-    while IFS= read -r s; do
-      [ -n "$s" ] && set -- "$@" "--sources=$s"
-    done <<LIST
-$(sources)
-LIST
-    exec "$HAICC_BARE" "$bundle" "--work=$HAICC_WORK" "$@" --no-follow ;;
-  teardown)
-    [ -d "$HAICC_ROOT" ] || fail "no boot mrepo at $HAICC_WORK (nothing to tear down)" 3
-    n=0
-    for pid in $(runtimes); do kill "$pid" 2>/dev/null && n=$((n + 1)); done
-    i=0
-    while [ -n "$(runtimes)" ] && [ "$i" -lt 100 ]; do sleep 0.1 2>/dev/null || sleep 1; i=$((i + 1)); done
-    for pid in $(runtimes); do kill -9 "$pid" 2>/dev/null; done
-    [ -z "$(runtimes)" ] || fail "a runtime under $HAICC_WORK did not stop" 1
-    # what boot/deploy put in place, by name: nothing else in the work folder
-    rm -rf "$HAICC_WORK/mrepos" "$HAICC_WORK/packages" "$HAICC_WORK/mrepo.json"
-    printf '{"tornDown":"/","runtimes":%s,"work":"%s"}\n' "$n" "$HAICC_WORK" ;;
-  '')
-    fail "haicc boot/deploy, haicc boot/teardown" 2 ;;
-  *)
-    fail "no action: boot $action (deploy, teardown)" 2 ;;
-esac
-HAICC_INSTALL_FILE_END
-cat > "$home/bin/haicc-format.awk" <<'HAICC_INSTALL_FILE_END'
-# haicc-format.awk: a record printed unpacked, across lines, in a compact
-# form. A container (an object, an array) that fits on the line is left as
-# it is stored; one that does not is opened: an entry a line, indented by
-# two, and so on inside it. Nothing of the record is changed: only line
-# breaks, indentation, and a space after the colon of an opened object's
-# keys are added.
-#   awk -f haicc-format.awk [-v width=<columns>] <record.json>     (80)
-function vend (i,    c, j, e) {
-  c = substr(s, i, 1)
-  if (c == "{" || c == "[") return shut[i]
-  if (c == "\"") {
-    e = 0
-    for (j = i + 1; j <= n; j++) {
-      c = substr(s, j, 1)
-      if (e) e = 0
-      else if (c == "\\") e = 1
-      else if (c == "\"") return j
-    }
-    return n
-  }
-  for (j = i; j <= n; j++) {
-    c = substr(s, j, 1)
-    if (c == "," || c == "}" || c == "]") return j - 1
-  }
-  return n
-}
-function skip (i) { while (i <= n && substr(s, i, 1) ~ /[ \t\n]/) i++; return i }
-function pad (k,    r) { r = ""; while (k-- > 0) r = r " "; return r }
-# The value at i..e printed: ind the indentation of the line it is on, col
-# the column it starts at.
-function emit (i, e, ind, col,    c, p, k, ke, v, ve, key) {
-  c = substr(s, i, 1)
-  if ((c != "{" && c != "[") || e - i + 1 + col <= width || e == i + 1) { printf "%s", substr(s, i, e - i + 1); return }
-  printf "%s\n", c
-  p = skip(i + 1)
-  while (p < e) {
-    printf "%s", pad(ind + 2)
-    if (c == "{") {
-      ke = vend(p); key = substr(s, p, ke - p + 1)
-      v = skip(ke + 1); v = skip(v + 1)          # past the colon
-      printf "%s: ", key
-      ve = vend(v)
-      emit(v, ve, ind + 2, ind + 2 + length(key) + 2)
-    } else {
-      v = p; ve = vend(v)
-      emit(v, ve, ind + 2, ind + 2)
-    }
-    p = skip(ve + 1)
-    if (substr(s, p, 1) == ",") { printf ",\n"; p = skip(p + 1) } else printf "\n"
-  }
-  printf "%s%s", pad(ind), substr(s, e, 1)
-}
-{ s = s $0 }
-END {
-  if (!width) width = 80
-  n = length(s); sp = 0; instr = 0; esc = 0
-  # the matching end of each container (strings passed over)
-  for (i = 1; i <= n; i++) {
-    c = substr(s, i, 1)
-    if (instr) { if (esc) esc = 0; else if (c == "\\") esc = 1; else if (c == "\"") instr = 0; continue }
-    if (c == "\"") instr = 1
-    else if (c == "{" || c == "[") stack[++sp] = i
-    else if (c == "}" || c == "]") { shut[stack[sp]] = i; sp-- }
-  }
-  i = skip(1)
-  if (i > n) exit 0
-  emit(i, vend(i), 0, 0)
-  printf "\n"
-}
+bundle=$(app)
+if [ -z "$bundle" ]; then
+  sh "$here/haicc-prereq" --check | grep '^missing' >&2
+  fail "a prerequisite is missing: haicc prereq" 3
+fi
+exec "$HAICC_BARE" "$bundle" /run "$@"
 HAICC_INSTALL_FILE_END
 cat > "$home/bin/haicc-lib.sh" <<'HAICC_INSTALL_FILE_END'
 # haicc-lib.sh: what the haicc scripts share; sourced, never run.
 #   HAICC_HOME   haicc's own folder: bin/, pins, sources.list, sources/, bare/
-#   HAICC_WORK   the work folder: the boot mrepo and its package store
-#                ($HAICC_HOME/work unless given)
-# The pins (the pinned Bare, the organisation, the root mrepo) come from
+# The pins (the pinned Bare, the organisation, the app) come from
 # $HAICC_HOME/pins.
 HAICC_HOME=${HAICC_HOME:-$(cd "$(dirname "$0")/.." && pwd)}
-HAICC_WORK=${HAICC_WORK:-$HAICC_HOME/work}
 . "$HAICC_HOME/pins"
 HAICC_LIST=$HAICC_HOME/sources.list
 HAICC_BARE=$HAICC_HOME/bare/bin/bare
-# the boot mrepo: the root, where every command goes in
-HAICC_ROOT=$HAICC_WORK/mrepos/$ROOT_NAME
 
 fail () { printf 'haicc: %s\n' "$1" >&2; exit "${2:-1}"; }
 
@@ -288,16 +131,16 @@ platform () {
 HAICC_INSTALL_FILE_END
 cat > "$home/bin/haicc-prereq" <<'HAICC_INSTALL_FILE_END'
 #!/bin/sh
-# haicc prereq: what a boot needs, checked, and put in place where it is
-# missing. Nothing is fetched: Bare is unpacked from the sources.
+# haicc prereq: what the command needs to start, checked, and put in place
+# where it is missing. Nothing is fetched: Bare is unpacked from the sources.
 #   haicc prereq           checked; Bare put in place from the sources
 #   haicc prereq --check   checked only, nothing changed
 # A line a prerequisite: ok, or missing with how to get it. Exit 0 when all
 # are there, 3 when one is missing.
 #   platform   this machine's, the one the pinned Bare is for
 #   tools      what the scripts use: tar, sha512sum
-#   work       the work folder: can be made and written
-#   sources    a folder registered that holds the boot package
+#   sources    a folder registered that holds the app: its bundle, with its
+#              organisation's manifest
 #   bare       the pinned Bare, in haicc's folder, as pinned (its tarball's
 #              sha512 recorded beside it)
 set -u
@@ -319,17 +162,10 @@ for t in tar sha512sum; do
   if command -v "$t" >/dev/null 2>&1; then ok "tool: $t"; else miss "tool: $t (install it)"; fi
 done
 
-# work
-if [ "$check" = yes ]; then
-  w=$HAICC_WORK; while [ ! -e "$w" ] && [ "$w" != / ] && [ "$w" != . ]; do w=$(dirname "$w"); done
-  if [ -d "$w" ] && [ -w "$w" ]; then ok "work: $HAICC_WORK"; else miss "work: $HAICC_WORK cannot be written"; fi
-elif mkdir -p "$HAICC_WORK" 2>/dev/null && [ -w "$HAICC_WORK" ]; then ok "work: $HAICC_WORK"
-else miss "work: $HAICC_WORK cannot be written"; fi
-
 # sources
-boot=$(in_sources "$HAICC_ORG/$BOOT_PACKAGE.bundle")
-if [ -n "$boot" ] && [ -f "$(dirname "$boot")/manifest.json" ]; then ok "sources: $(dirname "$(dirname "$boot")")"
-else miss "sources: no folder registered holds $HAICC_ORG/$BOOT_PACKAGE.bundle (haicc sources link <folder>)"; fi
+app=$(in_sources "$HAICC_ORG/$APP_PACKAGE.bundle")
+if [ -n "$app" ] && [ -f "$(dirname "$app")/manifest.json" ]; then ok "sources: $(dirname "$(dirname "$app")")"
+else miss "sources: no folder registered holds $HAICC_ORG/$APP_PACKAGE.bundle (haicc sources link <folder>)"; fi
 
 # bare
 if [ -x "$HAICC_BARE" ] && [ -f "$HAICC_HOME/bare/tarball.sha512" ] && [ "$(cat "$HAICC_HOME/bare/tarball.sha512")" = "$BARE_SHA512" ]; then
@@ -355,155 +191,22 @@ fi
 
 [ "$missing" -eq 0 ] || exit 3
 HAICC_INSTALL_FILE_END
-cat > "$home/bin/haicc-request" <<'HAICC_INSTALL_FILE_END'
-#!/bin/sh
-# haicc <URI> <protocol>/<action> <argument>...: a command for the mrepos.
-# Go to this node position and execute the command that follows. A record is
-# written into the boot mrepo's inbox folder, its response waited for in its
-# outbox folder and printed.
-# There is no mrepo context at the command line, so one rule of its own:
-#   at the root    the command is written plain:
-#                    haicc / boot/deploy host x   ->  boot/deploy host x
-#                  (the mrepo joins the name to the position: /host)
-#   anywhere else  the haicc command is written as it is; the boot mrepo
-#                  resolves the position:
-#                    haicc /host service/start    ->  haicc /host service/start
-# The parts go as typed, unnamed; the mrepo interprets them.
-# Prints the response record whole, unpacked across lines in a compact form
-# (haicc-format.awk: nothing of it changed); exit 0 when its completed form
-# holds an output, 1 an error (also said on stderr).
-#   HAICC_TIMEOUT   seconds to wait for the response (120); none in time:
-#                   exit 4 (the request stays; its key is said)
-#   HAICC_RAW=1     the record printed as it is in the outbox folder, one
-#                   line (haicc --raw)
-#   HAICC_OUTPUT=1  the completed form's output alone printed, not the
-#                   record (haicc --output)
-#   HAICC_WIDTH     the width the unpacked record is fitted to (80)
-set -u
-. "$(dirname "$0")/haicc-lib.sh"
-[ $# -ge 2 ] || fail "haicc <URI> <protocol>/<action> <argument>... (a command follows the URI)" 2
-[ -d "$HAICC_ROOT/inbox" ] || fail "no boot mrepo at $HAICC_WORK (haicc boot/deploy)" 3
-
-uri=$1; shift
-if [ "$uri" = / ]; then :; else set -- haicc "$uri" "$@"; fi
-
-# A part as a JSON string.
-tab=$(printf '\t')
-json_string () {
-  case "$1" in *"
-"*) fail "an argument with a line break cannot be sent" 2 ;; esac
-  printf '"%s"' "$(printf '%s' "$1" | tr -d '\001-\010\013\014\016-\037' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e "s/$tab/\\\\t/g")"
-}
-parts=''
-for p in "$@"; do
-  parts="$parts${parts:+,}$(json_string "$p")"
-done
-
-if [ -r /proc/sys/kernel/random/uuid ]; then key=$(cat /proc/sys/kernel/random/uuid)
-elif command -v uuidgen >/dev/null 2>&1; then key=$(uuidgen | tr 'A-Z' 'a-z')
-else fail "no way to make a key (no /proc/sys/kernel/random/uuid, no uuidgen)" 3; fi
-now=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
-
-# The record: the command, in its core (where the completed form goes back:
-# the terminal), in an envelope addressed to the root's inbox. Written
-# whole, then renamed into place: the runtime never sees half of one.
-file=$HAICC_ROOT/inbox/$key.json
-printf '{"topic":"/%s/inbox","key":"%s","timestamp":"%s","headers":{},"value":{"topic":"/haicc/terminal","key":"%s","timestamp":"%s","headers":{},"value":[%s]}}\n' \
-  "$ROOT_URI" "$key" "$now" "$key" "$now" "$parts" > "$file.part" || fail "could not write into $HAICC_ROOT/inbox" 3
-mv "$file.part" "$file"
-
-# Its response: the completed form, in the outbox folder under the same key.
-back=$HAICC_ROOT/outbox/$key.json
-limit=${HAICC_TIMEOUT:-120}
-waited=0
-while [ ! -f "$back" ]; do
-  [ "$waited" -lt $((limit * 5)) ] || fail "no response in $limit s (the request stays: $key)" 4
-  sleep 0.2 2>/dev/null || sleep 1
-  waited=$((waited + 1))
-done
-if [ "${HAICC_OUTPUT:-}" = 1 ]; then quiet=''
-elif [ "${HAICC_RAW:-}" = 1 ]; then quiet=1; cat "$back"
-else quiet=1; awk -f "$(dirname "$0")/haicc-format.awk" -v width="${HAICC_WIDTH:-80}" "$back"
-fi
-awk -f "$(dirname "$0")/haicc-response.awk" -v quiet="$quiet" "$back"
-HAICC_INSTALL_FILE_END
-cat > "$home/bin/haicc-response.awk" <<'HAICC_INSTALL_FILE_END'
-# haicc-response.awk: a response record read, its completed form's output or
-# error found. The record is JSON: an envelope around a core around the form,
-# so the form's own keys are three objects deep. Its output is printed as it
-# is (JSON), exit 0; its error, a string, on stderr, exit 1; neither: exit 5.
-# A scanner, not a parser: it follows strings and depth, nothing more.
-#   awk -f haicc-response.awk [-v quiet=1] <record.json>     (quiet: the
-#       output not printed, only the exit code and the error)
-{ s = s $0 "\n" }
-END {
-  n = length(s); depth = 0; instr = 0; esc = 0; expect = 0; readkey = 0; gotkey = 0; cap = 0
-  key = ""; cur = ""; val = ""
-  for (i = 1; i <= n; i++) {
-    c = substr(s, i, 1)
-    if (instr) {
-      if (cap) val = val c
-      if (esc) { esc = 0; if (readkey) cur = cur c; continue }
-      if (c == "\\") { esc = 1; if (readkey) cur = cur c; continue }
-      if (c == "\"") { instr = 0; if (readkey) { key = cur; readkey = 0; gotkey = 1 }; continue }
-      if (readkey) cur = cur c
-      continue
-    }
-    if (c == "\"") {
-      instr = 1
-      if (cap) val = val c
-      else if (depth == 3 && expect) { readkey = 1; cur = ""; expect = 0 }
-      continue
-    }
-    if (cap) {
-      if (depth == 3 && (c == "," || c == "}")) { out[key] = val; has[key] = 1; cap = 0; val = "" }
-      else val = val c
-    }
-    if (c == "{" || c == "[") {
-      depth++
-      # a new object three deep: the form is the last of them
-      if (c == "{" && depth == 3) { expect = 1; delete has["output"]; delete has["error"] }
-    } else if (c == "}" || c == "]") depth--
-    else if (c == "," && depth == 3) expect = 1
-    else if (c == ":" && depth == 3 && gotkey) {
-      gotkey = 0
-      if (key == "output" || key == "error") { cap = 1; val = "" }
-    }
-  }
-  if ("error" in has) {
-    e = out["error"]
-    gsub(/^[ \t\n]+|[ \t\n]+$/, "", e)
-    sub(/^"/, "", e); sub(/"$/, "", e)
-    gsub(/\\"/, "\"", e); gsub(/\\n/, " ", e); gsub(/\\\\/, "\\", e)
-    print "haicc: " e > "/dev/stderr"
-    exit 1
-  }
-  if ("output" in has) {
-    o = out["output"]
-    gsub(/^[ \t\n]+|[ \t\n]+$/, "", o)
-    if (!quiet) print o
-    exit 0
-  }
-  print "haicc: the response holds no completed form" > "/dev/stderr"
-  exit 5
-}
-HAICC_INSTALL_FILE_END
 cat > "$home/bin/haicc-sources" <<'HAICC_INSTALL_FILE_END'
 #!/bin/sh
-# haicc sources: where packages and third-party components come from.
-#   haicc sources                     the sources registered, in order
+# haicc sources, the part that has to work before Bare is on the machine:
+# where Bare's runtime and the app come from. The other actions (the list,
+# unlink, https, no-https, the download of packages) are the app's.
 #   haicc sources link <folder>       a local folder linked as a source (not
 #                                     copied): our packages (<org>/<package>
 #                                     .bundle, <org>/manifest.json, addons/)
 #                                     and the third-party components
-#   haicc sources unlink <folder>
-#   haicc sources download [<what>...]  fetched over https into haicc's own
-#                                     sources folder, each checked against
-#                                     its pin: bare, third-party, <org>,
-#                                     <org>/<package>; nothing named: all
-#   haicc sources https | no-https    https as the backup for what is not in
-#                                     the folders (the default), or not
-# This is the only haicc command that reaches the network.
+#   haicc sources download bare       Bare's runtime fetched over https into
+#                                     haicc's own sources folder, checked
+#                                     against its pin; that folder linked
+#                                     (third-party: the same)
+# The list is the app's too: $HAICC_HOME/sources.list, a line a source,
+# folder:<path> or github:<org>. This is the only script that reaches the
+# network.
 set -u
 . "$(dirname "$0")/haicc-lib.sh"
 own=$HAICC_HOME/sources
@@ -511,11 +214,6 @@ own=$HAICC_HOME/sources
 register () {
   sources | grep -Fxq "$1" && return 0
   printf '%s\n' "$1" >> "$HAICC_LIST"
-}
-unregister () {
-  [ -f "$HAICC_LIST" ] || return 0
-  grep -Fxv "$1" "$HAICC_LIST" > "$HAICC_LIST.part" || true
-  mv "$HAICC_LIST.part" "$HAICC_LIST"
 }
 
 download_bare () {
@@ -530,44 +228,25 @@ download_bare () {
   echo "bare: downloaded, as pinned ($BARE_VERSION)"
 }
 
-cmd=${1:-list}
+cmd=${1:-}
 [ $# -gt 0 ] && shift
 case "$cmd" in
-  list)
-    sources ;;
   link)
     [ $# -eq 1 ] || fail "haicc sources link <folder>" 2
     [ -d "$1" ] || fail "no folder: $1" 2
     register "folder:$(cd "$1" && pwd)"
     sources ;;
-  unlink)
-    [ $# -eq 1 ] || fail "haicc sources unlink <folder>" 2
-    if [ -d "$1" ]; then unregister "folder:$(cd "$1" && pwd)"; else unregister "folder:$1"; fi
-    sources ;;
-  https)
-    register "github:$HAICC_ORG"; sources ;;
-  no-https)
-    unregister "github:$HAICC_ORG"; sources ;;
   download)
-    [ $# -gt 0 ] || set -- third-party "$HAICC_ORG"
-    missed=0
+    [ $# -gt 0 ] || fail "haicc sources download bare" 2
     for what in "$@"; do
       case "$what" in
-        bare|third-party)
-          download_bare; register "folder:$own" ;;
-        "$HAICC_ORG"|"$HAICC_ORG"/*)
-          # Our packages are not published anywhere yet (release and
-          # sourcing: signed bundles and their manifest, to come).
-          echo "haicc: $what: not published yet; link a sources folder (haicc sources link <folder>)" >&2
-          missed=1 ;;
-        *)
-          echo "haicc: nothing to download for '$what' (bare, third-party, $HAICC_ORG, $HAICC_ORG/<package>)" >&2
-          missed=1 ;;
+        bare|third-party) ;;
+        *) fail "haicc sources download bare" 2 ;;
       esac
     done
-    [ "$missed" -eq 0 ] || exit 3 ;;
+    download_bare; register "folder:$own" ;;
   *)
-    fail "haicc sources [link <folder> | unlink <folder> | download [<what>...] | https | no-https]" 2 ;;
+    fail "haicc sources link <folder>, haicc sources download bare" 2 ;;
 esac
 HAICC_INSTALL_FILE_END
 cat > "$home/pins" <<'HAICC_INSTALL_FILE_END'
@@ -579,12 +258,10 @@ BARE_PLATFORM=linux-x64
 BARE_FILE=holepunchto/bare-runtime-linux-x64-1.36.0.tgz
 BARE_URL=https://registry.npmjs.org/bare-runtime-linux-x64/-/bare-runtime-linux-x64-1.36.0.tgz
 BARE_SHA512=3c1cb0a7b58e3408eeaac29ce153ea966af7dc88f8ba06cd3ddff1c3693020ee8ec6c5a1453dedd8790786fc928dac6aed1e850f26de73f7ef796d04701a4a41
-# Ours: the organisation, the boot component, the root mrepo (the boot mrepo:
-# its name, its unique URI).
+# Ours: the organisation, and the app the command is: its package, run
+# with Bare from its bundle in the sources.
 HAICC_ORG=haiccing
-BOOT_PACKAGE=base-component-boot
-ROOT_NAME=boot
-ROOT_URI=local/boot
+APP_PACKAGE=base-app-haicc
 HAICC_INSTALL_FILE_END
 chmod +x "$home/bin/haicc"
 . "$home/pins"

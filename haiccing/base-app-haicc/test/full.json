@@ -1,0 +1,11 @@
+{
+  "description": "Every test: the package's, and the modules' own (the code it carries).",
+  "tests": [
+    "command",
+    "help",
+    "code",
+    "mrepo",
+    "package",
+    "modules"
+  ]
+}

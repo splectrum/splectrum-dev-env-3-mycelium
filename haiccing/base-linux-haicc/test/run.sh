@@ -5,8 +5,8 @@
 #   sh test/run.sh [--keep]
 #     --keep    the temporary folder and its runtimes left as they are, to
 #               inspect (its path printed)
-#   SOURCES     the sources folder it links: the packages' bundles and
-#               Bare's tarball (the development repository's sources/, built
+#   SOURCES     the sources folder it links: the packages' bundles (the
+#               app's among them) and Bare's tarball (the development repository's sources/, built
 #               by tools/release.js); else ../../../sources from here;
 #               without one: skipped
 # One line a check (ok, not ok), the count last; exit 0 passed, 1 failed.
@@ -17,7 +17,7 @@ keep=no
 [ "${1:-}" = --keep ] && keep=yes
 . "$pkg/pins"
 SOURCES=${SOURCES:-$pkg/../../sources}
-for f in "$HAICC_ORG/$BOOT_PACKAGE.bundle" "$HAICC_ORG/base-component-haicc.bundle" "$HAICC_ORG/manifest.json" "$BARE_FILE"; do
+for f in "$HAICC_ORG/$APP_PACKAGE.bundle" "$HAICC_ORG/base-component-boot.bundle" "$HAICC_ORG/base-component-haicc.bundle" "$HAICC_ORG/manifest.json" "$BARE_FILE"; do
   [ -f "$SOURCES/$f" ] || { echo "skipped: no $f in $SOURCES (SOURCES: a sources folder)"; exit 0; }
 done
 SOURCES=$(cd "$SOURCES" && pwd)
@@ -50,39 +50,27 @@ PATH=$T/bin:$PATH; export PATH
 unset HAICC_HOME HAICC_WORK HAICC_OUTPUT HAICC_RAW HAICC_WIDTH 2>/dev/null
 HAICC_TIMEOUT=180; export HAICC_TIMEOUT
 
-# 2. the dispatcher
+# 2. before Bare is there: the first step's own commands, in sh; anything
+# else is the app's, and says what is missing
 out=$(haicc --help); is $? 0 "haicc --help"
 has "$out" "haicc sources link <folder>" "its usage: the script commands and the form of an mrepo command"
-haicc nosuch >/dev/null 2>&1; is $? 2 "no such script command: exit 2"
-out=$(haicc / 2>&1); is $? 2 "a URI with no command after it: exit 2"
-out=$(haicc boot 2>&1); is $? 2 "haicc boot alone: exit 2 (the machine level is boot/deploy, boot/teardown)"
-has "$out" "haicc boot/deploy, haicc boot/teardown" "said"
-haicc boot/nosuch >/dev/null 2>&1; is $? 2 "no such action at the machine level: exit 2"
-out=$(haicc --output 2>&1); is $? 2 "haicc --output without a URI: exit 2"
-out=$(haicc --raw 2>&1); is $? 2 "haicc --raw without a URI: exit 2"
+has "$out" "once haicc prereq says all is there" "before Bare: the first step's commands, the rest pointed to"
 
 # 3. nothing there yet: the prerequisites say what is missing; no boot
-is "$(haicc sources)" "github:$HAICC_ORG" "the sources at first: https, the backup, by default"
+is "$(cat "$T/home/sources.list")" "github:$HAICC_ORG" "the sources at first: https, the backup, by default"
 out=$(haicc prereq --check); is $? 3 "haicc prereq --check, nothing linked: exit 3"
 has "$out" "missing  sources:" "the sources missing, said"
 has "$out" "missing  bare:" "Bare missing, said"
 out=$(haicc boot/deploy 2>&1); is $? 3 "haicc boot/deploy without its prerequisites: exit 3, pointing to haicc prereq"
-haicc boot/teardown >/dev/null 2>&1; is $? 3 "haicc boot/teardown with no boot mrepo: exit 3"
+has "$out" "haicc: a prerequisite is missing: haicc prereq" "said, with what is missing"
 [ ! -e "$T/home/work/mrepos" ] && ok "nothing written" || no "nothing written"
-out=$(haicc /host service/start 2>&1); is $? 3 "an mrepo command before the boot: exit 3"
-has "$out" "no boot mrepo" "said: no boot mrepo (haicc boot/deploy)"
+haicc sources >/dev/null 2>&1; is $? 3 "the app's other commands the same: haicc sources, exit 3"
 
-# 4. the sources
+# 4. the sources: a folder linked, in sh (Bare and the app come from it)
 out=$(haicc sources link "$SOURCES")
 is "$out" "folder:$SOURCES
 github:$HAICC_ORG" "haicc sources link <folder>: the folder first, https the backup after it"
-is "$(haicc sources no-https)" "folder:$SOURCES" "haicc sources no-https: the backup off"
-haicc sources https >/dev/null; haicc sources link "$SOURCES" >/dev/null
-is "$(haicc sources | wc -l | tr -d ' ')" 2 "https back on; a folder linked twice is listed once"
 haicc sources link "$T/nowhere" >/dev/null 2>&1; is $? 2 "a folder that is not there: not linked"
-out=$(haicc sources download "$HAICC_ORG" 2>&1); is $? 3 "haicc sources download $HAICC_ORG: our packages are not published yet, exit 3"
-has "$out" "not published yet" "said"
-haicc sources download nosuch >/dev/null 2>&1; is $? 3 "nothing to download by that name: exit 3"
 
 # 5. the prerequisites: Bare unpacked from the sources, as pinned
 out=$(haicc prereq --check); is $? 3 "haicc prereq --check: Bare not in place yet, nothing changed"
@@ -93,6 +81,28 @@ is "$("$T/home/bare/bin/bare" --version 2>/dev/null)" "v$BARE_VERSION" "the pinn
 is "$(cat "$T/home/bare/tarball.sha512")" "$BARE_SHA512" "its tarball's sha512 recorded: the pin"
 out=$(haicc prereq --check); is $? 0 "haicc prereq --check: all there now"
 has "$out" "ok       bare: $BARE_VERSION, as pinned" "Bare there, as pinned: kept"
+
+# from here the command is the app, run with the Bare just put in place
+out=$(haicc --help); is $? 0 "haicc --help, Bare there"
+has "$out" "haicc sources link <folder>" "the usage whole: the first step's commands"
+has "$out" "haicc <URI> <protocol>/<action> <argument>..." "and the app's: the form of an mrepo command"
+haicc nosuch >/dev/null 2>&1; is $? 2 "no such script command: exit 2"
+out=$(haicc / 2>&1); is $? 2 "a URI with no command after it: exit 2"
+out=$(haicc boot 2>&1); is $? 2 "haicc boot alone: exit 2 (the machine level is boot/deploy, boot/teardown)"
+has "$out" "haicc boot/deploy, haicc boot/teardown" "said"
+haicc boot/nosuch >/dev/null 2>&1; is $? 2 "no such action at the machine level: exit 2"
+out=$(haicc --output 2>&1); is $? 2 "haicc --output without a URI: exit 2"
+out=$(haicc --raw 2>&1); is $? 2 "haicc --raw without a URI: exit 2"
+haicc boot/teardown >/dev/null 2>&1; is $? 3 "haicc boot/teardown with no boot mrepo: exit 3"
+out=$(haicc /host service/start 2>&1); is $? 3 "an mrepo command before the boot: exit 3"
+has "$out" "no boot mrepo" "said: no boot mrepo (haicc boot/deploy)"
+[ ! -e "$T/home/work/mrepos" ] && ok "nothing written by any of it" || no "nothing written by any of it"
+is "$(haicc sources no-https)" "folder:$SOURCES" "haicc sources no-https: the backup off"
+haicc sources https >/dev/null; haicc sources link "$SOURCES" >/dev/null
+is "$(haicc sources | wc -l | tr -d ' ')" 2 "https back on; a folder linked twice is listed once"
+out=$(haicc sources download "$HAICC_ORG" 2>&1); is $? 3 "haicc sources download $HAICC_ORG: our packages are not published yet, exit 3"
+has "$out" "not published yet" "said"
+haicc sources download nosuch >/dev/null 2>&1; is $? 3 "nothing to download by that name: exit 3"
 
 # 6. the boot: the boot mrepo at the root, its runtime started, nothing deployed
 out=$(haicc boot/deploy 2>&1); is $? 0 "haicc boot/deploy"
@@ -114,15 +124,18 @@ has "$out" '    "topic": "/haicc/terminal",' "across lines, an entry a line, ind
 has "$out" '      "protocol": "help",' "the form three deep"
 [ "$(printf '%s\n' "$out" | wc -l | tr -d ' ')" -gt 10 ] && ok "many lines" || no "many lines" "$out"
 out=$(haicc /host help/get / 2>&1 >/dev/null); is "$out" "haicc: no help extracted in this mrepo yet (help/extract)" "the host, booted: help active from boot, extracted by its initialise hook, not yet"
-# nothing of a record changed by the unpacking: line breaks, indentation and
-# the space after an opened object's keys taken off again, it is the record
-for f in "$T"/home/work/mrepos/boot/outbox/*.json; do
-  case "$f" in */layer.json) continue ;; esac
-  back=$(awk -f "$T/home/bin/haicc-format.awk" "$f" | sed -e 's/^ *//' -e 's/\([^\\]\)": /\1":/g' | tr -d '\n')
-  [ "$back" = "$(cat "$f")" ] || { no "unpacked and packed again: the record as stored" "$f"; back=''; break; }
+# nothing of a record changed by the unpacking: what is printed, its line
+# breaks, indentation and the space after an opened object's keys taken off
+# again, is the record as it is stored in the outbox (an output, an error)
+back=yes
+for c in "/ help/get / oneliner" "/ help/get /packages oneliner" "/ boot/deploy host base-component-haicc"; do
+  out=$(haicc $c 2>/dev/null)
+  key=$(printf '%s\n' "$out" | sed -n 's/^  "key": "\(.*\)",$/\1/p')
+  packed=$(printf '%s\n' "$out" | sed -e 's/^ *//' -e 's/\([^\\]\)": /\1":/g' | tr -d '\n')
+  [ -n "$key" ] && [ "$packed" = "$(cat "$T/home/work/mrepos/boot/outbox/$key.json")" ] || { no "unpacked and packed again: the record as stored" "haicc $c"; back=''; break; }
 done
 [ -z "$back" ] || ok "unpacked and packed again: every record in the outbox as stored"
-is "$(awk -f "$T/home/bin/haicc-format.awk" -v width=1000 "$f" | wc -l | tr -d ' ')" 1 "a record that fits the width: left on one line"
+is "$(HAICC_WIDTH=100000 haicc / help/get / oneliner | wc -l | tr -d ' ')" 1 "a record that fits the width: left on one line"
 out=$(haicc / boot/deploy host base-component-haicc 2>&1 >/dev/null); is $? 1 "deployed again: exit 1"
 is "$out" "haicc: deployed already: /host" "its error on stderr: /host is there already"
 out=$(haicc /host boot/deploy node-1 base-package-runtime 2>&1 >/dev/null); is $? 1 "the host booted: its boot protocol behind the service's door"

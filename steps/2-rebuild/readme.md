@@ -2506,3 +2506,92 @@ problems. The `haicc` test, 107 of 107. `base-component-boot`'s
 `validate` twice more, its `boot` test 119 of 119 each time. Nothing left
 running. Every package's repository pushed.
 
+
+## 60. The haicc command as a Bare app (2026-11-14)
+
+Task 0 of `tasks.md`, built first (the human: yes, a Bare app for
+`haicc`, before relative URIs). The split, settled with the human while
+building: **shell only for what getting Bare needs**, a folder linked,
+Bare fetched, the prerequisites; then the app. The other sources actions
+and the boot's machine level are in Bare.
+
+- **The module `pear-full-square/haicc-base-app`**: the command line.
+  Its methods, a directory each under `internal/`: `main` (a command
+  line run: what it prints, what it says on stderr, the exit code),
+  `command` (the command line read: for the mrepos, the machine level,
+  the sources, the usage; what is refused, exit 2), `request` (the
+  command as a record in the mrepo's inbox folder, its response waited
+  for in the outbox folder), `unpack` (a stored record across lines,
+  nothing of it changed: the awk scanner, in JavaScript), `outcome` (the
+  completed form's output or error), `sources` (the list and the `haicc
+  sources` actions: the list, `unlink`, `https`, `no-https`,
+  `download`), `boot` (`boot/deploy`: the boot component's bundle run
+  with the Bare running the app; `boot/teardown`). Its config
+  (`internal/config.js`): the organisation, the boot component, the root
+  mrepo (`boot`, `local/boot`), where a form goes back
+  (`/haicc/terminal`).
+- **One implementation of the command's form**: the record is made with
+  `mrepo-base-request`'s `record`, `wrap` and `guid` and written with its
+  inbox folder, as an mrepo sends a command on itself. The scripts' own
+  JSON writing and the two awk files are gone.
+- **Teardown no longer reads `/proc`**: the mrepos are walked from the
+  root down (an mrepo is a folder with its `.git`; those below it are in
+  the shadow of its `main`, at any depth), the deepest first, each
+  runtime stopped by its directory.
+- **`stop({ repo, pid })` in `mrepo-base-runtime`**: a runtime ended and
+  waited for until its process has ended, asked over its connection,
+  then SIGTERM, then SIGKILL. It was inside the boot protocol's
+  teardown; that one calls it now, and so does the app. One
+  implementation.
+- **The package `haiccing/base-app-haicc`**, a new type beside
+  `base-package-` and `base-component-`: a bundle from the template,
+  pinned to `haiccing/package-docs-template@6f78874`. Its `run.js` hands
+  the command line, the environment and the Bare running it to `main`.
+  It is started as `<bare> base-app-haicc.bundle /run <arguments>`: the
+  entry named first, so a URI (`/`, `/test/...`) is never taken for one
+  of the dispatcher's own targets; only that first `/run` is taken off
+  (a node may be named `run`). No mrepo side.
+- **Its own test, `test/command/`**: the program run as a process, 45
+  times, on a home folder made for it; a folder stands in for the root
+  mrepo and the test answers its inbox. The usage; each way a command
+  line is wrong; nothing booted; the sources; the record value by value;
+  the response unpacked, as stored, the output alone, an error, a form
+  not completed, none in time; the teardown's removal by name. A last
+  test fails when a kind of command line was not run. Not there: the
+  boot really run and running mrepos answering, which need Bare
+  installed: they stay in `run.sh`.
+- **`haiccing/base-linux-haicc` reduced to the first step on Linux**:
+  the installer, `haicc sources link <folder>`, `haicc sources download
+  bare`, `haicc prereq`, and a `haicc` that starts the app for anything
+  else (`--help`: its own commands, then the app's). Before Bare and the
+  app are there, anything else says what is missing, exit 3.
+  `haicc-request`, `haicc-boot` and the awk files are removed. Its pins:
+  the app's package in place of the boot component and the root mrepo
+  (those are the app's config now). `haicc prereq` checks a source
+  holding the app; the work folder is the app's, no longer checked
+  there; the boot component missing from the sources is said by `haicc
+  boot/deploy`, exit 3.
+- **`run.sh`: the 107 checks kept, 7 added, 114.** Moved, unchanged in
+  what they expect: the six wrong-command checks, `boot/teardown` and an
+  mrepo command with no boot mrepo, and the sources actions that are the
+  app's now (`no-https`, `https`, a folder linked twice, the two
+  downloads): they run after `haicc prereq`, since the app answers them.
+  Changed in how they look, not in what they expect: the sources at
+  first read from the list's file (the installer's default); "unpacked
+  and packed again" compares what `haicc` prints, packed again, with the
+  record stored in the outbox, for three commands, one of them an error
+  (the awk file it called is gone; every shape of record is in the
+  module's `print.test.js`); the width check through `HAICC_WIDTH`.
+  Added: before Bare the usage points to the rest; `haicc boot/deploy`
+  says a prerequisite is missing; the app's other commands exit 3 the
+  same; the usage whole once Bare is there (three); nothing written by
+  the refused commands.
+- **Dropped on purpose**: the refusal of an argument with a line break
+  and the stripping of control characters (limits of writing JSON in
+  sh); `haicc sources download` with nothing named fetched Bare and then
+  said our packages are not published: now it is the packages only, and
+  `haicc sources download bare` is the first step's.
+- **Its start time**: about half a second a command (sh was instant).
+  Bare's start, the dispatcher, and `mrepo-base-request`, whose `follow`
+  loads `mycelium-git` (0.15 s of it). Left as it is: loading that only
+  when following would change every package that carries the module.

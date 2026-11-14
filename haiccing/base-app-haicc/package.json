@@ -1,0 +1,20 @@
+{
+  "name": "base-app-haicc",
+  "description": "App: the haicc command, run with Bare: it boots the local root and puts commands in the boot mrepo's inbox.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "main.js",
+  "modules": [
+    "pear-full-square/haicc-base-app",
+    "pear-full-square/mrepo-base-help",
+    "pear-full-square/pkgm-base-check"
+  ],
+  "template": {
+    "repository": "haiccing/package-docs-template",
+    "commit": "6f78874fff7d626052336394f35071995a040d47"
+  },
+  "scripts": {
+    "test": "bare test/run.js"
+  }
+}

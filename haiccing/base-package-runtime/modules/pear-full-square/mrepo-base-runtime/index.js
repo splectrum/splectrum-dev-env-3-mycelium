@@ -37,6 +37,10 @@
 //                           null if it did not answer.
 //   ask({ work, op })       one request over the local connection; its
 //                           answer, or null if nothing answers.
+//   stop({ repo, pid })     the runtime ended, waited for until its process
+//                           has ended: asked over its connection, then
+//                           SIGTERM, then SIGKILL; { pid, how }, null when
+//                           none was running; throws when it did not end.
 //   viewOf(work, name)      a repository's folder, <work>/mrepos/<name>
 import process from 'bare-process'
 import Pipe from 'bare-pipe'
@@ -256,3 +260,23 @@ export async function start ({ work, repo = null, bare = process.execPath, bundl
   return null
 }
 
+// stop({ repo, pid }): an mrepo's runtime ended, by its directory (or
+// { work }). Waited for until its process has ended, not only until it
+// stops answering: asked over its connection; still there, SIGTERM; still
+// there, SIGKILL. pid: its process where it does not answer (as whoever
+// started it recorded it). -> { pid, how } (how: asked, SIGTERM, SIGKILL);
+// null when none was running; throws when it did not end.
+const alive = pid => { try { os.kill(pid, 0); return true } catch { return false } }
+const ended = async (pid, ms) => { for (let i = 0; i < ms / 100 && alive(pid); i++) await new Promise(resolve => setTimeout(resolve, 100)); return !alive(pid) }
+export async function stop ({ work, repo = null, pid = null }) {
+  const was = await ask({ work, repo, op: 'status' })
+  pid = was?.pid ?? pid
+  if (!pid || !alive(pid)) return null
+  if (was) await ask({ work, repo, op: 'stop' })
+  if (await ended(pid, 5000)) return { pid, how: 'asked' }
+  try { os.kill(pid, 'SIGTERM') } catch {}
+  if (await ended(pid, 5000)) return { pid, how: 'SIGTERM' }
+  try { os.kill(pid, 'SIGKILL') } catch {}
+  if (await ended(pid, 2000)) return { pid, how: 'SIGKILL' }
+  throw new Error(`its runtime did not stop: pid ${pid}`)
+}
