@@ -1,10 +1,10 @@
 # Tasks: discussed, waiting to be built
 
 Tasks discussed with the human and stacked here, to be built later in
-batches, in this order: 3 and on to swarm nodes up and running; then
+batches: on to swarm nodes up and running (not planned yet); then
 "Deployed tests" and "Coverage". ("First" and "Test reports" are built:
 kept here for what they left. Task 0, a Bare app for `haicc`, is built:
-`readme.md`, part 60.) A task is removed from this file when it is built:
+`readme.md`, part 60; task 3, the rest actions removed: part 64.) A task is removed from this file when it is built:
 its record is then a part in `readme.md`.
 
 How to read a task:
@@ -605,24 +605,6 @@ the `xpath` layer removed. Left from it, each to come with what needs it:
 - **`update`**: with mutable and immutable (the roadmap's item 3).
 - **The two repositories exist**: `pear-full-square/mrepo-base-crud`,
   `haiccing/base-package-crud`.
-
-## 3. The rest actions removed
-
-Follows task 2.
-
-**Settled**: nothing yet. The human asked whether the rest actions are a
-protocol. The answer given: in shape yes, in practice no: a table named
-`rest` (`get`, `put`, `delete`) in `mrepo-base-execute`, mounted by no
-package, so no deployed mrepo offers it.
-
-**Proposed** (not answered): once `crud` is validated, `rest` is removed
-and the tests that use it are moved to `crud`.
-
-**Where**: `pear-full-square/mrepo-base-execute/lib/actions.js` (the
-table, the default of `execute`'s `actions`);
-`pear-full-square/mrepo-base-execute/test/execute.test.js` and
-`pear-full-square/mrepo-base-boot/test/build.test.js` (its users); the
-roadmap's item 3 in `handover-next.md`, which says they stay until then.
 
 ## Future additions
 

@@ -8,6 +8,7 @@ modules test, `/test/modules`.
 
 | ours | |
 |---|---|
+| [pear-full-square/mrepo-base-crud/](pear-full-square/mrepo-base-crud/) | Module: the mrepo crud protocol, an mrepo's nodes created, read and deleted by URI. |
 | [pear-full-square/mrepo-base-execute/](pear-full-square/mrepo-base-execute/) | Module: the mrepo execute protocol, an action run in execution branches, committed or rolled back. |
 | [pear-full-square/mrepo-base-help/](pear-full-square/mrepo-base-help/) | Module: mrepo help, the READMEs of an mrepo's packages extracted, checked against the rules and retrieved by URI. |
 | [pear-full-square/mrepo-base-protocol/](pear-full-square/mrepo-base-protocol/) | Module: the mrepo protocol protocol, activate and deactivate. |

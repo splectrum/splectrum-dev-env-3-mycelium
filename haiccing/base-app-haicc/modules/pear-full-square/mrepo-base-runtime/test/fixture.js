@@ -1,7 +1,7 @@
 // A booted repository for the tests: the repository `host`, its layers, its
 // packages manifest (none linked: the tests' runtime, test/runtime.js, is
-// given the rest, service and protocol protocols), its service state booted,
-// its hooks (service active from boot; rest behind the service's door:
+// given the crud, service and protocol protocols), its service state booted,
+// its hooks (service active from boot; crud behind the service's door:
 // activated by its start, deactivated by its stop), the pending queue
 // preloaded with service initialise /. Without a setup: written directly. On the p2p
 // layer (as haicc-base-boot leaves the host) or on native git (storage:
@@ -18,8 +18,8 @@ const author = { name: 'test', email: 'test@localhost' }
 // The hooks, as a defining package would drop them into the runtime layer.
 export const HOOKS = {
   'boot/activate-service': ['protocol/activate', '.', 'service'],
-  'start/activate-rest': ['protocol/activate', '.', 'rest'],
-  'stop/deactivate-rest': ['protocol/deactivate', '.', 'rest']
+  'start/activate-crud': ['protocol/activate', '.', 'crud'],
+  'stop/deactivate-crud': ['protocol/deactivate', '.', 'crud']
 }
 async function layers (backend, { preload }) {
   const w = writer(backend)

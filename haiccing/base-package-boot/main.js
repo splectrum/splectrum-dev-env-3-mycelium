@@ -22,6 +22,7 @@ const UNITS = {
   "/test/mrepo-in-situ": () => Promise.all([import("./test/mrepo-in-situ/run.js")]),
   "/test/package": () => Promise.all([import("./test/package/run.js")]),
   "/test/modules/pear-full-square/mrepo-base-boot": () => Promise.all([import("./modules/pear-full-square/mrepo-base-boot/test/build.test.js"), import("./modules/pear-full-square/mrepo-base-boot/test/deploy.test.js")]),
+  "/test/modules/pear-full-square/mrepo-base-crud": () => Promise.all([import("./modules/pear-full-square/mrepo-base-crud/test/crud.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-execute": () => Promise.all([import("./modules/pear-full-square/mrepo-base-execute/test/execute.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/test/help.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-protocol": () => Promise.all([import("./modules/pear-full-square/mrepo-base-protocol/test/protocol.test.js")]),

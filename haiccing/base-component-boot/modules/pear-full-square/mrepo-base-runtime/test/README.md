@@ -4,7 +4,7 @@ The tests of mrepo-base-runtime, a section per file, each test by its name.
 
 ## `cycle.test.js`
 
-- the cycle on p2p and on git: initialise (preloaded), start, put, get, delete, refused, stop, shutdown
+- the cycle on p2p and on git: initialise (preloaded), start, create, read, delete, refused, stop, shutdown
 - where the layers live on the p2p host: the atomic ones in the store, the rest on disk
 
 ## `fixture.js`
@@ -13,7 +13,7 @@ Shared by the tests, not a test itself. A booted repository for the tests: the r
 
 ## `runtime.js`
 
-Shared by the tests, not a test itself. The runtime from the command line, started with the rest and service protocols as packages would offer them.
+Shared by the tests, not a test itself. The runtime from the command line, started with the crud and service protocols as packages would offer them.
 
 ## `runtime.test.js`
 

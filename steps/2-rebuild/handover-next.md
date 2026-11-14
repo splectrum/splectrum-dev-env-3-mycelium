@@ -1,13 +1,14 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-14, part 63). Read `CLAUDE.md` first (what is here, how to
+Kept current by the cloud session (last: 2026-11-14, part 64). Read `CLAUDE.md` first (what is here, how to
 validate), then this, then `tasks.md` here (what is planned and waits to
 be built: the next work), then `readme.md` (each part's record, the
 latest last: 30 to 45 the haicc work; 46 a note on future design; 47 to
 59 the tests: the package check, the template, the test reports, the
 pin, every package brought to the template one by one; 60 the `haicc`
 command as a Bare app; 61 relative URIs, piece A; 62 a URI inside an
-array of segments; 63 the crud protocol, the shortcuts in main).
+array of segments; 63 the crud protocol, the shortcuts in main; 64 the rest actions
+removed, a race fixed).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -81,7 +82,7 @@ is implemented first). In `tasks.md`, in this order:
    human left to come with the `haicc` commands that need them.
 2. **The `crud` protocol** (task 2): built (part 63). XPath across
    linked mrepos is later (the human).
-3. **The rest actions removed** (task 3).
+3. **The rest actions removed** (task 3): done (part 64).
 4. On towards swarm nodes up and running: the execution's current root,
    a node's unique URI, a node in its container, a swarm (not planned
    yet: "The roadmap", item 2). Then "Deployed tests" and "Coverage".
@@ -330,11 +331,11 @@ Not built yet, and the platform is not deployed until the first two are
      that never answers, dispatch to another node;
    - the layer routing in the code against the storage rule; the two-way
      sync of a folder with the Corestore.
-3. **`base-package-crud`** (the human: CRUD, not rest): the generic
-   actions on an mrepo's data as a protocol of its own, gated. It gets its
-   full meaning with mutable and immutable implemented: an update on the
-   mutable side from a stream of immutable change events. Until then the
-   `rest` actions stay in `mrepo-base-execute`, unmounted, the tests' own.
+3. **`base-package-crud`**: built (part 63): `create`, `read`, `delete`
+   on an mrepo's nodes; the `rest` actions it replaces are removed (part
+   64). Still to come: `update`, which gets its meaning with mutable and
+   immutable implemented (an update on the mutable side from a stream of
+   immutable change events).
 4. **Release and sourcing, deferred**: bundles signed and the manifest
    checked against the publisher's key (the key tool was removed with the
    clean-up: to be rebuilt with it); a GitHub source beside the folder

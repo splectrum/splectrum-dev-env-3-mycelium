@@ -1,5 +1,5 @@
 // The runtime for the module's tests, from the command line: started with
-// the rest, service and protocol protocols as packages would offer them
+// the crud, service and protocol protocols as packages would offer them
 // (their actions and their configs passed as its own).
 //   bare test/runtime.js start --work=<host folder>   the runtime, in the
 //       foreground (`start` in the library detaches it)
@@ -7,17 +7,17 @@
 // Exit 0 done; 1 not done (the store held by another, no repository); 2 a bad call.
 import process from 'bare-process'
 import { resolve } from 'bare-path'
-import { ACTIONS } from 'mrepo-base-execute'
+import { create, read, remove, CONFIG as CRUD } from 'mrepo-base-crud'
 import { initialise, start, stop, shutdown, CONFIG } from 'mrepo-base-service'
 import { activate, deactivate, CONFIG as PROTOCOL } from 'mrepo-base-protocol'
 import { version, run } from '../index.js'
 
 const own = {
-  actions: { rest: ACTIONS.rest, service: { initialise, start, stop, shutdown }, protocol: { activate, deactivate } },
+  actions: { crud: { create, read, delete: remove }, service: { initialise, start, stop, shutdown }, protocol: { activate, deactivate } },
   protocols: {
     service: CONFIG,
     protocol: PROTOCOL,
-    rest: { actions: { get: { uris: ['**'] }, put: { uris: ['<name>/**'] }, delete: { uris: ['<name>/**'] } } }
+    crud: CRUD
   }
 }
 

@@ -19,7 +19,8 @@
 //      into request/execute (the request completed: the request protocol
 //      moves it to done, then starts the next pending)
 // executed(ctx, name, record): step 4 alone, a form completed elsewhere (the
-// boot's own request) handed over the same way.
+// boot's own request) handed over the same way; a runtime running on the
+// repository may merge it first: found done then.
 // failed(ctx, why): a runtime's pass that failed, its error in the request
 // executing (its form completed with it: `runtime: <message>`); the names
 // completed ([]: none was executing).
@@ -41,12 +42,9 @@
 // written (['main', 'host']); the paths the execution reads and writes by
 // are given relative from the root (main/x) or slash-led (/main/x), the
 // same.
-// lib/actions.js: the generic rest actions, the tests' own.
 import { wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runtimeData, isInternal, principals, formOf, joined, slashed, OUTSIDE, OWN } from 'mrepo-base-request'
-import { ACTIONS } from './lib/actions.js'
 import { pass } from './lib/remote.js'
 
-export { ACTIONS }
 // The targets an action writes, those the mrepo has: main, runtime, help,
 // protocols.
 export const TARGETS = ['main', 'runtime', 'help', 'protocols']
@@ -91,8 +89,20 @@ export async function executed ({ backend, writer: w }, name, record) {
   const c = await w.change(branch)
   await c.put(`/${name}.json`, Buffer.from(JSON.stringify(record) + '\n'))
   await c.commit(`${name}: executed`, { author: AUTHOR })
-  await w.merge(branch, EXECUTE, `Merge ${name}: executed`, { author: AUTHOR })
-  await close(backend, name, EXECUTE)
+  // A runtime running on the same repository sees the branch as a request
+  // completed and merges it itself (execute, below). Whichever merges
+  // first, the other finds it done: the branch gone.
+  for (let i = 0; ; i++) {
+    try {
+      await w.merge(branch, EXECUTE, `Merge ${name}: executed`, { author: AUTHOR })
+      await close(backend, name, EXECUTE)
+      return
+    } catch (err) {
+      if (!(await heads(backend))[branch]) return
+      if (i >= 20) throw err
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+  }
 }
 
 export async function failed (ctx, why) {
@@ -119,7 +129,8 @@ const runtimeView = ctx => Object.freeze({
   read: uri => ctx.repo.read(abs(uri))
 })
 
-export async function execute (ctx, { actions = ACTIONS } = {}) {
+// actions: the mrepo's, by protocol and action: those its packages offer.
+export async function execute (ctx, { actions = {} } = {}) {
   const { repo, backend, writer: w } = ctx
   // Each request on its own branch of request/execute, its principal the
   // request the branch is named after.
