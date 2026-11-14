@@ -662,6 +662,16 @@ Discussed 2026-11-14; to design properly later.
   `base-how-package-making`, `base-how-package-testing`,
   `base-how-haicc-deploying`. Not confirmed.
 
+- **Our list goes in one**, under implementation (the human): the
+  how-tos about how we build (a new package, a protocol, a package's own
+  test, a newer template, a release) are one collection in the category
+  `implementation`.
+- **More important: the how-tos around functionality** (the human): for
+  the functionality that is being created, its specifics, the configs
+  available, and simple demos of these features.
+- **A way to develop functionality** (the human): prove it in a POC
+  demo, then implement the real thing, and turn the POC into a how-to.
+
 **Decided** (ours, told to the human; before the name was proposed)
 
 - Not one collection. By what a how-to is:
