@@ -2894,3 +2894,8 @@ tools/code-check.js`: 20 modules, 13 packages, no problems. The READMEs:
 seven times in a row, 136 of 136 each (before the fix two of seven
 failed, on `haicc boot/deploy` again). `base-component-boot`'s `validate`
 twice more, its `boot` test 120 of 120. Nothing left running.
+
+The two repositories of part 60, `haiccing/base-app-haicc` and
+`pear-full-square/haicc-base-app`, were created by the human (2026-11-14)
+and pushed: every package and module here now has its own repository,
+up to date.
