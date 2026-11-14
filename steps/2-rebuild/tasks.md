@@ -7,6 +7,9 @@ kept here for what they left. Task 0, a Bare app for `haicc`, is built:
 `readme.md`, part 60; task 3, the rest actions removed: part 64.) A task is removed from this file when it is built:
 its record is then a part in `readme.md`.
 
+A design in discussion, a file of its own: `xpath.md` (XPath across
+links: a query as a pipeline of `haicc` segments and merges).
+
 How to read a task:
 
 - **Settled** is what the human said or confirmed. Build it as written.
@@ -598,7 +601,9 @@ the `xpath` layer removed. Left from it, each to come with what needs it:
   of a replica) beside the `haicc` jump; a selection that crosses a
   link; several sources and local data combined at one node (the rule
   when two hold the same name); a write then goes to the local side
-  only. A demo first.
+  only. A demo first. **In discussion since** (2026-11-14): `xpath.md`
+  here, the design: a query rewritten into a pipeline of `haicc`
+  segments and merges.
 - **Internal use on other layers**: the existing files there
   (`runtime/service.json`) are not nodes; they move to the node form
   when an internal use comes.
@@ -637,7 +642,8 @@ The human, 2026-11-13: of no importance at the moment.
 
 `haicc test/mydata/users[name=s*] users/check-addresses *` (the human's
 example, task 1). Not valid in our URIs today; `mycelium-xpath` knows
-only `*`. Task 1 is built so that it does not block them.
+only `*`. Task 1 is built so that it does not block them. In discussion
+since (2026-11-14), with the other XPath operations: `xpath.md` here.
 
 ### How-tos
 
