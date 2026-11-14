@@ -170,6 +170,15 @@ demo kept as its how-to.
   and with one that fails.
 - **A hop that cannot be made**: the linked mrepo not running, the
   protocol not active there, no answer in time.
+- **Parallel work: processes or threads** (the human's question; our
+  opinion, not answered). Across mrepos: processes, as it is: every
+  linked mrepo has its runtime, so a fan-out over links runs in
+  parallel already. Inside one mrepo: its store has one owner (RocksDB
+  under the Corestore is opened by one process), so a second process on
+  the same mrepo is not the way; reading is asynchronous in the one
+  process already; threads only where a step computes heavily over a
+  large set (a function, a sort), fed by the runtime that owns the
+  store. Neither until a measurement asks for it.
 - **Where the merge lives** (an action of the `haicc` protocol, the
   request layer) and where the rewrite's code does.
 - **How the plan is recorded**, so a run can be repeated exactly.
@@ -202,7 +211,9 @@ moved.
   `bare-fs`. Four runs of a loop: 2107 ms one after another, 859 ms a
   thread each. A thread has its own heap: nothing shared but what is
   passed (a message, a shared buffer). Nothing of ours uses threads: an
-  mrepo's runtime is a process (`bare-subprocess`).
+  mrepo's runtime is a process (`bare-subprocess`). Starting one costs
+  the same either way: 20 empty processes 660 ms, 20 empty threads
+  648 ms, started together.
 - `vision.md`, "Pipelines, and mycelium as a database server" and
   "Overlays"; `tasks.md`, task 1 (the prefix, the jumps, selections as
   arrays) and "Predicates in a URI".
