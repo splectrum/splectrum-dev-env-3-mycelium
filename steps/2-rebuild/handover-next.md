@@ -102,8 +102,11 @@ and stacked (several layers at one position); the aim full coverage of
 the operations that look forward, in steps. With it, the human:
 requests can run on threads, several at once (reads of the Corestore are
 parallel, tried); the request train and the commit to `main` stay on one
-thread. Its steps are our proposal, not yet put to the human; its "To
-settle" lists are what to go through, point by point.
+thread; the commits measured (git is not the limit for the commits; the
+train's bookkeeping slows as requests are done, two repairs named; the
+merge into `main` is to become a squash). Its steps are our proposal,
+not yet put to the human; its "To settle" lists are what to go through,
+point by point.
 
 **Then, the human's priority: swarm nodes up and running** ("The
 roadmap", item 2): a command at a deeper position (the execution's

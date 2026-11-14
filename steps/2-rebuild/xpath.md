@@ -173,6 +173,11 @@ beyond XPath, into the runtime and the request layer.
   already." So whether a reader that stays open sees what is written
   after it opened is "not an issue".
 
+- **Two requests that wrote the same path, run at once**: "Yes, the
+  later one is run again on the new state - initial implementation."
+  (Our proposal with it: different paths merge; the train's order says
+  which is first. Read-only requests have nothing to settle.)
+
 **Found** (tried here, 2026-11-14: Bare v1.36.0, four cores, a shared
 machine; Corestore 7.16.1, Hypercore 11.39.6, rocksdb-native 3.19.3)
 
@@ -212,7 +217,7 @@ machine; Corestore 7.16.1, Hypercore 11.39.6, rocksdb-native 3.19.3)
   object is named by its content, a branch is a file of its own, and a
   branch moves only from the commit its writer saw (compare, then
   write). Tried with processes: threads have separate heaps and meet
-  the same files, so the same is expected, not tried. Speed here: the
+  the same files, so the same was expected, and tried since: "Commits", below. Speed here: the
   200 commits by eight at once 1300 to 1500 ms, by one worker 1700 to
   1850 ms: little gained on commits this small, most of it start-up.
 - **What is there today** (`pear-full-square/mrepo-base-request`): a
@@ -236,18 +241,130 @@ machine; Corestore 7.16.1, Hypercore 11.39.6, rocksdb-native 3.19.3)
 
 **To settle**
 
-- **Two requests that write, run at once**: both began on a state of
-  `main`; the one merged second was based on an older one. Read-only
-  requests have nothing to settle. For the others, the rule at the
-  merge: different paths merge; the same path is a conflict (the later
-  one refused, or run again on the new state). The train's order says
-  which is first.
 - How a thread hands its result to the train (it can commit on its
   request's branch itself: tried, above).
 - How many threads (the cores), and what a thread is given: a package's
   bundle, the request, the state to read.
 - p2p-git's two open defects for a reader beside a writer (the handover,
   "Elsewhere") come first: they are met at once with threads.
+
+## Commits: how often, and what git handles
+
+The human, 2026-11-14: "What we need to find out the sweetspot frequency
+for commits, what can git handle and how does multithreading affect
+this."
+
+**Settled** (the human)
+
+- "Our high frequency commits are on filesystem layers. We squash the
+  commits when merging into main so less history growth there, and much
+  lower frequency. Request branches should be cleaned up under normal
+  circumstance."
+
+**Against what is built** (found, 2026-11-14)
+
+- **The merge into `main` is a plain merge today**, not a squash
+  (`mrepo-base-execute`: `w.merge(...)`; `mycelium-git`'s `merge` makes
+  a merge commit, and its `deleteBranch` asks that the branch's head is
+  in the target's history, which a squash does not give). The squash is
+  to build.
+- **A request's branch is removed today, but not all of it**: its empty
+  folders stay under `refs/` and its objects stay (loose objects only,
+  nothing collects them; each merge also leaves one commit nothing
+  refers to). Both are in the numbers below.
+
+**Found** (measured here, 2026-11-14: the machine and versions as above;
+the filesystem with the p2p-git engine unless said; each commit one
+small document put at `swarms/n<x>/.node.json`, a folder of 100
+children; ext4, nothing forced to disk; the scripts not kept)
+
+- **Writers at once, each on its own branch** (threads really, this
+  time; branches of one layer, `execute/<id>/main`, made from `main`;
+  300 commits each, three runs; no error in any). Commits a second, all
+  writers together:
+
+  | writers | threads | processes |
+  |---|---|---|
+  | 1 | 107 to 118 | 115 to 119 |
+  | 2 | 220 to 231 | 185 to 225 |
+  | 4 | 240 to 256 | 257 to 262 |
+  | 8 | 262 to 266 | 283 to 349 |
+
+  It follows the cores: this machine gives a plain loop about 2.5 times
+  from its four. Separate layers (`data/w<i>`, an orphan branch each)
+  were the earlier trial with processes: the same holds.
+- **One commit, one writer**: 7 to 9 ms. Each object written (a blob, a
+  tree, a commit) or a branch moved: 0.5 to 1.4 ms, and that does not
+  change as the history grows.
+- **A folder's width costs**: a commit writes again the tree of every
+  folder on its path. One writer, commits a second: a folder of 10
+  children 137; of 100: 119; of 1000: 55; of 10000: 11. The folder of
+  100 five levels deeper: 91.
+- **A long history on one branch does not slow a commit**: 12,000
+  commits, 130 to 148 a second throughout. On disk: 60,205 loose
+  objects, 241 MB (about 20 KB a commit: five small files of one block
+  each).
+- **`main` in the Corestore** (a Hyperdrive under p2p-git): 112 commits
+  a second, one writer: as the filesystem.
+- **Native git** (a git process an operation): 24 commits a second.
+- **A request's cycle on one thread slows as requests are done** (its
+  branch made from `main`, one commit, a plain merge into `main`, the
+  branch removed), ms each:
+
+  | requests | branch made | a commit | merge into main | branch removed | together |
+  |---|---|---|---|---|---|
+  | 1 to 50 | 7.1 | 10.3 | 21.7 | 4.8 | 44 |
+  | 51 to 100 | 14.9 | 13.6 | 47.5 | 9.0 | 85 |
+  | 101 to 150 | 23.2 | 17.7 | 71.3 | 12.9 | 125 |
+  | 151 to 200 | 34.7 | 22.7 | 104.4 | 17.9 | 180 |
+
+  Two causes, neither the writing:
+  - **the branches listed** (six times a request: 3.2 ms a call at
+    first, 16.4 after 150 requests): every removed branch leaves its
+    empty folders under `refs/`, and the listing walks them all. After
+    200 requests: one branch, 204 folders. It counts for the whole
+    repository, every layer: a branch removed anywhere slows every
+    listing;
+  - **the ancestry check** (twice a request: 5.1 ms a call at first,
+    33.1 after 150): `isAncestor` walks the whole history of the branch
+    merged into, to find that the request's commit is not in it yet. It
+    counts for that layer only.
+- **Not tried**: the merge from a branch on the filesystem into `main`
+  in the Corestore (the `p2p` storage's mixed backend: the objects
+  carried over); writes forced to disk.
+
+**Ours** (not answered)
+
+- **Git is not the limit for the commits themselves**: about 110 to 140
+  a second a writer, more with the cores, steady over a long history.
+  Multithreading helps the executions; it does not help the train,
+  which is one thread by design.
+- **The limit is the train's bookkeeping**: two repairs first, then
+  measure again, before a frequency is chosen:
+  1. a removed branch takes its empty folders with it;
+  2. the ancestry check bounded, or gone with the squash (a squashed
+     request is never in `main`'s history).
+  After them a request's cycle should stay near its first figure (44 ms
+  with the plain merge, about 20 requests a second on the one thread);
+  an expectation, not measured.
+- **Keep folders narrow**: under about a thousand children a folder; a
+  wider set split over subfolders. A commit a step, not a commit a node.
+- **Space**: about 20 KB a commit on the filesystem and nothing
+  collected. With the squash and the branches cleaned up, what a
+  request wrote on its branch can go with it: a collection of objects
+  nothing refers to is to build for the filesystem layers.
+
+**To settle**
+
+- The squash's rule in `mycelium-git` (a commit on `main` with the
+  merged tree and one parent; the request's branch then removed though
+  its head is not in `main`'s history) and what `main`'s commit says of
+  the request (its record is in `request/done`).
+- Where the two repairs go: `mycelium-git`'s adapter, or `p2p-git`
+  (which has two open defects on refs already: the handover,
+  "Elsewhere").
+- Whether the measurements become a tool that is kept (`tools/`), run
+  again after each repair.
 
 ## To settle
 
