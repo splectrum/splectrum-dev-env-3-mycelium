@@ -167,10 +167,11 @@ step shown to the human first)
 
 **Open**
 
-- Whether the template itself is what is cloned (reshaped so a clone is a
-  clean, working, empty package: today its folders hold documentation,
-  an `example/` and a placeholder `name/`), or a skeleton kept inside it.
-  Put to the human, not answered.
+- **Cloning the template is the aim** (the human, 2026-11-14): the
+  template itself is what is cloned, and it carries in the help to
+  customise it. To build: the template reshaped so a clone is a clean,
+  working package whose READMEs say how to make it one's own (today its
+  folders hold documentation, an `example/` and a placeholder `name/`).
 - The pin as built (ours, shown to the human with part 50): `template`
   in `package.json`, `{ repository, commit }`, the commit of the
   template's own repository, `haiccing/package-docs-template`.
@@ -663,10 +664,11 @@ item 3), wanted for creating structure in `main`.
     first: the file a list from the start, one source in use (a deployed
     child, as today); combining several sources and local data when a
     real case comes, as a demo first.
-  - Ours, not answered: only what is true for everyone goes in the file
-    (each source's unique URI); what is local to the machine that
-    deployed a child (its folder, its runtime's pid, the packages placed)
-    stays out, `main` replicates. To settle when combining is built: the
+  - **Only the link** goes in the file (the human, 2026-11-14,
+    confirming ours): each source's unique URI; what is local to the
+    machine that deployed a child (its folder, its runtime's pid, the
+    packages placed) stays out, `main` replicates. To settle when
+    combining is built: the
     rule when two sources, or a source and the local side, hold the same
     name; reading through a link (a local read of a replica) beside the
     `haicc` jump (a command executed in the other mrepo).
@@ -855,4 +857,32 @@ overtaken by the line above for the how-tos that are run)
   (its module, its methods, its package); a package's own test, the
   "nothing to test" decision included; a package brought to a newer
   template; a release (the pre-release, then strict).
+
+### A Bare app for haicc
+
+The human's question, 2026-11-14: should we create a Bare app for
+`haicc`? Not settled; our view, told to the human.
+
+**What is there**: `haiccing/base-linux-haicc`, shell scripts (about 550
+lines with the awk that formats a response): the installer, `sources`,
+`prereq`, `boot/deploy`, `boot/teardown`, and a request written into the
+boot mrepo's inbox. No bundle, so no generic tests and no report; its
+test is `test/run.sh`, 107 checks.
+
+**Our view**: yes, as a package like the others.
+
+- It becomes a bundle from the template: the generic tests, a test of
+  its own, a report, the pin. The question whether `base-linux-haicc`
+  gets them goes away.
+- One implementation of the command's form. Today the scripts form the
+  record and print the response on their own, beside the modules that
+  interpret it; relative URIs would have to be changed in both.
+- Not tied to Linux and sh: it runs where Bare runs.
+- It is where the terminal as a mini mrepo (the roadmap, item 5) would
+  live.
+- What stays shell: the first step only, getting Bare onto the machine
+  and starting the app (Bare cannot fetch itself).
+- The order we would take: the app first, with today's command form
+  exactly, `run.sh`'s 107 checks unchanged as the proof that the port is
+  right; then relative URIs, changed in one place. Not both at once.
 

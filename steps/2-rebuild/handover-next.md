@@ -95,11 +95,12 @@ with the human first, unless the task says it is ours ("Left to us").
   notes come back in `local-note.md`: fetch and read them when told.
 - No release yet: on the human's word, created by the local agent
   (`handover-local.md`, "Releases").
-- Small points to settle (`tasks.md`): whether `base-linux-haicc` (shell
-  scripts, no bundle) gets the generic tests and a report; whether the
-  template itself becomes a clean thing to clone; in task 2, that only
-  the link goes into `.shortcuts.json` (what is local to a machine stays
-  out of `main`).
+- Settled since (2026-11-14): only the link goes into `.shortcuts.json`
+  (`tasks.md`, task 2); cloning the template is the aim, the template
+  carrying in the help to customise it (`tasks.md`, "First", to build).
+- In discussion: a Bare app for `haicc` in place of the shell scripts
+  (`tasks.md`, "Future additions"); with it the question whether
+  `base-linux-haicc` gets the generic tests and a report.
 - A leftover branch: `claude/vigilant-gates-b1r8rn` on the remote holds
   nothing that is not in `main`; the human may delete it.
 
