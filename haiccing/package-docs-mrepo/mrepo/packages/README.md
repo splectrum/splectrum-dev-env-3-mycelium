@@ -38,8 +38,8 @@ its manifest records each one's hash and entry points.
   is a `redeploy`.
 - **The runtime is started from here**, by the mrepo's directory:
   `bare <dir>/packages/haiccing/base-package-runtime.bundle <dir>`.
-- **Its tests run from here**: `runtime run
-  /packages/<org>/<package>/test/<set>`, through the package's dispatcher,
+- **Its tests run from here**: `runtime/run .
+  packages/<org>/<package>/test/<set>`, through the package's dispatcher,
   in a floating instance; the result is the request's output.
 - **What each package contributes**: `base-package-runtime` the engine,
   in every mrepo; `base-package-protocol` the activation of protocols;

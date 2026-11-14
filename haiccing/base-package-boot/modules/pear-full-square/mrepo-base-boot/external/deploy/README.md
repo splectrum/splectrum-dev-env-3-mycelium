@@ -9,7 +9,9 @@ in, in that order, and the child is built at `<parent>/main/<name>/`.
 
 ## Signature
 
-`deploy(exec, { uri, args })`: `uri` is `/<name>`, one segment.
+`deploy(exec, { uri, args })`: requested as `boot/deploy <name>
+<package>`. `uri` is the child's position from the mrepo's root,
+`main/<name>`, one segment below `main`.
 
 ## Arguments
 
@@ -18,14 +20,16 @@ in, in that order, and the child is built at `<parent>/main/<name>/`.
 
 ## Returns
 
-`{ deployed, mrepo, package, packages, layers, runtime: { pid } }`. The
+`{ deployed, mrepo, package, packages, layers, runtime: { pid } }`;
+`deployed` is the position as written at `main`, `<name>`. The
 same record, without `deployed`, is the child's shortcut, written at
 `/xpath/<name>/shortcut.json`. `mrepo` is the child's unique URI.
 
 ## Errors
 
-- No target, or a target of `/`: `missing argument: target`. One cannot
-  deploy the mrepo itself.
+- No target, `main` itself or the root: `missing argument: target`. One
+  cannot deploy the mrepo itself.
+- A URI that is not in `main`: `not a position in main`.
 - No package: `missing argument: package`.
 - The child is deployed already, or its folder is in the way.
 - The position exists locally, as data in `main`: the boot protocol

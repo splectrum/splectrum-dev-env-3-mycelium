@@ -1,4 +1,4 @@
-// extract: help extract /, the mrepo's help layer from the READMEs of its
+// extract: help/extract, the mrepo's help layer from the READMEs of its
 // linked packages: what is there replaced (README.md beside it). An internal
 // request: the runtime places it as it starts, before the mrepo takes
 // requests in.
@@ -11,7 +11,7 @@ const LAYER = { mode: 'atomic', description: 'Help: the READMEs of the packages 
 const json = async (exec, uri) => exec.read(uri).then(b => JSON.parse(b.toString()), () => null)
 
 export async function extractAction (exec, { uri }) {
-  if (uri !== '/') throw new Error(`help extract: the whole mrepo only, / (not ${uri})`)
+  if (uri !== '.' && uri !== 'main') throw new Error(`help extract: the whole mrepo only, . (not ${uri})`)
   const listed = (await json(exec, '/packages/manifest.json'))?.packages
   if (!listed) return { readmes: 0, changed: false, problems: 0 }
   const dir = exec.runtime.dir

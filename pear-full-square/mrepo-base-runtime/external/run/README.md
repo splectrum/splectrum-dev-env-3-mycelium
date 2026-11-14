@@ -8,15 +8,18 @@ of the package, each unit its own process, removed after.
 
 ## Signature
 
-`run(exec, { uri, args })`: requested as `runtime/run
-/packages/<org>/<package><target> [dry-run]`.
+`run(exec, { args })`: requested as `runtime/run .
+packages/<org>/<package><target> [dry-run]`. What it runs is an argument,
+not the request's URI, which is where the request is executed.
 
 ## Arguments
 
-1. `dry-run`, optional: nothing is run, what the target would run is
+1. The package's entry, a URI from the mrepo's root:
+   `packages/<org>/<package><target>`. Required.
+2. `dry-run`, optional: nothing is run, what the target would run is
    returned.
 
-The target is the rest of the URI after the package: `/test/<set>`,
+The target is the rest of the first argument after the package: `/test/<set>`,
 `/test/<name>`, `/test/modules`, `/test/modules/<org>/<module>`,
 `/protocol`, `/deploy`.
 
@@ -29,7 +32,8 @@ The target is the rest of the URI after the package: `/test/<set>`,
 
 ## Errors
 
-- The URI is not a package's entry: `not a package's entry`.
+- No first argument: `missing argument: target`.
+- It is not a package's entry: `not a package's entry`.
 - The target is `/run`: `not run here`. A package's program is not run
   inside the runtime's process.
 - The package is not linked: `not a package of this mrepo`.

@@ -20,9 +20,9 @@ into its runtime layer.
 A hook is a file holding one command, its parts:
 
 ```
-/runtime/hooks/boot/activate-help.json       ["protocol/activate", "/", "help"]
-/runtime/hooks/start/activate-boot.json      ["protocol/activate", "/", "boot"]
-/runtime/hooks/stop/deactivate-boot.json     ["protocol/deactivate", "/", "boot"]
+/runtime/hooks/boot/activate-help.json       ["protocol/activate", ".", "help"]
+/runtime/hooks/start/activate-boot.json      ["protocol/activate", ".", "boot"]
+/runtime/hooks/stop/deactivate-boot.json     ["protocol/deactivate", ".", "boot"]
 ```
 
 - `boot`: what the mrepo always offers. Fired by the runtime as it starts.

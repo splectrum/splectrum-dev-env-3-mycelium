@@ -1,20 +1,25 @@
-// run: runtime/run /packages/<org>/<package><target>, an entry of a package
-// the mrepo has linked, through that package's dispatcher (README.md beside it).
+// run: runtime/run . packages/<org>/<package>/<target>, an entry of a
+// package the mrepo has linked, through that package's dispatcher
+// (README.md beside it). What it runs is its first argument, a URI from the
+// mrepo's root; the request's URI is where it is executed.
 import { existsSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'bare-fs'
 import crypto from 'bare-crypto'
 import { tmpdir } from 'bare-os'
 import { join } from 'bare-path'
 import { pathToFileURL } from 'bare-url'
+import { relative } from 'mycelium-uri'
 
-function target (uri) {
-  const m = uri.match(/^\/packages\/([^/]+)\/([^/]+)(\/.*)?$/)
-  if (!m) throw new Error(`not a package's entry: ${uri} (/packages/<org>/<package>/<target>)`)
+// The package and its target (a path inside the package: /test/validate).
+function target (subject) {
+  const m = relative(subject).match(/^packages\/([^/]+)\/([^/]+)(\/.*)?$/)
+  if (!m) throw new Error(`not a package's entry: ${subject} (packages/<org>/<package>/<target>)`)
   return { pkg: `${m[1]}/${m[2]}`, target: m[3] ?? '/' }
 }
 
-export async function run (exec, { uri, args = [] }) {
-  const { pkg, target: t } = target(uri)
-  if (t === '/run') throw new Error(`not run here: ${uri} (a package's program)`)
+export async function run (exec, { args: [subject, ...args] = [] }) {
+  if (subject === undefined || subject === '') throw new Error('missing argument: target')
+  const { pkg, target: t } = target(subject)
+  if (t === '/run') throw new Error(`not run here: ${subject} (a package's program)`)
   const listed = await exec.read('/packages/manifest.json').then(b => JSON.parse(b.toString()).packages || {}, () => ({}))
   if (!listed[pkg]) throw new Error(`not a package of this mrepo: ${pkg}`)
   const bundle = join(exec.runtime.dir, 'packages', `${pkg}.bundle`)

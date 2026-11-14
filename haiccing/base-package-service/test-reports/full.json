@@ -1,8 +1,8 @@
 {
   "package": "haiccing/base-package-service",
-  "content": "2bea1e7ab037aa1ba2a3b58b673c5edfed2e55e4160d532d52aabdb2378cf330",
+  "content": "e3bc6ac72d5b256d83c00b33dee35aa32a8bf269439894b2b84cf1ae420abb23",
   "bare": "v1.36.0",
-  "date": "2026-11-14T00:59:30.604Z",
+  "date": "2026-11-14T07:20:08.436Z",
   "set": "full",
   "ok": true,
   "units": [
@@ -79,8 +79,8 @@
         "total": 5
       },
       "asserts": {
-        "passed": 21,
-        "total": 21
+        "passed": 27,
+        "total": 27
       },
       "failures": []
     },
@@ -88,12 +88,12 @@
       "unit": "/test/modules/pear-full-square/mrepo-base-request",
       "ok": true,
       "tests": {
-        "passed": 13,
-        "total": 13
+        "passed": 14,
+        "total": 14
       },
       "asserts": {
-        "passed": 105,
-        "total": 105
+        "passed": 122,
+        "total": 122
       },
       "failures": []
     },
@@ -140,12 +140,12 @@
       "unit": "/test/modules/pear-full-square/mycelium-uri",
       "ok": true,
       "tests": {
-        "passed": 15,
-        "total": 15
+        "passed": 18,
+        "total": 18
       },
       "asserts": {
-        "passed": 118,
-        "total": 118
+        "passed": 149,
+        "total": 149
       },
       "failures": []
     },

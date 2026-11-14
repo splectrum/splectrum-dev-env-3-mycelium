@@ -20,18 +20,21 @@ bare base-app-haicc.bundle /run <argument>...
 
 ```
 haicc boot/deploy
-haicc / boot/deploy host base-component-haicc
-haicc /host service/initialise
-haicc /host service/start
-haicc /host boot/deploy node-1 base-package-runtime
-haicc /host haicc /node-1 help/get /
-haicc /host boot/teardown node-1
-haicc / boot/teardown host
+haicc . boot/deploy host base-component-haicc
+haicc host service/initialise
+haicc host service/start
+haicc host boot/deploy node-1 base-package-runtime
+haicc host haicc node-1 help/get
+haicc host boot/teardown node-1
+haicc . boot/teardown host
 haicc boot/teardown
 ```
 
-- **A first part starting with `/`** is a command for the mrepos:
-  `haicc <URI> <protocol>/<action> <argument>...`. Go to this node
+- **A URI first** is a command for the mrepos:
+  `haicc <URI> <protocol>/<action> <argument>...`. A URI is relative,
+  without a leading slash: `.` is the local root, `host` the position
+  `host` in it; `./sources` is a position named like one of haicc's own
+  words. Go to this node
   position and execute the command that follows. It is written as a
   record into the boot mrepo's inbox folder; the response record is
   printed whole, unpacked across lines. `--raw` before the URI prints it
@@ -59,12 +62,12 @@ What a command becomes, in the boot mrepo's inbox folder:
     "key": "f949ad01-34db-4dd9-a5bc-bf438a21028c",
     "timestamp": "2026-11-14T02:02:29.120Z",
     "headers": {},
-    "value": ["haicc","/host","service/start"]
+    "value": ["haicc","host","service/start"]
   }
 }
 ```
 
-At the root the command goes plain, `haicc / boot/deploy host x` as
+At the root the command goes plain, `haicc . boot/deploy host x` as
 `boot/deploy host x`; anywhere else the `haicc` command goes as it is.
 The parts go as typed, unnamed; the mrepo interprets them.
 

@@ -9,7 +9,7 @@ export const protocols = {
     package: 'haiccing/base-package-runtime',
     description: 'Runs a linked package\'s entry by path, its tests above all.',
     actions: {
-      run: { uris: ['/packages/**'], target: true, description: 'A linked package\'s target, through its dispatcher; with dry-run, what it would run.' }
+      run: { uris: ['.'], args: ['target'], description: 'A linked package\'s target (packages/<org>/<package>/<target>), through its dispatcher; with dry-run, what it would run.' }
     }
   }
 }

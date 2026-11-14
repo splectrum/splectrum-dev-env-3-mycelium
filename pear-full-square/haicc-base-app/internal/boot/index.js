@@ -45,7 +45,7 @@ export async function teardown ({ work, root }) {
   }
   // what boot/deploy put in place, by name: nothing else in the work folder
   for (const n of ['mrepos', 'packages', 'mrepo.json']) rmSync(join(work, n), { recursive: true, force: true })
-  return { tornDown: '/', runtimes, work }
+  return { tornDown: '.', runtimes, work }
 }
 
 // The machine level's protocols, their actions.

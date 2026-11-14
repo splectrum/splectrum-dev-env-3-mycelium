@@ -39,19 +39,19 @@ test('execute: execution branches from their targets, the record completed, merg
   try {
     await bootedHost(work, { preload: false })
     await withHost(work, async ctx => {
-      let r = await run(ctx, { protocol: 'service', action: 'initialise', uri: '/' })
+      let r = await run(ctx, { protocol: 'service', action: 'initialise', uri: '.' })
       t.alike(r, { ok: true, value: { service: 'initialised', state: 'initialised' } })
       t.is((await json(ctx.repo, '/runtime/service.json')).state, 'initialised', 'merged back into runtime')
-      r = await run(ctx, { protocol: 'service', action: 'start', uri: '/' })
-      r = await run(ctx, { protocol: 'rest', action: 'put', uri: '/main/a/b.json', args: ['{"n":1}'] })
-      t.alike(r, { ok: true, value: { put: '/main/a/b.json' } }, 'completed: its form filled in, merged into request/execute')
+      r = await run(ctx, { protocol: 'service', action: 'start', uri: '.' })
+      r = await run(ctx, { protocol: 'rest', action: 'put', uri: 'main/a/b.json', args: ['{"n":1}'] })
+      t.alike(r, { ok: true, value: { put: 'main/a/b.json' } }, 'completed: its form filled in, merged into request/execute')
       t.alike(await json(ctx.repo, '/main/a/b.json'), { n: 1 }, 'in main')
       t.alike((await ctx.backend.listBranches()).map(([b]) => b).filter(b => b.startsWith('execute/')), [], 'its execution branches, its own by its key: merged back and removed')
       const before = (Object.fromEntries(await ctx.backend.listBranches())).main
-      r = await run(ctx, { protocol: 'rest', action: 'delete', uri: '/main/none.json' })
-      t.alike(r, { ok: false, error: 'nothing at /main/none.json' }, 'failed: its result said')
+      r = await run(ctx, { protocol: 'rest', action: 'delete', uri: 'main/none.json' })
+      t.alike(r, { ok: false, error: 'nothing at main/none.json' }, 'failed: its result said')
       t.is((Object.fromEntries(await ctx.backend.listBranches())).main, before, 'and main untouched')
-      r = await run(ctx, { protocol: 'service', action: 'start', uri: '/' })
+      r = await run(ctx, { protocol: 'service', action: 'start', uri: '.' })
       t.alike(r, { ok: false, error: 'not now: service start (the service is started)' }, 'checked again as it executes')
     })
   } finally { rmSync(work, { recursive: true, force: true }) }
@@ -65,7 +65,7 @@ test('the execution context: read-only to the action, the runtime\'s context rea
       let seen = null
       const actions = { ...ALL, service: { ...ALL.service, initialise: async exec => { seen = { frozen: Object.isFrozen(exec) && Object.isFrozen(exec.runtime), name: exec.runtime.name, writer: 'writer' in exec.runtime, branches: (await exec.runtime.branches()).includes('runtime'), service: JSON.parse((await exec.runtime.read('/runtime/service.json')).toString()).state }; return 'seen' } } }
       const name = guid()
-      await begin(ctx, name, record(null, { protocol: 'service', action: 'initialise', uri: '/' }, name))
+      await begin(ctx, name, record(null, { protocol: 'service', action: 'initialise', uri: '.' }, name))
       await execute(ctx, { actions })
       t.alike(seen, { frozen: true, name: 'host', writer: false, branches: true, service: 'booted' })
     })
@@ -77,8 +77,8 @@ test('local commit and rollback in an action; the global commit at its end, a fa
   try {
     await bootedHost(work, { preload: false })
     await withHost(work, async ctx => {
-      await run(ctx, { protocol: 'service', action: 'initialise', uri: '/' })
-      await run(ctx, { protocol: 'service', action: 'start', uri: '/' })
+      await run(ctx, { protocol: 'service', action: 'initialise', uri: '.' })
+      await run(ctx, { protocol: 'service', action: 'start', uri: '.' })
       let seen = null
       const go = (fail) => ({ ...ACTIONS, rest: { ...ACTIONS.rest, put: async exec => {
         exec.put('/main/step.json', Buffer.from('1'))
@@ -93,7 +93,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
       const at = async (repo, p) => (await repo.select(p)).length > 0
       const one = async (fail) => {
         const name = guid()
-        await begin(ctx, name, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', args: ['1'] }, name))
+        await begin(ctx, name, record(null, { protocol: 'rest', action: 'put', uri: 'main/x.json', args: ['1'] }, name))
         await execute(ctx, { actions: go(fail) })
         return (await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value
       }
@@ -122,7 +122,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
         return after
       } } }
       const name = guid()
-      await begin(ctx, name, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', args: ['1'] }, name))
+      await begin(ctx, name, record(null, { protocol: 'rest', action: 'put', uri: 'main/x.json', args: ['1'] }, name))
       await execute(ctx, { actions: back })
       t.alike((await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value.output, { committed: 1, dropped: 0, undone: 0 }, 'discard dropped the uncommitted; rollback undid the last commit, not the one before')
       t.ok(await at(ctx.repo, '/main/committed.json'), 'merged: what stayed committed')
@@ -140,7 +140,7 @@ test('local commit and rollback in an action; the global commit at its end, a fa
         return { after }
       } } }
       const n2 = guid()
-      await begin(ctx, n2, record(null, { protocol: 'rest', action: 'put', uri: '/main/x.json', args: ['1'] }, n2))
+      await begin(ctx, n2, record(null, { protocol: 'rest', action: 'put', uri: 'main/x.json', args: ['1'] }, n2))
       await execute(ctx, { actions: ditch })
       t.alike((await json(ctx.repo, `/${EXECUTE}/${n2}.json`)).value.value.output, { after: 0 }, 'reset: back to the start, its local commit undone')
       t.absent(await at(ctx.repo, '/main/first.json'), 'nothing before the reset merged')
@@ -156,8 +156,8 @@ test('exec.log: entries into the request\'s record, at or above the threshold', 
   try {
     await bootedHost(work, { preload: false })
     await withHost(work, async ctx => {
-      await run(ctx, { protocol: 'service', action: 'initialise', uri: '/' })
-      await run(ctx, { protocol: 'service', action: 'start', uri: '/' })
+      await run(ctx, { protocol: 'service', action: 'initialise', uri: '.' })
+      await run(ctx, { protocol: 'service', action: 'start', uri: '.' })
       const logging = { ...ACTIONS, rest: { ...ACTIONS.rest, get: async exec => {
         exec.log('info', 'step', { n: 1 })
         exec.log('debug', 'detail')
@@ -167,7 +167,7 @@ test('exec.log: entries into the request\'s record, at or above the threshold', 
       } } }
       const one = async () => {
         const name = guid()
-        await begin(ctx, name, record(null, { protocol: 'rest', action: 'get', uri: '/main' }, name))
+        await begin(ctx, name, record(null, { protocol: 'rest', action: 'get', uri: 'main' }, name))
         await execute(ctx, { actions: logging })
         return (await json(ctx.repo, `/${EXECUTE}/${name}.json`)).value.value
       }
@@ -185,7 +185,7 @@ test('executed: a form completed elsewhere handed over as execute hands one', as
   try {
     await bootedHost(work, { preload: false })
     await withHost(work, async ctx => {
-      const core = complete(record(null, { protocol: 'service', action: 'boot', uri: '/' }, guid()), { ok: true, value: { booted: true } })
+      const core = complete(record(null, { protocol: 'service', action: 'boot', uri: '.' }, guid()), { ok: true, value: { booted: true } })
       await executed(ctx, core.key, wrap(`/${EXECUTE}`, core))
       t.alike((await json(ctx.repo, `/${EXECUTE}/${core.key}.json`)).value, core, 'in request/execute, completed')
       t.alike((await ctx.backend.listBranches()).map(([b]) => b).filter(b => b.startsWith('execute/')), [], 'through its own execution branch, removed after')
@@ -199,7 +199,7 @@ test('failed: a runtime\'s error in the request executing', async (t) => {
     await bootedHost(work, { preload: false })
     await withHost(work, async ctx => {
       t.alike(await failed(ctx, 'runtime: x'), [], 'none executing: none completed (the caller says it on stderr)')
-      const core = record(null, { protocol: 'service', action: 'initialise', uri: '/' }, guid())
+      const core = record(null, { protocol: 'service', action: 'initialise', uri: '.' }, guid())
       await begin(ctx, core.key, core)
       t.alike(await failed(ctx, 'runtime: x'), [core.key])
       t.is((await json(ctx.repo, `/${EXECUTE}/${core.key}.json`)).value.value.error, 'runtime: x', 'its form completed with the error: the request protocol moves it to done')
@@ -212,14 +212,14 @@ test('exec.run: a command executed here; exec.forward: sent on, the principal wa
   try {
     await bootedHost(work, { preload: false })
     await withHost(work, async ctx => {
-      await run(ctx, { protocol: 'service', action: 'initialise', uri: '/' })
-      await run(ctx, { protocol: 'service', action: 'start', uri: '/' })
-      await run(ctx, { protocol: 'rest', action: 'put', uri: '/main/x.json', args: ['{"n":1}'] })
+      await run(ctx, { protocol: 'service', action: 'initialise', uri: '.' })
+      await run(ctx, { protocol: 'service', action: 'start', uri: '.' })
+      await run(ctx, { protocol: 'rest', action: 'put', uri: 'main/x.json', args: ['{"n":1}'] })
       // a linked mrepo's folder, as a shortcut would lead to it: its boxes
       const other = join(work, 'other')
       mkdirSync(join(other, 'inbox'), { recursive: true })
       mkdirSync(join(other, 'outbox'), { recursive: true })
-      const to = { at: '/other', mrepo: 'local/other', folder: 'other', dir: other }
+      const to = { at: 'other', mrepo: 'local/other', folder: 'other', dir: other }
       const acts = { ...ALL, rest: { ...ALL.rest,
         // the command that follows: executed here
         here: (exec, { args }) => exec.run(args),
@@ -234,20 +234,20 @@ test('exec.run: a command executed here; exec.forward: sent on, the principal wa
         return name
       }
       const done = async name => (await json(ctx2.repo, `/${EXECUTE}/${name}.json`)).value.value
-      const ran = await done(await one({ protocol: 'rest', action: 'here', uri: '/', args: ['rest/get', '/main/x.json'] }))
+      const ran = await done(await one({ protocol: 'rest', action: 'here', uri: '.', args: ['rest/get', 'main/x.json'] }))
       t.alike(ran.output, { n: 1 }, 'exec.run: the command interpreted and its action run in the same execution, its value returned')
-      t.is((await done(await one({ protocol: 'rest', action: 'here', uri: '/', args: ['rest/post', '/main/x.json'] }))).error, 'no action: rest post (delete, get, here, put, there)', 'checked as the request is (internal: no API gate), and its action looked up')
+      t.is((await done(await one({ protocol: 'rest', action: 'here', uri: '.', args: ['rest/post', 'main/x.json'] }))).error, 'no action: rest post (delete, get, here, put, there)', 'checked as the request is (internal: no API gate), and its action looked up')
 
-      const name = await one({ protocol: 'rest', action: 'there', uri: '/other', args: ['service/start'] })
+      const name = await one({ protocol: 'rest', action: 'there', uri: 'main/other', args: ['service/start'] })
       const [p] = (await principals(ctx2)).filter(x => x.id === name)
-      t.alike([p.core.value.remote.at, p.core.value.remote.folder, p.waits === p.core.value.remote.key], ['/other', 'other', true], 'exec.forward: the principal waiting on its branch, what it waits for recorded')
+      t.alike([p.core.value.remote.at, p.core.value.remote.folder, p.waits === p.core.value.remote.key], ['other', 'other', true], 'exec.forward: the principal waiting on its branch, what it waits for recorded')
       t.absent((await ctx2.repo.select('/main/dropped.json')).length, 'nothing of it executed here: its writes dropped')
       const [file] = readdirSync(join(other, 'inbox'))
       const sent = JSON.parse(readFileSync(join(other, 'inbox', file), 'utf8'))
       t.alike([sent.topic, sent.value.topic, sent.value.value, sent.key], ['/local/other/inbox', `/local/host/execute/${name}`, ['service/start'], p.waits], 'in the linked mrepo\'s inbox folder: addressed to it by its unique URI, the command unchanged, its core addressed back to this request\'s branch')
       // the linked mrepo's response, in its outbox folder: collected, added to
       // the branch, the principal returned with it
-      writeFileSync(join(other, 'outbox', `${p.waits}.json`), JSON.stringify(wrap('/outbox', complete({ ...sent.value, value: { command: sent.value.value, protocol: 'service', action: 'start', uri: '/', args: [] } }, { ok: true, value: { service: 'started' } }))))
+      writeFileSync(join(other, 'outbox', `${p.waits}.json`), JSON.stringify(wrap('/outbox', complete({ ...sent.value, value: { command: sent.value.value, protocol: 'service', action: 'start', uri: '.', args: [] } }, { ok: true, value: { service: 'started' } }))))
       for (let i = 0; i < 4; i++) { await request(ctx2); await execute(ctx2, { actions: acts }) }
       const back = (await json(ctx2.repo, `/request/done/${name}.json`)).value.value
       t.alike(back.output, { service: 'started' }, 'returned with the response: a response is not checked as a request (service start is not allowed here now, the service being started)')

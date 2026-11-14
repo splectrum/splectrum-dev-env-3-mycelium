@@ -3,7 +3,8 @@
 Our URIs: parse, validate, and split at known prefixes.
 
 Generic: no git, no dependencies. A URI is absolute and `/`-separated,
-without scheme, query or fragment; its canonical form is lowercase.
+without scheme, query or fragment; its canonical form is lowercase. A
+URI in a request is relative: the same segments, no leading slash.
 
 | | |
 |---|---|
@@ -53,3 +54,20 @@ reproduces every call inside it.
 ## Tests
 
 - `npm test`: the unit tests
+
+## Relative
+
+A URI as it is written in a request has no leading slash: it is relative
+to where its writer stands. `.` is the position itself, and so is none
+given; `./x` is `x`.
+
+- `relative(uri)` → its canonical form. Throws on a leading slash, saying
+  the URI as it is written now, on a segment that is not a name, and on a
+  form that is not canonical.
+- `from(at, uri)` → the URI written at a position, from that position's
+  start: `from('main', 'host')` is `main/host`.
+- `within(at, uri)` → the other way: `host`; `.` for the position itself;
+  `null` when the URI is not at or below it.
+- `slashed(uri)`, `unslashed(path)` → to and from the slash-led paths the
+  code still reads and writes by: `.` is `/`.
+- `ROOT`: `.`.

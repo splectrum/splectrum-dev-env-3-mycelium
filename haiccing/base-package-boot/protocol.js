@@ -9,7 +9,7 @@ import { deploy, teardown, redeploy } from './modules/pear-full-square/mrepo-bas
 
 // A target is needed: / is the mrepo itself, which one cannot deploy or
 // tear down.
-const CHILD = { uris: ['/<name>'], target: true }
+const CHILD = { uris: ['<name>'], target: true }
 
 export const protocols = {
   boot: {

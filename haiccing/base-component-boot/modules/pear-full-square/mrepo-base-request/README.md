@@ -47,10 +47,17 @@ setting.
   list, unnamed. A request may also be given as a command, as it is typed:
   its parts in order, `<protocol>/<action> <URI> <argument>...`, an array
   or a string (`{ command }`, or the value itself). It is interpreted on
-  its way into pending (`interpret(command, protocols)`, `formOf`): the
-  protocol alone takes its default action (its config's `default`); no URI
-  is `/`; a URI without its leading `/` gets it. The command stays in the
-  form, beside what it was interpreted as.
+  its way into pending (`interpret(command, protocols, at)`, `formOf`):
+  the protocol alone takes its default action (its config's `default`).
+  The command stays in the form, beside what it was interpreted as.
+- **A request's URI is relative**: no leading slash, as written where
+  its writer stands. `.` is the position itself, and so is none given;
+  `./x` is `x`. From outside the writer stands at `main` (`MAIN`), so the
+  outside reaches `main` only; the mrepo's own requests, a hook, stand at
+  its root (`ROOT`) and name the layer first. The form holds the URI from
+  the root: `host` from outside is `main/host`. A leading slash is
+  refused. The URI functions are `mycelium-uri`'s, offered here too:
+  `relative`, `from`, `within`, `slashed`.
 - **One way into pending** (`admit(ctx, core, { origin })`): the inbox's
   records and internal requests (`internal(ctx, form)`, the mrepo's own)
   pass the same handler, validated by where they come from; refused, the
@@ -70,9 +77,9 @@ setting.
   principal, it goes to `request/done` and is not sent on. A response
   nobody waits for goes to `request/done`. `settled()` counts any request
   branch as not done.
-- **What is missing is said** (`missing(cfg, uri, args)`): an action's
-  config names what it needs, a target (`target`: not `/`, the mrepo
-  itself) and its arguments (`args`, by name, `?` optional). One not
+- **What is missing is said** (`missing(cfg, uri, args, at)`): an action's
+  config names what it needs, a target (`target`: not the position the
+  request was written at, the mrepo itself) and its arguments (`args`, by name, `?` optional). One not
   given: `missing argument: <name>`, with or without a service, before
   the URI is looked at.
 - **Checked** (`check`): its URI canonical; from outside, against the

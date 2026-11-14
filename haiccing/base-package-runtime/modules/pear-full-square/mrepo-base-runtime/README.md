@@ -36,8 +36,8 @@ mrepo's own packages: `bare
   status: `repository.uri`.
 - Its own package's protocols, passed in by its `run.js` (`run({ own })`;
   its bundle not imported again): `runtime run`, the method `external/run/`.
-  `runtime run
-  /packages/<org>/<package><target> [dry-run]`: a linked package's
+  `runtime/run .
+  packages/<org>/<package><target> [dry-run]`: a linked package's
   entry through its dispatcher, its tests above all (a floating instance of
   the package, each unit its own process); the result the request's output,
   a line a unit in its log. `/protocol`, `/deploy`: the names offered.

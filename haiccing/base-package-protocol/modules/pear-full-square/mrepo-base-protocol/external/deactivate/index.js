@@ -1,4 +1,4 @@
-// deactivate: protocol/deactivate / <protocol>, an active protocol made inactive (README.md beside it).
+// deactivate: protocol/deactivate . <protocol>, an active protocol made inactive (README.md beside it).
 import { activeAt } from '../../internal/config.js'
 
 export async function deactivate (exec, { args = [] }) {

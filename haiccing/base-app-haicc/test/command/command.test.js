@@ -59,8 +59,9 @@ test('the usage: every form of the command line, printed; exit 0', async (t) => 
 test('not a command: exit 2, said on stderr, nothing printed', async (t) => {
   for (const [a, said] of [
     [['nosuch'], "haicc: no command 'nosuch' (haicc --help)"],
-    [['/'], 'haicc: haicc <URI> <protocol>/<action> <argument>... (a command follows the URI)'],
-    [['/host'], 'haicc: haicc <URI> <protocol>/<action> <argument>... (a command follows the URI)'],
+    [['.'], 'haicc: haicc <URI> <protocol>/<action> <argument>... (a command follows the URI)'],
+    [['swarms/swarm-1'], 'haicc: haicc <URI> <protocol>/<action> <argument>... (a command follows the URI)'],
+    [['host'], "haicc: no command 'host' (haicc --help)"],
     [['boot'], 'haicc: haicc boot/deploy, haicc boot/teardown'],
     [['boot/nosuch'], 'haicc: no action: boot nosuch (deploy, teardown)'],
     [['boot/deploy', 'host'], 'haicc: haicc boot/deploy (no arguments)'],
@@ -74,13 +75,13 @@ test('not a command: exit 2, said on stderr, nothing printed', async (t) => {
 })
 
 test('nothing booted: said, exit 3, nothing written', async (t) => {
-  let r = asked('request', await haicc(['/host', 'service/start']))
+  let r = asked('request', await haicc(['host', 'service/start']))
   t.alike([r.code, r.out, r.err], [3, '', `haicc: no boot mrepo at ${work} (haicc boot/deploy)\n`], 'a command for the mrepos')
   r = asked('boot/teardown', await haicc(['boot/teardown']))
   t.alike([r.code, r.out, r.err], [3, '', `haicc: no boot mrepo at ${work} (nothing to tear down)\n`], 'haicc boot/teardown')
   r = asked('boot/deploy', await haicc(['boot/deploy']))
   t.alike([r.code, r.out, r.err], [3, '', `haicc: no ${CONFIG.org}/${CONFIG.boot}.bundle in the sources (haicc sources link <folder>)\n`], 'haicc boot/deploy, no source holding the boot component')
-  r = await haicc(['/', 'help/get'], { env: { HAICC_WORK: join(home, 'elsewhere') } })
+  r = await haicc(['.', 'help/get'], { env: { HAICC_WORK: join(home, 'elsewhere') } })
   t.alike([r.code, r.err], [3, `haicc: no boot mrepo at ${join(home, 'elsewhere')} (haicc boot/deploy)\n`], 'HAICC_WORK: another work folder')
   t.alike(readdirSync(home), [], 'nothing written')
 })
@@ -103,8 +104,8 @@ test('haicc sources: the list in its own folder, read and changed', async (t) =>
 
 test('a command for the mrepos: its record in the root\'s inbox, value by value', async (t) => {
   mkdirSync(join(root, 'inbox'), { recursive: true }); mkdirSync(join(root, 'outbox'))
-  let a = answer({ output: { deployed: '/host' } })
-  let r = asked('request', await haicc(['--output', '/', 'boot/deploy', 'host', 'base-component-haicc']))
+  let a = answer({ output: { deployed: 'host' } })
+  let r = asked('request', await haicc(['--output', '.', 'boot/deploy', 'host', 'base-component-haicc']))
   let { file, envelope } = await a
   t.is(r.code, 0, r.err)
   t.is(envelope.topic, `/${CONFIG.root.uri}/inbox`, 'an envelope addressed to the root mrepo\'s inbox: /local/boot/inbox')
@@ -118,14 +119,14 @@ test('a command for the mrepos: its record in the root\'s inbox, value by value'
   t.alike(readdirSync(join(root, 'inbox')), [file], 'nothing half written left beside it')
 
   a = answer({ output: 1 })
-  r = await haicc(['--output', '/host', 'haicc', '/node-1', 'help/get', '/packages', 'no "such" section'])
+  r = await haicc(['--output', 'host', 'haicc', 'node-1', 'help/get', '.', 'packages', 'no "such" section'])
   ;({ envelope } = await a)
-  t.alike(envelope.value.value, ['haicc', '/host', 'haicc', '/node-1', 'help/get', '/packages', 'no "such" section'], 'anywhere else the haicc command as it is: chained, an argument with spaces and quotes one part')
+  t.alike(envelope.value.value, ['haicc', 'host', 'haicc', 'node-1', 'help/get', '.', 'packages', 'no "such" section'], 'anywhere else the haicc command as it is: chained, an argument with spaces and quotes one part')
 
   a = answer({ output: 1 })
   r = await haicc(['/run', 'service/start'], { env: { HAICC_OUTPUT: '1' } })
   ;({ envelope } = await a)
-  t.alike(envelope.value.value, ['haicc', '/run', 'service/start'], 'a position named /run: a URI, not the entry\'s name')
+  t.alike(envelope.value.value, ['haicc', '/run', 'service/start'], 'a first word /run after the entry\'s name: passed on as typed, not taken for the entry')
   a = answer({ output: 1 })
   r = await haicc(['/run', 'service/start'], { env: { HAICC_OUTPUT: '1' }, via: ['run.js'] })
   ;({ envelope } = await a)
@@ -133,10 +134,10 @@ test('a command for the mrepos: its record in the root\'s inbox, value by value'
 })
 
 test('its response: the record unpacked, as stored, or the output alone; the exit code from its completed form', async (t) => {
-  const output = { deployed: '/host', mrepo: 'local/host', package: 'haiccing/base-component-haicc', runtime: { pid: 4242, started: '2026-11-14T00:00:00.000Z' } }
+  const output = { deployed: 'host', mrepo: 'local/host', package: 'haiccing/base-component-haicc', runtime: { pid: 4242, started: '2026-11-14T00:00:00.000Z' } }
   const packed = s => s.split('\n').map(l => l.replace(/^ */, '').replace(/([^\\])": /g, '$1":')).join('')
   let a = answer({ output })
-  let r = await haicc(['/', 'boot/deploy', 'host', 'base-component-haicc'])
+  let r = await haicc(['.', 'boot/deploy', 'host', 'base-component-haicc'])
   let { text } = await a
   t.alike([r.code, r.err], [0, ''], 'an output: exit 0')
   t.ok(r.out.includes('\n    "topic": "/haicc/terminal",\n'), 'by default the record unpacked across lines: the core two deep')
@@ -144,36 +145,36 @@ test('its response: the record unpacked, as stored, or the output alone; the exi
   t.is(packed(r.out), text.trim(), 'packed again: the record as stored, nothing of it changed')
 
   a = answer({ output })
-  r = await haicc(['/', 'help/get'], { env: { HAICC_WIDTH: '1000' } })
+  r = await haicc(['.', 'help/get'], { env: { HAICC_WIDTH: '1000' } })
   ;({ text } = await a)
   t.is(r.out, text, 'HAICC_WIDTH: a record that fits it left on one line')
 
-  for (const [args, env] of [[['--raw', '/', 'help/get'], {}], [['/', 'help/get'], { HAICC_RAW: '1' }]]) {
+  for (const [args, env] of [[['--raw', '.', 'help/get'], {}], [['.', 'help/get'], { HAICC_RAW: '1' }]]) {
     a = answer({ output })
     r = await haicc(args, { env })
     ;({ text } = await a)
     t.alike([r.code, r.out], [0, text], `${args[0] === '--raw' ? '--raw' : 'HAICC_RAW=1'}: the record as stored, one line`)
   }
-  for (const [args, env] of [[['--output', '/', 'help/get'], {}], [['/', 'help/get'], { HAICC_OUTPUT: '1', HAICC_RAW: '1' }]]) {
+  for (const [args, env] of [[['--output', '.', 'help/get'], {}], [['.', 'help/get'], { HAICC_OUTPUT: '1', HAICC_RAW: '1' }]]) {
     a = answer({ output: { service: 'started', state: 'started' } })
     r = await haicc(args, { env }); await a
     t.alike([r.code, r.out], [0, '{"service":"started","state":"started"}\n'], `${args[0] === '--output' ? '--output' : 'HAICC_OUTPUT=1, before HAICC_RAW'}: the output alone`)
   }
 
   a = answer({ error: 'deployed already: /host' })
-  r = await haicc(['/', 'boot/deploy', 'host', 'x'])
+  r = await haicc(['.', 'boot/deploy', 'host', 'x'])
   ;({ text } = await a)
   t.alike([r.code, r.err], [1, 'haicc: deployed already: /host\n'], 'an error: exit 1, said on stderr')
   t.is(packed(r.out), text.trim(), 'its record printed all the same')
   a = answer({ error: 'deployed already: /host' })
-  r = await haicc(['--output', '/', 'boot/deploy', 'host', 'x']); await a
+  r = await haicc(['--output', '.', 'boot/deploy', 'host', 'x']); await a
   t.alike([r.code, r.out, r.err], [1, '', 'haicc: deployed already: /host\n'], '--output: the error alone')
 
   a = answer(null)
-  r = await haicc(['--output', '/', 'help/get']); await a
+  r = await haicc(['--output', '.', 'help/get']); await a
   t.alike([r.code, r.out, r.err], [5, '', 'haicc: the response holds no completed form\n'], 'a response whose form is not completed: exit 5')
 
-  r = await haicc(['/', 'help/get'], { env: { HAICC_TIMEOUT: '0.5' } })
+  r = await haicc(['.', 'help/get'], { env: { HAICC_TIMEOUT: '0.5' } })
   t.is(r.code, 4, 'HAICC_TIMEOUT: no response in time, exit 4')
   t.ok(/^haicc: no response in 0\.5 s \(the request stays: [0-9a-f-]{36}\)\n$/.test(r.err), 'said, with the request\'s key')
 })
@@ -182,7 +183,7 @@ test('boot/teardown: what boot/deploy put in place removed by name, the rest kep
   for (const d of ['mrepos/boot/.git', 'mrepos/boot/main/host/.git', 'packages/haiccing', 'kept']) mkdirSync(join(work, d), { recursive: true })
   writeFileSync(join(work, 'mrepo.json'), '{}')
   let r = asked('boot/teardown', await haicc(['boot/teardown']))
-  t.alike([r.code, r.out, r.err], [0, JSON.stringify({ tornDown: '/', runtimes: 0, work }) + '\n', ''], 'said: the root torn down, no runtime was running')
+  t.alike([r.code, r.out, r.err], [0, JSON.stringify({ tornDown: '.', runtimes: 0, work }) + '\n', ''], 'said: the root torn down, no runtime was running')
   t.alike(readdirSync(work), ['kept'], 'the mrepos, the package store and the setting removed; nothing else')
   t.ok(existsSync(join(home, 'sources.list')), 'the sources list kept')
   r = await haicc(['boot/teardown'])

@@ -37,13 +37,13 @@ const LIST = [
 // its boot, what its initialise does, and the door its service opens and
 // closes: the boot protocol.
 const HOOKS = {
-  'boot/activate-haicc': ['protocol/activate', '/', 'haicc'],
-  'boot/activate-help': ['protocol/activate', '/', 'help'],
-  'boot/activate-runtime': ['protocol/activate', '/', 'runtime'],
-  'boot/activate-service': ['protocol/activate', '/', 'service'],
+  'boot/activate-haicc': ['protocol/activate', '.', 'haicc'],
+  'boot/activate-help': ['protocol/activate', '.', 'help'],
+  'boot/activate-runtime': ['protocol/activate', '.', 'runtime'],
+  'boot/activate-service': ['protocol/activate', '.', 'service'],
   'initialise/help-extract': ['help/extract'],
-  'start/activate-boot': ['protocol/activate', '/', 'boot'],
-  'stop/deactivate-boot': ['protocol/deactivate', '/', 'boot']
+  'start/activate-boot': ['protocol/activate', '.', 'boot'],
+  'stop/deactivate-boot': ['protocol/deactivate', '.', 'boot']
 }
 
 test('its list of packages, in deploy order, itself last', (t) => {
@@ -106,7 +106,7 @@ function world () {
     put: (uri, bytes) => { files[uri] = Buffer.from(bytes) },
     remove: uri => { delete files[uri] },
     run: async command => {
-      const [first, uri = '/', ...args] = command
+      const [first, uri = '.', ...args] = command
       const [p, a] = first.split('/')
       commands.push(command.join(' '))
       if (!actions[p]?.[a]) throw new Error(`no action: ${first}`)

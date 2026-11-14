@@ -2,13 +2,14 @@
 
 Writes the mrepo's help layer from the READMEs of its linked packages, replacing what was there.
 
-An internal request: the runtime places `help extract /` as the mrepo
+An internal request: the runtime places `help/extract` as the mrepo
 starts, before it takes requests from the inbox. It reads the packages
 manifest and the bundles in the mrepo's `packages/`.
 
 ## Signature
 
-`extractAction(exec, { uri })`: `uri` is `/`, the whole mrepo.
+`extractAction(exec, { uri })`: `uri` is the mrepo itself, `.` for its
+own request, `main` from outside: the whole mrepo.
 
 ## Returns
 
@@ -18,4 +19,4 @@ same, a warning when there are problems.
 
 ## Errors
 
-A URI other than `/`.
+A URI other than the mrepo itself.

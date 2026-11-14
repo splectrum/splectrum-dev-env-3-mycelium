@@ -3,4 +3,5 @@
 // Plain, pure functions: a run reproduces them from their arguments.
 
 export { isSegment, validate, sameName, isUri, parse, format, join, parent, split } from './lib/uri.js'
+export { relative, from, within, slashed, unslashed, ROOT } from './lib/relative.js'
 export { isName, validateName, isDataName, validateDataName, uriFormOf, dataNameOf } from './lib/names.js'

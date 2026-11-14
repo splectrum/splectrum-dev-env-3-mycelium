@@ -2,9 +2,10 @@
 
 Reads a haicc command line and says what it asks for.
 
-A URI starts with `/`, the local root, so a first part starting with `/`
-is a command for the mrepos. A `<protocol>/<action>` without a URI is the
-machine level. Anything else is the app's own.
+A URI is relative, without a leading slash: `.` is the local root,
+`host` the position `host` in it. So the first part is a URI, and a
+command follows it, unless it is one of haicc's own first words: a
+machine level command, `sources`, or the usage's.
 
 ## Signature
 
@@ -25,20 +26,25 @@ One of:
 
 A `Failure` with exit code 2:
 
-- No command by that name, or no such action at the machine level.
+- One word that is no command of haicc's own.
 - A URI with no command after it.
-- `--raw` or `--output` without a URI after it.
-- Arguments after a machine level command.
+- `--raw` or `--output` with nothing after it.
+- A machine level protocol alone, an action it does not have, or
+  arguments after one.
 
 ## Design
 
 There is no mrepo context at the command line, so one rule of its own:
 
 ```
-haicc / boot/deploy host x     sent as   boot/deploy host x
-haicc /host service/start      sent as   haicc /host service/start
+haicc . boot/deploy host x     sent as   boot/deploy host x
+haicc host service/start       sent as   haicc host service/start
 ```
 
 At the root the command is sent plain; anywhere else the `haicc` command
 goes as it is and the root mrepo resolves the position. The parts go as
-typed, unnamed; the mrepo interprets them.
+typed, unnamed; the mrepo interprets them, so a URI that is not one, a
+leading slash among them, is refused there.
+
+A position named like one of haicc's own first words is written with
+`./` in front: `haicc ./sources help/get`, `haicc ./boot service/start`.

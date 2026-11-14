@@ -87,14 +87,14 @@ out=$(haicc --help); is $? 0 "haicc --help, Bare there"
 has "$out" "haicc sources link <folder>" "the usage whole: the first step's commands"
 has "$out" "haicc <URI> <protocol>/<action> <argument>..." "and the app's: the form of an mrepo command"
 haicc nosuch >/dev/null 2>&1; is $? 2 "no such script command: exit 2"
-out=$(haicc / 2>&1); is $? 2 "a URI with no command after it: exit 2"
+out=$(haicc . 2>&1); is $? 2 "a URI with no command after it: exit 2"
 out=$(haicc boot 2>&1); is $? 2 "haicc boot alone: exit 2 (the machine level is boot/deploy, boot/teardown)"
 has "$out" "haicc boot/deploy, haicc boot/teardown" "said"
 haicc boot/nosuch >/dev/null 2>&1; is $? 2 "no such action at the machine level: exit 2"
 out=$(haicc --output 2>&1); is $? 2 "haicc --output without a URI: exit 2"
 out=$(haicc --raw 2>&1); is $? 2 "haicc --raw without a URI: exit 2"
 haicc boot/teardown >/dev/null 2>&1; is $? 3 "haicc boot/teardown with no boot mrepo: exit 3"
-out=$(haicc /host service/start 2>&1); is $? 3 "an mrepo command before the boot: exit 3"
+out=$(haicc host service/start 2>&1); is $? 3 "an mrepo command before the boot: exit 3"
 has "$out" "no boot mrepo" "said: no boot mrepo (haicc boot/deploy)"
 [ ! -e "$T/home/work/mrepos" ] && ok "nothing written by any of it" || no "nothing written by any of it"
 is "$(haicc sources no-https)" "folder:$SOURCES" "haicc sources no-https: the backup off"
@@ -106,7 +106,7 @@ haicc sources download nosuch >/dev/null 2>&1; is $? 3 "nothing to download by t
 
 # 6. the boot: the boot mrepo at the root, its runtime started, nothing deployed
 out=$(haicc boot/deploy 2>&1); is $? 0 "haicc boot/deploy"
-has "$out" '"protocol":"boot","action":"deploy","uri":"/boot"' "its request printed, completed: boot deploy /boot"
+has "$out" '"protocol":"boot","action":"deploy","uri":"boot"' "its request printed, completed: boot deploy boot"
 has "$out" '"repository":"boot"' "its runtime started"
 [ -d "$T/home/work/mrepos/boot/inbox" ] && ok "the boot mrepo in the work folder" || no "the boot mrepo in the work folder"
 [ ! -e "$T/home/work/mrepos/boot/main/host" ] && ok "nothing deployed by the boot" || no "nothing deployed by the boot"
@@ -115,70 +115,73 @@ is "$(running | wc -l | tr -d ' ')" 1 "one runtime running: the boot mrepo's"
 # 7. commands: the host deployed at the root; passed through to it. The
 # response record is printed whole, unpacked across lines; --raw: as it is
 # stored, one line; --output: the output alone
-out=$(haicc --raw / boot/deploy host base-component-haicc 2>&1); is $? 0 "haicc --raw / boot/deploy host base-component-haicc"
-has "$out" '"deployed":"/host","mrepo":"local/host","package":"haiccing/base-component-haicc"' "its output: the haicc mrepo deployed at /host, its unique URI local/host"
+out=$(haicc --raw . boot/deploy host base-component-haicc 2>&1); is $? 0 "haicc --raw . boot/deploy host base-component-haicc"
+has "$out" '"deployed":"host","mrepo":"local/host","package":"haiccing/base-component-haicc"' "its output: the haicc mrepo deployed at host, its unique URI local/host"
 has "$out" '"topic":"/haicc/terminal"' "--raw: the response record as it is stored, the core addressed back to the terminal"
 is "$(printf '%s\n' "$out" | wc -l | tr -d ' ')" 1 "one line"
-out=$(haicc / help/get / oneliner 2>&1); is $? 0 "haicc / help/get /: by default the record unpacked"
+out=$(haicc . help/get . oneliner 2>&1); is $? 0 "haicc . help/get .: by default the record unpacked"
 has "$out" '    "topic": "/haicc/terminal",' "across lines, an entry a line, indented: the core two deep"
 has "$out" '      "protocol": "help",' "the form three deep"
 [ "$(printf '%s\n' "$out" | wc -l | tr -d ' ')" -gt 10 ] && ok "many lines" || no "many lines" "$out"
-out=$(haicc /host help/get / 2>&1 >/dev/null); is "$out" "haicc: no help extracted in this mrepo yet (help/extract)" "the host, booted: help active from boot, extracted by its initialise hook, not yet"
+out=$(haicc host help/get 2>&1 >/dev/null); is "$out" "haicc: no help extracted in this mrepo yet (help/extract)" "the host, booted: help active from boot, extracted by its initialise hook, not yet"
 # nothing of a record changed by the unpacking: what is printed, its line
 # breaks, indentation and the space after an opened object's keys taken off
 # again, is the record as it is stored in the outbox (an output, an error)
 back=yes
-for c in "/ help/get / oneliner" "/ help/get /packages oneliner" "/ boot/deploy host base-component-haicc"; do
+for c in ". help/get . oneliner" ". help/get . packages oneliner" ". boot/deploy host base-component-haicc"; do
   out=$(haicc $c 2>/dev/null)
   key=$(printf '%s\n' "$out" | sed -n 's/^  "key": "\(.*\)",$/\1/p')
   packed=$(printf '%s\n' "$out" | sed -e 's/^ *//' -e 's/\([^\\]\)": /\1":/g' | tr -d '\n')
   [ -n "$key" ] && [ "$packed" = "$(cat "$T/home/work/mrepos/boot/outbox/$key.json")" ] || { no "unpacked and packed again: the record as stored" "haicc $c"; back=''; break; }
 done
 [ -z "$back" ] || ok "unpacked and packed again: every record in the outbox as stored"
-is "$(HAICC_WIDTH=100000 haicc / help/get / oneliner | wc -l | tr -d ' ')" 1 "a record that fits the width: left on one line"
-out=$(haicc / boot/deploy host base-component-haicc 2>&1 >/dev/null); is $? 1 "deployed again: exit 1"
-is "$out" "haicc: deployed already: /host" "its error on stderr: /host is there already"
-out=$(haicc /host boot/deploy node-1 base-package-runtime 2>&1 >/dev/null); is $? 1 "the host booted: its boot protocol behind the service's door"
+is "$(HAICC_WIDTH=100000 haicc . help/get . oneliner | wc -l | tr -d ' ')" 1 "a record that fits the width: left on one line"
+out=$(haicc . boot/deploy host base-component-haicc 2>&1 >/dev/null); is $? 1 "deployed again: exit 1"
+is "$out" "haicc: deployed already: host" "its error on stderr: host is there already"
+out=$(haicc host boot/deploy node-1 base-package-runtime 2>&1 >/dev/null); is $? 1 "the host booted: its boot protocol behind the service's door"
 is "$out" "haicc: not now: boot deploy (boot is not active; the service is booted)" "said: boot is activated by the service's start"
-is "$(haicc --output /host service/initialise 2>&1)" '{"service":"initialised","state":"initialised"}' "haicc --output /host service/initialise: passed through to the haicc mrepo; what was done, the state now"
-is "$(haicc --output /host service/start 2>&1)" '{"service":"started","state":"started"}' "haicc /host service/start"
+is "$(haicc --output host service/initialise 2>&1)" '{"service":"initialised","state":"initialised"}' "haicc --output host service/initialise: passed through to the haicc mrepo; what was done, the state now"
+is "$(haicc --output host service/start 2>&1)" '{"service":"started","state":"started"}' "haicc host service/start"
 
 # 8. what is missing is said: an argument, a protocol
-out=$(haicc / boot/deploy 2>&1 >/dev/null); is $? 1 "haicc / boot/deploy, nothing after it: exit 1"
+out=$(haicc . boot/deploy 2>&1 >/dev/null); is $? 1 "haicc . boot/deploy, nothing after it: exit 1"
 is "$out" "haicc: missing argument: target" "missing argument: target"
-out=$(haicc / boot/teardown 2>&1 >/dev/null); is "$out" "haicc: missing argument: target" "haicc / boot/teardown: the same (one cannot tear down the mrepo itself)"
-out=$(haicc / boot/teardown / 2>&1 >/dev/null); is "$out" "haicc: missing argument: target" "a target of / written out: still missing"
-out=$(haicc / boot/deploy other 2>&1 >/dev/null); is "$out" "haicc: missing argument: package" "haicc / boot/deploy other: missing argument: package"
-out=$(haicc /host boot/deploy 2>&1 >/dev/null); is "$out" "haicc: missing argument: target" "and passed through: said by the mrepo it lands in"
-out=$(haicc /host 2>&1); is $? 2 "haicc /host, no command: exit 2 at the command line"
-out=$(haicc / protocol/activate / service 2>&1 >/dev/null); is "$out" "haicc: not now: protocol activate (protocol is not active)" "activating a protocol is the hooks', not a command from outside"
-out=$(haicc / deploy/teardown host 2>&1 >/dev/null); is $? 1 "a protocol that is not there: exit 1"
+out=$(haicc . boot/teardown 2>&1 >/dev/null); is "$out" "haicc: missing argument: target" "haicc . boot/teardown: the same (one cannot tear down the mrepo itself)"
+out=$(haicc . boot/teardown . 2>&1 >/dev/null); is "$out" "haicc: missing argument: target" "a target of . written out: still missing"
+out=$(haicc . boot/deploy other 2>&1 >/dev/null); is "$out" "haicc: missing argument: package" "haicc . boot/deploy other: missing argument: package"
+out=$(haicc host boot/deploy 2>&1 >/dev/null); is "$out" "haicc: missing argument: target" "and passed through: said by the mrepo it lands in"
+out=$(haicc host 2>&1); is $? 2 "haicc host, no command: exit 2 at the command line"
+out=$(haicc . protocol/activate . service 2>&1 >/dev/null); is "$out" "haicc: not now: protocol activate (protocol is not active)" "activating a protocol is the hooks', not a command from outside"
+out=$(haicc . deploy/teardown host 2>&1 >/dev/null); is $? 1 "a protocol that is not there: exit 1"
 is "$out" "haicc: no protocol: deploy (boot, haicc, help, runtime)" "said, with the protocols there"
-out=$(haicc / boot/remove host 2>&1 >/dev/null); is "$out" "haicc: no action: boot remove (deploy, redeploy, teardown)" "an action that is not there: said, with the protocol's actions"
+out=$(haicc . boot/remove host 2>&1 >/dev/null); is "$out" "haicc: no action: boot remove (deploy, redeploy, teardown)" "an action that is not there: said, with the protocol's actions"
 
 # 9. a node inside the host; commands chained through both
-out=$(haicc --raw /host boot/deploy node-1 base-package-runtime 2>&1); is $? 0 "haicc /host boot/deploy node-1: executed by the haicc mrepo"
-has "$out" '"deployed":"/node-1","mrepo":"local/node-1"' "the node deployed inside it"
+out=$(haicc --raw host boot/deploy node-1 base-package-runtime 2>&1); is $? 0 "haicc host boot/deploy node-1: executed by the haicc mrepo"
+has "$out" '"deployed":"node-1","mrepo":"local/node-1"' "the node deployed inside it"
 [ -d "$T/home/work/mrepos/boot/main/host/main/node-1/inbox" ] && ok "in the shadow of its main: main/host/main/node-1" || no "in the shadow of its main"
 is "$(running | wc -l | tr -d ' ')" 3 "three runtimes running: the boot mrepo's, the host's, the node's"
-out=$(haicc --raw /host haicc /node-1 help/get /packages oneliner 2>&1); is $? 0 "haicc /host haicc /node-1 help/get /packages: chained through two shortcuts"
-has "$out" '"uri":"/packages"' "answered by the node"
+out=$(haicc --raw host haicc node-1 help/get . packages oneliner 2>&1); is $? 0 "haicc host haicc node-1 help/get . packages: chained through two shortcuts"
+has "$out" '"uri":"packages"' "answered by the node"
 case "$out" in *base-package-boot*) no "the node's packages, not the host's" "$out" ;; *) ok "the node's packages, not the host's" ;; esac
-out=$(haicc /host/node-1 help/get 2>&1 >/dev/null); is $? 1 "a URI running through a shortcut: exit 1"
-has "$out" "/host is a shortcut: a URI does not run through it" "said, with the way across"
-out=$(haicc / help/get /packages 'no "such" section' 2>&1 >/dev/null); is $? 1 "an argument with spaces and quotes: sent whole"
-has "$out" 'no section "no "such" section" at /packages' "and back in the error"
-out=$(haicc --output /host help/get / oneliner 2>&1); is $? 0 "haicc --output: the output alone"
+out=$(haicc host/node-1 help/get 2>&1 >/dev/null); is $? 1 "a URI running through a shortcut: exit 1"
+has "$out" "host is a shortcut: a URI does not run through it (haicc host haicc node-1 ...)" "said, with the way across"
+out=$(haicc . help/get . packages 'no "such" section' 2>&1 >/dev/null); is $? 1 "an argument with spaces and quotes: sent whole"
+has "$out" 'no section "no "such" section" at packages' "and back in the error"
+out=$(haicc /host help/get 2>&1 >/dev/null); is $? 1 "a URI with a leading slash: refused, exit 1"
+is "$out" "haicc: not a relative URI: /host (no leading slash: host)" "said, with the URI as it is written now"
+out=$(haicc --output ./host service/start 2>&1 >/dev/null); is "$out" "haicc: not now: service start (the service is started)" "./host is host: a position written with ./ in front"
+out=$(haicc --output host help/get . oneliner 2>&1); is $? 0 "haicc --output: the output alone"
 case "$out" in *'"topic":'*) no "no record around it" "$out" ;; *) ok "no record around it" ;; esac
-out=$(HAICC_OUTPUT=1 haicc /host help/get / oneliner 2>&1); is $? 0 "HAICC_OUTPUT=1: the same"
+out=$(HAICC_OUTPUT=1 haicc host help/get . oneliner 2>&1); is $? 0 "HAICC_OUTPUT=1: the same"
 case "$out" in *'"topic":'*) no "no record around it, HAICC_OUTPUT=1" "$out" ;; *) ok "no record around it, HAICC_OUTPUT=1" ;; esac
 
 # 10. torn down: the node; the service stopped and shut down; the host
-is "$(haicc --output /host boot/teardown node-1 2>&1)" '{"tornDown":"/node-1"}' "haicc /host boot/teardown node-1"
-is "$(haicc --output /host service/stop 2>&1)" '{"service":"stopped","state":"initialised"}' "haicc /host service/stop: stopped, the state initialised again"
-out=$(haicc /host boot/deploy node-2 base-package-runtime 2>&1 >/dev/null); is "$out" "haicc: not now: boot deploy (boot is not active; the service is initialised)" "stopped: its boot protocol deactivated, the door closed again"
-is "$(haicc --output /host service/shutdown 2>&1)" '{"service":"shut down","state":"booted"}' "haicc /host service/shutdown: shut down, the state booted again"
-is "$(haicc --output / boot/teardown host 2>&1)" '{"tornDown":"/host"}' "haicc / boot/teardown host: at the root, about the shortcut as an item"
+is "$(haicc --output host boot/teardown node-1 2>&1)" '{"tornDown":"node-1"}' "haicc host boot/teardown node-1"
+is "$(haicc --output host service/stop 2>&1)" '{"service":"stopped","state":"initialised"}' "haicc host service/stop: stopped, the state initialised again"
+out=$(haicc host boot/deploy node-2 base-package-runtime 2>&1 >/dev/null); is "$out" "haicc: not now: boot deploy (boot is not active; the service is initialised)" "stopped: its boot protocol deactivated, the door closed again"
+is "$(haicc --output host service/shutdown 2>&1)" '{"service":"shut down","state":"booted"}' "haicc host service/shutdown: shut down, the state booted again"
+is "$(haicc --output . boot/teardown host 2>&1)" '{"tornDown":"host"}' "haicc . boot/teardown host: at the root, about the shortcut as an item"
 [ ! -e "$T/home/work/mrepos/boot/main/host" ] && ok "the host's folder removed" || no "the host's folder removed"
 is "$(running | wc -l | tr -d ' ')" 1 "one runtime left: the boot mrepo's"
 
@@ -189,10 +192,10 @@ is "$(running | wc -l | tr -d ' ')" 1 "still one runtime"
 
 # 12. the machine level torn down: every runtime stopped, what boot/deploy
 # put in place removed; Bare, the sources and the scripts stay
-haicc / boot/deploy host base-component-haicc >/dev/null 2>&1; is $? 0 "the host deployed again"
+haicc . boot/deploy host base-component-haicc >/dev/null 2>&1; is $? 0 "the host deployed again"
 is "$(running | wc -l | tr -d ' ')" 2 "two runtimes running"
 out=$(haicc boot/teardown 2>&1); is $? 0 "haicc boot/teardown"
-has "$out" '"tornDown":"/","runtimes":2' "said: the root torn down, two runtimes stopped"
+has "$out" '"tornDown":".","runtimes":2' "said: the root torn down, two runtimes stopped"
 is "$(running | wc -l | tr -d ' ')" 0 "no runtime left: the host's stopped with the boot mrepo's"
 [ ! -e "$T/home/work/mrepos" ] && [ ! -e "$T/home/work/packages" ] && [ ! -e "$T/home/work/mrepo.json" ] && ok "the mrepos, the package store and the setting removed" || no "what boot/deploy put in place removed" "$(ls "$T/home/work")"
 [ -x "$T/home/bare/bin/bare" ] && [ -f "$T/home/sources.list" ] && [ -x "$T/home/bin/haicc" ] && ok "Bare, the sources list and the scripts kept" || no "Bare, the sources list and the scripts kept"

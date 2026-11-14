@@ -4,7 +4,7 @@ Moves the service from started back to initialised: the external API closed.
 
 ## Signature
 
-`stop(exec)`: requested as `service stop /`.
+`stop(exec)`: requested as `service/stop`.
 
 ## Returns
 

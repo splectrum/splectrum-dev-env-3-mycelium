@@ -2613,3 +2613,91 @@ each time. Nothing left running.
 `haiccing/base-app-haicc` and `pear-full-square/haicc-base-app` (the
 module's name is ours, to confirm); until then their product
 repositories are not pushed. The others that changed are.
+
+## 61. Relative URIs, piece A: requests relative (2026-11-14)
+
+Task 1 of `tasks.md`, its first piece. By the method: the demo first,
+`run.sh` rewritten in the new form, seen to fail, then built until it
+passed.
+
+- **A URI in a request is relative.** No leading slash; `.` the position
+  itself, and so is none given; `./x` is `x`. A leading slash is refused,
+  saying the URI as it is written now (`not a relative URI: /host (no
+  leading slash: host)`).
+- **Where the writer stands.** From outside, at `main`: `.` is `main`,
+  `host` is `main/host`; the outside reaches nothing but `main`. The
+  mrepo itself (a hook, a request of its own) at its root, the layer
+  first. The request's form holds the URI from the root. Taken once,
+  where the request comes in (`admit`: the inbox's at `main`, the
+  mrepo's own at the root); a form given filled in is treated the same,
+  so its URI in the stored form is from the root too.
+- **The URI functions are `mycelium-uri`'s** (`lib/relative.js`):
+  `relative`, `from`, `within`, `slashed`, `unslashed`, `ROOT`. `slashed`
+  is the one function at the boundary for the code that still reads and
+  writes by slash-led paths. `MAIN` is `mrepo-base-request`'s, which
+  offers the functions too.
+- **`check`** takes where the request was written (`at`: `main` from
+  outside, the root for the mrepo's own, the position for a command
+  executed there). A target is missing when the URI is that position. A
+  config's `uris` are written at `main` (`.`, `<name>`, `**`) and matched
+  against the part of the URI after `main`; a URI not in `main` is not
+  offered. Internal requests are not matched, as before.
+- **`exec.run(command, { at })`**: a hook stands at the root; the command
+  `goto` executes stands at its position. `goto` executes at `main` and
+  at the root (the mrepo's own `haicc . ...`), nowhere deeper yet.
+- **`resolve`** takes the URI from the root: `main`, `main/host`; `.` is
+  the mrepo itself, no shortcut there; anything else outside `main` is
+  refused. Its `at`, and `shortcutOf` and `shadowOf`, are the position as
+  written at `main` (`host`). The way across is said in the new form:
+  `host is a shortcut: a URI does not run through it (haicc host haicc
+  node-1 ...)`.
+- **The boot actions**: the child is `main/<name>`; what they say back
+  names it as written at `main`: `"deployed":"host"`,
+  `{"tornDown":"host"}`, `deployed already: host`.
+- **What an action is about is an argument**: `help/get . packages
+  oneliner`, `runtime/run . packages/<org>/<package>/test/validate`. Both
+  are offered at `.` only. `help/get` with no subject, or a level first,
+  is the mrepo itself; its answer's URIs are relative from the root
+  (`"uri":"packages"`, `.` for the root).
+- **The configs**: `.` for `/`, `<name>` for `/<name>`, `**` for `/**`;
+  `help/get` gets `args: ['subject?']`, `runtime/run` `args: ['target']`
+  in place of `target: true`.
+- **The hooks**: `"."` for `"/"` in every hook file of the components
+  and the packages. The boot's own request is `boot deploy boot`.
+- **The `haicc` app**: the first word is a URI and a command follows,
+  unless it is one of haicc's own first words: a machine level protocol
+  (`boot`, `boot/deploy`), `sources`, the usage's when alone. A position
+  named so is written with `./` in front. At the root (`.`) the command
+  is sent plain; anywhere else the `haicc` command as typed. One word
+  that is no command: `no command '<word>'`, exit 2. A leading slash is
+  passed on as typed and refused by the mrepo. `haicc boot/teardown`
+  says `"tornDown":"."`. The first step's script needed no change.
+- **The rest actions** (the tests' own, to go in task 3): URIs from the
+  root. Their glance at the whole repository is at the root, so no
+  longer reachable from outside; the cycle test reads the layers from
+  the repository instead.
+- **Not in this piece, as planned**: inside, every read and write is
+  still slash-led (`exec.read('/runtime/service.json')`, the help
+  index's keys, the records' topics, a package's own targets,
+  `/test/validate`).
+- **`run.sh`**: every command in the new form; 117 checks, the 114 and
+  three more: a leading slash refused and said, `./host` taken as `host`.
+
+**Validated**: the demo first: `run.sh` in the new form passed 117 of
+117 on its first run after the rebuild. The pre-release of all eleven
+packages (every one carries a changed module): each passing, its report
+written; units, tests, asserts: `base-app-haicc` 22, 253, 1324;
+`base-component-boot` 22, 237, 1296; `base-component-haicc` 8, 47, 242;
+`base-package-boot` 22, 242, 1229; `base-package-haicc` 10, 51, 269;
+`base-package-help` 8, 48, 251; `base-package-protocol` 9, 50, 251;
+`base-package-runtime` 21, 231, 1128; `base-package-service` 14, 187,
+844; `package-docs-mrepo` 8, 41, 208; `package-docs-template` 7, 41, 208.
+Two failed first and were right to: an expectation still in the old form
+in `base-package-boot`'s own test (a name refused) and one in
+`base-component-boot`'s (a help link); both tests corrected, nothing in
+the code. Then `tools/bare tools/release.js --strict`: eleven packages,
+every report current. `tools/bare tools/code-check.js`: 19 modules, 12
+packages, no problems. The READMEs: 224 in the sources, 425 in the help
+tree, no problems. `base-component-boot`'s `validate` twice more, its
+`boot` test 119 of 119 each time. The `haicc` test, 117 of 117. Nothing
+left running.

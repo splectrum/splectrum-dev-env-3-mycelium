@@ -30,23 +30,23 @@ test('the hooks: each transition runs its own first, in name order, as the mrepo
   const exec = context('booted', {
     'initialise/b-extract': ['help/extract'],
     'initialise/a-ready': ['x/ready'],
-    'start/activate-boot': ['protocol/activate', '/', 'boot'],
-    'stop/deactivate-boot': ['protocol/deactivate', '/', 'boot'],
+    'start/activate-boot': ['protocol/activate', '.', 'boot'],
+    'stop/deactivate-boot': ['protocol/deactivate', '.', 'boot'],
     'shutdown/fail': ['fail/now']
   })
   await initialise(exec)
   t.alike(exec.ran, [['x/ready', { own: true }], ['help/extract', { own: true }]], 'initialise: its hooks, by name, each run in its execution as the mrepo\'s own')
   await start(exec)
-  t.alike(exec.ran.at(-1), ['protocol/activate / boot', { own: true }], 'start: the door opened by its hook')
+  t.alike(exec.ran.at(-1), ['protocol/activate . boot', { own: true }], 'start: the door opened by its hook')
   await stop(exec)
-  t.alike(exec.ran.at(-1), ['protocol/deactivate / boot', { own: true }], 'stop: closed again')
+  t.alike(exec.ran.at(-1), ['protocol/deactivate . boot', { own: true }], 'stop: closed again')
   await t.exception(shutdown(exec), /refused/, 'a hook that fails: the transition fails')
   t.is((await stateOf(exec)).state, 'initialised', 'the state not moved')
 })
 
-test('the config: each action at /, in the states that allow it', (t) => {
+test('the config: each action at the mrepo itself, in the states that allow it', (t) => {
   t.alike(Object.keys(CONFIG.actions), ['initialise', 'start', 'stop', 'shutdown'])
-  t.alike(Object.values(CONFIG.actions).map(a => a.uris), [['/'], ['/'], ['/'], ['/']])
+  t.alike(Object.values(CONFIG.actions).map(a => a.uris), [['.'], ['.'], ['.'], ['.']])
   t.alike(Object.fromEntries(Object.entries(CONFIG.actions).map(([n, a]) => [n, a.states])), { initialise: ['booted'], start: ['initialised'], stop: ['started'], shutdown: ['initialised'] })
   t.ok(CONFIG.description && Object.values(CONFIG.actions).every(a => a.description))
 })

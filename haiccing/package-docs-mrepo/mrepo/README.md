@@ -23,6 +23,8 @@ Each layer, its README:
 ## The rules
 
 - Every path starts with its layer, from the root: `/main/notes/a.json`.
+- A URI in a request is relative, without a leading slash: "Requests",
+  below.
 - Layers are disjoint, never merged into each other.
 - One writer per branch.
 - The repository is the truth; a folder on disk is a view of a commit.
@@ -93,7 +95,7 @@ going). Its key, a GUID, names its document in every layer.
     "key": "7b0c1f4e-2d3a-4c5b-9e6f-0a1b2c3d4e5f",
     "timestamp": "2026-11-10T00:00:00.000Z",
     "headers": {},
-    "value": { "protocol": "service", "action": "start", "uri": "/" }
+    "value": { "protocol": "service", "action": "start", "uri": "." }
   }
 }
 ```
@@ -108,11 +110,25 @@ arguments a list, unnamed. It can also be given as a command, as it is
 typed: its parts in order, `<protocol>/<action> <URI> <argument>...`.
 
 ```json
-"value": ["haicc", "/host", "service/start"]
+"value": ["haicc", "host", "service/start"]
 ```
 
 The mrepo interprets it on its way in. The protocol alone takes its
 default action: `haicc` is `haicc/goto`.
+
+A URI in a request is relative: it has no leading slash and is read from
+where its writer stands. `.` is the position itself, and so is none
+given; `./x` is `x`.
+
+- **From outside** the writer stands at `main`: `.` is `main`, `host` is
+  `main/host`. The outside reaches `main` and nothing else.
+- **The mrepo itself**, a hook or a request of its own, stands at its
+  root, above the layers, and names the layer first: `protocol/activate .
+  help`.
+
+The form holds the URI from the root, `main/host`. What an action is
+about, when that is not where it is executed, is an argument: `help/get .
+packages`, `runtime/run . packages/<org>/<package>/test/validate`.
 
 Its way: `inbox` → `request/pending/default` → `request/execute` →
 `request/done`, and back through the `outbox`. Order is the commit chain.
@@ -120,7 +136,7 @@ Requests are checked at the inbox, and again as they execute.
 
 ## Deploying an mrepo
 
-`boot deploy /<name> <package>`, executed by the parent, names a target
+`boot deploy <name> <package>`, executed by the parent, names a target
 package; the target's `mrepo/packages/layer.json` lists the packages the mrepo is made
 of, in order.
 

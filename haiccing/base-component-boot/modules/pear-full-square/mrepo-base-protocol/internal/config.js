@@ -3,7 +3,7 @@
 // the protocols layer, one file a protocol, holding its config.
 export const activeAt = name => `/protocols/${name}.json`
 
-const one = { uris: ['/'], args: ['protocol'] }
+const one = { uris: ['.'], args: ['protocol'] }
 export const CONFIG = {
   description: 'The protocols an mrepo offers to the outside: activated and deactivated.',
   actions: {

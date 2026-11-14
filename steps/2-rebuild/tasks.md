@@ -499,56 +499,23 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
 | `haicc /host help/get /` | `haicc host help/get` |
 | a hook: `protocol/activate / help` | `protocol/activate . help` |
 
-**The build** (ours; analysed 2026-11-14, nothing built yet)
+**The build** (ours; analysed 2026-11-14)
 
-By the method: the demo first. `haiccing/base-linux-haicc/test/run.sh` is
-the commands as typed, 107 checks: rewrite it in the new form first, see
-it fail, then build until it passes.
-
-- **Piece A, requests relative** (one part, validated whole):
-  - `mrepo-base-request/lib/command.js`: `interpret`: no URI is `.`;
-    `./x` is `x`; a leading slash refused; the segments validated
-    (`mycelium-uri` validates slash-led only: validate `'/' + rel`).
-    `formOf` takes where the writer stands.
-  - The standpoint: `admit` (`mrepo-base-request/index.js`) knows the
-    origin. `inbox`: the writer stands at `main`: `.` becomes `main`,
-    `host` becomes `main/host`; a form given filled in is treated the
-    same. `internal` (the runtime's boot hooks, a preloaded request):
-    the root, `.` stays, the layer first. A command sent on through a
-    shortcut arrives in the linked mrepo's inbox: outside there, as it
-    should be.
-  - `exec.run` (`mrepo-base-execute/index.js`): a hook (`own`) stands at
-    the root; the command `goto` executes stands at its position.
-  - `check`, `matches`, `missing`: the form's URI is from the root; a
-    config's `uris` are patterns from `main`, where the outside stands
-    (`.`, `<name>`, `**`), matched against the part after `main`;
-    `target`: the URI is not the position itself. Internal requests are
-    not matched against `uris`, as now.
-  - The configs' `uris`, in each protocol's module or package: `.` for
-    `/`, `<name>` for `/<name>`, `**` for `/**`.
-  - The actions that read the URI: `resolve` (`mrepo-base-xpath`), `goto`
-    (its messages name the way across in the new form), `child`
-    (`mrepo-base-boot/internal/child.js`: the name from `main/<name>`),
-    `help/extract` (the mrepo itself: `.` or `main`), `help/get` and
-    `runtime/run` (the subject their first argument; for `get` a first
-    argument that is a level word means the root).
-  - Inside, `exec.read`, `put` and the others keep slash-led paths in
-    this piece.
-  - The hooks: `"/"` becomes `"."` in every file of the components' and
-    the service package's `mrepo/runtime/hooks/`.
-  - The `haicc` command: the app (`pear-full-square/haicc-base-app`,
-    `internal/command/`: the first word, `.`, the usage text) and the
-    first step's script (`haiccing/base-linux-haicc/bin/haicc`: it only
-    takes `sources link`, `sources download bare`, `prereq` and
-    `--help` for itself, so nothing of a URI's form is in it).
-  - The tests: the modules' (`mrepo-base-request` check and command,
-    `-execute` whose rest forms use `/main/...`, `-haicc`, `-xpath`,
-    `-boot`, `-runtime`, `-service`, `-protocol`); the packages'
-    `mounted` and `configured`; `base-component-boot/test/boot/boot.test.js`;
-    `run.sh`. The READMEs that show commands: read them, no check finds
-    a stale command.
-  - Then every package's pre-release, the release strict, the `haicc`
-    test, the boot's test several times.
+- **Piece A, requests relative: built** (`readme.md`, part 61). What it
+  settled, for B and C to build on:
+  - the URI functions are `mycelium-uri`'s (`relative`, `from`, `within`,
+    `slashed`, `unslashed`, `ROOT`); `MAIN` is `mrepo-base-request`'s;
+  - a request's form holds its URI from the mrepo's root (`main/host`);
+    what an action says back names a position as written at `main`
+    (`"deployed":"host"`, `remote.at`), and help's URIs from the root
+    (`packages`);
+  - a config's `uris` are written at `main` and matched against the part
+    after it; `check` takes where a request was written (`at`);
+  - `exec.run(command, { at })`; `goto` executes at `main` and at the
+    root (`.`), nowhere deeper yet;
+  - inside, every read and write is still slash-led (`exec.read`, the
+    help index's keys, the topics, a package's own targets
+    `/test/validate`): that is piece B and step 3 of the changeover.
 - **Piece B, the interface accepts both**: `mycelium-uri`'s `validate`
   (relative, `.`); `exec.read`, `select`, `put`, `remove` and the
   repository's reads take `runtime/service.json` as

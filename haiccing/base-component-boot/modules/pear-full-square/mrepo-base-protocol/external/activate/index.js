@@ -1,4 +1,4 @@
-// activate: protocol/activate / <protocol>, a loaded protocol made active (README.md beside it).
+// activate: protocol/activate . <protocol>, a loaded protocol made active (README.md beside it).
 import { activeAt } from '../../internal/config.js'
 
 export async function activate (exec, { args = [] }) {

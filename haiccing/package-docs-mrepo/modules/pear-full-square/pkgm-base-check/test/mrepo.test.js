@@ -89,7 +89,7 @@ test('hooks: in their place, on a transition, each a command', (t) => {
   try {
     write(d, {
       ...good,
-      'mrepo/runtime/hooks/boot/activate-p.json': ['protocol/activate', '/', 'p'],
+      'mrepo/runtime/hooks/boot/activate-p.json': ['protocol/activate', '.', 'p'],
       'mrepo/runtime/hooks/initialise/extract.json': ['help/extract']
     })
     t.alike(checkStructure(d), [], 'well formed: none')

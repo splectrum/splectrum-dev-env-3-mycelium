@@ -26,16 +26,16 @@
 // done (in both: the old place cleared). The boxes (lib/boxes.js) are layers.
 import { existsSync, readFileSync } from 'bare-fs'
 import { join } from 'bare-path'
-import { validate as canonical } from 'mycelium-uri'
 import { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX } from './lib/boxes.js'
 import { record, wrap, guid, complete, isComplete, logger, LEVELS } from './lib/record.js'
 import { layer, AUTHOR } from './lib/layer.js'
 import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
-import { interpret, formOf } from './lib/command.js'
+import { relative, from, within, slashed, unslashed } from 'mycelium-uri'
+import { interpret, formOf, ROOT, MAIN } from './lib/command.js'
 import { hooks, hooksAt, TRANSITIONS } from './lib/hooks.js'
 
 export { follow } from './lib/follow.js'
-export { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING, interpret, formOf, hooks, hooksAt, TRANSITIONS }
+export { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING, interpret, formOf, relative, from, within, slashed, unslashed, ROOT, MAIN, hooks, hooksAt, TRANSITIONS }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'
@@ -56,11 +56,13 @@ export async function runtimeData ({ repo, protocols = null }) {
   return { service: await read('/runtime/service.json'), protocols, active }
 }
 
-// A URI against a pattern of an action's config: segments, <name> any one,
-// ** the rest (none too): /, /<name>, /main/**, /**.
+// A URI against a pattern of an action's config. Both are written where
+// the outside stands, at main: segments, <name> any one, ** the rest (none
+// too): `.`, <name>, swarms/**, **.
 export function matches (pattern, uri) {
-  const p = pattern.split('/').filter(Boolean)
-  const u = uri.split('/').filter(Boolean)
+  const segments = x => (x === ROOT ? [] : x.split('/').filter(Boolean))
+  const p = segments(pattern)
+  const u = segments(uri)
   for (let i = 0; i < p.length; i++) {
     if (p[i] === '**') return true
     if (i >= u.length) return false
@@ -71,12 +73,13 @@ export function matches (pattern, uri) {
 
 // What an action's config asks for and the request does not give: null, or
 // `missing argument: <name>`.
-//   target    a target is needed: the URI is not / (the mrepo itself, which
-//             one cannot deploy or tear down); left out, the URI is /
+//   target    a target is needed: the URI is not the position the request
+//             was written at (at: the mrepo itself, which one cannot
+//             deploy or tear down); left out, the URI is that position
 //   args      the arguments by name, in order; one ending in ? is optional
-export function missing (cfg, uri, args = []) {
+export function missing (cfg, uri, args = [], at = MAIN) {
   if (!cfg) return null
-  if (cfg.target && uri === '/') return 'missing argument: target'
+  if (cfg.target && uri === at) return 'missing argument: target'
   for (const [i, n] of (cfg.args || []).entries()) {
     if (n.endsWith('?')) continue
     if (args?.[i] === undefined || args[i] === '') return `missing argument: ${n}`
@@ -85,11 +88,13 @@ export function missing (cfg, uri, args = []) {
 }
 
 // A request checked: null when allowed, else why not.
-//   always             a form, its URI canonical
+//   always             a form, its URI canonical: relative, from the
+//                      mrepo's root
 //   from outside       (the inbox's) its protocol loaded and its action
 //                      configured, said with what is there when not; what
 //                      the action's config asks for given (missing); its URI
-//                      one the config names; and now (state: true, as it
+//                      in main, and there one the config names (its
+//                      patterns are written at main); and now (state: true, as it
 //                      executes): its protocol active (nothing is by
 //                      default: protocol/activate, from a hook), and an
 //                      action that names its states (the service's own) in
@@ -100,22 +105,26 @@ export function missing (cfg, uri, args = []) {
 //                      action names them
 // At the inbox neither the activation nor the state is checked (state:
 // false): the queue may hold requests that change them first.
-export function check (value, { service, protocols, active }, { state = true, internal = false } = {}) {
+//   at   where the request was written: main from outside, the root for
+//        the mrepo's own, by default; a command executed at a position
+//        (haicc): that position
+export function check (value, { service, protocols, active }, { state = true, internal = false, at = internal ? ROOT : MAIN } = {}) {
   if (!value || typeof value !== 'object') return 'not a request'
   let uri
-  try { uri = canonical(value.uri ?? '') } catch (err) { return err.message }
+  try { uri = relative(value.uri) } catch (err) { return err.message }
   if (uri !== value.uri) return `not canonical: ${value.uri} (${uri})`
   const { protocol, action } = value
   const cfg = protocols?.[protocol]?.actions?.[action]
   const now = () => (state && cfg?.states && service && !cfg.states.includes(service.state)) ? `not now: ${protocol} ${action} (the service is ${service.state})` : null
-  if (internal) return missing(cfg, uri, value.args) ?? now()
+  if (internal) return missing(cfg, uri, value.args, at) ?? now()
   if (!protocols?.[protocol]) return `no protocol: ${protocol} (${Object.keys(active ?? {}).sort().join(', ')})`
   if (!cfg) return `no action: ${protocol} ${action} (${Object.keys(protocols[protocol].actions ?? {}).sort().join(', ')})`
-  // (before its URI is looked at: a target left out is / and would only be
-  // said not offered there)
-  const lacks = missing(cfg, uri, value.args)
+  // (before its URI is looked at: a target left out is the position itself
+  // and would only be said not offered there)
+  const lacks = missing(cfg, uri, value.args, at)
   if (lacks) return lacks
-  if (!(cfg.uris || []).some(p => matches(p, uri))) return `not offered: ${protocol} ${action} at ${uri}`
+  const inMain = within(MAIN, uri)
+  if (inMain === null || !(cfg.uris || []).some(p => matches(p, inMain))) return `not offered: ${protocol} ${action} at ${inMain ?? uri}`
   if (!state) return null
   if (!active?.[protocol]) return `not now: ${protocol} ${action} (${protocol} is not active${service ? `; the service is ${service.state}` : ''})`
   return now()
@@ -140,7 +149,9 @@ const branches = async ctx => Object.fromEntries(await ctx.backend.listBranches(
 // chain): in no request layer (every one taken in ends in request/done, a
 // refused one too).
 // The way into pending, the one handler every request passes: a command as
-// typed interpreted (its parts: <protocol>/<action> <URI> <arguments>),
+// typed interpreted (its parts: <protocol>/<action> <URI> <arguments>; its
+// URI taken as written where its writer stands: main from the inbox, the
+// root for the mrepo's own),
 // validated by where it comes from, then queued; or refused (its form
 // completed with the error, in request/done, sent back). The inbox itself
 // checks nothing.
@@ -162,11 +173,15 @@ export async function admit (ctx, core, { origin, name = core?.key ?? guid() }) 
     await layer(ctx, PENDING).put(name, wrap(`/${PENDING}`, core), `Response ${name}`)
     return { name, queued: true }
   }
+  // (what is wrong with the request itself is said as it is; anything else
+  // that fails taking it in is the runtime's)
   try {
-    const filled = formOf(form, ctx.protocols ?? {})
+    const filled = formOf(form, ctx.protocols ?? {}, origin === 'internal' ? ROOT : MAIN)
     if (filled !== form) { form = filled; core = { ...core, value: form } }
-    why = check(form, await runtimeData(ctx), origin === 'internal' ? { internal: true } : { state: false })
-  } catch (err) { why = form?.command !== undefined && form.protocol === undefined ? err.message : `runtime: ${err.message}` }
+  } catch (err) { why = err.message }
+  if (!why) {
+    try { why = check(form, await runtimeData(ctx), origin === 'internal' ? { internal: true } : { state: false }) } catch (err) { why = `runtime: ${err.message}` }
+  }
   if (why) {
     const refused = complete(core ?? record(null, null, name), { ok: false, error: why })
     await layer(ctx, DONE).put(name, wrap(`/${DONE}`, refused), `Refused ${name}`)

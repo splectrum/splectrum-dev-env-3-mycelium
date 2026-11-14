@@ -20,8 +20,8 @@ for (const l of ['main', 'runtime', 'protocols', 'inbox', 'outbox', 'packages', 
 }
 // a boot hook, as a defining package would drop it: rest active from boot
 mkdirSync(join(BOOT, 'runtime', 'hooks', 'boot'), { recursive: true })
-writeFileSync(join(BOOT, 'runtime', 'hooks', 'boot', 'activate-rest.json'), JSON.stringify(['protocol/activate', '/', 'rest']))
-const preloaded = { api: 'boot', protocol: 'boot', action: 'deploy', uri: '/host', args: ['haiccing/base-package-runtime'] }
+writeFileSync(join(BOOT, 'runtime', 'hooks', 'boot', 'activate-rest.json'), JSON.stringify(['protocol/activate', '.', 'rest']))
+const preloaded = { api: 'boot', protocol: 'boot', action: 'deploy', uri: 'main/host', args: ['haiccing/base-package-runtime'] }
 writeFileSync(join(BOOT, 'request', 'pending', 'default', `${PRELOADED}.json`), JSON.stringify({ topic: '/request/pending/default', key: PRELOADED, timestamp: '2026-11-11T00:00:00.000Z', headers: {}, value: { topic: null, key: PRELOADED, timestamp: '2026-11-11T00:00:00.000Z', headers: {}, value: preloaded } }))
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
@@ -41,7 +41,7 @@ test('the boot mrepo: built from its folder, the same twice', async (t) => {
     const r = await open(a)
     const repo = openRepo(r.backend)
     t.is(JSON.parse((await repo.read('/runtime/layer.json')).toString()).mode, 'atomic', 'layer.json committed with its layer')
-    t.alike(JSON.parse((await repo.read('/runtime/hooks/boot/activate-rest.json')).toString()), ['protocol/activate', '/', 'rest'], 'a hook dropped into the runtime layer: committed with it')
+    t.alike(JSON.parse((await repo.read('/runtime/hooks/boot/activate-rest.json')).toString()), ['protocol/activate', '.', 'rest'], 'a hook dropped into the runtime layer: committed with it')
     t.is((await repo.select(`/request/pending/default/${PRELOADED}.json`)).length, 1, 'the request preloaded')
     await t.exception(build({ from: BOOT, work: a, name: 'boot' }), /exists/, 'never over an existing one')
   } finally {
@@ -58,15 +58,15 @@ test('the boot mrepo running, without its packages: its boot hook run, what it a
     t.ok(s?.pid, 'the runtime started')
     t.is(s.repository.storage, 'filesystem')
     t.is(s.repository.name, 'boot')
-    t.alike(await send(work, req('rest', 'get', '/main')), { ok: true, value: { entries: ['layer.json'] } }, 'no service: rest activated by the boot hook, a request answered')
-    t.alike(await send(work, req('service', 'start', '/')), { ok: false, error: 'not now: service start (service is not active)' }, 'loaded, not activated by any hook: not from outside')
+    t.alike(await send(work, req('rest', 'get', '.')), { ok: true, value: { entries: ['layer.json'] } }, 'no service: rest activated by the boot hook, a request answered')
+    t.alike(await send(work, req('service', 'start', '.')), { ok: false, error: 'not now: service start (service is not active)' }, 'loaded, not activated by any hook: not from outside')
     t.ok((await ask({ work, op: 'stop' }))?.stopping, 'asked to stop')
     for (let i = 0; i < 100 && alive(s.pid); i++) await wait(100)
     t.absent(alive(s.pid), 'stopped')
     const r = await open(work)
     const repo = openRepo(r.backend)
     const done = JSON.parse((await repo.read(`/request/done/${PRELOADED}.json`)).toString()).value.value
-    t.alike([done.protocol, done.action, done.uri, done.args], ['boot', 'deploy', '/host', ['haiccing/base-package-runtime']], 'the preloaded request: boot deploy /host, the runtime its target')
+    t.alike([done.protocol, done.action, done.uri, done.args], ['boot', 'deploy', 'main/host', ['haiccing/base-package-runtime']], 'the preloaded request: boot deploy main/host, the runtime its target')
     t.is(done.error, 'no protocol: boot (protocol, rest, service)', 'done, refused here: no boot protocol linked, said with those there (the package\'s test runs it with its packages)')
     t.alike((await repo.select('/request/pending/default/*')).map(([p]) => p), ['/request/pending/default/layer.json'], 'nothing pending')
   } finally {

@@ -1,0 +1,34 @@
+import test from 'brittle'
+import { relative, from, within, slashed, unslashed, ROOT } from '../index.js'
+
+test('relative: no leading slash, . the position itself, ./ allowed in front', (t) => {
+  t.is(ROOT, '.')
+  t.is(relative('host'), 'host')
+  t.is(relative('swarms/swarm-1/node-1'), 'swarms/swarm-1/node-1')
+  t.is(relative('a/b.json'), 'a/b.json')
+  for (const u of [undefined, null, '', '.', './', './.']) t.is(relative(u), '.', `${JSON.stringify(u)}: the position itself`)
+  t.is(relative('./sources'), 'sources', './ in front: allowed, not part of the canonical form')
+  t.is(relative('././a/b.json'), 'a/b.json')
+  t.exception(() => relative('/host'), /not a relative URI: \/host \(no leading slash: host\)/, 'a leading slash: refused, the URI as it is written now said')
+  t.exception(() => relative('/'), /not a relative URI: \/ \(no leading slash: \.\)/)
+  t.exception(() => relative('//a'), /not a relative URI: \/\/a \(no leading slash: a\)/)
+  t.exception(() => relative('Host'), /not canonical: Host \(host\)/)
+  t.exception(() => relative('a//b'), /not canonical: a\/\/b \(a\/b\)/)
+  t.exception(() => relative('a/'), /not canonical: a\/ \(a\)/)
+  t.exception(() => relative('a_b'), /bad segment/)
+  t.exception(() => relative('a/../b'), /bad segment/, 'no way up: forward only')
+  t.exception(() => relative('a/./b'), /bad segment/, '. only in front')
+  t.exception(() => relative(7), /not a URI/)
+})
+
+test('from, within: to and from a position', (t) => {
+  t.alike([from('main', '.'), from('main', 'host'), from('.', '.'), from('.', 'runtime/hooks'), from('main/users', 'a')], ['main', 'main/host', '.', 'runtime/hooks', 'main/users/a'], 'from: written at a position')
+  t.alike([within('main', 'main'), within('main', 'main/host/x'), within('.', 'main/x'), within('.', '.')], ['.', 'host/x', 'main/x', '.'], 'within: as written at the position')
+  t.alike([within('main', 'runtime/x'), within('main', 'mainly'), within('main', '.'), within('main/a', 'main')], [null, null, null, null], 'not at or below it: null')
+  for (const [at, u] of [['main', 'host'], ['main', '.'], ['.', 'a/b'], ['main/a', 'b/c']]) t.is(within(at, from(at, u)), u, `${at}, ${u}: there and back`)
+})
+
+test('slashed, unslashed: the slash-led paths', (t) => {
+  t.alike([slashed('.'), slashed('main/host'), slashed('runtime/service.json')], ['/', '/main/host', '/runtime/service.json'])
+  t.alike([unslashed('/'), unslashed('/packages/x')], ['.', 'packages/x'])
+})

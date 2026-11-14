@@ -6,4 +6,4 @@ The tests of mrepo-base-service, a section per file, each test by its name.
 
 - the actions: the state moved, booted to started and back
 - the hooks: each transition runs its own first, in name order, as the mrepo's own; one failing fails the transition
-- the config: each action at /, in the states that allow it
+- the config: each action at the mrepo itself, in the states that allow it

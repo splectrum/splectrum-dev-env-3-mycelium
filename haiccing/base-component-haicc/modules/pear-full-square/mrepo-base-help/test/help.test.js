@@ -35,12 +35,19 @@ test('extract: each README at the URI it documents; the index; the packages link
 test('help get: the levels, a section, the nearest when nothing is there', async (t) => {
   const files = extract(packages)
   const exec = { read: async uri => { const f = files[uri.slice('/help'.length)]; if (!f) throw new Error('none'); return f } }
-  const s = await help(exec, { uri: '/packages/haiccing/app' })
-  t.alike([s.uri, s.oneliner, s.links], ['/packages/haiccing/app', 'An app.', [{ uri: '/packages/haiccing/app/test', oneliner: 'Its tests.' }]], 'the summary level: the one-liner, the links with theirs')
+  const s = await help(exec, { uri: 'main', args: ['packages/haiccing/app'] })
+  t.alike([s.uri, s.oneliner, s.links], ['packages/haiccing/app', 'An app.', [{ uri: 'packages/haiccing/app/test', oneliner: 'Its tests.' }]], 'the subject its first argument, from the mrepo\'s root; the summary level: the one-liner, the links with theirs')
   t.ok(typeof s.summary === 'string')
-  t.alike(Object.keys(await help(exec, { uri: '/help/', args: ['oneliner'] })), ['uri', 'title', 'oneliner', 'links'], 'the root, by /help too; one-liners only')
-  await t.exception(help(exec, { uri: '/packages/haiccing/app/test/nothing' }), /no help at .*: nearest \/packages\/haiccing\/app\/test/)
-  await t.exception(help({ read: async () => { throw new Error('none') } }, { uri: '/' }), /no help extracted in this mrepo yet \(help\/extract\)/)
+  t.alike(Object.keys(await help(exec, { uri: 'main', args: ['help', 'oneliner'] })), ['uri', 'title', 'oneliner', 'links'], 'the root, by help too; one-liners only')
+  const root = await help(exec, { uri: 'main', args: ['oneliner'] })
+  t.alike([root.uri, root.links], ['.', [{ uri: 'packages', oneliner: root.links[0].oneliner }]], 'a level first: no subject, the mrepo itself; its URI .')
+  t.is((await help(exec, { uri: 'main' })).uri, '.', 'no argument at all: the mrepo itself, the summary')
+  t.is((await help(exec, { uri: 'main', args: ['.', 'detail'] })).uri, '.', '. written out')
+  t.is((await help(exec, { uri: 'main', args: ['./packages'] })).uri, 'packages', './ in front')
+  await t.exception(help(exec, { uri: 'main', args: ['/packages'] }), /not a relative URI: \/packages/)
+  await t.exception(help(exec, { uri: 'main', args: ['packages/haiccing/app/test/nothing'] }), /no help at packages\/haiccing\/app\/test\/nothing: nearest packages\/haiccing\/app\/test/)
+  await t.exception(help(exec, { uri: 'main', args: ['packages/haiccing/app', 'no', 'such', 'section'] }), /no section "no such section" at packages\/haiccing\/app/)
+  await t.exception(help({ read: async () => { throw new Error('none') } }, { uri: 'main' }), /no help extracted in this mrepo yet \(help\/extract\)/)
 })
 
 test('the rules: a README against them, and a tree with a broken link, an unlinked folder, an unreached README', (t) => {
