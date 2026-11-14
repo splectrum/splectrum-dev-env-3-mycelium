@@ -251,3 +251,24 @@ rollback); AVRO the rows' schema.
   pipeline request, and names what it was based on; a pipeline reads one
   snapshot throughout. The atomicity is per node: combining two nodes'
   `main` is a merge whose rule is the application's.
+
+### Overlays, and distributed transactions
+
+The human, 2026-11-14 (with the shortcuts moved into `main`, a file
+beside the node's document: `steps/2-rebuild/tasks.md`, task 2). A node
+can draw its data from several mrepos and hold local data beside it: what
+is seen is the combination, an overlay; what is stored stays apart, and a
+write goes to the local side only. For instance a local layer adds
+processed documents to an input data structure while keeping both
+separate.
+
+**We can create distributed transactions with these overlays** (the
+human). A reading of how, not designed: every party writes its part of a
+transaction into its own mrepo, an atomic commit there, tied to the
+others by the request's key; nobody writes into another's data, so
+nothing is locked. The overlay decides what is seen: the parts become
+visible together once all of them are there (or once the one who started
+it records that they are), and a transaction that is not completed is
+simply never shown and can be cleared. It is the pipeline's request
+branch, one commit at the end, across mrepos.
+

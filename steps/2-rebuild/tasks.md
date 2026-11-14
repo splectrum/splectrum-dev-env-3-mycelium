@@ -1,7 +1,9 @@
 # Tasks: discussed, waiting to be built
 
 Tasks discussed with the human and stacked here, to be built later in
-batches, in this order: "First", "Test reports", "Coverage", then 1, 2, 3. A task is removed from this file when it is built:
+batches, in this order: 1, 2, 3 and on to swarm nodes up and running; then
+"Deployed tests" and "Coverage". ("First" and "Test reports" are built:
+kept here for what they left.) A task is removed from this file when it is built:
 its record is then a part in `readme.md`.
 
 How to read a task:
@@ -223,6 +225,61 @@ step shown to the human first)
 - Each protocol's module tests, to see what is covered as functions:
   `pear-full-square/mrepo-base-*/test/`.
 
+## Deployed tests: the tests that deploy floating test mrepos
+
+In discussion with the human, 2026-11-14: the design, point by point.
+What "First" left: each package's test in a running mrepo.
+
+**Settled** (the human)
+
+- **A package's deployed test is its how-to** ("How-tos", under "Future
+  additions"): it lives where the functionality is made.
+- **The test itself is the deployable thing** (ours, put three times, not
+  objected to; it follows from the line above): its folder holds an
+  `mrepo/` with the test data and the configs under test, and a list
+  naming the packages it needs, the package under test among them. A test
+  mrepo is defined as a real one is; nothing of it is built by test-only
+  code.
+- **Deployed the real way**, of course: through a boot mrepo, with the
+  boot protocol. **The `haicc` tool can deploy them.** Once there is
+  structure in the boot mrepo (tasks 1 and 2), they are given a location
+  there.
+- **Why it matters** (the human): if requirements become POCs, then
+  how-tos, and are collocated (self-contained), then each installed
+  package can create help and how-tos that are 100% tailored and kept
+  fresh through the documentation and implementation rules. Very few
+  designs can beat this.
+
+- **Not constrained** (the human): what a deployed test is, is not
+  fixed. There are types of deployed test, and types keep being added
+  over time. (Our proposal of one list of steps, the source of both the
+  test's script and the how-to's text, is then one type to consider, not
+  the definition.)
+- **When** (the human's proposal, agreed by us): deployed tests are
+  tackled after swarm nodes are up and running. Until then (ours): a new
+  feature starts as a POC demo run with the `haicc` tool, kept as its
+  first how-to; the two end to end tests (`base-component-boot`'s `boot`,
+  `base-linux-haicc`'s `run.sh`) stay green and are extended where the
+  behaviour changes; each package's `mounted` or `configured` test says
+  what is "Not here".
+
+**To settle** (when the work reaches it)
+
+- What a test deploys as its target: a unit inside a package
+  (`<org>/<package>/test/<name>`), where `boot/deploy` takes a package
+  today.
+- Which boot mrepo: one the machine has (the `haicc` tool's), the tests
+  at their location in it; or a temporary one where there is none (the
+  pre-release).
+- How the test talks to it: commands as someone would type them; whether
+  the steps are one source for both the how-to's text and the test's
+  script.
+- "Nothing forgotten", from the `done` history: every action requested,
+  every hook run.
+- Where the shared helper lives. Cleanup; what runs in `validate` and
+  what in `full`. More than one mrepo: a node inside a host, later
+  swarms.
+
 ## Test reports: proof of test execution
 
 The human, 2026-11-14. Part of the standard: it is in the template.
@@ -438,6 +495,63 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
 | `haicc /host help/get /` | `haicc host help/get` |
 | a hook: `protocol/activate / help` | `protocol/activate . help` |
 
+**The build** (ours; analysed 2026-11-14, nothing built yet)
+
+By the method: the demo first. `haiccing/base-linux-haicc/test/run.sh` is
+the commands as typed, 107 checks: rewrite it in the new form first, see
+it fail, then build until it passes.
+
+- **Piece A, requests relative** (one part, validated whole):
+  - `mrepo-base-request/lib/command.js`: `interpret`: no URI is `.`;
+    `./x` is `x`; a leading slash refused; the segments validated
+    (`mycelium-uri` validates slash-led only: validate `'/' + rel`).
+    `formOf` takes where the writer stands.
+  - The standpoint: `admit` (`mrepo-base-request/index.js`) knows the
+    origin. `inbox`: the writer stands at `main`: `.` becomes `main`,
+    `host` becomes `main/host`; a form given filled in is treated the
+    same. `internal` (the runtime's boot hooks, a preloaded request):
+    the root, `.` stays, the layer first. A command sent on through a
+    shortcut arrives in the linked mrepo's inbox: outside there, as it
+    should be.
+  - `exec.run` (`mrepo-base-execute/index.js`): a hook (`own`) stands at
+    the root; the command `goto` executes stands at its position.
+  - `check`, `matches`, `missing`: the form's URI is from the root; a
+    config's `uris` are patterns from `main`, where the outside stands
+    (`.`, `<name>`, `**`), matched against the part after `main`;
+    `target`: the URI is not the position itself. Internal requests are
+    not matched against `uris`, as now.
+  - The configs' `uris`, in each protocol's module or package: `.` for
+    `/`, `<name>` for `/<name>`, `**` for `/**`.
+  - The actions that read the URI: `resolve` (`mrepo-base-xpath`), `goto`
+    (its messages name the way across in the new form), `child`
+    (`mrepo-base-boot/internal/child.js`: the name from `main/<name>`),
+    `help/extract` (the mrepo itself: `.` or `main`), `help/get` and
+    `runtime/run` (the subject their first argument; for `get` a first
+    argument that is a level word means the root).
+  - Inside, `exec.read`, `put` and the others keep slash-led paths in
+    this piece.
+  - The hooks: `"/"` becomes `"."` in every file of the components' and
+    the service package's `mrepo/runtime/hooks/`.
+  - The `haicc` scripts (`haiccing/base-linux-haicc/bin/haicc`,
+    `haicc-request`): the first word, `.`, the usage text.
+  - The tests: the modules' (`mrepo-base-request` check and command,
+    `-execute` whose rest forms use `/main/...`, `-haicc`, `-xpath`,
+    `-boot`, `-runtime`, `-service`, `-protocol`); the packages'
+    `mounted` and `configured`; `base-component-boot/test/boot/boot.test.js`;
+    `run.sh`. The READMEs that show commands: read them, no check finds
+    a stale command.
+  - Then every package's pre-release, the release strict, the `haicc`
+    test, the boot's test several times.
+- **Piece B, the interface accepts both**: `mycelium-uri`'s `validate`
+  (relative, `.`); `exec.read`, `select`, `put`, `remove` and the
+  repository's reads take `runtime/service.json` as
+  `/runtime/service.json`.
+- **Piece C, selections and results as arrays, the prefix**: `resolve`
+  an array, `goto` at each; a result an array; the prefix in the form,
+  the layer first, then the jumps. It changes what every command
+  answers (`haicc host service/start`: an array of one): show the human
+  the new answers before building it.
+
 **Where**
 
 - `pear-full-square/mrepo-base-request/lib/command.js`: `interpret` adds
@@ -527,6 +641,41 @@ item 3), wanted for creating structure in `main`.
     on the user's initiative, so it is good to be able to put some
     structure in. The boot mrepo has no service: there `crud` is
     activated by a `boot` hook, as its other protocols are.
+- **Shortcuts are part of the hidden visible state** (the human,
+  2026-11-14), in `main` beside the node's document, not on the `xpath`
+  layer as planned and built.
+  - **A file per data unit** (the human): `.shortcuts.json`, beside
+    `.node.json`, not an envelope in one file (our proposal, dropped).
+    Agreed: each file one concern and one writer (`crud` the node's
+    document, the boot protocol the shortcuts), no collision between a
+    change of the value and a change of the links, a new kind of system
+    data a new hidden file.
+  - **Several for one node** (the human): the file sits in the node and
+    can name more than one mrepo its data comes from.
+  - **Plus local data**, for more sophisticated setups (the human): for
+    instance a local layer can add processed documents to an input data
+    structure while keeping both separate.
+  - **XPath processing has become simpler** (the human): with `haicc`
+    for the segments, a path is resolved inside one mrepo.
+  - Confirmed by the human (our reading): what is seen at such a node is
+    the combination of its sources and the local data, an overlay, each
+    kept where it is stored; a write goes to the local side only. Built
+    first: the file a list from the start, one source in use (a deployed
+    child, as today); combining several sources and local data when a
+    real case comes, as a demo first.
+  - Ours, not answered: only what is true for everyone goes in the file
+    (each source's unique URI); what is local to the machine that
+    deployed a child (its folder, its runtime's pid, the packages placed)
+    stays out, `main` replicates. To settle when combining is built: the
+    rule when two sources, or a source and the local side, hold the same
+    name; reading through a link (a local read of a replica) beside the
+    `haicc` jump (a command executed in the other mrepo).
+  - What follows in the code: the `xpath` layer can go; `resolve`, the
+    boot protocol's actions, `goto` and their tests
+    (`pear-full-square/mrepo-base-xpath`,
+    `mrepo-base-boot/internal/child.js`, `external/deploy`, `teardown`;
+    the `mounted` tests of `base-package-boot` and `base-package-haicc`;
+    `package-docs-mrepo`'s `xpath` page).
 - The names (agreed): protocol `crud`, module
   `pear-full-square/mrepo-base-crud`, package
   `haiccing/base-package-crud`.
@@ -640,3 +789,70 @@ The human, 2026-11-13: of no importance at the moment.
 `haicc test/mydata/users[name=s*] users/check-addresses *` (the human's
 example, task 1). Not valid in our URIs today; `mycelium-xpath` knows
 only `*`. Task 1 is built so that it does not block them.
+
+### How-tos
+
+Discussed 2026-11-14; to design properly later.
+
+**Settled** (the human)
+
+- The earlier demo packages (a swarm and its nodes deployed, the
+  functionality shown) were in a sense how-tos.
+- Our packages are self-contained and final (no major version upgrades),
+  so a how-to stays relevant to the context it was written in.
+- One package with many how-tos, or several packages: ours to decide, we
+  are the user of them.
+
+- **The name** (the human's proposal, after our decision below):
+  `base-how-[category]-[collection]`: a how-to package is a collection,
+  in a category. Our reading, put to the human: it names every how-to
+  package, the ones to read too, so the split below becomes: a collection
+  may hold how-tos to read and scenarios to run; examples:
+  `base-how-package-making`, `base-how-package-testing`,
+  `base-how-haicc-deploying`. Not confirmed.
+
+- **Our list goes in one**, under implementation (the human): the
+  how-tos about how we build (a new package, a protocol, a package's own
+  test, a newer template, a release) are one collection in the category
+  `implementation`.
+- **More important: the how-tos around functionality** (the human): for
+  the functionality that is being created, its specifics, the configs
+  available, and simple demos of these features.
+- **A way to develop functionality** (the human): prove it in a POC
+  demo, then implement the real thing, and turn the POC into a how-to.
+
+- **A package's deployed test can be the how-to** (the human, the last
+  word so far): that makes sense, because how-tos live where they are
+  generated. Then there are **no special how-to packages** (the name
+  `base-how-[category]-[collection]` and the collections above are
+  dropped): instead **an extraction, like help**, from which an up to
+  date selection can be built.
+- What follows for a deployed test (ours): it has to read as a how-to:
+  its README says what the functionality is, the configs available and
+  the steps; its steps are the commands as someone would type them. The
+  help layer already extracts every test's README at its URI: the
+  selection is a view over that; how a test is marked as a how-to is to
+  design.
+
+**Decided** (ours, told to the human; before the name was proposed, and
+overtaken by the line above for the how-tos that are run)
+
+- Not one collection. By what a how-to is:
+  - **one that is read** (a procedure for making something) lives with
+    what it is about: making packages in `package-docs-template`,
+    operating an mrepo in `package-docs-mrepo`, a folder each, so it
+    lands in the help layer and travels with the template a package is
+    pinned to;
+  - **one that is run** (a scenario deployed and shown, the demo kind) is
+    a package of its own: its list, its tests and its report prove it
+    works, and it is pinned to the packages it shows.
+- Why: a how-to found from where the work already is; each stays true
+  for its own context when something else moves on; a collection would
+  mix contexts and be published again whole for any change.
+- Kept honest: few, only for tasks that span several places; steps as
+  commands, ending with the check that proves it worked.
+- The first ones to read: a new package from the template; a protocol
+  (its module, its methods, its package); a package's own test, the
+  "nothing to test" decision included; a package brought to a newer
+  template; a release (the pre-release, then strict).
+
