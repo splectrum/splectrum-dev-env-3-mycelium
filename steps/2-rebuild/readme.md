@@ -2595,3 +2595,21 @@ and the boot's machine level are in Bare.
   Bare's start, the dispatcher, and `mrepo-base-request`, whose `follow`
   loads `mycelium-git` (0.15 s of it). Left as it is: loading that only
   when following would change every package that carries the module.
+
+**Validated**: the module's tests, 15 tests, 130 asserts. The
+pre-release of every package that changed: `base-app-haicc` (22 units,
+249 tests, 1258 asserts; its own test 8 tests, 67 asserts), and the three
+that carry `mrepo-base-runtime` or `mrepo-base-boot`:
+`base-package-runtime` (21 units, 227 tests, 1069 asserts),
+`base-package-boot` (22, 238, 1165), `base-component-boot` (22, 233,
+1235). Then everything rebuilt, `tools/bare tools/release.js --strict`:
+eleven packages, every report current. `tools/bare tools/code-check.js`:
+19 modules, 12 packages, no problems. The READMEs: 224 in the sources,
+413 in the help tree, no problems. The `haicc` test, 114 of 114, twice.
+`base-component-boot`'s `validate` twice more, its `boot` test 119 of 119
+each time. Nothing left running.
+
+**Left**: the two new repositories are the human's to create,
+`haiccing/base-app-haicc` and `pear-full-square/haicc-base-app` (the
+module's name is ours, to confirm); until then their product
+repositories are not pushed. The others that changed are.
