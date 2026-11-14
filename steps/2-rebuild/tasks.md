@@ -640,3 +640,38 @@ The human, 2026-11-13: of no importance at the moment.
 `haicc test/mydata/users[name=s*] users/check-addresses *` (the human's
 example, task 1). Not valid in our URIs today; `mycelium-xpath` knows
 only `*`. Task 1 is built so that it does not block them.
+
+### How-tos
+
+Discussed 2026-11-14; to design properly later.
+
+**Settled** (the human)
+
+- The earlier demo packages (a swarm and its nodes deployed, the
+  functionality shown) were in a sense how-tos.
+- Our packages are self-contained and final (no major version upgrades),
+  so a how-to stays relevant to the context it was written in.
+- One package with many how-tos, or several packages: ours to decide, we
+  are the user of them.
+
+**Decided** (ours, told to the human)
+
+- Not one collection. By what a how-to is:
+  - **one that is read** (a procedure for making something) lives with
+    what it is about: making packages in `package-docs-template`,
+    operating an mrepo in `package-docs-mrepo`, a folder each, so it
+    lands in the help layer and travels with the template a package is
+    pinned to;
+  - **one that is run** (a scenario deployed and shown, the demo kind) is
+    a package of its own: its list, its tests and its report prove it
+    works, and it is pinned to the packages it shows.
+- Why: a how-to found from where the work already is; each stays true
+  for its own context when something else moves on; a collection would
+  mix contexts and be published again whole for any change.
+- Kept honest: few, only for tasks that span several places; steps as
+  commands, ending with the check that proves it worked.
+- The first ones to read: a new package from the template; a protocol
+  (its module, its methods, its package); a package's own test, the
+  "nothing to test" decision included; a package brought to a newer
+  template; a release (the pre-release, then strict).
+
