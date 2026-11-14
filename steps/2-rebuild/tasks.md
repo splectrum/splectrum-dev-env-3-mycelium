@@ -1,7 +1,8 @@
 # Tasks: discussed, waiting to be built
 
 Tasks discussed with the human and stacked here, to be built later in
-batches, in this order: "First", "Test reports", "Coverage", then 1, 2, 3. A task is removed from this file when it is built:
+batches, in this order: "First", "Deployed tests" (in design), "Test reports",
+"Coverage", then 1, 2, 3. A task is removed from this file when it is built:
 its record is then a part in `readme.md`.
 
 How to read a task:
@@ -222,6 +223,48 @@ step shown to the human first)
   requests).
 - Each protocol's module tests, to see what is covered as functions:
   `pear-full-square/mrepo-base-*/test/`.
+
+## Deployed tests: the tests that deploy floating test mrepos
+
+In discussion with the human, 2026-11-14: the design, point by point.
+What "First" left: each package's test in a running mrepo.
+
+**Settled** (the human)
+
+- **A package's deployed test is its how-to** ("How-tos", under "Future
+  additions"): it lives where the functionality is made.
+- **The test itself is the deployable thing** (ours, put three times, not
+  objected to; it follows from the line above): its folder holds an
+  `mrepo/` with the test data and the configs under test, and a list
+  naming the packages it needs, the package under test among them. A test
+  mrepo is defined as a real one is; nothing of it is built by test-only
+  code.
+- **Deployed the real way**, of course: through a boot mrepo, with the
+  boot protocol. **The `haicc` tool can deploy them.** Once there is
+  structure in the boot mrepo (tasks 1 and 2), they are given a location
+  there.
+- **Why it matters** (the human): if requirements become POCs, then
+  how-tos, and are collocated (self-contained), then each installed
+  package can create help and how-tos that are 100% tailored and kept
+  fresh through the documentation and implementation rules. Very few
+  designs can beat this.
+
+**To settle** (the points still to discuss)
+
+- What a test deploys as its target: a unit inside a package
+  (`<org>/<package>/test/<name>`), where `boot/deploy` takes a package
+  today.
+- Which boot mrepo: one the machine has (the `haicc` tool's), the tests
+  at their location in it; or a temporary one where there is none (the
+  pre-release).
+- How the test talks to it: commands as someone would type them; whether
+  the steps are one source for both the how-to's text and the test's
+  script.
+- "Nothing forgotten", from the `done` history: every action requested,
+  every hook run.
+- Where the shared helper lives. Cleanup; what runs in `validate` and
+  what in `full`. More than one mrepo: a node inside a host, later
+  swarms.
 
 ## Test reports: proof of test execution
 
