@@ -60,6 +60,9 @@ mrepo's own packages: `bare
   p2p host (and on `filesystem`) the inbox folder's new files committed, the request protocol (`mrepo-base-request`), the
   execute protocol (`mrepo-base-execute`). It runs until it is stopped: a parent's teardown
   stops its child's.
+- `stop({ repo, pid })`: a runtime ended, waited for until its process has
+  ended: asked over its connection, then SIGTERM, then SIGKILL. Used by a
+  parent's teardown and by the `haicc` app's.
 - `test/fixture.js`: a booted host, for the tests.
 
 ## Tests

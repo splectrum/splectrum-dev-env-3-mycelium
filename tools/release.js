@@ -18,8 +18,8 @@
 //                                       brought in line with the lockfile;
 //   haiccing/base-linux-haicc/haicc-install.sh   its installer written
 //                                       again (its build.sh)
-// No executable: the boot is its bundle, run with Bare
-// (haiccing/base-linux-haicc: haicc boot/deploy).
+// No executable: the boot is its bundle, run with Bare, as the haicc
+// command is (haiccing/base-app-haicc; haicc boot/deploy runs the boot).
 // Each package's test report against the bundle built (tools/lib/report.js:
 // current, stale, failed, none) is said in the result; --strict: exit 1
 // unless every one is current (a release to publish: every package tested

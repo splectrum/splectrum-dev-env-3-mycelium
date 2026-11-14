@@ -1,6 +1,6 @@
 {
   "name": "base-linux-haicc",
-  "description": "The haicc command on Linux: sh scripts that install it, link or download the sources, boot, and put commands in the boot mrepo's inbox.",
+  "description": "The first step of the haicc command on Linux: sh scripts that install it, link a sources folder, put Bare in place and start the app.",
   "private": true,
   "license": "MIT",
   "scripts": {

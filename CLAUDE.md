@@ -28,7 +28,11 @@ the work reaches it.
   `base-component-haicc`
   (several packages deployed together, `main` empty; a list ends with its
   own package, which states the mrepo's runtime config);
-  `base-linux-haicc` (the `haicc` command: sh scripts, no bundle); and the
+  `base-app-haicc` (the `haicc` command, an app run with Bare from its
+  bundle: the machine level, the sources, a command put in the boot
+  mrepo's inbox); `base-linux-haicc` (the first step on Linux, sh scripts,
+  no bundle: a folder linked, Bare put in place, the `haicc` that starts
+  the app); and the
   documentation packages `package-docs-template` (the package structure,
   the README rules, modules and methods, tests; the template a package
   starts from: its `test/` holds the generic tests, a folder each) and
@@ -88,7 +92,7 @@ the work reaches it.
   (`SOURCES=$PWD/sources tools/bare sources/haiccing/base-component-boot.bundle /test/validate`).
   Nothing left running after (`pgrep -fa "bin/bare"`).
 - The `haicc` command end to end, when anything it touches changed (the
-  scripts, the boot, the component, the request form):
+  app, the scripts, the boot, the component, the request form):
   `sh haiccing/base-linux-haicc/test/run.sh`.
 - **A package tests what it provides**, in a test of its own, a folder in
   its `test/`; where nothing is specific to it, a dummy that says so, an

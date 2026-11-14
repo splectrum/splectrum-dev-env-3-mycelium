@@ -14,8 +14,11 @@ setup file, three signed bundles, an executable) are in `local-run.md`,
   are not set up for it yet.
 - **Releases are yours to create**, on the human's word (below). The
   sources are built locally and linked locally first.
-- **The `haicc` command** is sh scripts (`haiccing/base-linux-haicc`),
-  installed by one file, `haicc-install.sh`.
+- **The `haicc` command** is an app run with Bare
+  (`haiccing/base-app-haicc`, its bundle in the sources). The sh scripts
+  (`haiccing/base-linux-haicc`, installed by one file,
+  `haicc-install.sh`) are the first step only: a folder linked, Bare put
+  in place, the app started.
 
 ## What a run is
 

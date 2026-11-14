@@ -1,16 +1,11 @@
 # haicc-lib.sh: what the haicc scripts share; sourced, never run.
 #   HAICC_HOME   haicc's own folder: bin/, pins, sources.list, sources/, bare/
-#   HAICC_WORK   the work folder: the boot mrepo and its package store
-#                ($HAICC_HOME/work unless given)
-# The pins (the pinned Bare, the organisation, the root mrepo) come from
+# The pins (the pinned Bare, the organisation, the app) come from
 # $HAICC_HOME/pins.
 HAICC_HOME=${HAICC_HOME:-$(cd "$(dirname "$0")/.." && pwd)}
-HAICC_WORK=${HAICC_WORK:-$HAICC_HOME/work}
 . "$HAICC_HOME/pins"
 HAICC_LIST=$HAICC_HOME/sources.list
 HAICC_BARE=$HAICC_HOME/bare/bin/bare
-# the boot mrepo: the root, where every command goes in
-HAICC_ROOT=$HAICC_WORK/mrepos/$ROOT_NAME
 
 fail () { printf 'haicc: %s\n' "$1" >&2; exit "${2:-1}"; }
 

@@ -6,7 +6,7 @@ Run with Bare from its bundle, it builds the boot mrepo, places its
 packages and starts its runtime. It deploys nothing by itself: the boot
 mrepo then takes commands, and deploys the mrepos linked in it. Bare and
 the sources are there before it runs: `haicc boot/deploy`, of
-`haiccing/base-linux-haicc`, sees to that.
+`haiccing/base-app-haicc`, runs it from the sources.
 
 ```sh
 bare base-component-boot.bundle --work=<folder> --sources=folder:<sources>

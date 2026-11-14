@@ -1,12 +1,12 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-14, part 59, and the
-planning after it). Read `CLAUDE.md` first (what is here, how to
+Kept current by the cloud session (last: 2026-11-14, part 60). Read `CLAUDE.md` first (what is here, how to
 validate), then this, then `tasks.md` here (what is planned and waits to
 be built: the next work), then `readme.md` (each part's record, the
 latest last: 30 to 45 the haicc work; 46 a note on future design; 47 to
 59 the tests: the package check, the template, the test reports, the
-pin, every package brought to the template one by one).
+pin, every package brought to the template one by one; 60 the `haicc`
+command as a Bare app).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -44,25 +44,24 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
 - The `haicc` command installs, boots, deploys a host from
   `base-component-haicc`, starts its service, deploys a node inside it
   and chains commands through both (parts 30 to 45).
-- All ten bundle packages are brought to the package template and
+- All eleven bundle packages are brought to the package template and
   pinned, each with a test of its own and a current, passing report
-  (parts 47 to 59). `tools/bare tools/release.js --strict` passes;
+  (parts 47 to 60). `tools/bare tools/release.js --strict` passes;
   `tools/bare tools/code-check.js` and the README checks have no
-  problems; the `haicc` test 107 of 107; `base-component-boot`'s `boot`
+  problems; the `haicc` test 114 of 114; `base-component-boot`'s `boot`
   test 119 of 119.
+- The `haicc` command is a Bare app, `base-app-haicc` (part 60); the
+  shell, `base-linux-haicc`, is the first step only. The command's form
+  is in one place now: `pear-full-square/haicc-base-app`,
+  `internal/command/`.
 
 **Next: build what is planned** (the human, 2026-11-14: what remains to
 plan depends heavily on having floating mrepo tests, so the planned work
 is implemented first). In `tasks.md`, in this order:
 
-0. **A Bare app for `haicc`** (task 0), in place of the shell scripts,
-   with today's command form exactly: `run.sh`'s 107 checks unchanged
-   are the proof the port is right. Its package: `haiccing/base-app-haicc`
-   (agreed; the human creates the repository, needed only to push);
-   `base-linux-haicc` stays as the first step on Linux.
 1. **Relative URIs** (task 1). Settled with the human point by point;
    the build is planned there in pieces ("The build"): begin with piece
-   A. Nothing of it is built yet.
+   A. Nothing of it is built yet. This is next.
 2. **The `crud` protocol** (task 2), on top of it; with it the shortcuts
    moved into `main` (`.shortcuts.json` beside `.node.json`), the `xpath`
    layer gone. Its two repositories exist.
@@ -94,6 +93,16 @@ with the human first, unless the task says it is ours ("Left to us").
 
 **With the human, open**
 
+- Two repositories to create (part 60), each needed only to push its
+  product repository: `haiccing/base-app-haicc` (agreed; "App: the haicc
+  command, run with Bare: it boots the local root and puts commands in
+  the boot mrepo's inbox.") and `pear-full-square/haicc-base-app` (the
+  app's module; the name is ours, said to the human, not yet answered:
+  "Module: the haicc command's app, the command line that boots the
+  local root and sends commands to the mrepos."). Check they exist
+  (`gh api -X GET search/repositories -f q='<name> in:name org:<org>'`),
+  then `sh tools/products.sh haicc-base-app` and `sh tools/packages.sh
+  -m "..." base-app-haicc`.
 - Testing by hand on the local machine: the local agent ran `381bbae`
   (its note, 2026-11-13) and nothing after; its prompt, `prompt-local.md`,
   predates parts 47 to 59 (`tools/package-test.js`, the reports). Its
@@ -186,11 +195,15 @@ with the human first, unless the task says it is ours ("Left to us").
   deployed by it, no executable. Its protocol: `boot deploy`, `teardown`,
   `redeploy` of a child, inside its parent (`main/<name>/`, the shadow of
   `main`), its shortcut in the parent's `xpath` layer.
-- **The haicc command** (`base-linux-haicc`, sh): one installer file;
-  `haicc sources`, `haicc prereq`, `haicc boot/deploy` and
-  `haicc boot/teardown` (the machine level); `haicc <URI>
-  <protocol>/<action> <args>` writes a record into the boot mrepo's inbox
-  folder and prints the response.
+- **The haicc command** (part 60): an app run with Bare,
+  `base-app-haicc` (its code the module `haicc-base-app`): `haicc
+  boot/deploy` and `haicc boot/teardown` (the machine level), `haicc
+  sources` (the list, `unlink`, `https`, `no-https`, `download`), and
+  `haicc <URI> <protocol>/<action> <args>`, which writes a record into
+  the boot mrepo's inbox folder and prints the response. Before Bare is
+  on the machine, the first step, `base-linux-haicc`, sh: one installer
+  file, `haicc sources link <folder>`, `haicc sources download bare`,
+  `haicc prereq`; its `haicc` starts the app for everything else.
 - **Commands** (parts 33, 34): a request is protocol, action, URI and a
   list of unnamed arguments; given as its parts as typed, it is
   interpreted on its way in. `haicc` is a protocol (`base-package-haicc`),

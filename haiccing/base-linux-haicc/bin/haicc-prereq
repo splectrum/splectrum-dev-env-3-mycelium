@@ -1,14 +1,14 @@
 #!/bin/sh
-# haicc prereq: what a boot needs, checked, and put in place where it is
-# missing. Nothing is fetched: Bare is unpacked from the sources.
+# haicc prereq: what the command needs to start, checked, and put in place
+# where it is missing. Nothing is fetched: Bare is unpacked from the sources.
 #   haicc prereq           checked; Bare put in place from the sources
 #   haicc prereq --check   checked only, nothing changed
 # A line a prerequisite: ok, or missing with how to get it. Exit 0 when all
 # are there, 3 when one is missing.
 #   platform   this machine's, the one the pinned Bare is for
 #   tools      what the scripts use: tar, sha512sum
-#   work       the work folder: can be made and written
-#   sources    a folder registered that holds the boot package
+#   sources    a folder registered that holds the app: its bundle, with its
+#              organisation's manifest
 #   bare       the pinned Bare, in haicc's folder, as pinned (its tarball's
 #              sha512 recorded beside it)
 set -u
@@ -30,17 +30,10 @@ for t in tar sha512sum; do
   if command -v "$t" >/dev/null 2>&1; then ok "tool: $t"; else miss "tool: $t (install it)"; fi
 done
 
-# work
-if [ "$check" = yes ]; then
-  w=$HAICC_WORK; while [ ! -e "$w" ] && [ "$w" != / ] && [ "$w" != . ]; do w=$(dirname "$w"); done
-  if [ -d "$w" ] && [ -w "$w" ]; then ok "work: $HAICC_WORK"; else miss "work: $HAICC_WORK cannot be written"; fi
-elif mkdir -p "$HAICC_WORK" 2>/dev/null && [ -w "$HAICC_WORK" ]; then ok "work: $HAICC_WORK"
-else miss "work: $HAICC_WORK cannot be written"; fi
-
 # sources
-boot=$(in_sources "$HAICC_ORG/$BOOT_PACKAGE.bundle")
-if [ -n "$boot" ] && [ -f "$(dirname "$boot")/manifest.json" ]; then ok "sources: $(dirname "$(dirname "$boot")")"
-else miss "sources: no folder registered holds $HAICC_ORG/$BOOT_PACKAGE.bundle (haicc sources link <folder>)"; fi
+app=$(in_sources "$HAICC_ORG/$APP_PACKAGE.bundle")
+if [ -n "$app" ] && [ -f "$(dirname "$app")/manifest.json" ]; then ok "sources: $(dirname "$(dirname "$app")")"
+else miss "sources: no folder registered holds $HAICC_ORG/$APP_PACKAGE.bundle (haicc sources link <folder>)"; fi
 
 # bare
 if [ -x "$HAICC_BARE" ] && [ -f "$HAICC_HOME/bare/tarball.sha512" ] && [ "$(cat "$HAICC_HOME/bare/tarball.sha512")" = "$BARE_SHA512" ]; then

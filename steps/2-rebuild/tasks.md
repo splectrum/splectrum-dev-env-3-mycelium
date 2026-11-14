@@ -1,9 +1,10 @@
 # Tasks: discussed, waiting to be built
 
 Tasks discussed with the human and stacked here, to be built later in
-batches, in this order: 0, 1, 2, 3 and on to swarm nodes up and running; then
+batches, in this order: 1, 2, 3 and on to swarm nodes up and running; then
 "Deployed tests" and "Coverage". ("First" and "Test reports" are built:
-kept here for what they left.) A task is removed from this file when it is built:
+kept here for what they left. Task 0, a Bare app for `haicc`, is built:
+`readme.md`, part 60.) A task is removed from this file when it is built:
 its record is then a part in `readme.md`.
 
 How to read a task:
@@ -162,8 +163,10 @@ step shown to the human first)
     ("Proposed", below);
   - `base-linux-haicc`: shell scripts, no bundle, so it carries no
     generic test and the package check skips it; its own test is
-    `test/run.sh`. To settle with the human whether it gets the generic
-    tests and a report too.
+    `test/run.sh`. Since part 60 it is the first step only (a folder
+    linked, Bare put in place, the app started); the command itself is
+    `base-app-haicc`, a bundle with the generic tests, a test of its own
+    and a report.
 
 **Open**
 
@@ -359,55 +362,6 @@ packages as well; put on the list, the implementation looked at later.
 - What coverage means for a haiccing package: its own tests against the
   code it carries and its own entry points.
 
-## 0. A Bare app for haicc
-
-The human's question, 2026-11-14: should we create a Bare app for
-`haicc`? Our view below; the human: yes, and first, before relative
-URIs ("if that suits you"). Built first.
-
-**What is there**: `haiccing/base-linux-haicc`, shell scripts (about 550
-lines with the awk that formats a response): the installer, `sources`,
-`prereq`, `boot/deploy`, `boot/teardown`, and a request written into the
-boot mrepo's inbox. No bundle, so no generic tests and no report; its
-test is `test/run.sh`, 107 checks.
-
-**Settled** (ours, agreed by the human): yes, as a package like the
-others.
-
-- It becomes a bundle from the template: the generic tests, a test of
-  its own, a report, the pin. The question whether `base-linux-haicc`
-  gets them goes away.
-- One implementation of the command's form. Today the scripts form the
-  record and print the response on their own, beside the modules that
-  interpret it; relative URIs would have to be changed in both.
-- Not tied to Linux and sh: it runs where Bare runs.
-- It is where the terminal as a mini mrepo (the roadmap, item 5) would
-  live.
-- What stays shell: the first step only, getting Bare onto the machine
-  and starting the app (Bare cannot fetch itself).
-- The order we would take: the app first, with today's command form
-  exactly, `run.sh`'s 107 checks unchanged as the proof that the port is
-  right; then relative URIs, changed in one place. Not both at once.
-
-**Agreed by the human** (2026-11-14)
-
-- Its package: `haiccing/base-app-haicc`, a new repository for the human
-  to create (not needed until the app is ready to push; check it exists
-  then: `gh api -X GET search/repositories -f q='base-app-haicc in:name
-  org:haiccing'`); its description: ("App: the haicc command, run with Bare: it boots the local
-  root and puts commands in the boot mrepo's inbox."). A new type beside
-  `base-package-` and `base-component-`.
-- `haiccing/base-linux-haicc` stays, reduced to the first step on Linux:
-  the installer that gets Bare and puts in place a `haicc` that starts
-  the app. Another platform gets its own first step later.
-
-**Where**: `haiccing/base-linux-haicc/bin/` (`haicc`, `haicc-request`,
-`haicc-boot`, `haicc-sources`, `haicc-prereq`, `haicc-lib.sh`, the two
-awk files), `haicc-install.sh`, `build.sh`, `pins`, `test/run.sh`;
-`tools/release.js` (it writes the pins and the installer); the record's
-form and the reading of a response: `pear-full-square/mrepo-base-request`.
-
-
 ## 1. Relative URIs
 
 Discussed 2026-11-13, while designing task 2, which builds on it.
@@ -582,8 +536,11 @@ it fail, then build until it passes.
     this piece.
   - The hooks: `"/"` becomes `"."` in every file of the components' and
     the service package's `mrepo/runtime/hooks/`.
-  - The `haicc` scripts (`haiccing/base-linux-haicc/bin/haicc`,
-    `haicc-request`): the first word, `.`, the usage text.
+  - The `haicc` command: the app (`pear-full-square/haicc-base-app`,
+    `internal/command/`: the first word, `.`, the usage text) and the
+    first step's script (`haiccing/base-linux-haicc/bin/haicc`: it only
+    takes `sources link`, `sources download bare`, `prereq` and
+    `--help` for itself, so nothing of a URI's form is in it).
   - The tests: the modules' (`mrepo-base-request` check and command,
     `-execute` whose rest forms use `/main/...`, `-haicc`, `-xpath`,
     `-boot`, `-runtime`, `-service`, `-protocol`); the packages'
@@ -618,12 +575,13 @@ it fail, then build until it passes.
   target's name from the URI), `mrepo-base-help` (`get`) and
   `mrepo-base-runtime/lib/protocol.js` (`run`): the two whose subject
   becomes an argument.
-- `haiccing/base-linux-haicc/bin/haicc` (a first part starting with `/`
-  goes to `haicc-request`) and `bin/haicc-request` (`/` sent as it is,
-  another URI as `haicc <uri> ...`).
+- `pear-full-square/haicc-base-app/internal/command/` (a first part
+  starting with `/` is a command for the mrepos; `/` sent as it is,
+  another URI as `haicc <uri> ...`), its tests, and the app's own test,
+  `haiccing/base-app-haicc/test/command/`.
 - The hooks' files in the components' `mrepo/runtime/hooks/`.
 - The tests that type commands: `haiccing/base-linux-haicc/test/run.sh`
-  (107 asserts), `haiccing/base-component-boot/test/boot/`, the modules'
+  (114 checks), `haiccing/base-component-boot/test/boot/`, the modules'
   tests; the READMEs that show commands.
 
 ## 2. The crud protocol

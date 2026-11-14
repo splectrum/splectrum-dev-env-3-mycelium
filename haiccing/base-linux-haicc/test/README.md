@@ -12,22 +12,25 @@ inspect. One line a check, the count last; exit 0 passed, 1 failed.
 
 1. **The installer**: the one `build.sh` writes; installed with `--home`
    and `--bin`; the command registered.
-2. **The dispatcher**: its usage; no such script command; a URI with no
-   command after it; `haicc boot` alone; `--output` without a URI.
-3. **Nothing there yet**: the prerequisites say what is missing;
-   `haicc boot/deploy` stops and writes nothing; `haicc boot/teardown` and
-   an mrepo command say there is no boot mrepo.
-4. **The sources**: a folder linked, listed before https; the backup off
-   and on; a folder linked twice listed once; a folder that is not there;
-   a download of our packages, not published yet.
+2. **Before Bare**: the usage says the first step's commands and points
+   to the rest.
+3. **Nothing there yet**: https the only source, by default; the
+   prerequisites say what is missing; `haicc boot/deploy` and the app's
+   other commands stop, pointing to `haicc prereq`, and write nothing.
+4. **The sources**: a folder linked, listed before https; a folder that
+   is not there.
 5. **The prerequisites**: a check changes nothing; `haicc prereq` unpacks
    the pinned Bare from the sources and records its hash; there next time.
+   From here the command is the app: its usage whole; no such command; a
+   URI with no command after it; `haicc boot` alone; `--output` without a
+   URI; no boot mrepo yet; the backup off and on; a folder linked twice
+   listed once; a download of our packages, not published yet.
 6. **The boot**: `haicc boot/deploy`: the boot mrepo at the root, its
    runtime started, nothing deployed.
 7. **Commands**: the host deployed at the root from
    `base-component-haicc`; the response record printed unpacked across
-   lines by default, as stored with `--raw`; every record in the outbox
-   unpacked and packed again is the record as stored; deployed
+   lines by default, as stored with `--raw`; a record printed, packed
+   again, is the record as stored in the outbox; deployed
    again, an error on stderr; its boot protocol behind the service's door,
    not active; its help not extracted yet;
    `service/initialise` and `service/start` passed through to it, each

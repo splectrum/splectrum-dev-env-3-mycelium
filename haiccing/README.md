@@ -11,7 +11,9 @@ each at `haiccing/<repo>`, in the package structure
 - Components, several packages deployed together: `base-component-boot/`,
   the initial boot mrepo and the program that puts it in place;
   `base-component-haicc/`, the haicc mrepo.
-- `base-linux-haicc/`: the `haicc` command, sh scripts.
+- `base-app-haicc/`: the `haicc` command, an app run with Bare.
+- `base-linux-haicc/`: the first step on Linux, sh scripts: Bare put in
+  place and the `haicc` that starts the app.
 - `package-docs-template/`, `package-docs-mrepo/`: the documentation
   packages.
 

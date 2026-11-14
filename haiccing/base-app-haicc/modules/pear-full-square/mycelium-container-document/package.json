@@ -1,0 +1,11 @@
+{
+  "name": "mycelium-container-document",
+  "version": "0.1.0",
+  "description": "A storage container: one value per file, written atomically, in the encoding it is given",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}
