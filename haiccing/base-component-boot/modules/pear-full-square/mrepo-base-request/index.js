@@ -30,12 +30,12 @@ import { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX } from './l
 import { record, wrap, guid, complete, isComplete, logger, LEVELS } from './lib/record.js'
 import { layer, AUTHOR } from './lib/layer.js'
 import { viewOf, gitdirOf, setting, isWork, SETTING } from './lib/view.js'
-import { relative, from, within, slashed, unslashed } from 'mycelium-uri'
-import { interpret, formOf, ROOT, MAIN } from './lib/command.js'
+import { relative, from, within, slashed, unslashed, segmented, joined, positionOf } from 'mycelium-uri'
+import { interpret, formOf, ROOT, MAIN, OUTSIDE, OWN } from './lib/command.js'
 import { hooks, hooksAt, TRANSITIONS } from './lib/hooks.js'
 
 export { follow } from './lib/follow.js'
-export { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING, interpret, formOf, relative, from, within, slashed, unslashed, ROOT, MAIN, hooks, hooksAt, TRANSITIONS }
+export { post, ensure, inboxFolder, inboxOf, outboxOf, INBOX, OUTBOX, record, wrap, guid, complete, isComplete, logger, LEVELS, layer, AUTHOR, viewOf, gitdirOf, setting, isWork, SETTING, interpret, formOf, relative, from, within, slashed, unslashed, segmented, joined, positionOf, ROOT, MAIN, OUTSIDE, OWN, hooks, hooksAt, TRANSITIONS }
 
 export const PENDING = 'request/pending/default'
 export const EXECUTE = 'request/execute'
@@ -73,13 +73,13 @@ export function matches (pattern, uri) {
 
 // What an action's config asks for and the request does not give: null, or
 // `missing argument: <name>`.
-//   target    a target is needed: the URI is not the position the request
-//             was written at (at: the mrepo itself, which one cannot
-//             deploy or tear down); left out, the URI is that position
+//   target    a target is needed: the URI as it was written (its last
+//             segment) is not `.`, the position itself (the mrepo, which
+//             one cannot deploy or tear down); left out, it is `.`
 //   args      the arguments by name, in order; one ending in ? is optional
-export function missing (cfg, uri, args = [], at = MAIN) {
+export function missing (cfg, uri, args = []) {
   if (!cfg) return null
-  if (cfg.target && uri === at) return 'missing argument: target'
+  if (cfg.target && uri.at(-1) === ROOT) return 'missing argument: target'
   for (const [i, n] of (cfg.args || []).entries()) {
     if (n.endsWith('?')) continue
     if (args?.[i] === undefined || args[i] === '') return `missing argument: ${n}`
@@ -88,13 +88,14 @@ export function missing (cfg, uri, args = [], at = MAIN) {
 }
 
 // A request checked: null when allowed, else why not.
-//   always             a form, its URI canonical: relative, from the
-//                      mrepo's root
+//   always             a form, its URI an array of segments, each a
+//                      relative URI in its canonical form
 //   from outside       (the inbox's) its protocol loaded and its action
 //                      configured, said with what is there when not; what
 //                      the action's config asks for given (missing); its URI
-//                      in main, and there one the config names (its
-//                      patterns are written at main); and now (state: true, as it
+//                      the prefix main and one segment, that one a URI the
+//                      config names (its patterns are written at main); and
+//                      now (state: true, as it
 //                      executes): its protocol active (nothing is by
 //                      default: protocol/activate, from a hook), and an
 //                      action that names its states (the service's own) in
@@ -105,26 +106,22 @@ export function missing (cfg, uri, args = [], at = MAIN) {
 //                      action names them
 // At the inbox neither the activation nor the state is checked (state:
 // false): the queue may hold requests that change them first.
-//   at   where the request was written: main from outside, the root for
-//        the mrepo's own, by default; a command executed at a position
-//        (haicc): that position
-export function check (value, { service, protocols, active }, { state = true, internal = false, at = internal ? ROOT : MAIN } = {}) {
+export function check (value, { service, protocols, active }, { state = true, internal = false } = {}) {
   if (!value || typeof value !== 'object') return 'not a request'
   let uri
-  try { uri = relative(value.uri) } catch (err) { return err.message }
-  if (uri !== value.uri) return `not canonical: ${value.uri} (${uri})`
+  try { uri = segmented(value.uri) } catch (err) { return err.message }
   const { protocol, action } = value
   const cfg = protocols?.[protocol]?.actions?.[action]
   const now = () => (state && cfg?.states && service && !cfg.states.includes(service.state)) ? `not now: ${protocol} ${action} (the service is ${service.state})` : null
-  if (internal) return missing(cfg, uri, value.args, at) ?? now()
+  if (internal) return missing(cfg, uri, value.args) ?? now()
   if (!protocols?.[protocol]) return `no protocol: ${protocol} (${Object.keys(active ?? {}).sort().join(', ')})`
   if (!cfg) return `no action: ${protocol} ${action} (${Object.keys(protocols[protocol].actions ?? {}).sort().join(', ')})`
   // (before its URI is looked at: a target left out is the position itself
   // and would only be said not offered there)
-  const lacks = missing(cfg, uri, value.args, at)
+  const lacks = missing(cfg, uri, value.args)
   if (lacks) return lacks
-  const inMain = within(MAIN, uri)
-  if (inMain === null || !(cfg.uris || []).some(p => matches(p, inMain))) return `not offered: ${protocol} ${action} at ${inMain ?? uri}`
+  const inMain = uri.length === 2 && uri[0] === MAIN ? uri[1] : null
+  if (inMain === null || !(cfg.uris || []).some(p => matches(p, inMain))) return `not offered: ${protocol} ${action} at ${inMain ?? joined(uri)}`
   if (!state) return null
   if (!active?.[protocol]) return `not now: ${protocol} ${action} (${protocol} is not active${service ? `; the service is ${service.state}` : ''})`
   return now()
@@ -176,7 +173,7 @@ export async function admit (ctx, core, { origin, name = core?.key ?? guid() }) 
   // (what is wrong with the request itself is said as it is; anything else
   // that fails taking it in is the runtime's)
   try {
-    const filled = formOf(form, ctx.protocols ?? {}, origin === 'internal' ? ROOT : MAIN)
+    const filled = formOf(form, ctx.protocols ?? {}, origin === 'internal' ? OWN : OUTSIDE)
     if (filled !== form) { form = filled; core = { ...core, value: form } }
   } catch (err) { why = err.message }
   if (!why) {
@@ -188,7 +185,7 @@ export async function admit (ctx, core, { origin, name = core?.key ?? guid() }) 
     await sendBack(ctx, name, refused)
     return { name, refused: why }
   }
-  await layer(ctx, PENDING).put(name, wrap(`/${PENDING}`, core), `${origin === 'internal' ? 'Internal' : 'Request'} ${name}: ${form.protocol} ${form.action} ${form.uri}`)
+  await layer(ctx, PENDING).put(name, wrap(`/${PENDING}`, core), `${origin === 'internal' ? 'Internal' : 'Request'} ${name}: ${form.protocol} ${form.action} ${joined(form.uri)}`)
   return { name, queued: true }
 }
 

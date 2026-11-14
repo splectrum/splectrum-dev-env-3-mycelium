@@ -106,7 +106,7 @@ haicc sources download nosuch >/dev/null 2>&1; is $? 3 "nothing to download by t
 
 # 6. the boot: the boot mrepo at the root, its runtime started, nothing deployed
 out=$(haicc boot/deploy 2>&1); is $? 0 "haicc boot/deploy"
-has "$out" '"protocol":"boot","action":"deploy","uri":"boot"' "its request printed, completed: boot deploy boot"
+has "$out" '"protocol":"boot","action":"deploy","uri":["boot"]' "its request printed, completed: boot deploy boot"
 has "$out" '"repository":"boot"' "its runtime started"
 [ -d "$T/home/work/mrepos/boot/inbox" ] && ok "the boot mrepo in the work folder" || no "the boot mrepo in the work folder"
 [ ! -e "$T/home/work/mrepos/boot/main/host" ] && ok "nothing deployed by the boot" || no "nothing deployed by the boot"

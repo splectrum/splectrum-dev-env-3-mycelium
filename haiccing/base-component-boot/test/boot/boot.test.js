@@ -38,7 +38,7 @@ test('the sources missing: the boot says so, its request printed, exit 1', async
     const r = boot(work, ['--sources=folder:/nowhere/at/all'])
     t.is(r.code, 1, 'exit 1')
     const form = r.lines.at(-1).value
-    t.alike([form.protocol, form.action, form.uri], ['boot', 'deploy', 'boot'], 'its request printed: boot deploy boot')
+    t.alike([form.protocol, form.action, form.uri], ['boot', 'deploy', ['boot']], 'its request printed: boot deploy boot')
     t.ok(form.command.includes('--sources=folder:/nowhere/at/all'), 'the command as typed')
     t.ok(form.error, `completed with the error: ${form.error}`)
     t.is(await ask({ repo: viewOf(work, 'boot'), op: 'status' }), null, 'no runtime started')
@@ -87,7 +87,7 @@ test('the boot: put in place, its runtime started, nothing deployed; the host de
     // the host deployed by a command at the root, the name joined to the
     // position: boot/deploy /host (the runtime the target)
     const first = await typed(['boot/deploy', 'host', 'haiccing/base-package-runtime'])
-    t.alike([first?.error, first?.uri, first?.output?.deployed, first?.output?.mrepo], [undefined, 'main/host', 'host', 'local/host'], `boot/deploy host: its URI from the root in the form, said as written in its output: done ${first?.error ?? ''}`)
+    t.alike([first?.error, first?.uri, first?.output?.deployed, first?.output?.mrepo], [undefined, ['main', 'host'], 'host', 'local/host'], `boot/deploy host: in the form its URI the prefix main and what was written, in its output as written: done ${first?.error ?? ''}`)
     const h = await ask({ repo: host, op: 'status' })
     t.is(h?.repository.name, 'host', 'the host deployed inside the boot mrepo (main/host), its runtime running')
     t.is(statSync(join(host, 'packages', 'haiccing', 'base-package-runtime.bundle')).ino, statSync(store).ino, 'its runtime linked from the store')
@@ -105,7 +105,7 @@ test('the boot: put in place, its runtime started, nothing deployed; the host de
       for (const n of await layer({ repo, backend }, 'request/done').arrived()) history.push((await repo.read(`/request/done/${n}.json`).then(b => JSON.parse(b.toString()))).value.value)
       if (history.length < 7) await wait(100)
     }
-    t.alike(history.map(f => `${f.protocol} ${f.action} ${f.uri} ${(f.args ?? []).join(' ')}`.trim()), ['boot deploy boot', 'protocol activate . boot', 'protocol activate . haicc', 'protocol activate . help', 'protocol activate . runtime', 'help extract .', 'boot deploy main/host haiccing/base-package-runtime'], 'the history: the boot\'s deploy, then its boot hooks in name order (its protocols activated, its help extracted), then the first command')
+    t.alike(history.map(f => `${f.protocol} ${f.action} ${Array.isArray(f.uri) ? f.uri.join("/") : f.uri} ${(f.args ?? []).join(' ')}`.trim()), ['boot deploy boot', 'protocol activate . boot', 'protocol activate . haicc', 'protocol activate . help', 'protocol activate . runtime', 'help extract .', 'boot deploy main/host haiccing/base-package-runtime'], 'the history: the boot\'s deploy, then its boot hooks in name order (its protocols activated, its help extracted), then the first command')
     t.alike(await repo.select('/inbox/*').then(r => r.filter(([p]) => !p.endsWith('layer.json')).length, () => 0), 1, 'all but the last internal: only the command in the inbox')
     t.ok(history.slice(1, 6).every(f => !f.error), `its hooks done without an error ${history.slice(1, 6).map(f => f.error).filter(Boolean).join('; ')}`)
     t.alike((await repo.select('/protocols/*')).map(([p]) => p.slice(p.lastIndexOf('/') + 1)).filter(n => n !== 'layer.json').sort(), ['boot.json', 'haicc.json', 'help.json', 'runtime.json'], 'its active protocols, in its protocols layer: the boot\'s, haicc, help, the runtime\'s; not the protocol protocol itself')
@@ -162,14 +162,14 @@ test('the boot: put in place, its runtime started, nothing deployed; the host de
     // command as typed, its parts; at a shortcut it is sent on to the mrepo
     // linked there, unchanged; the request waits, the response its result
     const far = await typed(['haicc', 'host', 'help/get', '.', 'packages', 'oneliner'])
-    t.alike([far?.error, far?.protocol, far?.action, far?.uri, far?.args], [undefined, 'haicc', 'goto', 'main/host', ['help/get', '.', 'packages', 'oneliner']], `haicc host help/get . packages oneliner: haicc alone is haicc/goto, what follows its arguments ${far?.error ?? ''}`)
+    t.alike([far?.error, far?.protocol, far?.action, far?.uri, far?.args], [undefined, 'haicc', 'goto', ['main', 'host'], ['help/get', '.', 'packages', 'oneliner']], `haicc host help/get . packages oneliner: haicc alone is haicc/goto, what follows its arguments ${far?.error ?? ''}`)
     t.alike([far?.output?.uri, far?.remote?.at, far?.remote?.folder, typeof far?.remote?.key], ['packages', 'host', 'main/host', 'string'], 'answered by the host: host is a shortcut, the command sent on')
     const hostRepo = openRepo(p2pgitBackend(join(host, '.git'), { fs }))
     const passed = await hostRepo.read(`/request/done/${far?.remote?.key}.json`).then(b => JSON.parse(b.toString()).value, () => null)
-    t.alike([/^\/local\/boot\/execute\/[0-9a-f-]{36}$/.test(passed?.topic ?? ''), passed?.value?.command, passed?.value?.protocol, passed?.value?.uri], [true, ['help/get', '.', 'packages', 'oneliner'], 'help', 'main'], 'in the host: the command that followed, unchanged (the hop taken off, nothing rewritten), addressed back to the waiting request\'s branch')
+    t.alike([/^\/local\/boot\/execute\/[0-9a-f-]{36}$/.test(passed?.topic ?? ''), passed?.value?.command, passed?.value?.protocol, passed?.value?.uri], [true, ['help/get', '.', 'packages', 'oneliner'], 'help', ['main', '.']], 'in the host: the command that followed, unchanged (the hop taken off, nothing rewritten), addressed back to the waiting request\'s branch')
     let kept = null // moved to done right after its principal, in the same pass
     for (let i = 0; i < 50 && !kept; i++) { kept = await repo.read(`/request/done/${far?.remote?.key}.json`).then(b => JSON.parse(b.toString()).value, () => null); if (!kept) await wait(100) }
-    t.alike([kept?.value?.uri, kept?.value?.output?.uri, 'output' in (kept?.value ?? {})], ['main', 'packages', true], 'the host\'s response, merged in with its principal: kept in done')
+    t.alike([kept?.value?.uri, kept?.value?.output?.uri, 'output' in (kept?.value ?? {})], [['main', '.'], 'packages', true], 'the host\'s response, merged in with its principal: kept in done')
     t.absent(await repo.read(`/outbox/${far?.remote?.key}.json`).then(() => true, () => false), 'and not sent on')
     const near = await typed(['haicc', '.', 'help/get', '.', 'packages', 'oneliner'])
     t.alike([near?.error, near?.remote], [undefined, undefined], `haicc . help/get: the root, executed here ${near?.error ?? ''}`)
@@ -276,7 +276,7 @@ test('the boot: put in place, its runtime started, nothing deployed; the host de
     // again: only its own requests are added, nothing done before is repeated
     const doneNow = async () => {
       const out = {}
-      for (const [p] of await repo.select('/request/done/*')) if (!p.endsWith('layer.json')) { const v = JSON.parse((await repo.read(p)).toString()).value.value; out[p] = `${v.protocol} ${v.action} ${v.uri}` }
+      for (const [p] of await repo.select('/request/done/*')) if (!p.endsWith('layer.json')) { const v = JSON.parse((await repo.read(p)).toString()).value.value; out[p] = `${v.protocol} ${v.action} ${Array.isArray(v.uri) ? v.uri.join("/") : v.uri}` }
       return out
     }
     const before = await doneNow()

@@ -9,7 +9,7 @@ it stopped is logged.
 ## Signature
 
 `teardown(exec, { uri })`: requested as `boot/teardown <name>`. `uri`
-is `main/<name>`.
+is `["main", "<name>"]`.
 
 ## Returns
 

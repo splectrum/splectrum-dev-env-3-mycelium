@@ -45,29 +45,29 @@ test('its config, value by value', (t) => {
 
 test('activate: the loaded protocol\'s config written into the protocols layer', async (t) => {
   const { exec, writes } = execution({ help: HELP, boot: {} })
-  t.alike(await act('activate', exec, { uri: '.', args: ['help'] }), { activated: 'help' }, 'what it returns')
+  t.alike(await act('activate', exec, { uri: ['.'], args: ['help'] }), { activated: 'help' }, 'what it returns')
   t.alike(writes, [['put', '/protocols/help.json', HELP]], 'one write: its config, as the runtime loaded it, at /protocols/help.json')
-  t.alike(await act('activate', exec, { uri: '.', args: ['help'] }), { activated: 'help' }, 'active already: the same answer')
+  t.alike(await act('activate', exec, { uri: ['.'], args: ['help'] }), { activated: 'help' }, 'active already: the same answer')
   t.alike(writes.length, 2, 'written again, nothing else')
-  await t.exception(act('activate', exec, { uri: '.', args: ['rest'] }), /no protocol: rest \(boot, help\)/, 'a protocol that is not loaded: refused, those that are named')
-  await t.exception(act('activate', exec, { uri: '.' }), /missing argument: protocol/, 'no name: said')
+  await t.exception(act('activate', exec, { uri: ['.'], args: ['rest'] }), /no protocol: rest \(boot, help\)/, 'a protocol that is not loaded: refused, those that are named')
+  await t.exception(act('activate', exec, { uri: ['.'] }), /missing argument: protocol/, 'no name: said')
   t.is(writes.length, 2, 'a refusal writes nothing')
 })
 
 test('deactivate: its file removed from the protocols layer', async (t) => {
   const { exec, writes, files } = execution({ help: HELP }, { '/protocols/help.json': Buffer.from(JSON.stringify(HELP)) })
-  t.alike(await act('deactivate', exec, { uri: '.', args: ['help'] }), { deactivated: 'help' }, 'what it returns')
+  t.alike(await act('deactivate', exec, { uri: ['.'], args: ['help'] }), { deactivated: 'help' }, 'what it returns')
   t.alike(writes, [['remove', '/protocols/help.json']], 'one write: the file removed')
   t.absent('/protocols/help.json' in files, 'no longer active')
-  await t.exception(act('deactivate', exec, { uri: '.', args: ['help'] }), /not active: help/, 'not active: refused')
-  await t.exception(act('deactivate', exec, { uri: '.' }), /missing argument: protocol/, 'no name: said')
+  await t.exception(act('deactivate', exec, { uri: ['.'], args: ['help'] }), /not active: help/, 'not active: refused')
+  await t.exception(act('deactivate', exec, { uri: ['.'] }), /missing argument: protocol/, 'no name: said')
   t.is(writes.length, 1, 'a refusal writes nothing')
 })
 
 test('activate, then deactivate: the layer as it was', async (t) => {
   const { exec, files } = execution({ help: HELP })
-  await act('activate', exec, { uri: '.', args: ['help'] })
-  await act('deactivate', exec, { uri: '.', args: ['help'] })
+  await act('activate', exec, { uri: ['.'], args: ['help'] })
+  await act('deactivate', exec, { uri: ['.'], args: ['help'] })
   t.alike(Object.keys(files), [], 'nothing left in the protocols layer')
 })
 

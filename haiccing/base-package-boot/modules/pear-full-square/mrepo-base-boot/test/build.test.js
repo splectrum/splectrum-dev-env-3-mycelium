@@ -21,7 +21,7 @@ for (const l of ['main', 'runtime', 'protocols', 'inbox', 'outbox', 'packages', 
 // a boot hook, as a defining package would drop it: rest active from boot
 mkdirSync(join(BOOT, 'runtime', 'hooks', 'boot'), { recursive: true })
 writeFileSync(join(BOOT, 'runtime', 'hooks', 'boot', 'activate-rest.json'), JSON.stringify(['protocol/activate', '.', 'rest']))
-const preloaded = { api: 'boot', protocol: 'boot', action: 'deploy', uri: 'main/host', args: ['haiccing/base-package-runtime'] }
+const preloaded = { api: 'boot', protocol: 'boot', action: 'deploy', uri: ['main', 'host'], args: ['haiccing/base-package-runtime'] }
 writeFileSync(join(BOOT, 'request', 'pending', 'default', `${PRELOADED}.json`), JSON.stringify({ topic: '/request/pending/default', key: PRELOADED, timestamp: '2026-11-11T00:00:00.000Z', headers: {}, value: { topic: null, key: PRELOADED, timestamp: '2026-11-11T00:00:00.000Z', headers: {}, value: preloaded } }))
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
@@ -66,7 +66,7 @@ test('the boot mrepo running, without its packages: its boot hook run, what it a
     const r = await open(work)
     const repo = openRepo(r.backend)
     const done = JSON.parse((await repo.read(`/request/done/${PRELOADED}.json`)).toString()).value.value
-    t.alike([done.protocol, done.action, done.uri, done.args], ['boot', 'deploy', 'main/host', ['haiccing/base-package-runtime']], 'the preloaded request: boot deploy main/host, the runtime its target')
+    t.alike([done.protocol, done.action, done.uri, done.args], ['boot', 'deploy', ['main', 'host'], ['haiccing/base-package-runtime']], 'the preloaded request: boot deploy main/host, the runtime its target')
     t.is(done.error, 'no protocol: boot (protocol, rest, service)', 'done, refused here: no boot protocol linked, said with those there (the package\'s test runs it with its packages)')
     t.alike((await repo.select('/request/pending/default/*')).map(([p]) => p), ['/request/pending/default/layer.json'], 'nothing pending')
   } finally {

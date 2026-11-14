@@ -1,7 +1,7 @@
 // resolve: a local URI resolved to a node position in an mrepo, an ordinary
 // node or a shortcut (README.md beside it).
 import { join } from 'bare-path'
-import { relative, within, ROOT } from 'mycelium-uri'
+import { segmented, joined, within, ROOT } from 'mycelium-uri'
 
 // The layer positions are in: where the outside stands.
 const MAIN = 'main'
@@ -26,12 +26,11 @@ export const swarmOf = uri => (typeof uri === 'string' && uri.includes('/') ? ur
 // in the same swarm.
 export const uriOf = (parent, name) => `${swarmOf(parent)}/${name}`
 
-// uri: from the mrepo's root, as a request's form holds it: main (the
-// root position), main/host; `.` the mrepo itself, above its layers.
-// at: the position as written at main (`.`, host).
+// uri: as a request's form holds it, its segments: ['main', '.'] (main's
+// root position), ['main', 'host']; ['.'] the mrepo itself, above its
+// layers. at: the position as written at main (`.`, host).
 export async function resolve (exec, uri) {
-  const u = relative(uri)
-  if (u !== uri) throw new Error(`not canonical: ${uri} (${u})`)
+  const u = joined(segmented(uri))
   if (u === ROOT) return { at: ROOT, shortcut: null }
   const at = within(MAIN, u)
   if (at === null) throw new Error(`not a position in main: ${u} (main, main/<position>)`)

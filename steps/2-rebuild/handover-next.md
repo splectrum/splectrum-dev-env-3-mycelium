@@ -1,12 +1,13 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-14, part 61). Read `CLAUDE.md` first (what is here, how to
+Kept current by the cloud session (last: 2026-11-14, part 62). Read `CLAUDE.md` first (what is here, how to
 validate), then this, then `tasks.md` here (what is planned and waits to
 be built: the next work), then `readme.md` (each part's record, the
 latest last: 30 to 45 the haicc work; 46 a note on future design; 47 to
 59 the tests: the package check, the template, the test reports, the
 pin, every package brought to the template one by one; 60 the `haicc`
-command as a Bare app; 61 relative URIs, piece A).
+command as a Bare app; 61 relative URIs, piece A; 62 a URI inside an
+array of segments).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -59,18 +60,22 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   its root; the form holds it from the root (`main/host`). `haicc .
   boot/deploy host <package>`, `haicc host service/start`, `haicc host
   help/get . packages`. Inside, reads and writes are still slash-led.
+- **Inside, a URI is an array of segments** (part 62): in a request's
+  form the prefix `main` and the URI as written, `["main", "host"]`;
+  the mrepo's own without a prefix, `["."]`. Outside it is one segment,
+  as written. An action's answer is whatever it is: not wrapped.
 
 **Next: build what is planned** (the human, 2026-11-14: what remains to
 plan depends heavily on having floating mrepo tests, so the planned work
 is implemented first). In `tasks.md`, in this order:
 
-1. **Relative URIs** (task 1). Piece A, requests relative, is built
-   (part 61). Next its piece B (the interface accepts both: `exec.read`
-   and the others take `runtime/service.json` as well as the slash-led
-   form) and piece C (selections and results as arrays, the prefix). C
-   changes what every command answers: **show the human the new answers
-   before building it**. B is small and can go with the first module
-   written relative, `crud`.
+1. **Relative URIs** (task 1). Piece A is built (part 61), and of piece
+   C the URI's type inside (part 62). Left: piece B (the interface
+   accepts both: `exec.read` and the others take `runtime/service.json`
+   as well as the slash-led form), small, to go with `crud`, the first
+   module written relative; and the rest of piece C (selections as
+   arrays, deeper positions, the jumps and the prefix), which the human
+   left to come with the `haicc` commands that need them.
 2. **The `crud` protocol** (task 2), on top of it; with it the shortcuts
    moved into `main` (`.shortcuts.json` beside `.node.json`), the `xpath`
    layer gone. Its two repositories exist.

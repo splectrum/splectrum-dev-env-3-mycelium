@@ -54,10 +54,15 @@ setting.
   its writer stands. `.` is the position itself, and so is none given;
   `./x` is `x`. From outside the writer stands at `main` (`MAIN`), so the
   outside reaches `main` only; the mrepo's own requests, a hook, stand at
-  its root (`ROOT`) and name the layer first. The form holds the URI from
-  the root: `host` from outside is `main/host`. A leading slash is
-  refused. The URI functions are `mycelium-uri`'s, offered here too:
-  `relative`, `from`, `within`, `slashed`.
+  its root and name the layer first. A leading slash is refused.
+- **Inside, a URI is an array of segments**: in the form, the prefix
+  where the writer stands, then the URI as written. From outside
+  (`OUTSIDE`) that is the prefix `main` and one segment: `host` is
+  `["main", "host"]`, no URI `["main", "."]`. The mrepo's own (`OWN`)
+  have no prefix: `["."]`, `["runtime/hooks"]`. Outside, a URI is one
+  segment, as it is written: a form given filled in carries it so. The
+  URI functions are `mycelium-uri`'s, offered here too: `relative`,
+  `segmented`, `joined`, `positionOf`, `slashed`.
 - **One way into pending** (`admit(ctx, core, { origin })`): the inbox's
   records and internal requests (`internal(ctx, form)`, the mrepo's own)
   pass the same handler, validated by where they come from; refused, the
@@ -77,9 +82,9 @@ setting.
   principal, it goes to `request/done` and is not sent on. A response
   nobody waits for goes to `request/done`. `settled()` counts any request
   branch as not done.
-- **What is missing is said** (`missing(cfg, uri, args, at)`): an action's
-  config names what it needs, a target (`target`: not the position the
-  request was written at, the mrepo itself) and its arguments (`args`, by name, `?` optional). One not
+- **What is missing is said** (`missing(cfg, uri, args)`): an action's
+  config names what it needs, a target (`target`: the URI as written, its
+  last segment, is not `.`, the mrepo itself) and its arguments (`args`, by name, `?` optional). One not
   given: `missing argument: <name>`, with or without a service, before
   the URI is looked at.
 - **Checked** (`check`): its URI canonical; from outside, against the

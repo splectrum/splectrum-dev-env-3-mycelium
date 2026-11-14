@@ -8,8 +8,8 @@ manifest and the bundles in the mrepo's `packages/`.
 
 ## Signature
 
-`extractAction(exec, { uri })`: `uri` is the mrepo itself, `.` for its
-own request, `main` from outside: the whole mrepo.
+`extractAction(exec, { uri })`: `uri` is the mrepo itself, `["."]` for
+its own request, `["main", "."]` from outside: the whole mrepo.
 
 ## Returns
 
