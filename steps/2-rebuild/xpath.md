@@ -87,6 +87,8 @@ crud/read */swarms/*
 **Settled** (the human)
 
 - "The aim is full coverage, but in steps."
+- **No parent step (`..`)**: "we don't need it as ours is forward
+  looking only." Full coverage is of what looks forward.
 
 **Proposed** (ours: the list shown to the human, the points not
 answered one by one). "Attribute" read as a field of the node's
@@ -112,14 +114,11 @@ document.
   of each node (the node, its URI only, one field) and aggregates (a
   count).
 
-**To settle**, against full coverage (our first opinion was to leave
-both out):
+**To settle**, against full coverage:
 
-- **A parent step (`..`)**: a command sees forward only, and a linked
-  mrepo does not know where it is linked. Inside one segment it could be
-  worked away before the cut.
 - **A selection by position (`[1]`, the last)**: it needs an order, and a
-  merged set has none unless the merge defines one.
+  merged set has none unless the merge defines one (our first opinion:
+  left out for now).
 - What full coverage is measured against: XPath as it is written
   elsewhere (which version), or the list above grown.
 
