@@ -17,18 +17,24 @@ import * as mounted from '../../protocol.js'
 const seg = u => (Array.isArray(u) ? u : u === 'main' ? ['main', '.'] : u.startsWith('main/') ? ['main', u.slice(5)] : [u])
 const ran = new Set()
 const act = (name, exec, form) => { ran.add(name); return mounted.actions.boot[name](exec, form) }
-const SHORTCUT = '/xpath/host/shortcut.json'
+// Where a child at host is recorded: its node and its link in main, what
+// is local to this machine about it in the runtime layer.
+const NODE = '/main/host/.node.json'
+const SHORTCUT = '/main/host/.shortcuts.json'
+const LOCAL = '/runtime/deployed/host.json'
+const LINKED = { [NODE]: Buffer.from('{}'), [SHORTCUT]: Buffer.from(JSON.stringify([{ mrepo: 'local/host' }])) }
+const abs = p => (p.startsWith('/') ? p : `/${p}`)
 
 // An execution as an action sees it: the parent's folder and unique URI,
-// its files by URI, its writes kept in order.
+// its files by path (given relative or slash-led), its writes kept in order.
 function execution (dir, files = {}) {
   const writes = []
   const exec = {
     runtime: { dir, uri: 'local/boot' },
-    read: async uri => { if (!(uri in files)) throw new Error(`nothing at ${uri}`); return files[uri] },
-    select: async uri => Object.keys(files).filter(p => p === uri || p.startsWith(uri + '/')).map(p => [p, {}]),
-    put: (uri, bytes) => { writes.push(['put', uri]); files[uri] = Buffer.from(bytes) },
-    remove: uri => { writes.push(['remove', uri]); delete files[uri] },
+    read: async uri => { if (!(abs(uri) in files)) throw new Error(`nothing at ${uri}`); return files[abs(uri)] },
+    select: async uri => Object.keys(files).filter(p => p === abs(uri) || p.startsWith(abs(uri) + '/')).map(p => [p, {}]),
+    put: (uri, bytes) => { writes.push(['put', abs(uri)]); files[abs(uri)] = Buffer.from(bytes) },
+    remove: uri => { writes.push(['remove', abs(uri)]); delete files[abs(uri)] },
     commit: async () => { writes.push(['commit']) },
     log: () => {}
   }
@@ -84,7 +90,7 @@ test('deploy: each refusal, before anything is built', async (t) => {
     await t.exception(act('deploy', execution(dir, store).exec, form('main/1host', 'p')), /not a name for an mrepo: 1host/, 'not a name: lowercase letters, digits, hyphens, a letter first')
     await t.exception(act('deploy', execution(dir, store).exec, form('main/swarms/host', 'p')), /not a name for an mrepo: swarms\/host/, 'deeper than one name')
     await t.exception(act('deploy', execution(dir, store).exec, form('host', 'p')), /not a position in main: host \(main\/<name>\)/, 'not in main: from the root the layer comes first')
-    await t.exception(act('deploy', execution(dir, { ...store, [SHORTCUT]: B({ mrepo: 'local/host' }) }).exec, form('main/host', 'p')), /deployed already: host/, 'a child linked there already')
+    await t.exception(act('deploy', execution(dir, { ...store, ...LINKED }).exec, form('main/host', 'p')), /deployed already: host/, 'a child linked there already')
     await t.exception(act('deploy', execution(dir, { ...store, '/main/host/data.json': B({}) }).exec, form('main/host', 'p')), /host exists locally: the boot protocol cannot target it/, 'data in main at that position: not a target')
     mkdirSync(join(dir, 'main', 'busy'), { recursive: true })
     await t.exception(act('deploy', execution(dir, store).exec, form('main/busy', 'p')), /in the way: .*main\/busy/, 'a folder in its place')
@@ -101,10 +107,10 @@ test('teardown: a child without a runtime, its folder and its shortcut removed; 
     const folder = join(dir, 'main', 'host')
     mkdirSync(folder, { recursive: true })
     writeFileSync(join(folder, 'kept.txt'), 'x')
-    const { exec, writes, files } = execution(dir, { [SHORTCUT]: B({ mrepo: 'local/host', package: 'haiccing/p' }) })
+    const { exec, writes, files } = execution(dir, { ...LINKED, [LOCAL]: B({ package: 'haiccing/p' }) })
     t.alike(await act('teardown', exec, { uri: ['main', 'host'] }), { tornDown: 'host' }, 'what it returns')
     t.absent(existsSync(folder), 'its folder, in the shadow of main at its position: removed')
-    t.alike([writes, SHORTCUT in files], [[['remove', SHORTCUT]], false], 'one write: its shortcut out of the xpath layer')
+    t.alike([writes, Object.keys(files)], [[['remove', SHORTCUT], ['remove', NODE], ['remove', LOCAL]], []], 'its link and its node out of main, what was local about it out of the runtime layer')
     await t.exception(act('teardown', exec, { uri: ['main', 'host'] }), /not deployed: host/, 'torn down already: not deployed')
     await t.exception(act('teardown', execution(dir, { '/main/data/x.json': B({}) }).exec, { uri: ['main', 'data'] }), /data exists locally: the boot protocol cannot target it/, 'data in main there: not a child')
     await t.exception(act('teardown', exec, { uri: ['main', '.'] }), /missing argument: target/, 'the mrepo itself')
@@ -114,9 +120,9 @@ test('teardown: a child without a runtime, its folder and its shortcut removed; 
 test('redeploy: teardown first; what is not deployed, refused; the package it was deployed from, by default', async (t) => {
   await within(async dir => {
     await t.exception(act('redeploy', execution(dir).exec, { uri: ['main', 'host'] }), /not deployed: host/, 'nothing to tear down: refused, nothing deployed')
-    const { exec, writes } = execution(dir, { [SHORTCUT]: B({ mrepo: 'local/host', package: 'haiccing/gone-package' }), '/packages/manifest.json': B({ store: join(dir, 'store'), sources: [] }) })
+    const { exec, writes } = execution(dir, { ...LINKED, [LOCAL]: B({ package: 'haiccing/gone-package' }), '/packages/manifest.json': B({ store: join(dir, 'store'), sources: [] }) })
     await t.exception(act('redeploy', exec, { uri: ['main', 'host'], args: [] }), 'no package given: the one it was deployed from, here in no source: the deploy refused')
-    t.alike(writes.slice(0, 2), [['remove', SHORTCUT], ['commit']], 'torn down first, and that committed in the execution, before the deploy is tried')
+    t.alike(writes.slice(0, 4), [['remove', SHORTCUT], ['remove', NODE], ['remove', LOCAL], ['commit']], 'torn down first, and that committed in the execution, before the deploy is tried')
   })
 })
 

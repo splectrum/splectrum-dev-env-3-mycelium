@@ -29,13 +29,14 @@ const LIST = [
   'haiccing/base-package-boot',
   'haiccing/base-package-service',
   'haiccing/base-package-haicc',
+  'haiccing/base-package-crud',
   'haiccing/package-docs-mrepo',
   'haiccing/package-docs-template',
   'haiccing/base-component-haicc'
 ]
 // Each hook named here with its command: what the haicc mrepo offers from
 // its boot, what its initialise does, and the door its service opens and
-// closes: the boot protocol.
+// closes: the boot protocol and the crud protocol.
 const HOOKS = {
   'boot/activate-haicc': ['protocol/activate', '.', 'haicc'],
   'boot/activate-help': ['protocol/activate', '.', 'help'],
@@ -43,7 +44,9 @@ const HOOKS = {
   'boot/activate-service': ['protocol/activate', '.', 'service'],
   'initialise/help-extract': ['help/extract'],
   'start/activate-boot': ['protocol/activate', '.', 'boot'],
-  'stop/deactivate-boot': ['protocol/deactivate', '.', 'boot']
+  'start/activate-crud': ['protocol/activate', '.', 'crud'],
+  'stop/deactivate-boot': ['protocol/deactivate', '.', 'boot'],
+  'stop/deactivate-crud': ['protocol/deactivate', '.', 'crud']
 }
 
 test('its list of packages, in deploy order, itself last', (t) => {
@@ -76,12 +79,13 @@ test('the packages it lists: each in the sources, the protocols they provide', (
   t.alike(missing, [], 'every package of the list has its bundle there')
   t.alike(Object.fromEntries(Object.entries(provided).map(([p, c]) => [p, c.from]).sort()), {
     boot: 'haiccing/base-package-boot',
+    crud: 'haiccing/base-package-crud',
     haicc: 'haiccing/base-package-haicc',
     help: 'haiccing/base-package-help',
     protocol: 'haiccing/base-package-protocol',
     runtime: 'haiccing/base-package-runtime',
     service: 'haiccing/base-package-service'
-  }, 'six protocols, one a package; the documentation and the component provide none')
+  }, 'seven protocols, one a package; the documentation and the component provide none')
 })
 
 test('every hook names a protocol and an action a listed package provides', (t) => {
@@ -121,18 +125,18 @@ function world () {
 }
 const of = transition => Object.keys(brought).filter(n => n.startsWith(`${transition}/`)).sort()
 
-test('what its hooks do: the boot opens haicc, help, runtime and service; the service\'s start opens boot, its stop closes it', async (t) => {
+test('what its hooks do: the boot opens haicc, help, runtime and service; the service\'s start opens boot and crud, its stop closes them', async (t) => {
   const w = world()
   // the boot: the runtime places these as its own, in name order
   for (const name of of('boot')) await w.exec.run(brought[name])
   t.alike(w.active(), ['haicc', 'help', 'runtime', 'service'], 'after the boot: what a haicc mrepo always offers')
-  t.absent(w.active().includes('boot'), 'the boot protocol is behind the service\'s door')
+  t.absent(w.active().includes('boot') || w.active().includes('crud'), 'the boot protocol and the crud protocol are behind the service\'s door')
   t.absent(w.active().includes('protocol'), 'the protocol protocol is never opened: activating is the hooks\' business')
   t.alike(await w.exec.run(['service/initialise']), { service: 'initialised', state: 'initialised' })
   t.ok(w.commands.includes('help/extract'), 'initialise: the help extracted, by its hook')
   t.alike(w.active(), ['haicc', 'help', 'runtime', 'service'], 'initialised: the same protocols open')
   t.alike(await w.exec.run(['service/start']), { service: 'started', state: 'started' })
-  t.alike(w.active(), ['boot', 'haicc', 'help', 'runtime', 'service'], 'started: the door open, boot with the others')
+  t.alike(w.active(), ['boot', 'crud', 'haicc', 'help', 'runtime', 'service'], 'started: the door open, boot and crud with the others')
   t.alike(await w.exec.run(['service/stop']), { service: 'stopped', state: 'initialised' })
   t.alike(w.active(), ['haicc', 'help', 'runtime', 'service'], 'stopped: the door closed again, exactly what start opened')
   t.alike(await w.exec.run(['service/shutdown']), { service: 'shut down', state: 'booted' })

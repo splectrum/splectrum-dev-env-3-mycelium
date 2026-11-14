@@ -14,7 +14,6 @@ Each layer, its README:
 | [packages/](packages/) | the code it runs |
 | [protocols/](protocols/) | its external API |
 | [help/](help/) | its documentation |
-| [xpath/](xpath/) | its navigation directives: the shortcuts |
 | [inbox/](inbox/) | records posted to it |
 | [outbox/](outbox/) | records it sends |
 | [request/](request/) | the request layers: pending, executing, done |
@@ -37,7 +36,7 @@ Each layer has a mode, in its `layer.json`:
 
 | mode | written | layers |
 |---|---|---|
-| atomic | one commit at a time, by the runtime | `main`, `runtime`, `protocols`, `help`, `xpath` |
+| atomic | one commit at a time, by the runtime | `main`, `runtime`, `protocols`, `help` |
 | replicated | as atomic, also copied out as files | `packages` |
 | non-atomic | its own writers, in parallel | `inbox`, `outbox`, `request/*`, `execute/*` |
 
@@ -58,8 +57,8 @@ An mrepo is a folder, `<dir>`. The first, the boot mrepo, put in place by
 `base-component-boot`, is `<work>/mrepos/boot/`; every other lives inside its parent, at
 `<parent>/main/<position>/` (the host: `boot/main/host/`). That `main/`
 folder is a shadow structure of the `main` layer: what is linked at a
-position sits there at the same path. The parent has a shortcut for it in
-its `xpath` layer and nothing in `main`. A running mrepo sees only forward
+position sits there at the same path. The parent has a node for it in
+`main`, a shortcut: the link, nothing of its data. A running mrepo sees only forward
 (a URI has no `..`); outside is reached through a mapping (the work
 folder's package store, named in its packages manifest).
 
@@ -151,6 +150,7 @@ of, in order.
 3. **Its packages linked**, individually, from the work folder's store.
 4. **Its runtime started**, from its own `packages/`, by its folder:
    `bare <dir>/packages/haiccing/base-package-runtime.bundle <dir>`.
-5. **Its shortcut placed** in the parent's `xpath` layer, at its position.
+5. **Its shortcut placed** in the parent's `main`, at its position: a
+   node, and its link beside it.
 
 

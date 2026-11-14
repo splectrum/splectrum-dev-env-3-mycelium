@@ -39,16 +39,22 @@
 // one from outside, at the position a haicc command went to.
 // A request's URI is an array of segments, a prefix then the URI as
 // written (['main', 'host']); the paths the execution reads and writes by
-// are still slash-led (/main/x).
+// are given relative from the root (main/x) or slash-led (/main/x), the
+// same.
 // lib/actions.js: the generic rest actions, the tests' own.
-import { wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runtimeData, isInternal, principals, formOf, joined, OUTSIDE, OWN } from 'mrepo-base-request'
+import { wrap, complete, isComplete, logger, AUTHOR, EXECUTE, check, runtimeData, isInternal, principals, formOf, joined, slashed, OUTSIDE, OWN } from 'mrepo-base-request'
 import { ACTIONS } from './lib/actions.js'
 import { pass } from './lib/remote.js'
 
 export { ACTIONS }
 // The targets an action writes, those the mrepo has: main, runtime, help,
-// protocols, xpath.
-export const TARGETS = ['main', 'runtime', 'help', 'protocols', 'xpath']
+// protocols.
+export const TARGETS = ['main', 'runtime', 'help', 'protocols']
+
+// A path as the execution reads and writes by, given either way: relative
+// from the mrepo's root (runtime/service.json), or slash-led
+// (/runtime/service.json), meaning the same.
+const abs = path => (path.startsWith('/') ? path : slashed(path))
 
 // What is not there, said with what is: the protocol (the mrepo's
 // protocols), or the action (the protocol's actions).
@@ -109,8 +115,8 @@ const runtimeView = ctx => Object.freeze({
   branches: async () => (await ctx.backend.listBranches()).map(([b]) => b),
   // the protocols the runtime loaded, their configs by name
   protocols: ctx.protocols ?? {},
-  select: uri => ctx.repo.select(uri),
-  read: uri => ctx.repo.read(uri)
+  select: uri => ctx.repo.select(abs(uri)),
+  read: uri => ctx.repo.read(abs(uri))
 })
 
 export async function execute (ctx, { actions = ACTIONS } = {}) {
@@ -191,11 +197,11 @@ export async function execute (ctx, { actions = ACTIONS } = {}) {
       runtime: runtimeView(ctx),
       // A URI as the execution sees it: /main/x read from its execution
       // branch of main, once it has one.
-      path: uri => made.has(targetOf(uri)) ? `/execute/${name}${uri}` : uri,
+      path: given => { const uri = abs(given); return made.has(targetOf(uri)) ? `/execute/${name}${uri}` : uri },
       select: uri => repo.select(exec.path(uri)),
       read: uri => repo.read(exec.path(uri)),
-      put (uri, bytes) { const b = targetOf(uri); if (!b) throw new Error(`not writable here: ${uri}`); (edits.get(b) ?? edits.set(b, []).get(b)).push(['put', inside(uri), bytes]) },
-      remove (uri) { const b = targetOf(uri); if (!b) throw new Error(`not writable here: ${uri}`); (edits.get(b) ?? edits.set(b, []).get(b)).push(['remove', inside(uri)]) },
+      put (given, bytes) { const uri = abs(given); const b = targetOf(uri); if (!b) throw new Error(`not writable here: ${given}`); (edits.get(b) ?? edits.set(b, []).get(b)).push(['put', inside(uri), bytes]) },
+      remove (given) { const uri = abs(given); const b = targetOf(uri); if (!b) throw new Error(`not writable here: ${given}`); (edits.get(b) ?? edits.set(b, []).get(b)).push(['remove', inside(uri)]) },
       // The local commit: the writes so far committed to the execution
       // branches (later reads see them).
       commit: async (what = null) => { commits.push(await snapshot()); return flush(what ? `${message}: ${what}` : message) },

@@ -1,0 +1,10 @@
+{
+  "description": "The package on its own, in a floating instance: its protocol as mounted, and its help, its code, its mrepo side and its structure check without problems.",
+  "tests": [
+    "mounted",
+    "help",
+    "code",
+    "mrepo",
+    "package"
+  ]
+}

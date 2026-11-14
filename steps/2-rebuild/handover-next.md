@@ -1,13 +1,13 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-14, part 62). Read `CLAUDE.md` first (what is here, how to
+Kept current by the cloud session (last: 2026-11-14, part 63). Read `CLAUDE.md` first (what is here, how to
 validate), then this, then `tasks.md` here (what is planned and waits to
 be built: the next work), then `readme.md` (each part's record, the
 latest last: 30 to 45 the haicc work; 46 a note on future design; 47 to
 59 the tests: the package check, the template, the test reports, the
 pin, every package brought to the template one by one; 60 the `haicc`
 command as a Bare app; 61 relative URIs, piece A; 62 a URI inside an
-array of segments).
+array of segments; 63 the crud protocol, the shortcuts in main).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -45,11 +45,11 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
 - The `haicc` command installs, boots, deploys a host from
   `base-component-haicc`, starts its service, deploys a node inside it
   and chains commands through both (parts 30 to 45).
-- All eleven bundle packages are brought to the package template and
+- All twelve bundle packages are brought to the package template and
   pinned, each with a test of its own and a current, passing report
   (parts 47 to 60). `tools/bare tools/release.js --strict` passes;
   `tools/bare tools/code-check.js` and the README checks have no
-  problems; the `haicc` test 117 of 117; `base-component-boot`'s `boot`
+  problems; the `haicc` test 136 of 136; `base-component-boot`'s `boot`
   test passing.
 - The `haicc` command is a Bare app, `base-app-haicc` (part 60); the
   shell, `base-linux-haicc`, is the first step only. The command's form
@@ -64,21 +64,23 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   form the prefix `main` and the URI as written, `["main", "host"]`;
   the mrepo's own without a prefix, `["."]`. Outside it is one segment,
   as written. An action's answer is whatever it is: not wrapped.
+- **Structure in `main`** (part 63): the `crud` protocol
+  (`base-package-crud`): `haicc . crud/create swarms/swarm-1`,
+  `crud/read swarms/*`, `crud/delete swarms recurse`; a node is a folder
+  with `.node.json`. A shortcut is a node, its link beside its document
+  in `.shortcuts.json`; the `xpath` layer is gone. What is local about a
+  deployed child is in the parent's `runtime/deployed/<name>.json`.
 
 **Next: build what is planned** (the human, 2026-11-14: what remains to
 plan depends heavily on having floating mrepo tests, so the planned work
 is implemented first). In `tasks.md`, in this order:
 
-1. **Relative URIs** (task 1). Piece A is built (part 61), and of piece
-   C the URI's type inside (part 62). Left: piece B (the interface
-   accepts both: `exec.read` and the others take `runtime/service.json`
-   as well as the slash-led form), small, to go with `crud`, the first
-   module written relative; and the rest of piece C (selections as
-   arrays, deeper positions, the jumps and the prefix), which the human
-   left to come with the `haicc` commands that need them.
-2. **The `crud` protocol** (task 2), on top of it; with it the shortcuts
-   moved into `main` (`.shortcuts.json` beside `.node.json`), the `xpath`
-   layer gone. Its two repositories exist.
+1. **Relative URIs** (task 1): built as far as it goes for now (parts 61
+   to 63). Left: the rest of piece C (selections as arrays in `resolve`
+   and `goto`, deeper positions, the jumps and the prefix), which the
+   human left to come with the `haicc` commands that need them.
+2. **The `crud` protocol** (task 2): built (part 63). XPath across
+   linked mrepos is later (the human).
 3. **The rest actions removed** (task 3).
 4. On towards swarm nodes up and running: the execution's current root,
    a node's unique URI, a node in its container, a swarm (not planned

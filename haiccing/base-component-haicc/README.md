@@ -26,13 +26,14 @@ created.
 | `base-package-boot` | the `boot` protocol: deploy, teardown, redeploy |
 | `base-package-service` | the `service` protocol and the service state |
 | `base-package-haicc` | the `haicc` protocol: goto |
+| `base-package-crud` | the `crud` protocol: create, read, delete: structure in `main` |
 | `package-docs-mrepo`, `package-docs-template` | the documentation |
 
 ## Deploying
 
 By the boot mrepo, with a command at the root. The mrepo starts `booted`:
-its boot protocol is behind the service's door, activated by a hook on
-`start`. Its help is extracted by a hook on `initialise`. Each service
+its boot protocol and its crud protocol are behind the service's door,
+activated by hooks on `start`. Its help is extracted by a hook on `initialise`. Each service
 command answers what was done and the state now.
 
 ```

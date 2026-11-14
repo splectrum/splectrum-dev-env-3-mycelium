@@ -12,6 +12,9 @@ export async function teardown (exec, { uri }) {
   const stopped = await stop({ repo: c.dir, pid: recorded.runtime?.pid })
   if (stopped) exec.log?.('info', 'runtime stopped', stopped)
   rmSync(c.dir, { recursive: true, force: true })
+  // its link, the node it was made at, and what was local about it
+  exec.remove(c.links)
   exec.remove(c.node)
+  if (await exec.read(c.local).then(() => true, () => false)) exec.remove(c.local)
   return { tornDown: c.at }
 }

@@ -49,7 +49,8 @@ Run by the repository's runtime
 (`mrepo-base-runtime`). `lib/actions.js` holds the generic `rest` actions
 (get, put, delete), not mounted by a package yet: the tests use them. An
 action writes the targets the mrepo has: `main`, `runtime`, `help`,
-`protocols`, `xpath`.
+`protocols`. A path it reads or writes by is given relative from the
+mrepo's root (`runtime/service.json`) or slash-led, the same.
 
 ## Tests
 

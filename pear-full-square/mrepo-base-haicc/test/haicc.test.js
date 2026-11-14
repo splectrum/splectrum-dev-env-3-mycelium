@@ -1,4 +1,4 @@
-// goto on a context written here: its xpath entries by URI; what it runs
+// goto on a context written here: its shortcuts by path; what it runs
 // and what it sends on, kept.
 import test from 'brittle'
 import { goto, CONFIG } from '../index.js'
@@ -15,7 +15,7 @@ function context (files) {
 }
 
 test('goto: at the root executed here; at a shortcut sent on; no command, a deeper position', async (t) => {
-  const { exec, seen } = context({ '/xpath/host/shortcut.json': { mrepo: 'local/host' } })
+  const { exec, seen } = context({ 'main/host/.shortcuts.json': [{ mrepo: 'local/host' }] })
   t.alike(await goto(exec, { uri: ['main', '.'], args: ['boot/deploy', 'host', 'haiccing/base-component-haicc'] }), { ran: ['boot/deploy', 'host', 'haiccing/base-component-haicc'] }, 'main, the root position: the command executed here, its value returned')
   t.alike(seen.at, [['main']], 'the command that follows stands at the position: its URI is read behind that prefix')
   t.alike(await goto(exec, { uri: ['.'], args: ['help/extract'] }), { ran: ['help/extract'] }, 'the mrepo itself (its own command): executed here')

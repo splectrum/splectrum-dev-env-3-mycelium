@@ -36,8 +36,8 @@ export async function deploy (exec, { uri, args = [] }) {
     mkdirSync(dirname(c.dir), { recursive: true })
     const { layers } = await build({ from: tmp, dir: c.dir, setting: false })
     const { packages } = await place({ dir: c.dir, store, sources, list })
-    // Its shortcut: the link, in the xpath layer; nothing of it in main.
-    const record = { mrepo: c.mrepo, package: target, packages: Object.keys(packages), layers }
+    // What is local to this machine about it: not in main, which replicates.
+    const record = { package: target, packages: Object.keys(packages), layers }
     // Its runtime started, from its own packages/ (its pinned runtime), by
     // its directory: its inbox operational. Not when it has no runtime.
     const runtime = join(c.dir, 'packages', 'haiccing', 'base-package-runtime.bundle')
@@ -46,7 +46,10 @@ export async function deploy (exec, { uri, args = [] }) {
       if (!s) throw new Error(`its runtime did not start: ${c.dir}`)
       record.runtime = { pid: s.pid }
     }
-    exec.put(c.node, Buffer.from(JSON.stringify(record, null, 2) + '\n'))
-    return { deployed: c.at, ...record }
+    // Its node, in main, and beside it its shortcuts: the link, only that.
+    exec.put(c.node, Buffer.from('{}\n'))
+    exec.put(c.links, Buffer.from(JSON.stringify([{ mrepo: c.mrepo }], null, 2) + '\n'))
+    exec.put(c.local, Buffer.from(JSON.stringify(record, null, 2) + '\n'))
+    return { deployed: c.at, mrepo: c.mrepo, ...record }
   } finally { rmSync(tmp, { recursive: true, force: true }) }
 }

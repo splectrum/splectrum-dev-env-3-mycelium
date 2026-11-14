@@ -2775,3 +2775,83 @@ problems. The READMEs: 224 in the sources, 425 in the help tree, no
 problems. `base-component-boot`'s `validate` twice more, its `boot` test
 119 of 119 each time. The `haicc` test again, 117 of 117. Nothing left
 running.
+
+## 63. The crud protocol; the shortcuts in main; the xpath layer gone (2026-11-14)
+
+Task 2 of `tasks.md`, on the human's go for its proposed points ("Yes,
+we will do xpath for linked repos later"). The demo first: 19 checks
+added to `run.sh`, then built until they passed.
+
+- **The module `pear-full-square/mrepo-base-crud`** and **the package
+  `haiccing/base-package-crud`** (from the template, pinned to
+  `haiccing/package-docs-template@4de4eae`): the `crud` protocol,
+  `create`, `read`, `delete`. No `update`: asking for it answers `no
+  action: crud update (create, delete, read)`.
+- **A node** is a folder holding its document, `.node.json`: `{}` when
+  no value is given. Its children are the folders in it that hold one.
+  The layer itself is a node (its document `{}` when it has none). A
+  node's name is a plain name, no extension.
+- **`create <URI> [<value>]`**: the node and every node above it made;
+  one there already left as it is, whatever value is given. It answers
+  with every node of the path, each saying `created` or `there`.
+- **`read <URI>`**: an array of the nodes selected, each `{ uri, value,
+  children }`, the children by name; `*` as the last name part selects
+  the children; nothing there is an empty array. At a shortcut the node
+  carries `shortcuts`, the mrepos its data comes from.
+- **`delete <URI> [recurse]`**: the nodes selected removed; one with
+  children only with `recurse` (refused otherwise, saying how; nothing
+  of a selection removed then); nothing there: an empty array. The
+  layer itself is not deleted. Deleting a shortcut removes the link.
+- **The URI in an answer is in the internal format**, its segments:
+  `["main", "swarms/swarm-1"]`; the request's prefix kept, so the
+  mrepo's own requests get `["runtime/log"]`.
+- **A URI does not run through a shortcut**, in `crud` as elsewhere:
+  what is below one is refused, with the way across.
+- **A name part may be `*`** (`relative`, `mycelium-uri`): a URI that
+  selects. Elsewhere it selects nothing or is refused as no name.
+- **Where it is open**: in the boot mrepo from its boot (a `boot` hook),
+  in a haicc mrepo behind the service's door, with `boot` (`start` and
+  `stop` hooks). Both components list the package.
+- **The shortcuts are in main**: a shortcut is a node, its sources
+  beside its document in `.shortcuts.json`, a list: `[{ "mrepo":
+  "local/host" }]`. Only the link. What is local to the machine that
+  deployed the child (the package it came from, the packages placed, its
+  layers, its runtime's process) is in the deploying mrepo's runtime
+  layer, `runtime/deployed/<name>.json`: `main` replicates, that does
+  not. `boot/deploy` writes the node, the link and the local record;
+  `boot/teardown` removes the three. `resolve` reads the list, the first
+  source in use.
+- **The xpath layer is gone**: from the runtime package's structure, the
+  targets an action writes, the layer names `mycelium-git` knows, the
+  documentation (its page's content moved to `main`'s).
+- **Piece B of task 1**: the paths an execution reads and writes by are
+  accepted relative from the root as well as slash-led
+  (`runtime/service.json`, `/runtime/service.json`). `crud`, the
+  shortcuts and the boot's child are written relative.
+- **Kept small on purpose**: the crud package does not carry the request
+  module, so its own test does not run the check on a request; that, and
+  `update` refused, are in `run.sh`.
+- **Later, on the human's word**: what XPath does across linked mrepos
+  (reading through a link, a selection that crosses one, several sources
+  and local data combined).
+
+**Validated**: the demo first: `run.sh` with its 19 crud checks, 136 of
+136 on its first run after the rebuild. The pre-release of all twelve
+packages, each passing, its report written; units, tests, asserts:
+`base-app-haicc` 22, 254, 1349; `base-component-boot` 22, 238, 1326;
+`base-component-haicc` 8, 48, 263; `base-package-boot` 22, 243, 1259;
+`base-package-crud` 10, 56, 345 (its own test 5 tests, 40 asserts);
+`base-package-haicc` 10, 52, 291; `base-package-help` 8, 49, 268;
+`base-package-protocol` 9, 51, 268; `base-package-runtime` 21, 232,
+1153; `base-package-service` 14, 188, 864; `package-docs-mrepo` 8, 42,
+225; `package-docs-template` 7, 42, 225. Two failed first, for their
+tests: `base-package-boot`'s `mounted` (a slip in the order of its own
+definitions, then an expectation of what a redeploy removes) and
+`base-component-boot`'s `boot` (three expectations that did not count
+`crud` among the active protocols). The tests corrected, nothing in the
+code. Then `tools/bare tools/release.js --strict`: twelve packages, every
+report current. `tools/bare tools/code-check.js`: 20 modules, 13
+packages, no problems. The READMEs: 241 in the sources, 466 in the help
+tree, no problems. `base-component-boot`'s `validate` twice more, its
+`boot` test 120 of 120 each time. The `haicc` test again, 136 of 136.
+Nothing left running.

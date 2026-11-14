@@ -12,13 +12,14 @@ and remove the shortcuts of the mrepos it deploys.
 | [internal/](internal/) | its methods |
 | [test/](test/) | its tests |
 
-## Layer
+## Shortcuts
 
-The `xpath` layer holds the navigation directives. A shortcut at a
-position is one entry, at the position's own path:
+A shortcut is in `main`, beside its node's document, under a hidden
+name: a list of the sources the node's data comes from, each by its
+unique URI. Only the link: nothing local to a machine.
 
 ```
-/xpath/host/shortcut.json     { "mrepo": "local/host", ... }
+/main/host/.shortcuts.json     [{ "mrepo": "local/host" }]
 ```
 
 ## Unique URIs

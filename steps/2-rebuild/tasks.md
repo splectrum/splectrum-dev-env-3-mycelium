@@ -1,7 +1,7 @@
 # Tasks: discussed, waiting to be built
 
 Tasks discussed with the human and stacked here, to be built later in
-batches, in this order: 1, 2, 3 and on to swarm nodes up and running; then
+batches, in this order: 3 and on to swarm nodes up and running; then
 "Deployed tests" and "Coverage". ("First" and "Test reports" are built:
 kept here for what they left. Task 0, a Bare app for `haicc`, is built:
 `readme.md`, part 60.) A task is removed from this file when it is built:
@@ -548,10 +548,11 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   - inside, every read and write is still slash-led (`exec.read`, the
     help index's keys, the topics, a package's own targets
     `/test/validate`): that is piece B and step 3 of the changeover.
-- **Piece B, the interface accepts both**: `mycelium-uri`'s `validate`
-  (relative, `.`); `exec.read`, `select`, `put`, `remove` and the
-  repository's reads take `runtime/service.json` as
-  `/runtime/service.json`.
+- **Piece B, the interface accepts both: built** with `crud` (part 63):
+  an execution's reads and writes take `runtime/service.json` as well as
+  `/runtime/service.json`. Not done: `mycelium-uri`'s `validate` and the
+  repository's own reads stay slash-led; modules change over as they are
+  touched.
 - **Piece C, in part built** (`readme.md`, part 62): inside, a URI is an
   array of segments, the prefix `main` and the URI as written for a
   request from outside; outside it is one segment; an action's answer is
@@ -589,167 +590,21 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
 
 ## 2. The crud protocol
 
-Discussed 2026-11-13. The start of `base-package-crud` (the roadmap's
-item 3), wanted for creating structure in `main`.
+Built (`readme.md`, part 63), with the shortcuts moved into `main` and
+the `xpath` layer removed. Left from it, each to come with what needs it:
 
-**Settled** (the human)
-
-- The `crud` protocol is implemented; `update` is left not implemented.
-- For visible state, `crud` operates only on `main`. It may be used by
-  internal requests on other layers: those changes are then audited (a
-  request each). The human's consideration: with `main` only there is no
-  natural auditing on the layers, where it could be useful.
-- **The stored form** (agreed 2026-11-13, replacing the human's earlier
-  suggestion of a file turned into a folder when needed): every node is
-  a folder holding `.node.json`, its document, `{}` when no value is
-  given. `main/swarms/swarm-1` is `swarms/swarm-1/.node.json` in `main`.
-  - The folder is created straight away, with the file in it: it is the
-    "dummy" that keeps the folder in git.
-  - The system name starts with a dot (the human): it is naturally
-    hidden, our URIs do not allow it.
-  - Why: one stored form, no conversion; a write touches only its own
-    node (a file turned into a folder would have a create rewrite its
-    parent, where parallel steps would collide).
-  - Its costs, accepted: two git objects a node; the existing files on
-    other layers (`runtime/service.json`) are not in this form, so `crud`
-    does not see them as nodes: they move to it when an internal use
-    comes.
-  - The two repositories exist (checked on GitHub, 2026-11-13).
-- With task 1, `crud` gets the URI from the mrepo's root, layer first
-  (`main/swarms/swarm-1`, `runtime/log`), and nothing from outside can
-  name another layer.
-- **Idempotent** (the human): repeating a request is safe.
-  - `create` ensures the node exists, and creates the whole path, not
-    just the leaf: missing parents are made too, each with an empty
-    document. A node already there is left untouched, also when a
-    different value is given (changing it is `update`'s); the request
-    succeeds and the result says what was created and what was there.
-  - `delete` ensures the node is gone: one that is not there selects
-    nothing, and the request succeeds with an empty result (the empty
-    selection, task 1).
-  - Why: a step retried or a run replayed does not fail on its own first
-    attempt; parallel steps that need the same node do not collide.
-- **`delete` recurses only with a flag**; the default is no (the human).
-  Without it a node that still has children is not removed.
-- **A linked mrepo is data that comes from elsewhere** (the human): a
-  shortcut is a node, and deleting it deletes the link, not what it
-  leads to, as deleting a shortcut does not delete the file. Removing a
-  linked mrepo's link is not a teardown. So `recurse` needs no exception
-  for what is linked below: it removes the nodes and the links, one
-  change to this mrepo, undoable. Whoever wants the linked mrepo itself
-  gone tears it down first (`boot/teardown`): the sender's matter, not
-  something `crud` guards against.
-- **A URI in a result is in the internal format** (the human): an action
-  cannot know a sender's standpoint; there are internal requests that
-  never see the outbox. With the prefix of task 1: the URI in the data is
-  relative to the execution's root, and the prefix says where that is.
-- **Where it is open**:
-  - in `base-component-haicc`, behind the service's door as `boot` is:
-    activated by a `start` hook, deactivated by a `stop` hook (ours,
-    agreed);
-  - in the boot mrepo as well (the human): the haicc app may want to
-    create tools outside the realm of swarm management, and this could be
-    on the user's initiative, so it is good to be able to put some
-    structure in. The boot mrepo has no service: there `crud` is
-    activated by a `boot` hook, as its other protocols are.
-- **Shortcuts are part of the hidden visible state** (the human,
-  2026-11-14), in `main` beside the node's document, not on the `xpath`
-  layer as planned and built.
-  - **A file per data unit** (the human): `.shortcuts.json`, beside
-    `.node.json`, not an envelope in one file (our proposal, dropped).
-    Agreed: each file one concern and one writer (`crud` the node's
-    document, the boot protocol the shortcuts), no collision between a
-    change of the value and a change of the links, a new kind of system
-    data a new hidden file.
-  - **Several for one node** (the human): the file sits in the node and
-    can name more than one mrepo its data comes from.
-  - **Plus local data**, for more sophisticated setups (the human): for
-    instance a local layer can add processed documents to an input data
-    structure while keeping both separate.
-  - **XPath processing has become simpler** (the human): with `haicc`
-    for the segments, a path is resolved inside one mrepo.
-  - Confirmed by the human (our reading): what is seen at such a node is
-    the combination of its sources and the local data, an overlay, each
-    kept where it is stored; a write goes to the local side only. Built
-    first: the file a list from the start, one source in use (a deployed
-    child, as today); combining several sources and local data when a
-    real case comes, as a demo first.
-  - **Only the link** goes in the file (the human, 2026-11-14,
-    confirming ours): each source's unique URI; what is local to the
-    machine that deployed a child (its folder, its runtime's pid, the
-    packages placed) stays out, `main` replicates. To settle when
-    combining is built: the
-    rule when two sources, or a source and the local side, hold the same
-    name; reading through a link (a local read of a replica) beside the
-    `haicc` jump (a command executed in the other mrepo).
-  - What follows in the code: the `xpath` layer can go; `resolve`, the
-    boot protocol's actions, `goto` and their tests
-    (`pear-full-square/mrepo-base-xpath`,
-    `mrepo-base-boot/internal/child.js`, `external/deploy`, `teardown`;
-    the `mounted` tests of `base-package-boot` and `base-package-haicc`;
-    `package-docs-mrepo`'s `xpath` page).
-- The names (agreed): protocol `crud`, module
-  `pear-full-square/mrepo-base-crud`, package
+- **XPath across linked mrepos** (the human, 2026-11-14: "we will do
+  xpath for linked repos later"): reading through a link (a local read
+  of a replica) beside the `haicc` jump; a selection that crosses a
+  link; several sources and local data combined at one node (the rule
+  when two hold the same name); a write then goes to the local side
+  only. A demo first.
+- **Internal use on other layers**: the existing files there
+  (`runtime/service.json`) are not nodes; they move to the node form
+  when an internal use comes.
+- **`update`**: with mutable and immutable (the roadmap's item 3).
+- **The two repositories exist**: `pear-full-square/mrepo-base-crud`,
   `haiccing/base-package-crud`.
-- The actions (agreed): `create`, `read`, `delete`. `update` is not there
-  at all: asking for it answers
-  `no action: crud update (create, delete, read)`.
-- The two repositories, created by the human (2026-11-13, public), with
-  these descriptions:
-  - `pear-full-square/mrepo-base-crud`: "Module: the mrepo crud protocol,
-    an mrepo's nodes created, read and deleted by URI."
-  - `haiccing/base-package-crud`: "Package: the crud protocol, the
-    generic actions on an mrepo's data: its nodes created, read and
-    deleted by URI."
-
-**Proposed** (put to the human, not yet answered)
-
-- A node's name is a plain name, no extension (`isName`,
-  `mycelium-uri`).
-- The flag is written as the word `recurse` after the URI:
-  `crud/delete swarms recurse` (an optional argument: commands have no
-  named options yet).
-- A node with children deleted without `recurse`: refused, saying so.
-- The result, an array, an entry for each node (the rule of task 1):
-  `{ "uri": "swarms", "value": {}, "children": ["swarm-1"] }` (with the
-  prefix of task 1) for
-  `read`, the children by name only (`crud/read swarms/*` reads them);
-  `create` and `delete` answer in the same shape, saying for each node
-  what happened: created, already there, deleted.
-- `read` at a shortcut shows a node that is a link, with where it leads.
-  A URI still does not run through a shortcut: the way across is `haicc`
-  at it.
-- Not in this task: `goto` at a position deeper inside `main` (the
-  execution context opened at a position); it is the next item on the
-  roadmap.
-
-**Where**
-
-- The model for the package: `haiccing/base-package-help` (`protocol.js`
-  mounting the module's actions, `package.json` with its `modules`, its
-  `test/` sets). For the module: `pear-full-square/mrepo-base-protocol`
-  (`external/<action>/` with a README each, `internal/config.js`,
-  `test/`).
-- An action takes `(exec, form)`: `exec.read`, `exec.select`, `exec.put`,
-  `exec.remove`, all on full URIs (`pear-full-square/mrepo-base-execute/index.js`;
-  its `TARGETS` are the layers an action may write). Reads and writes
-  inside do not validate names, so `.node.json` can be read and written;
-  a request's URI is validated at the boundary, where a leading dot is
-  refused (`pear-full-square/mycelium-uri/lib/uri.js`, checked).
-- A shortcut: `resolve` in `pear-full-square/mrepo-base-xpath`; it has no
-  presence in `main`, its entry is in the `xpath` layer.
-- The activation hooks and the lists of packages, in both components:
-  `haiccing/base-component-haicc/mrepo/runtime/hooks/` (`start/`,
-  `stop/`, as `activate-boot.json` and `deactivate-boot.json` there) and
-  `haiccing/base-component-boot/mrepo/runtime/hooks/boot/` (as
-  `activate-help.json` there); each component's
-  `mrepo/packages/layer.json` (its own package last).
-- A new module and a new package are written into `package.json`
-  (workspaces) and `package-lock.json` by hand, the module linked in
-  `node_modules/` (`handover-next.md`, "The lock file by hand");
-  `tools/release.js` builds every package.
-- Building and testing here does not need the two new repositories; the
-  product pushes do.
 
 ## 3. The rest actions removed
 

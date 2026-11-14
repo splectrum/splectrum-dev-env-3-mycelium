@@ -28,6 +28,7 @@ bare base-component-boot.bundle --work=<folder> --sources=folder:<sources>
 | `base-package-protocol` | the `protocol` protocol: activate, deactivate |
 | `base-package-boot` | the `boot` protocol: deploy, teardown, redeploy |
 | `base-package-haicc` | the `haicc` protocol: goto |
+| `base-package-crud` | the `crud` protocol: create, read, delete: structure in `main` |
 | `package-docs-mrepo`, `package-docs-template` | the documentation |
 
 ## Steps

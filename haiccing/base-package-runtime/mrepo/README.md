@@ -3,9 +3,7 @@
 The runtime's part of every mrepo's structure, laid in when an mrepo is deployed: its layers.
 
 - **The layers** every mrepo has: `main`, `runtime`, `packages`,
-  `protocols`, `xpath`, the boxes and the request layers.
-- **The `xpath` layer**: the mrepo's navigation directives, its
-  shortcuts. XPath is the runtime's own, internal functionality.
+  `protocols`, the boxes and the request layers.
 - **The `protocols` layer**: the active protocols, one file each.
 
 ## Deployed alone
