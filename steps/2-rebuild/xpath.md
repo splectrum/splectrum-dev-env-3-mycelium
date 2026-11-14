@@ -169,6 +169,9 @@ beyond XPath, into the runtime and the request layer.
   multiple threads processing on input is very beneficial."
 - "Furthermore all our requests can go multithreaded. What needs a
   single thread is the request train and commit to main."
+- **No dirty reads**: "We fix read to a commit that has happened
+  already." So whether a reader that stays open sees what is written
+  after it opened is "not an issue".
 
 **Found** (tried here, 2026-11-14: Bare v1.36.0, four cores, a shared
 machine; Corestore 7.16.1, Hypercore 11.39.6, rocksdb-native 3.19.3)
@@ -196,8 +199,22 @@ machine; Corestore 7.16.1, Hypercore 11.39.6, rocksdb-native 3.19.3)
   from a process ("File descriptor could not be locked"); a read-only
   open (`new Corestore(dir, { readOnly: true })`) reads it, from a
   second thread, from a second process, from four threads at once; one
-  opened after a later write sees that write. Not tried: whether a
-  reader that stays open sees what is written after it opened.
+  opened after a later write sees that write.
+- **Several writers, each committing on a branch of its own, at once:
+  it works** (the human's question; tried on the filesystem with the
+  p2p-git engine, where the request and execute layers always are):
+  eight processes, each 25 commits on its own branch of one repository,
+  every commit also writing one file with the same content in every
+  branch (the same object written by all): three rounds with the
+  branches made beforehand, three with each worker making its own: no
+  worker failed, 200 of 200 files read back each round. Branch creation
+  alone, 25 more rounds of eight at once: none failed. Why it holds: an
+  object is named by its content, a branch is a file of its own, and a
+  branch moves only from the commit its writer saw (compare, then
+  write). Tried with processes: threads have separate heaps and meet
+  the same files, so the same is expected, not tried. Speed here: the
+  200 commits by eight at once 1300 to 1500 ms, by one worker 1700 to
+  1850 ms: little gained on commits this small, most of it start-up.
 - **What is there today** (`pear-full-square/mrepo-base-request`): a
   request begins on a branch of its own (`execute/<key>/request/execute`)
   and is merged at its end, so the shape is there; but one at a time:
@@ -225,8 +242,8 @@ machine; Corestore 7.16.1, Hypercore 11.39.6, rocksdb-native 3.19.3)
   merge: different paths merge; the same path is a conflict (the later
   one refused, or run again on the new state). The train's order says
   which is first.
-- How a thread writes its request's branch (the execute layer has its
-  own writer on the filesystem) and hands its result to the train.
+- How a thread hands its result to the train (it can commit on its
+  request's branch itself: tried, above).
 - How many threads (the cores), and what a thread is given: a package's
   bundle, the request, the state to read.
 - p2p-git's two open defects for a reader beside a writer (the handover,
