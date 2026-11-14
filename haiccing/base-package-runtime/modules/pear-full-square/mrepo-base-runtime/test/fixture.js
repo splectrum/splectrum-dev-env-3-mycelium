@@ -17,9 +17,9 @@ import { record, wrap, guid, post, inboxFolder, setting, gitdirOf, PENDING } fro
 const author = { name: 'test', email: 'test@localhost' }
 // The hooks, as a defining package would drop them into the runtime layer.
 export const HOOKS = {
-  'boot/activate-service': ['protocol/activate', '/', 'service'],
-  'start/activate-rest': ['protocol/activate', '/', 'rest'],
-  'stop/deactivate-rest': ['protocol/deactivate', '/', 'rest']
+  'boot/activate-service': ['protocol/activate', '.', 'service'],
+  'start/activate-rest': ['protocol/activate', '.', 'rest'],
+  'stop/deactivate-rest': ['protocol/deactivate', '.', 'rest']
 }
 async function layers (backend, { preload }) {
   const w = writer(backend)
@@ -33,7 +33,7 @@ async function layers (backend, { preload }) {
   await r.commit('Booted', { author })
   if (preload) {
     const q = await w.change(PENDING)
-    const core = record(null, { protocol: 'service', action: 'initialise', uri: '/' }, guid())
+    const core = record(null, { protocol: 'service', action: 'initialise', uri: '.' }, guid())
     await q.put(`/${core.key}.json`, Buffer.from(JSON.stringify(wrap(`/${PENDING}`, core))))
     await q.commit('Preloaded', { author })
   }

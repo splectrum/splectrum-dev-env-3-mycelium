@@ -16,9 +16,9 @@ structure is moved: only the position it is sent to changes. Offered by
 ## Examples
 
 ```
-haicc / boot/deploy host haiccing/base-component-haicc
-haicc /host service/initialise
-haicc /host haicc /swarms/swarm-1 boot/deploy node-1
+haicc . boot/deploy host haiccing/base-component-haicc
+haicc host service/initialise
+haicc host haicc swarms/swarm-1 boot/deploy node-1
 ```
 
 ## Config

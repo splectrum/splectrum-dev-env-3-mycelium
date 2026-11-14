@@ -1,0 +1,11 @@
+{
+  "name": "mycelium-uri",
+  "id": "da42bc4b-f626-442e-b621-83a784a8486f",
+  "description": "Our URIs: parse, validate, split at known prefixes",
+  "type": "module",
+  "exports": "./index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

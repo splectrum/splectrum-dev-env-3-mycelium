@@ -4,7 +4,7 @@ Moves the service from initialised to started: the external API open.
 
 ## Signature
 
-`start(exec)`: requested as `service start /`.
+`start(exec)`: requested as `service/start`.
 
 ## Returns
 

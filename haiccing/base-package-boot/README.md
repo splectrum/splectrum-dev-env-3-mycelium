@@ -17,11 +17,11 @@ package.
 ## Commands
 
 ```
-haicc / boot/deploy host base-component-haicc
-haicc /host boot/deploy node-1 base-package-runtime
-haicc /host boot/redeploy node-1
-haicc /host boot/teardown node-1
-haicc / boot/teardown host
+haicc . boot/deploy host base-component-haicc
+haicc host boot/deploy node-1 base-package-runtime
+haicc host boot/redeploy node-1
+haicc host boot/teardown node-1
+haicc . boot/teardown host
 ```
 
 - `boot/deploy <name> <package>`: the mrepo built at that position from

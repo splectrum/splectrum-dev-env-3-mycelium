@@ -36,9 +36,9 @@ its boot protocol is behind the service's door, activated by a hook on
 command answers what was done and the state now.
 
 ```
-haicc / boot/deploy host base-component-haicc
-haicc /host service/initialise
-haicc /host service/start
+haicc . boot/deploy host base-component-haicc
+haicc host service/initialise
+haicc host service/start
 ```
 
 ## Package

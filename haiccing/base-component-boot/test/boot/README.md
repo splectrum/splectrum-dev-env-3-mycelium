@@ -9,7 +9,7 @@ the tests: `boot.test.js`. It leaves nothing running.
 ## Steps
 
 1. **The sources missing**: a source folder that is not there; the boot
-   says so, exit 1, its request (`boot deploy /boot`, the command as
+   says so, exit 1, its request (`boot deploy boot`, the command as
    typed) completed with the error; no runtime started.
 2. **The whole lifecycle** (needs `SOURCES`):
    - the boot: the boot mrepo built, its packages placed and linked, its
@@ -24,13 +24,13 @@ the tests: `boot.test.js`. It leaves nothing running.
      running, its shortcut at `/xpath/host/shortcut.json`, nothing of it in
      `main`, its unique URI `local/host`; the records followed, the request
      history in `request/done`;
-   - requests posted to the boot mrepo's inbox: `boot redeploy /host` (the
-     old runtime stopped, a new one), `boot teardown /host` (its runtime
-     ended, its folder and shortcut gone), `boot deploy /host` again;
-   - `haicc`, commands as typed: `haicc /host help/get /packages` sent to
+   - requests posted to the boot mrepo's inbox: `boot redeploy host` (the
+     old runtime stopped, a new one), `boot teardown host` (its runtime
+     ended, its folder and shortcut gone), `boot deploy host` again;
+   - `haicc`, commands as typed: `haicc host help/get . packages` sent to
      the boot mrepo goes to the shortcut, the command that follows is sent
      on to the host unchanged, the request waits and is completed with the
-     host's response; `haicc / ...` is executed here; a URI running through
+     host's response; `haicc . ...` is executed here; a URI running through
      a shortcut and a position inside `main` are refused; a chained `haicc`
      is the linked mrepo's to execute; a plain command at the root;
    - the runtime protocol: `runtime run` on the runtime package, a dry run
@@ -45,8 +45,8 @@ the tests: `boot.test.js`. It leaves nothing running.
      without its organisation): its packages layer the component's list,
      its `main` empty; booted, its boot protocol behind the service's door,
      not active;
-     `haicc /haicc service/initialise` and `service/start` passed through
-     to it; a node deployed inside it by `haicc /haicc boot/deploy node-1`,
+     `haicc haicc service/initialise` and `service/start` passed through
+     to it; a node deployed inside it by `haicc haicc boot/deploy node-1`,
      its shortcut in the haicc mrepo's `xpath` layer only; commands chained
      through both shortcuts; the component validated in situ; the node
      torn down; `service/stop`, its boot protocol deactivated by the stop

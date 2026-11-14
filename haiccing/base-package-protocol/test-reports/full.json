@@ -1,8 +1,8 @@
 {
   "package": "haiccing/base-package-protocol",
-  "content": "a3dcab4865e07816eb8b8e28a2674d2d90d6441b541bd3106146c568d9dd479b",
+  "content": "2b1e2502d70bcae17b953cf75778d5d36b81ac75e46c19c11b45bc573c76ab40",
   "bare": "v1.36.0",
-  "date": "2026-11-13T23:50:52.290Z",
+  "date": "2026-11-14T07:19:35.496Z",
   "set": "full",
   "ok": true,
   "units": [
@@ -79,8 +79,8 @@
         "total": 5
       },
       "asserts": {
-        "passed": 21,
-        "total": 21
+        "passed": 27,
+        "total": 27
       },
       "failures": []
     },
@@ -94,6 +94,19 @@
       "asserts": {
         "passed": 13,
         "total": 13
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/modules/pear-full-square/mycelium-uri",
+      "ok": true,
+      "tests": {
+        "passed": 18,
+        "total": 18
+      },
+      "asserts": {
+        "passed": 149,
+        "total": 149
       },
       "failures": []
     },

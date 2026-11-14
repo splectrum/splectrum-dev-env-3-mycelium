@@ -4,7 +4,7 @@ Moves the service from initialised back to booted.
 
 ## Signature
 
-`shutdown(exec)`: requested as `service shutdown /`.
+`shutdown(exec)`: requested as `service/shutdown`.
 
 ## Returns
 

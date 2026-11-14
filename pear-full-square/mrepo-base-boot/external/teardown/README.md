@@ -8,15 +8,16 @@ it stopped is logged.
 
 ## Signature
 
-`teardown(exec, { uri })`: `uri` is `/<name>`.
+`teardown(exec, { uri })`: requested as `boot/teardown <name>`. `uri`
+is `main/<name>`.
 
 ## Returns
 
-`{ tornDown: uri }`.
+`{ tornDown }`: the position as written at `main`, `<name>`.
 
 ## Errors
 
-- No target, or a target of `/`: `missing argument: target`.
+- No target, `main` itself or the root: `missing argument: target`.
 - The child is not deployed; or the position exists locally, which the
   boot protocol cannot target.
 - Its runtime does not stop.

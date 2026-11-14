@@ -1,32 +1,37 @@
-// child(exec, uri): the child mrepo a boot action names: { name, dir, node,
-// mrepo, recorded(), local() }; shared by the actions (not documented: a
-// helper).
+// child(exec, uri): the child mrepo a boot action names: { name, at, dir,
+// node, mrepo, recorded(), local() }; shared by the actions (not documented:
+// a helper).
+//   uri       the request's, from the mrepo's root: main/<name>
+//   at        its position as written at main: <name>
 //   dir       its folder: in the shadow of main, at its position
 //   node      its shortcut, in the xpath layer (no presence in main)
 //   mrepo     its unique URI: in its parent's swarm, <swarm>/<name>
 //   recorded  its shortcut, or null
 //   local     whether its position exists locally: data in main there. The
 //             boot protocol cannot target that: refuse() throws then
-// A target is needed: / is the mrepo itself, which one cannot deploy or
-// tear down.
+// A target is needed: main itself, or the root, is the mrepo, which one
+// cannot deploy or tear down.
 import { join } from 'bare-path'
+import { within, ROOT } from 'mycelium-uri'
 import { shortcutOf, shadowOf, uriOf } from 'mrepo-base-xpath'
 
 export function child (exec, uri) {
-  if (uri === undefined || uri === '/') throw new Error('missing argument: target')
-  const name = uri.slice(1)
-  if (!/^[a-z][a-z0-9-]*$/.test(name)) throw new Error(`not a name for an mrepo: ${uri} (one segment: lowercase letters, digits, hyphens)`)
+  if (uri === undefined || uri === ROOT || uri === 'main') throw new Error('missing argument: target')
+  const at = within('main', uri)
+  if (at === null) throw new Error(`not a position in main: ${uri} (main/<name>)`)
+  if (!/^[a-z][a-z0-9-]*$/.test(at)) throw new Error(`not a name for an mrepo: ${at} (one segment: lowercase letters, digits, hyphens)`)
   const dir = exec.runtime.dir
   if (!dir) throw new Error('no directory in the context')
-  const node = shortcutOf(uri)
-  const local = async () => (await exec.select(`/main${uri}`).catch(() => [])).length > 0
+  const node = shortcutOf(at)
+  const local = async () => (await exec.select(`/main/${at}`).catch(() => [])).length > 0
   return {
-    name,
-    dir: join(dir, shadowOf(uri)),
+    name: at,
+    at,
+    dir: join(dir, shadowOf(at)),
     node,
-    mrepo: uriOf(exec.runtime.uri, name),
+    mrepo: uriOf(exec.runtime.uri, at),
     recorded: () => exec.read(node).then(b => JSON.parse(b.toString()), () => null),
     local,
-    refuse: async () => { if (await local()) throw new Error(`${uri} exists locally: the boot protocol cannot target it`) }
+    refuse: async () => { if (await local()) throw new Error(`${at} exists locally: the boot protocol cannot target it`) }
   }
 }

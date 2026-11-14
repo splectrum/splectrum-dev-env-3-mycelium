@@ -18,9 +18,9 @@ linked in it.
 ## Commands
 
 ```
-haicc / boot/deploy host haiccing/base-component-haicc
-haicc /host service/initialise
-haicc /host haicc /swarms/swarm-1 boot/deploy node-1
+haicc . boot/deploy host haiccing/base-component-haicc
+haicc host service/initialise
+haicc host haicc swarms/swarm-1 boot/deploy node-1
 ```
 
 `haicc` alone is `haicc/goto`, the protocol's default action.

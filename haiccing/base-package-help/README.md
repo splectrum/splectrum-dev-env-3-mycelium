@@ -17,13 +17,14 @@ it, so the help can be walked down from the root.
 ## Commands
 
 ```
-haicc / help/extract
-haicc / help/get /
-haicc / help/get /packages oneliner
-haicc /host help/get /protocols detail
+haicc . help/extract
+haicc . help/get
+haicc . help/get . packages oneliner
+haicc host help/get . protocols detail
 ```
 
-- `help/get <URI> [<level> | <section>]`: the levels are `oneliner`,
+- `help/get . [<subject>] [<level> | <section>]`: the subject is a URI
+  from the mrepo's root, the mrepo itself when none; the levels are `oneliner`,
   `summary`, the default, and `detail`; or one section, by its title.
 - `help/extract`: the help layer written again from the linked packages.
   Run by a hook: at `boot` in an mrepo without a service, at the

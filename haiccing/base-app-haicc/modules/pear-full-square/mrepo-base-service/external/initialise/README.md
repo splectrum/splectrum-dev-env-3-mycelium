@@ -6,7 +6,7 @@ Nothing more yet: the place for a type's own actions when it is made ready.
 
 ## Signature
 
-`initialise(exec)`: requested as `service initialise /`.
+`initialise(exec)`: requested as `service/initialise`.
 
 ## Returns
 

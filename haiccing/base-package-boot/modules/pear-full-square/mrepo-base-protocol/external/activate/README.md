@@ -9,7 +9,7 @@ changes nothing else.
 
 ## Signature
 
-`activate(exec, { args })`: requested as `protocol/activate / <protocol>`.
+`activate(exec, { args })`: requested as `protocol/activate . <protocol>`.
 
 ## Arguments
 

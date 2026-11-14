@@ -20,9 +20,9 @@ sh haicc-install.sh
 haicc sources link <folder>
 haicc prereq
 haicc boot/deploy
-haicc / boot/deploy host base-component-haicc
-haicc /host service/initialise
-haicc /host service/start
+haicc . boot/deploy host base-component-haicc
+haicc host service/initialise
+haicc host service/start
 ```
 
 `haicc-install.sh` carries the scripts and the pins, nothing else.

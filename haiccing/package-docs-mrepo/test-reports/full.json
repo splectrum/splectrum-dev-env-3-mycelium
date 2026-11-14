@@ -1,8 +1,8 @@
 {
   "package": "haiccing/package-docs-mrepo",
-  "content": "742d5c1b748b48290e41e9c13cb8effa4a4933b44b9e9d6704988c6f29ad717a",
+  "content": "3af23bba656e8166bb6e2fcb0330dccd21b3bee2070881d0c84c78d70452e54a",
   "bare": "v1.36.0",
-  "date": "2026-11-13T23:51:31.423Z",
+  "date": "2026-11-14T07:19:29.849Z",
   "set": "full",
   "ok": true,
   "units": [
@@ -79,8 +79,21 @@
         "total": 5
       },
       "asserts": {
-        "passed": 21,
-        "total": 21
+        "passed": 27,
+        "total": 27
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/modules/pear-full-square/mycelium-uri",
+      "ok": true,
+      "tests": {
+        "passed": 18,
+        "total": 18
+      },
+      "asserts": {
+        "passed": 149,
+        "total": 149
       },
       "failures": []
     },

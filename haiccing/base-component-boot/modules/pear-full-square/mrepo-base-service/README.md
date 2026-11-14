@@ -35,7 +35,7 @@ Each action answers what was done and the state now: `{ service, state }`.
 
 ## Config
 
-`CONFIG`, in `internal/state.js`: each action at `/`, with the states that
+`CONFIG`, in `internal/state.js`: each action at the mrepo itself, `.`, with the states that
 allow it. The runtime's check reads it: the state machine is configuration,
 not code.
 

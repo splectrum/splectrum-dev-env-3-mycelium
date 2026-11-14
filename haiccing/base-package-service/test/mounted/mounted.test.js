@@ -16,7 +16,7 @@ import * as mounted from '../../protocol.js'
 const pkg = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const json = (...p) => JSON.parse(readFileSync(join(pkg, ...p), 'utf8'))
 const ran = new Set()
-const act = (name, exec) => { ran.add(name); return mounted.actions.service[name](exec, { uri: '/' }) }
+const act = (name, exec) => { ran.add(name); return mounted.actions.service[name](exec, { uri: '.' }) }
 
 // The hooks the package brings, as they are in its structure: by
 // <transition>/<name>, each its command.
@@ -55,7 +55,7 @@ test('its config, value by value: each action at the mrepo itself, in the states
   t.alike(Object.keys(cfg).sort(), ['actions', 'description', 'package'], 'nothing else: no default action')
   t.alike(Object.fromEntries(Object.entries(cfg.actions).map(([n, a]) => [n, a.states])), { initialise: ['booted'], start: ['initialised'], stop: ['started'], shutdown: ['initialised'] }, 'the state machine: booted, initialised, started, and back')
   for (const [name, a] of Object.entries(cfg.actions)) {
-    t.alike(a.uris, ['/'], `${name}: at the mrepo itself, nowhere else`)
+    t.alike(a.uris, ['.'], `${name}: at the mrepo itself, nowhere else`)
     t.ok(a.description, `${name}: its description`)
     t.alike(Object.keys(a).sort(), ['description', 'states', 'uris'], `${name}: nothing else: no argument, no target`)
   }
@@ -66,12 +66,12 @@ test('its config in effect: a request checked on each state, allowed only where 
   const active = { service: protocols.service }
   const allowed = { booted: ['initialise'], initialised: ['shutdown', 'start'], started: ['stop'] }
   for (const [state, can] of Object.entries(allowed)) {
-    const now = Object.keys(protocols.service.actions).filter(action => check({ protocol: 'service', action, uri: '/' }, { service: { state }, protocols, active }) === null).sort()
+    const now = Object.keys(protocols.service.actions).filter(action => check({ protocol: 'service', action, uri: 'main' }, { service: { state }, protocols, active }) === null).sort()
     t.alike(now, can, `${state}: ${can.join(', ')} allowed, the others refused`)
   }
-  t.is(check({ protocol: 'service', action: 'start', uri: '/' }, { service: { state: 'booted' }, protocols, active }), 'not now: service start (the service is booted)', 'a refusal says the state the service is in')
-  t.is(check({ protocol: 'service', action: 'start', uri: '/host' }, { service: { state: 'initialised' }, protocols, active }), 'not offered: service start at /host', 'anywhere but the mrepo itself: not offered')
-  t.is(check({ protocol: 'service', action: 'start', uri: '/' }, { service: { state: 'initialised' }, protocols, active: {} }), 'not now: service start (service is not active; the service is initialised)', 'not activated: refused whatever the state')
+  t.is(check({ protocol: 'service', action: 'start', uri: 'main' }, { service: { state: 'booted' }, protocols, active }), 'not now: service start (the service is booted)', 'a refusal says the state the service is in')
+  t.is(check({ protocol: 'service', action: 'start', uri: 'main/host' }, { service: { state: 'initialised' }, protocols, active }), 'not offered: service start at host', 'anywhere but the mrepo itself: not offered')
+  t.is(check({ protocol: 'service', action: 'start', uri: 'main' }, { service: { state: 'initialised' }, protocols, active: {} }), 'not now: service start (service is not active; the service is initialised)', 'not activated: refused whatever the state')
 })
 
 test('its structure: the state it starts in, and its list of packages', (t) => {
@@ -83,9 +83,9 @@ test('its structure: the state it starts in, and its list of packages', (t) => {
 // The hooks it brings, each named here with its command: deployed alone,
 // what the mrepo offers from its boot, and what its initialise does.
 const HOOKS = {
-  'boot/activate-help': ['protocol/activate', '/', 'help'],
-  'boot/activate-runtime': ['protocol/activate', '/', 'runtime'],
-  'boot/activate-service': ['protocol/activate', '/', 'service'],
+  'boot/activate-help': ['protocol/activate', '.', 'help'],
+  'boot/activate-runtime': ['protocol/activate', '.', 'runtime'],
+  'boot/activate-service': ['protocol/activate', '.', 'service'],
   'initialise/help-extract': ['help/extract']
 }
 
@@ -110,12 +110,12 @@ test('start, stop, shutdown: the state moved each time, no hook of its own to ru
 })
 
 test('hooks dropped in by a package that defines the mrepo: each transition its own, in name order; one failing, the state not moved', async (t) => {
-  const dropped = { 'start/b-open': ['protocol/activate', '/', 'boot'], 'start/a-first': ['x/first'], 'stop/close': ['protocol/deactivate', '/', 'boot'], 'shutdown/last': ['x/last'] }
+  const dropped = { 'start/b-open': ['protocol/activate', '.', 'boot'], 'start/a-first': ['x/first'], 'stop/close': ['protocol/deactivate', '.', 'boot'], 'shutdown/last': ['x/last'] }
   const { exec, commands, now } = execution('initialised', dropped)
   await act('start', exec)
-  t.alike(commands, [['x/first', { own: true }], ['protocol/activate / boot', { own: true }]], 'start: its hooks only, by name')
+  t.alike(commands, [['x/first', { own: true }], ['protocol/activate . boot', { own: true }]], 'start: its hooks only, by name')
   await act('stop', exec)
-  t.alike(commands.at(-1), ['protocol/deactivate / boot', { own: true }], 'stop: its own')
+  t.alike(commands.at(-1), ['protocol/deactivate . boot', { own: true }], 'stop: its own')
   const bad = execution('initialised', dropped, { failing: 'x/last' })
   await t.exception(act('shutdown', bad.exec), /x\/last: refused/, 'a hook that fails: the transition fails')
   t.alike([bad.now(), bad.writes], ['initialised', []], 'the state not moved, nothing written')

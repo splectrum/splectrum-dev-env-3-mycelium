@@ -9,6 +9,7 @@ modules test, `/test/modules`.
 | ours | |
 |---|---|
 | [pear-full-square/mrepo-base-help/](pear-full-square/mrepo-base-help/) | Module: mrepo help, the READMEs of an mrepo's packages extracted, checked against the rules and retrieved by URI. |
+| [pear-full-square/mycelium-uri/](pear-full-square/mycelium-uri/) | Our URIs: parse, validate, split at known prefixes |
 | [pear-full-square/pkgm-base-check/](pear-full-square/pkgm-base-check/) | Module: the checks a package runs on itself, its code against the code rules, the integrity of its mrepo side and its own structure. |
 
 The third-party code: `node_modules/`, 63 modules for linux-x64, each

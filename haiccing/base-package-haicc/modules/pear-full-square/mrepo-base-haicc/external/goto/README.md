@@ -35,7 +35,12 @@ of the mrepo it was sent to.
   the response.
 - **At an ordinary node** the command is executed here, in the context of
   the position: forward visibility only, nothing above it is reachable.
-  For now the root only.
-- **Local and remote at once**: `haicc / boot/teardown host` is a command
-  at the root about the shortcut as an item; `haicc /host service/start`
+  The command that follows stands at the position: its URI is read from
+  there. For now `main`'s root only, and the mrepo itself for its own
+  commands.
+- **URIs are relative**: `haicc . <command>` is the root, `haicc host
+  <command>` the position `host`. The form holds the URI from the mrepo's
+  root, `main/host`.
+- **Local and remote at once**: `haicc . boot/teardown host` is a command
+  at the root about the shortcut as an item; `haicc host service/start`
   goes through it.

@@ -14,7 +14,7 @@ const ORG = 'haiccing'
 
 export async function deploy (exec, { uri, args = [] }) {
   const c = child(exec, uri)
-  if (await c.recorded()) throw new Error(`deployed already: ${uri}`)
+  if (await c.recorded()) throw new Error(`deployed already: ${c.at}`)
   // a position that exists locally (data in main there): not a target
   await c.refuse()
   if (existsSync(c.dir)) throw new Error(`in the way: ${c.dir}`)
@@ -47,6 +47,6 @@ export async function deploy (exec, { uri, args = [] }) {
       record.runtime = { pid: s.pid }
     }
     exec.put(c.node, Buffer.from(JSON.stringify(record, null, 2) + '\n'))
-    return { deployed: uri, ...record }
+    return { deployed: c.at, ...record }
   } finally { rmSync(tmp, { recursive: true, force: true }) }
 }

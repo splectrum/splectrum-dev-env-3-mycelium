@@ -17,10 +17,12 @@ action run on a minimal execution.
 - **`extract`**: from small bundles written for the test, each README at
   the URI it documents, the index, the problems; run again, nothing
   written; a README gone from a package, removed; a README against the
-  rules, counted; a URI other than `/`, refused; no packages, nothing.
-- **`get`**: a URI's help at its three levels, one section by its title,
-  the root, a URI given under `/help`; nothing extracted yet, a section
-  or a URI that is not there, each said; it writes nothing.
+  rules, counted; a URI other than the mrepo itself, refused; no
+  packages, nothing.
+- **`get`**: a subject's help at its three levels, one section by its
+  title, the mrepo itself when no subject is given, a subject given under
+  `help`; nothing extracted yet, a section or a subject that is not
+  there, a subject with a leading slash, each said; it writes nothing.
 - **Nothing forgotten**: the last test fails when the config names an
   action that was not run here.
 

@@ -8,12 +8,15 @@ path. Only the mrepo that owns a shortcut knows it is one.
 
 ## Signature
 
-`resolve(exec, uri)`: `exec` reads the mrepo, `exec.read(uri)`; `uri` is
-local to it, canonical, and addresses a position in `main`.
+`resolve(exec, uri)`: `exec` reads the mrepo, `exec.read(path)`; `uri` is
+local to it, relative from its root as a request's form holds it, and
+addresses a position in `main`: `main` itself, `main/host`. `.` is the
+mrepo itself, above its layers: no shortcut there.
 
 ## Returns
 
-`{ at, shortcut }`: `at` is the position. `shortcut` is `null` for an
+`{ at, shortcut }`: `at` is the position as written at `main`: `.`,
+`host`. `shortcut` is `null` for an
 ordinary node. For a shortcut it is its entry and where it leads:
 
 ```
@@ -26,7 +29,8 @@ ordinary node. For a shortcut it is its entry and where it leads:
 
 ## Errors
 
-- The URI is not canonical.
+- The URI is not canonical, or has a leading slash.
+- The URI is not in `main`.
 - The URI runs through a shortcut: a URI stays inside its mrepo. The
   message names the shortcut and the way across, a `haicc` at it.
 
@@ -43,7 +47,8 @@ ordinary node. For a shortcut it is its entry and where it leads:
 
 ## Also exported
 
-- `shortcutOf(position)`: the entry's URI, `/xpath/<position>/shortcut.json`.
+- `shortcutOf(position)`: the entry's path, `/xpath/<position>/shortcut.json`,
+  for a position as written at `main`.
 - `shadowOf(position)`: the position's folder in the shadow of `main`.
 - `IDENTITY`: `/runtime/mrepo.json`, an mrepo's own `{ uri }`.
 - `swarmOf(uri)`: the swarm of a unique URI, `local` when it has none.

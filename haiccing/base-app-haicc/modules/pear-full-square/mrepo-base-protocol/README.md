@@ -16,14 +16,14 @@ of an mrepo's status transitions call them. Offered by
 ## Examples
 
 ```
-["protocol/activate", "/", "help"]       a boot hook: always open
-["protocol/activate", "/", "boot"]       a start hook: behind the door
-["protocol/deactivate", "/", "boot"]     a stop hook
+["protocol/activate", ".", "help"]       a boot hook: always open
+["protocol/activate", ".", "boot"]       a start hook: behind the door
+["protocol/deactivate", ".", "boot"]     a stop hook
 ```
 
 ## Config
 
-`CONFIG`, in `internal/config.js`: both actions at `/`, the mrepo itself,
+`CONFIG`, in `internal/config.js`: both actions at `.`, the mrepo itself,
 their argument the protocol's name.
 
 ## Tests

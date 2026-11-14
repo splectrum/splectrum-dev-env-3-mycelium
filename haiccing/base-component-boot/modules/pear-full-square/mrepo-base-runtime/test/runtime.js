@@ -17,7 +17,7 @@ const own = {
   protocols: {
     service: CONFIG,
     protocol: PROTOCOL,
-    rest: { actions: { get: { uris: ['/', '/main/**', '/runtime/**', '/packages/**', '/request/**'] }, put: { uris: ['/main/**'] }, delete: { uris: ['/main/**'] } } }
+    rest: { actions: { get: { uris: ['**'] }, put: { uris: ['<name>/**'] }, delete: { uris: ['<name>/**'] } } }
   }
 }
 

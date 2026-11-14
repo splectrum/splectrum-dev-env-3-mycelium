@@ -7,7 +7,7 @@ can be activated again.
 
 ## Signature
 
-`deactivate(exec, { args })`: requested as `protocol/deactivate / <protocol>`.
+`deactivate(exec, { args })`: requested as `protocol/deactivate . <protocol>`.
 
 ## Arguments
 

@@ -12,8 +12,8 @@ export const protocols = {
     package: 'haiccing/base-package-help',
     description: 'The mrepo\'s help, read by URI.',
     actions: {
-      get: { uris: ['/**'], description: 'The README documenting a URI, at a level (oneliner, summary, detail) or one section, by its title.' },
-      extract: { uris: ['/'], description: 'The help layer extracted from the linked packages\' READMEs.' }
+      get: { uris: ['.'], args: ['subject?'], description: 'The README documenting a subject, a URI from the mrepo\'s root (none: the mrepo itself), at a level (oneliner, summary, detail) or one section, by its title.' },
+      extract: { uris: ['.'], description: 'The help layer extracted from the linked packages\' READMEs.' }
     }
   }
 }

@@ -20,13 +20,17 @@ haicc sources download [<what>...]              fetched over https: <org>,
 haicc sources https | no-https                  https as the backup, or not
 
   haicc boot/deploy
-  haicc / boot/deploy host base-component-haicc
-  haicc /host service/initialise
-  haicc /host service/start
-  haicc /host boot/deploy node-1 base-package-runtime
-  haicc /host haicc /node-1 help/get /
-  haicc /host boot/teardown node-1
-  haicc / boot/teardown host
+  haicc . boot/deploy host base-component-haicc
+  haicc host service/initialise
+  haicc host service/start
+  haicc host boot/deploy node-1 base-package-runtime
+  haicc host haicc node-1 help/get
+  haicc host boot/teardown node-1
+  haicc . boot/teardown host
   haicc boot/teardown
 
-Help in an mrepo: haicc / help/get /, haicc /host help/get /protocols`
+A URI is relative, without a leading slash: . is the local root, host the
+position host in it. A position named like a command of haicc itself is
+written with ./ in front: ./sources, ./boot.
+
+Help in an mrepo: haicc . help/get, haicc host help/get . packages`

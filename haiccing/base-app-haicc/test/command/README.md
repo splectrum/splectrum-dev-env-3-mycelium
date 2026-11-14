@@ -21,7 +21,7 @@ runtime would. No runtime is started.
 - **A command's record, value by value**: the envelope addressed to the
   root's inbox, the core addressed back to the terminal, one key, the
   parts as typed; plain at the root, the `haicc` command elsewhere; a
-  position named `/run`.
+  first word `/run`, passed on as typed.
 - **Its response**: unpacked by default and packed again the record as
   stored; `--raw`, `--output` and their variables; an error, exit 1; a
   form not completed, exit 5; none in time, exit 4.
