@@ -399,6 +399,19 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   essence XPath: `crud/read swarms` gives an array holding one node,
   `crud/read *` an array of all of them, the same shape. A set comes in,
   a set goes out.
+- **A response can contain any data type** (the human, 2026-11-14,
+  asked whether an action that is not about nodes, `service/start`,
+  should also answer with an array of one: "No, response can contain any
+  data type."). So nothing wraps an action's answer: what reads nodes
+  answers with an array of them, by what it is; `service/start` answers
+  its object as it does now.
+- **A URI is of type array of name part strings** (the human, the same
+  answer: "URI is of type Array of Namepart strings."). Our reading, to
+  confirm before it is built: a URI as data is its name parts in order,
+  `["swarms", "swarm-1", "node-1"]`, not one string with slashes; the
+  string form is how it is typed. The prefix is then of the same type and
+  joining the two is joining two arrays. Where it applies (the URIs in a
+  response and the prefix only, or the request's form too) is asked.
 - **An empty selection is not an error** inside: it gives an empty
   array, also for a plain path with a typo in it. Whether that is an
   error is for the one who submits the request to check. No rule of ours
@@ -520,11 +533,13 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   (relative, `.`); `exec.read`, `select`, `put`, `remove` and the
   repository's reads take `runtime/service.json` as
   `/runtime/service.json`.
-- **Piece C, selections and results as arrays, the prefix**: `resolve`
-  an array, `goto` at each; a result an array; the prefix in the form,
-  the layer first, then the jumps. It changes what every command
-  answers (`haicc host service/start`: an array of one): show the human
-  the new answers before building it.
+- **Piece C, selections as arrays, the URI's type, the prefix**:
+  `resolve` an array, `goto` at each; a URI as data an array of name
+  parts; the prefix in the form, the layer first, then the jumps. Shown
+  to the human 2026-11-14 with every answer wrapped in an array: refused
+  ("response can contain any data type"), so an action's answer is not
+  wrapped. Not built until the human has confirmed our reading of the
+  URI's type and where it applies ("Settled", above).
 
 **Where**
 
