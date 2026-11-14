@@ -55,6 +55,10 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
 plan depends heavily on having floating mrepo tests, so the planned work
 is implemented first). In `tasks.md`, in this order:
 
+0. **A Bare app for `haicc`** (task 0), in place of the shell scripts,
+   with today's command form exactly: `run.sh`'s 107 checks unchanged
+   are the proof the port is right. Its package's name and repository
+   are put to the human, not answered: ask first.
 1. **Relative URIs** (task 1). Settled with the human point by point;
    the build is planned there in pieces ("The build"): begin with piece
    A. Nothing of it is built yet.
@@ -98,9 +102,6 @@ with the human first, unless the task says it is ours ("Left to us").
 - Settled since (2026-11-14): only the link goes into `.shortcuts.json`
   (`tasks.md`, task 2); cloning the template is the aim, the template
   carrying in the help to customise it (`tasks.md`, "First", to build).
-- In discussion: a Bare app for `haicc` in place of the shell scripts
-  (`tasks.md`, "Future additions"); with it the question whether
-  `base-linux-haicc` gets the generic tests and a report.
 - A leftover branch: `claude/vigilant-gates-b1r8rn` on the remote holds
   nothing that is not in `main`; the human may delete it.
 
