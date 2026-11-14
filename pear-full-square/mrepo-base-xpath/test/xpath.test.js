@@ -1,13 +1,13 @@
 // Positions resolved on a context written here: its files by URI.
 import test from 'brittle'
-import { resolve, shortcutOf, shadowOf, swarmOf, uriOf, IDENTITY } from '../index.js'
+import { resolve, shortcutOf, shortcutsAt, shadowOf, swarmOf, uriOf, IDENTITY, SHORTCUTS } from '../index.js'
 
 function context (files, dir = '/work/mrepos/boot') {
   return { runtime: { dir }, read: async uri => { if (!(uri in files)) throw new Error('none'); return Buffer.from(JSON.stringify(files[uri])) } }
 }
 
 test('a position: an ordinary node, a shortcut, a URI through a shortcut', async (t) => {
-  const exec = context({ '/xpath/host/shortcut.json': { mrepo: 'local/host' }, '/xpath/swarms/swarm-1/node-1/shortcut.json': { mrepo: 'swarm-1/node-1' } })
+  const exec = context({ 'main/host/.shortcuts.json': [{ mrepo: 'local/host' }], 'main/swarms/swarm-1/node-1/.shortcuts.json': [{ mrepo: 'swarm-1/node-1' }, { mrepo: 'swarm-2/node-9' }], 'main/empty/.shortcuts.json': [] })
   t.alike(await resolve(exec, ['main', '.']), { at: '.', shortcut: null }, 'main: the root position, where the outside stands')
   t.alike(await resolve(exec, ['.']), { at: '.', shortcut: null }, 'the mrepo itself, above its layers: no shortcut there')
   t.alike(await resolve(exec, ['main', 'swarms/swarm-1']), { at: 'swarms/swarm-1', shortcut: null }, 'an ordinary node: its position as written at main')
@@ -20,11 +20,15 @@ test('a position: an ordinary node, a shortcut, a URI through a shortcut', async
   await t.exception(resolve(exec, ['runtime/hooks']), /not a position in main: runtime\/hooks/)
   await t.exception(resolve(exec, ['host']), /not a position in main: host/, 'from the root the layer comes first')
   t.is((await resolve({ read: exec.read }, ['main', 'host'])).shortcut.dir, null, 'no folder in the context: none')
+  t.is((await resolve(exec, ['main', 'swarms/swarm-1/node-1'])).shortcut.mrepo, 'swarm-1/node-1', 'several sources at one node: the first in use')
+  t.alike(await resolve(exec, ['main', 'empty']), { at: 'empty', shortcut: null }, 'a list with no source: an ordinary node')
+  t.alike([await shortcutsAt(exec, 'host'), await shortcutsAt(exec, 'swarms'), (await shortcutsAt(exec, 'swarms/swarm-1/node-1')).length], [[{ mrepo: 'local/host' }], [], 2], 'shortcutsAt: the sources recorded at a position, none: []')
 })
 
 test('the paths: a shortcut\'s entry, the shadow folder, the unique URIs', (t) => {
-  t.is(shortcutOf('host'), '/xpath/host/shortcut.json')
-  t.is(shortcutOf('swarms/swarm-1/node-1'), '/xpath/swarms/swarm-1/node-1/shortcut.json')
+  t.is(shortcutOf('host'), 'main/host/.shortcuts.json', 'in main, beside the node\'s document, hidden')
+  t.is(SHORTCUTS, '.shortcuts.json')
+  t.is(shortcutOf('swarms/swarm-1/node-1'), 'main/swarms/swarm-1/node-1/.shortcuts.json')
   t.is(shadowOf('host'), 'main/host')
   t.is(shadowOf('.'), 'main')
   t.is(IDENTITY, '/runtime/mrepo.json')

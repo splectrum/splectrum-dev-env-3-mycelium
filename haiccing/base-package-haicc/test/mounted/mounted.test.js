@@ -9,7 +9,7 @@ import * as mounted from '../../protocol.js'
 const ran = new Set()
 const act = (name, exec, form) => { ran.add(name); return mounted.actions.haicc[name](exec, form) }
 
-// An execution as the action sees it: this mrepo's folder, its xpath
+// An execution as the action sees it: this mrepo's folder, its shortcuts
 // entries by URI; a command executed here answers with what it was given.
 function execution (shortcuts = {}) {
   const executed = []
@@ -22,7 +22,7 @@ function execution (shortcuts = {}) {
   }
   return { exec, executed, sent }
 }
-const HOST = { '/xpath/host/shortcut.json': { mrepo: 'local/host', package: 'haiccing/base-component-haicc' } }
+const HOST = { 'main/host/.shortcuts.json': [{ mrepo: 'local/host' }] }
 
 test('what it provides: one protocol, haicc, its config and its action', (t) => {
   t.alike(Object.keys(mounted.protocols), ['haicc'], 'the package provides the haicc protocol, and no other')
@@ -55,7 +55,7 @@ test('goto at a shortcut: the command sent on, unchanged, to the mrepo linked th
   const { exec, executed, sent } = execution(HOST)
   const command = ['haicc', '/node-1', 'service/start']
   t.is(await act('goto', exec, { uri: ['main', 'host'], args: command }), null, 'nothing returned here: the request waits for the linked mrepo\'s response')
-  t.alike(sent, [{ to: { at: 'host', mrepo: 'local/host', package: 'haiccing/base-component-haicc', folder: 'main/host', dir: '/work/mrepos/boot/main/host' }, command }], 'where it leads: the linked mrepo, its folder in the shadow of main; the command as it was, a haicc of its own included: commands chain')
+  t.alike(sent, [{ to: { at: 'host', mrepo: 'local/host', folder: 'main/host', dir: '/work/mrepos/boot/main/host' }, command }], 'where it leads: the linked mrepo, its folder in the shadow of main; the command as it was, a haicc of its own included: commands chain')
   t.alike(executed, [], 'nothing of it executed here')
 })
 

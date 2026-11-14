@@ -1,0 +1,20 @@
+{
+  "name": "base-package-crud",
+  "description": "Package: the crud protocol, the generic actions on an mrepo's data: its nodes created, read and deleted by URI.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "main.js",
+  "modules": [
+    "pear-full-square/mrepo-base-crud",
+    "pear-full-square/mrepo-base-help",
+    "pear-full-square/pkgm-base-check"
+  ],
+  "template": {
+    "repository": "haiccing/package-docs-template",
+    "commit": "4de4eae014f95f72db09e983c9b10d8b27797cca"
+  },
+  "scripts": {
+    "test": "bare test/run.js"
+  }
+}

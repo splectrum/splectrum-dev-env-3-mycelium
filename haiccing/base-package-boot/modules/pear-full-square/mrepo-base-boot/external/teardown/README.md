@@ -1,6 +1,6 @@
 # teardown
 
-Stops a child mrepo's runtime and removes the child and its shortcut.
+Stops a child mrepo's runtime and removes the child, its node and its shortcut.
 
 The runtime is asked to stop over its socket; still running, it gets
 SIGTERM, then SIGKILL, each waited for until the process has ended. How

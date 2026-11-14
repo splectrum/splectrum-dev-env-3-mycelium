@@ -1,6 +1,7 @@
 // A relative URI: as it is written in a request. No leading slash; relative
 // to where its writer stands. `.` is the position itself; none given means
-// `.`; `./x` is `x`. Its segments are our URIs' (lib/uri.js).
+// `.`; `./x` is `x`. Its name parts are our URIs' (lib/uri.js); one may be
+// `*`, for a URI that selects.
 //   relative(uri)     the URI in its canonical form; throws when it is not
 //                     one: a leading slash, a segment that is not a name,
 //                     a form that is not canonical (uppercase, empty parts)
@@ -34,7 +35,7 @@ export function relative (uri) {
   let u = uri
   while (u.startsWith('./')) u = u.slice(2)
   if (u === '' || u === ROOT) return ROOT
-  const c = validate(`/${u}`).slice(1)
+  const c = validate(`/${u}`, { star: true }).slice(1)
   if (c !== u) throw new Error(`not canonical: ${uri} (${c || ROOT})`)
   return u
 }

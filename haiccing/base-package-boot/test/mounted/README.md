@@ -19,8 +19,8 @@ standing for the parent's.
   not a name, deployed already, data in `main` at that position, a folder
   in the way, no package, no store, a package in no source. A refusal
   writes nothing and leaves no folder.
-- **`teardown`**: a child without a runtime: its folder and its shortcut
-  removed; not deployed, data in `main` there, the mrepo itself, refused.
+- **`teardown`**: a child without a runtime: its folder, its node, its
+  shortcut and what was local about it removed; not deployed, data in `main` there, the mrepo itself, refused.
 - **`redeploy`**: torn down first and that committed, then the deploy,
   from the package it was deployed from when none is given.
 - **Nothing forgotten**: the last test fails when the config names an

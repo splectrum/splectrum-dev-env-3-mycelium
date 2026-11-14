@@ -30,7 +30,7 @@ haicc host haicc swarms/swarm-1 boot/deploy node-1
 - `protocol.js`: the `haicc` protocol, its config and its action, from
   `mrepo-base-haicc`.
 - `main.js`: the dispatcher, the bundle's main, generated.
-- No structure of its own: the `xpath` layer, where the shortcuts are, is
+- No structure of its own: `main`, where the shortcuts are, is
   the runtime package's.
 
 Written from [splectrum/splectrum-dev-env-3-mycelium](https://github.com/splectrum/splectrum-dev-env-3-mycelium).

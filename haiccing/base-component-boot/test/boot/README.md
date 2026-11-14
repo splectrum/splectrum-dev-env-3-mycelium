@@ -21,8 +21,8 @@ the tests: `boot.test.js`. It leaves nothing running.
      extracted;
    - the host deployed by a command at the root, `boot/deploy host
      <package>`: built inside the boot mrepo (`main/host/`), its runtime
-     running, its shortcut at `/xpath/host/shortcut.json`, nothing of it in
-     `main`, its unique URI `local/host`; the records followed, the request
+     running, its node and its shortcut in `main`
+     (`host/.shortcuts.json`), only the link, its unique URI `local/host`; the records followed, the request
      history in `request/done`;
    - requests posted to the boot mrepo's inbox: `boot redeploy host` (the
      old runtime stopped, a new one), `boot teardown host` (its runtime
@@ -47,7 +47,7 @@ the tests: `boot.test.js`. It leaves nothing running.
      not active;
      `haicc haicc service/initialise` and `service/start` passed through
      to it; a node deployed inside it by `haicc haicc boot/deploy node-1`,
-     its shortcut in the haicc mrepo's `xpath` layer only; commands chained
+     its shortcut in the haicc mrepo's `main`; commands chained
      through both shortcuts; the component validated in situ; the node
      torn down; `service/stop`, its boot protocol deactivated by the stop
      hook, the door closed again; the component torn down;

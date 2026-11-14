@@ -10,9 +10,14 @@ const MAIN = 'main'
 // <swarm>/<node> (local/<name> for what the boot mrepo creates).
 export const IDENTITY = '/runtime/mrepo.json'
 
-// A position's shortcut, in the xpath layer (a path the code reads by):
-// host -> /xpath/host/shortcut.json.
-export const shortcutOf = position => `/xpath${position === ROOT ? '' : `/${position}`}/shortcut.json`
+// A position's shortcuts, in main beside the node's document, hidden (a
+// name starting with a dot is no URI's): host -> main/host/.shortcuts.json.
+// A list: each entry a source the node's data comes from, { mrepo }, its
+// unique URI: only the link, nothing local to a machine.
+export const SHORTCUTS = '.shortcuts.json'
+export const shortcutOf = position => `main/${position === ROOT ? '' : `${position}/`}${SHORTCUTS}`
+// The sources recorded at a position: its list, [] when it has none.
+export const shortcutsAt = (exec, position) => exec.read(shortcutOf(position)).then(b => { const l = JSON.parse(b.toString()); return Array.isArray(l) ? l : [] }, () => [])
 
 // A position's folder in the shadow structure of main, relative to the
 // mrepo's own folder: host -> main/host. What is linked at the position
@@ -35,10 +40,10 @@ export async function resolve (exec, uri) {
   const at = within(MAIN, u)
   if (at === null) throw new Error(`not a position in main: ${u} (main, main/<position>)`)
   const segments = at === ROOT ? [] : at.split('/')
-  const read = p => exec.read(p).then(b => JSON.parse(b.toString()), () => null)
   for (let i = 1; i <= segments.length; i++) {
     const position = segments.slice(0, i).join('/')
-    const entry = await read(shortcutOf(position))
+    // one source in use for now: the first
+    const [entry] = await shortcutsAt(exec, position)
     if (!entry) continue
     // The simple rule: a URI stays inside its mrepo. One that runs through a
     // shortcut is not resolved: the way across is a goto at the shortcut.

@@ -16,9 +16,9 @@ The component's part of the structure: the list of the packages the haicc mrepo 
 - **At `boot`**: `haicc`, `help`, `runtime` and `service` activated. A
   closed haicc mrepo can be addressed, inspected and tested.
 - **At `initialise`**: its help extracted.
-- **At `start`**: `boot` activated. The boot protocol is what sits behind
-  its door.
-- **At `stop`**: `boot` deactivated again.
+- **At `start`**: `boot` and `crud` activated. Deploying mrepos and
+  making structure in `main` are what sits behind its door.
+- **At `stop`**: both deactivated again.
 
 Runtime config is laid in from the last package of a list only, the one
 that defines the mrepo. So the component states its own in full.

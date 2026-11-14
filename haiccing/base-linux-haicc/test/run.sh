@@ -153,7 +153,7 @@ out=$(haicc host boot/deploy 2>&1 >/dev/null); is "$out" "haicc: missing argumen
 out=$(haicc host 2>&1); is $? 2 "haicc host, no command: exit 2 at the command line"
 out=$(haicc . protocol/activate . service 2>&1 >/dev/null); is "$out" "haicc: not now: protocol activate (protocol is not active)" "activating a protocol is the hooks', not a command from outside"
 out=$(haicc . deploy/teardown host 2>&1 >/dev/null); is $? 1 "a protocol that is not there: exit 1"
-is "$out" "haicc: no protocol: deploy (boot, haicc, help, runtime)" "said, with the protocols there"
+is "$out" "haicc: no protocol: deploy (boot, crud, haicc, help, runtime)" "said, with the protocols there"
 out=$(haicc . boot/remove host 2>&1 >/dev/null); is "$out" "haicc: no action: boot remove (deploy, redeploy, teardown)" "an action that is not there: said, with the protocol's actions"
 
 # 9. a node inside the host; commands chained through both
@@ -176,10 +176,33 @@ case "$out" in *'"topic":'*) no "no record around it" "$out" ;; *) ok "no record
 out=$(HAICC_OUTPUT=1 haicc host help/get . oneliner 2>&1); is $? 0 "HAICC_OUTPUT=1: the same"
 case "$out" in *'"topic":'*) no "no record around it, HAICC_OUTPUT=1" "$out" ;; *) ok "no record around it, HAICC_OUTPUT=1" ;; esac
 
+# 9b. structure in main: nodes created, read and deleted with crud; at the
+# root (the boot mrepo: crud active from its boot) and in the host (behind
+# its service's door, open while started). Every one can be repeated
+is "$(haicc --output . crud/create swarms/swarm-1 '{"size":3}' 2>&1)" '[{"uri":["main","swarms"],"value":{},"children":["swarm-1"],"outcome":"created"},{"uri":["main","swarms/swarm-1"],"value":{"size":3},"children":[],"outcome":"created"}]' "haicc . crud/create swarms/swarm-1 <value>: the node and the one above it made, each answered: its URI as held inside, its document, its children, what happened"
+is "$(haicc --output . crud/create swarms/swarm-1 '{"size":9}' 2>&1)" '[{"uri":["main","swarms"],"value":{},"children":["swarm-1"],"outcome":"there"},{"uri":["main","swarms/swarm-1"],"value":{"size":3},"children":[],"outcome":"there"}]' "again, with another value: there already, left as it is"
+is "$(haicc --output . crud/create swarms/swarm-2 2>&1)" '[{"uri":["main","swarms"],"value":{},"children":["swarm-1","swarm-2"],"outcome":"there"},{"uri":["main","swarms/swarm-2"],"value":{},"children":[],"outcome":"created"}]' "a sibling, no value: an empty document"
+is "$(haicc --output . crud/read swarms 2>&1)" '[{"uri":["main","swarms"],"value":{},"children":["swarm-1","swarm-2"]}]' "haicc . crud/read swarms: an array of one node, its children by name"
+is "$(haicc --output . crud/read 'swarms/*' 2>&1)" '[{"uri":["main","swarms/swarm-1"],"value":{"size":3},"children":[]},{"uri":["main","swarms/swarm-2"],"value":{},"children":[]}]' "haicc . crud/read swarms/*: its children, each a node"
+is "$(haicc --output . crud/read swarmz 2>&1)" '[]' "nothing there (a typo): an empty array, exit 0"
+is "$(haicc --output . crud/read host 2>&1)" '[{"uri":["main","host"],"value":{},"children":[],"shortcuts":[{"mrepo":"local/host"}]}]' "the host read as a node: a shortcut, with the mrepo its data comes from; only the link"
+is "$(haicc --output . crud/read . 2>&1)" '[{"uri":["main","."],"value":{},"children":["host","swarms"]}]' "the root: a node, its children the host and what was created"
+out=$(haicc . crud/read host/swarms 2>&1 >/dev/null); is "$out" "haicc: host is a shortcut: a URI does not run through it (haicc host haicc swarms ...)" "below a shortcut: not read here, the way across said"
+out=$(haicc . crud/delete swarms 2>&1 >/dev/null); is "$out" "haicc: swarms has children: not deleted (crud/delete swarms recurse)" "haicc . crud/delete swarms: it has children, refused, saying how"
+out=$(haicc . crud/update swarms '{}' 2>&1 >/dev/null); is "$out" "haicc: no action: crud update (create, delete, read)" "there is no update: said, with the actions there are"
+out=$(haicc . crud/create . 2>&1 >/dev/null); is "$out" "haicc: missing argument: target" "the root itself is not created"
+is "$(haicc --output . crud/delete swarms recurse 2>&1)" '[{"uri":["main","swarms"],"value":{},"children":["swarm-1","swarm-2"],"outcome":"deleted"}]' "with recurse: deleted, answered as it was"
+is "$(haicc --output . crud/delete swarms recurse 2>&1)" '[]' "again: nothing there, nothing selected, exit 0"
+is "$(haicc --output . crud/read . 2>&1)" '[{"uri":["main","."],"value":{},"children":["host"]}]' "gone with everything below it; the host untouched"
+is "$(haicc --output host crud/create swarms/swarm-1 2>&1)" '[{"uri":["main","swarms"],"value":{},"children":["swarm-1"],"outcome":"created"},{"uri":["main","swarms/swarm-1"],"value":{},"children":[],"outcome":"created"}]' "haicc host crud/create swarms/swarm-1: in the host, started: its own main"
+is "$(haicc --output host crud/read . 2>&1)" '[{"uri":["main","."],"value":{},"children":["node-1","swarms"]}]' "the host's root: its node, a shortcut, and what was created there"
+is "$(haicc --output . crud/read swarms 2>&1)" '[]' "nothing of it in the boot mrepo: each mrepo its own main"
+
 # 10. torn down: the node; the service stopped and shut down; the host
 is "$(haicc --output host boot/teardown node-1 2>&1)" '{"tornDown":"node-1"}' "haicc host boot/teardown node-1"
 is "$(haicc --output host service/stop 2>&1)" '{"service":"stopped","state":"initialised"}' "haicc host service/stop: stopped, the state initialised again"
 out=$(haicc host boot/deploy node-2 base-package-runtime 2>&1 >/dev/null); is "$out" "haicc: not now: boot deploy (boot is not active; the service is initialised)" "stopped: its boot protocol deactivated, the door closed again"
+out=$(haicc host crud/read . 2>&1 >/dev/null); is "$out" "haicc: not now: crud read (crud is not active; the service is initialised)" "and its crud protocol with it: behind the same door"
 is "$(haicc --output host service/shutdown 2>&1)" '{"service":"shut down","state":"booted"}' "haicc host service/shutdown: shut down, the state booted again"
 is "$(haicc --output . boot/teardown host 2>&1)" '{"tornDown":"host"}' "haicc . boot/teardown host: at the root, about the shortcut as an item"
 [ ! -e "$T/home/work/mrepos/boot/main/host" ] && ok "the host's folder removed" || no "the host's folder removed"

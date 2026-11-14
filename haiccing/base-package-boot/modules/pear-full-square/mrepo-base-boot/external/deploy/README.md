@@ -21,9 +21,17 @@ in, in that order, and the child is built at `<parent>/main/<name>/`.
 ## Returns
 
 `{ deployed, mrepo, package, packages, layers, runtime: { pid } }`;
-`deployed` is the position as written at `main`, `<name>`. The
-same record, without `deployed`, is the child's shortcut, written at
-`/xpath/<name>/shortcut.json`. `mrepo` is the child's unique URI.
+`deployed` is the position as written at `main`, `<name>`; `mrepo` is
+the child's unique URI.
+
+What it writes in the parent:
+
+- `main/<name>/.node.json`: the child's node, an empty document.
+- `main/<name>/.shortcuts.json`: its shortcut, `[{ "mrepo" }]`: only the
+  link, since `main` replicates.
+- `runtime/deployed/<name>.json`: what is local to this machine about
+  it: the package it was deployed from, the packages placed, its layers,
+  its runtime's process.
 
 ## Errors
 

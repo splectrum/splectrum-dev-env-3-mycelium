@@ -1,6 +1,6 @@
 {
   "mode": "replicated",
-  "description": "The packages the haicc mrepo is made of, in deploy order: the runtime, the help protocol, the protocol protocol, the boot protocol, the service protocol, the haicc protocol, the documentation packages, this component last.",
+  "description": "The packages the haicc mrepo is made of, in deploy order: the runtime, the help protocol, the protocol protocol, the boot protocol, the service protocol, the haicc protocol, the crud protocol, the documentation packages, this component last.",
   "packages": [
     "haiccing/base-package-runtime",
     "haiccing/base-package-help",
@@ -8,6 +8,7 @@
     "haiccing/base-package-boot",
     "haiccing/base-package-service",
     "haiccing/base-package-haicc",
+    "haiccing/base-package-crud",
     "haiccing/package-docs-mrepo",
     "haiccing/package-docs-template",
     "haiccing/base-component-haicc"

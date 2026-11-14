@@ -33,11 +33,11 @@ function source (dir, packages) {
   writeFileSync(join(dir, 'haiccing', 'manifest.json'), JSON.stringify(manifest))
 }
 
-// A parent: main, runtime, packages, xpath; its packages manifest (the store, the sources).
+// A parent: main, runtime, packages; its packages manifest (the store, the sources).
 async function parent (work, sources) {
   const src = mkdtempSync(join(tmpdir(), 'deploy-parent-'))
   try {
-    for (const l of ['main', 'runtime', 'packages', 'xpath']) lj(join(src, l), 'atomic')
+    for (const l of ['main', 'runtime', 'packages']) lj(join(src, l), 'atomic')
     const { dir } = await build({ from: src, work, name: 'boot' })
     await place({ dir, store: join(work, 'packages'), sources, list: [] })
     return dir
@@ -48,13 +48,15 @@ async function parent (work, sources) {
 // committed to their layers after the action (exec.commit(): a local commit).
 function context (dir, backend) {
   const repo = openRepo(backend)
+  const abs = p => (p.startsWith('/') ? p : `/${p}`)
   const edits = []
   const exec = {
     runtime: { name: 'boot', uri: 'local/boot', dir },
-    select: uri => repo.select(uri),
-    read: uri => repo.read(uri),
-    put: (uri, bytes) => edits.push(['put', uri, bytes]),
-    remove: uri => edits.push(['remove', uri]),
+    // (paths given relative from the root or slash-led, the same)
+    select: uri => repo.select(abs(uri)),
+    read: uri => repo.read(abs(uri)),
+    put: (uri, bytes) => edits.push(['put', abs(uri), bytes]),
+    remove: uri => edits.push(['remove', abs(uri)]),
     commit: () => commit()
   }
   async function commit () {
@@ -104,8 +106,10 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
     t.ok(await child.read('/runtime/layer.json').then(() => true, () => false), 'the runtime layer itself is structure: from whichever package brings it')
     t.alike(d.packages, ['haiccing/base', 'haiccing/target'], 'its packages, in order')
     t.is(statSync(join(work, 'packages', 'haiccing', 'base.bundle')).ino, statSync(join(host, 'packages', 'haiccing', 'base.bundle')).ino, 'each linked from the store')
-    t.alike(json(await repo.read('/xpath/host/shortcut.json')), { mrepo: 'local/host', package: 'haiccing/target', packages: d.packages, layers: d.layers }, 'its shortcut, in the xpath layer: the mrepo linked there (its unique URI, in its parent\'s swarm), what was deployed')
-    t.is(await repo.read('/main/host.json').catch(() => null), null, 'nothing of it in main')
+    t.alike(json(await repo.read('/main/host/.shortcuts.json')), [{ mrepo: 'local/host' }], 'its shortcut, in main beside its node: a list, the mrepo linked there by its unique URI (in its parent\'s swarm); only the link')
+    t.alike(json(await repo.read('/main/host/.node.json')), {}, 'its node, in main: an empty document')
+    t.alike(json(await repo.read('/runtime/deployed/host.json')), { package: 'haiccing/target', packages: d.packages, layers: d.layers }, 'what is local to this machine about it, in the runtime layer: main replicates, this does not')
+    t.alike([d.mrepo, d.package], ['local/host', 'haiccing/target'], 'both said in what deploy returns')
     t.alike(json(await child.read('/runtime/mrepo.json')), { uri: 'local/host' }, 'its identity, in its own runtime layer')
     await t.exception(deploy(exec, { uri: ['main', 'host'], args: ['haiccing/target'] }), /deployed already/)
 
@@ -117,8 +121,8 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
 
     // a runtime that does not stop (no socket, SIGTERM ignored): teardown ends it all the same
     const stubborn = spawn('sh', ['-c', 'trap "" TERM; while true; do sleep 1; done'], { stdio: 'ignore', detached: true })
-    const rec = json(await repo.read('/xpath/host/shortcut.json'))
-    exec.put('/xpath/host/shortcut.json', Buffer.from(JSON.stringify({ ...rec, runtime: { pid: stubborn.pid } })))
+    const rec = json(await repo.read('/runtime/deployed/host.json'))
+    exec.put('/runtime/deployed/host.json', Buffer.from(JSON.stringify({ ...rec, runtime: { pid: stubborn.pid } })))
     await commit()
     const logged = []
     exec.log = (level, event, data) => logged.push({ level, event, ...data })
@@ -128,7 +132,7 @@ test('deploy from a target package\'s list, inside the parent; redeploy; teardow
     delete exec.log
     await commit()
     t.absent(existsSync(host), 'removed')
-    t.is(await repo.read('/xpath/host/shortcut.json').catch(() => null), null, 'its shortcut out of the xpath layer')
+    t.alike([await repo.read('/main/host/.shortcuts.json').catch(() => null), await repo.read('/main/host/.node.json').catch(() => null), await repo.read('/runtime/deployed/host.json').catch(() => null)], [null, null, null], 'its shortcut and its node out of main, what was local out of the runtime layer')
     await t.exception(teardown(exec, { uri: ['main', 'host'] }), /not deployed/)
     await t.exception(deploy(exec, { uri: ['main', 'x'], args: ['haiccing/none'] }), /not in the store nor the sources/)
     await t.exception(deploy(exec, { uri: ['main', '../x'], args: ['haiccing/target'] }), /bad segment/, 'no way up')
