@@ -138,7 +138,8 @@ step shown to the human first)
   | `base-package-runtime` | there (part 51, pinned) | has one (`start`) |
   | `base-component-boot` | to bring in | has one (`boot`) |
   | `base-package-protocol` | there (part 53, pinned) | `mounted`: its protocol as mounted, no mrepo; in a running mrepo still to come |
-  | `base-package-service`, `-help`, `-haicc`, `-boot` | to bring in | lacking |
+  | `base-package-help` | there (part 54, pinned) | `mounted`, no mrepo; in a running mrepo still to come |
+  | `base-package-service`, `-haicc`, `-boot` | to bring in | lacking |
   | `base-component-haicc` | to bring in | lacking |
   | `base-linux-haicc` | not a bundle: carries no generic test, its own is `test/run.sh`; to settle |
 
