@@ -405,13 +405,19 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   data type."). So nothing wraps an action's answer: what reads nodes
   answers with an array of them, by what it is; `service/start` answers
   its object as it does now.
-- **A URI is of type array of name part strings** (the human, the same
-  answer: "URI is of type Array of Namepart strings."). Our reading, to
-  confirm before it is built: a URI as data is its name parts in order,
-  `["swarms", "swarm-1", "node-1"]`, not one string with slashes; the
-  string form is how it is typed. The prefix is then of the same type and
-  joining the two is joining two arrays. Where it applies (the URIs in a
-  response and the prefix only, or the request's form too) is asked.
+- **A URI is of type array of URI segments** (the human, the same
+  answer: "URI is of type Array of Namepart strings.", then corrected:
+  "name part uri segments rather than individual name parts"). Our
+  reading, to confirm before it is built: a URI as data is an array of
+  segments, each a relative URI of one or more name parts
+  (`"swarms/swarm-1/node-1"`), not split into single names and not one
+  joined string. The segments are the fixed chunks the rewrites work on:
+  the layer, each jump, the URI where the command was executed:
+  `["main", "host", "swarms/swarm-1/node-1"]`. The prefix is of the same
+  type, so joining prefix and URI is joining two arrays, and the
+  boundaries stay. The string form is how one segment is typed. Where the
+  type applies (the URIs in a response and the prefix only, or the
+  request's form too) is asked.
 - **An empty selection is not an error** inside: it gives an empty
   array, also for a plain path with a typo in it. Whether that is an
   error is for the one who submits the request to check. No rule of ours
