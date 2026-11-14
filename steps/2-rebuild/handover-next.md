@@ -110,16 +110,6 @@ with the human first, unless the task says it is ours ("Left to us").
 
 **With the human, open**
 
-- Two repositories to create (part 60), each needed only to push its
-  product repository: `haiccing/base-app-haicc` (agreed; "App: the haicc
-  command, run with Bare: it boots the local root and puts commands in
-  the boot mrepo's inbox.") and `pear-full-square/haicc-base-app` (the
-  app's module; the name is ours, said to the human, not yet answered:
-  "Module: the haicc command's app, the command line that boots the
-  local root and sends commands to the mrepos."). Check they exist
-  (`gh api -X GET search/repositories -f q='<name> in:name org:<org>'`),
-  then `sh tools/products.sh haicc-base-app` and `sh tools/packages.sh
-  -m "..." base-app-haicc`.
 - Testing by hand on the local machine: the local agent ran `381bbae`
   (its note, 2026-11-13) and nothing after; its prompt, `prompt-local.md`,
   predates parts 47 to 59 (`tools/package-test.js`, the reports). Its
