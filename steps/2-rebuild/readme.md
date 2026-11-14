@@ -2478,3 +2478,31 @@ problems.
 **Validated**: its pre-release: 22 units, 233 tests, 1235 asserts, the
 report written (four minutes; its `boot` test 119 asserts). The READMEs,
 196, no problems. Nothing left running.
+
+## 59. base-component-haicc brought to the template; all ten in line (2026-11-14)
+
+- **`base-component-haicc`** brought to the template, pinned to
+  `haiccing/package-docs-template@6f78874`.
+- **Its own test, `test/configured/`**, no mrepo: what defines the haicc
+  mrepo. Its list, in deploy order, itself last; its hooks file by file,
+  the state it starts in; then against the packages it lists, their
+  bundles read from the sources (`SOURCES`): each is there, the six
+  protocols they provide; every hook names a protocol and an action one
+  of them provides; and what the hooks do, run with those packages' own
+  actions on a minimal execution in memory: after the boot `haicc`,
+  `help`, `runtime` and `service` open; `initialise` extracts the help;
+  `start` opens `boot`, `stop` closes it, `shutdown` back to booted;
+  every hook file must have run. Every protocol the listed packages
+  provide is opened by a hook, except the protocol protocol, on purpose:
+  a package added to the list without a hook for its protocol fails it.
+
+**Validated, the whole**: its pre-release: 7 units, 29 tests, 87 asserts,
+its own test 6 tests and 34 asserts. Then everything rebuilt,
+`tools/bare tools/release.js --strict`: ten packages, every report
+current (nothing rerun: the same bundles). `tools/bare tools/code-check.js`:
+18 modules, 11 packages, no problems (it listed 104 lines when the folder
+rule went in). The READMEs: 204 in the sources, 413 in the help tree, no
+problems. The `haicc` test, 107 of 107. `base-component-boot`'s
+`validate` twice more, its `boot` test 119 of 119 each time. Nothing left
+running. Every package's repository pushed.
+

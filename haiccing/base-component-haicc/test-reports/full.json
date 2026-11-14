@@ -1,0 +1,101 @@
+{
+  "package": "haiccing/base-component-haicc",
+  "content": "ef0254042d96e7e23599c14296e4a6d89eb87e2fc584c8235b7f65052aa0ebd2",
+  "bare": "v1.36.0",
+  "date": "2026-11-14T01:09:38.221Z",
+  "set": "full",
+  "ok": true,
+  "units": [
+    {
+      "unit": "/test/configured",
+      "ok": true,
+      "tests": {
+        "passed": 6,
+        "total": 6
+      },
+      "asserts": {
+        "passed": 34,
+        "total": 34
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/help",
+      "ok": true,
+      "tests": {
+        "passed": 1,
+        "total": 1
+      },
+      "asserts": {
+        "passed": 2,
+        "total": 2
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/code",
+      "ok": true,
+      "tests": {
+        "passed": 1,
+        "total": 1
+      },
+      "asserts": {
+        "passed": 2,
+        "total": 2
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/mrepo",
+      "ok": true,
+      "tests": {
+        "passed": 1,
+        "total": 1
+      },
+      "asserts": {
+        "passed": 1,
+        "total": 1
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/package",
+      "ok": true,
+      "tests": {
+        "passed": 1,
+        "total": 1
+      },
+      "asserts": {
+        "passed": 1,
+        "total": 1
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/modules/pear-full-square/mrepo-base-help",
+      "ok": true,
+      "tests": {
+        "passed": 5,
+        "total": 5
+      },
+      "asserts": {
+        "passed": 21,
+        "total": 21
+      },
+      "failures": []
+    },
+    {
+      "unit": "/test/modules/pear-full-square/pkgm-base-check",
+      "ok": true,
+      "tests": {
+        "passed": 14,
+        "total": 14
+      },
+      "asserts": {
+        "passed": 26,
+        "total": 26
+      },
+      "failures": []
+    }
+  ]
+}

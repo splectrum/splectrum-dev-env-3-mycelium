@@ -72,28 +72,29 @@ the work reaches it.
 
 ## Validation, before every commit
 
-- Each package's `validate` set from its bundle (its own tests, `help`,
-  `code`, `mrepo`, `package`), `full` when modules changed:
-  `SOURCES=$PWD/sources tools/bare sources/haiccing/<package>.bundle /test/full`.
+- **A package that changed: its pre-release**, one command:
+  `tools/bare tools/package-test.js haiccing/<package>`. It rebuilds the
+  package, runs its `full` set from the bundle when its content changed,
+  and writes the report (`test-reports/`) that is committed with it.
+  Nothing changed: nothing run, the same bundle. A module that changed:
+  the pre-release of every package that carries it.
+- **Everything**: `tools/bare tools/release.js --strict`: every package
+  rebuilt, and it refuses unless every package's report is current.
 - `tools/bare tools/help-extract.js` (and `--files`) and
   `tools/bare tools/code-check.js`: no problems. The second also checks
-  every package's structure: a package that provides something and has no
-  test of its own for it is named there.
+  every package against the package structure.
 - When the runtime or the repository code changed, the boot's test
-  (`base-component-boot`: `test/boot/run.js`) several times: a race shows
-  one run in a few. Nothing left running after.
+  several times: a race shows one run in a few
+  (`SOURCES=$PWD/sources tools/bare sources/haiccing/base-component-boot.bundle /test/validate`).
+  Nothing left running after (`pgrep -fa "bin/bare"`).
 - The `haicc` command end to end, when anything it touches changed (the
   scripts, the boot, the component, the request form):
   `sh haiccing/base-linux-haicc/test/run.sh`.
-- A package brought to the template (it has `test-reports/`) is validated
-  by its pre-release, one command: `tools/bare tools/package-test.js
-  haiccing/<package>`. It rebuilds, runs the `full` set when the package
-  changed, and writes the report that is committed with it. Nothing
-  changed: nothing run, the same bundle.
-- Rebuild first: `tools/bare tools/package-assemble.js haiccing/<package>`,
-  then `tools/bare tools/package-bundle.js haiccing/<package>`; or all of
-  it, `tools/bare tools/release.js`. A bundle carries its package's tests:
-  rebuild after a test changed, too.
+- **A package tests what it provides**, in a test of its own, a folder in
+  its `test/`; where nothing is specific to it, a dummy that says so, an
+  explicit decision. A test that runs nothing by accident fails. A new
+  package starts from the template (`sh tools/package-template.sh`) and
+  fails its own validation until that question is answered.
 
 ## Execution
 

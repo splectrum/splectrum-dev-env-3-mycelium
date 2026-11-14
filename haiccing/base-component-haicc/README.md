@@ -12,7 +12,8 @@ created.
 | | |
 |---|---|
 | [mrepo/](mrepo/) | its part of the structure: the list of its packages |
-| [test/](test/) | its tests |
+| [test/](test/) | its tests: its list and its hooks as configured, and the generic ones |
+| [test-reports/](test-reports/) | the report of its last pre-release |
 | [modules/](modules/) | its code, assembled: ours and the third-party code |
 
 ## Packages
