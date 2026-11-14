@@ -1,7 +1,8 @@
 # Prompt for the local agent
 
 Give this to Claude Code on the local machine (Linux x86-64; git, curl,
-tar; `gh` for a release). Nothing is signed. The sources are built
+tar; `gh` for a release; `git` also for one measurement of step 6).
+Nothing is signed. The sources are built
 locally and used locally; a release is created only when the human asks.
 Only its note is committed.
 
@@ -48,7 +49,22 @@ Only its note is committed.
 >    Then `tools/bare tools/release.js --strict`: it says, for each
 >    package, whether the report committed with it is the one of the
 >    bundle you built (`current`); say in your note if one is not.
-> 6. **Install it for the human**, in their home folder:
+> 6. **Measure the commits** (the human's laptop has twelve cores: what
+>    do the same measurements give there). From the clone's folder:
+>    `tools/bare tools/commit-bench.js --dir "$HOME/haicc-commit-bench"`
+>    (a folder on the laptop's disk, not a RAM disk; it makes the folder
+>    and removes what it wrote, up to a few hundred MB meanwhile). It
+>    prints one line of JSON a measurement and ends with
+>    `{"ok":true,"measure":"done",...}`; ten to twenty minutes. Run it
+>    with the laptop on mains power and little else running. Into your
+>    note: every line it printed, as printed; the processor
+>    (`lscpu | grep -E "Model name|^CPU\(s\)|Thread|Core"`); the
+>    filesystem of the folder (`df -T "$HOME"`); and anything that
+>    failed (a line with `"error"`, or `"errors"` above 0). What it
+>    measures and what it gave in the cloud session:
+>    `steps/2-rebuild/xpath.md`, "Commits: how often, and what git
+>    handles". It leaves nothing running.
+> 7. **Install it for the human**, in their home folder:
 >    `sh haiccing/base-linux-haicc/haicc-install.sh` (it puts the scripts in
 >    `~/.haicc` and registers `haicc` in `/usr/local/bin` when that can be
 >    written, else in `~/.local/bin`; it says if that folder is not on the
@@ -58,7 +74,7 @@ Only its note is committed.
 >    install left a boot mrepo running (`pgrep -fa "bin/bare"`), say so in
 >    your note and leave it: stopping it is the human's (`haicc
 >    boot/teardown`). Do not run `haicc boot/deploy`: that is the human's.
-> 7. **Tell the human** it is ready: what steps 4 and 5 printed last (or
+> 8. **Tell the human** it is ready: what steps 4 and 5 printed last (or
 >    what failed and how), where `haicc` was registered, and the commands
 >    to try, in this order:
 >    `haicc boot/deploy`, `haicc . boot/deploy host base-component-haicc`,
@@ -74,7 +90,7 @@ Only its note is committed.
 >    command prints its response record whole, unpacked across lines;
 >    `haicc --raw ...` as it is stored, one line; `haicc --output ...` the
 >    output alone. `haicc --help` lists the commands.
-> 8. **Write a note back**: what ran, each result, anything that did not
+> 9. **Write a note back**: what ran, each result, anything that did not
 >    run as written and why (with a proposal and a patch if you have one,
 >    as before), in `steps/2-rebuild/local-note.md`: a new section at the
 >    top, dated, naming the commit you tested. Commit only that file on
