@@ -94,6 +94,15 @@ crud/read */swarms/*
   descendants, filters, set operations), nothing that looks back or up
   (the parent, the ancestors, the siblings before a node).
 
+- **The order of a node set**: "there is system order - whichever way
+  it comes out - or a set order." Our reading, to confirm: by default a
+  set comes in the system's order, nothing promised about it; an order
+  can be set on it (asked for in the query: a sort). What depends on
+  order (a selection by position, the siblings after a node) works on
+  the order the set has, and is repeatable only on a set order.
+- **XPath's functions**: "if we can do it efficiently, yes functions
+  please."
+
 **Proposed** (ours: the list shown to the human, the points not
 answered one by one). "Attribute" read as a field of the node's
 document.
@@ -120,13 +129,14 @@ document.
 
 **To settle**, against full coverage:
 
-- **A selection by position (`[1]`, the last)**: it needs an order, and a
-  merged set has none unless the merge defines one (our first opinion:
-  left out for now).
-- Which XPath the forward part is taken from (its version), and its
-  functions (on strings, numbers, node sets): which are wanted.
-- The siblings after a node: forward, but they need the same order a
-  position does.
+- Which XPath the forward part is taken from (its version); which of
+  its functions (on strings, numbers, node sets), and what efficient
+  asks of each: one that reads a node's own name and document runs
+  where the node lives, as a filter does; one over the whole set (a
+  count, a position, the last) runs after the merge.
+- How an order is set: in the query, and by whom it is applied (after
+  the merge, by the mrepo that fanned out; a linked mrepo's own order is
+  lost in a merge unless the merge keeps it).
 
 ## The steps
 
@@ -154,7 +164,6 @@ demo kept as its how-to.
 - **The stacked merge's rule**: which layer is on top (local data, the
   sources in their order), and whether a node on top replaces the one
   below whole or their documents are combined.
-- **The order of a merged set**, if any.
 - **A command that is not a read, executed at a selection** (`haicc
   swarms/* service/start`): its answers are not node sets (the human: "a
   response can contain any data type"); what the merge does with them,
@@ -185,6 +194,15 @@ moved.
   URI does not run through a shortcut.
 - `pear-full-square/mrepo-base-request`: a command interpreted on its
   way in (`lib/command.js`), where a rewrite would sit.
+- **Bare runs threads in parallel** (the human's question, tried here
+  2026-11-14, Bare v1.36.0, four cores): `Bare.Thread`, in Bare itself,
+  a JavaScript entry on an OS thread of its own; `bare-thread` (an entry
+  bundled with its modules) and `bare-channel` (messages between
+  threads) are in `node_modules/` already, brought by `brittle` and
+  `bare-fs`. Four runs of a loop: 2107 ms one after another, 859 ms a
+  thread each. A thread has its own heap: nothing shared but what is
+  passed (a message, a shared buffer). Nothing of ours uses threads: an
+  mrepo's runtime is a process (`bare-subprocess`).
 - `vision.md`, "Pipelines, and mycelium as a database server" and
   "Overlays"; `tasks.md`, task 1 (the prefix, the jumps, selections as
   arrays) and "Predicates in a URI".
