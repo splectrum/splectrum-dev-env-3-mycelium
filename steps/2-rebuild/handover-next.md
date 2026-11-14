@@ -99,8 +99,11 @@ query that comes in is rewritten into a pipeline of `haicc` segments and
 merges; each mrepo rewrites the part it sees and answers with one merged
 node set (no cascading); two scenarios, juxtaposed (a link along the URI)
 and stacked (several layers at one position); the aim full coverage of
-the operations, in steps. Its steps are our proposal, not yet put to the
-human; its "To settle" is the list to go through, point by point.
+the operations that look forward, in steps. With it, the human:
+requests can run on threads, several at once (reads of the Corestore are
+parallel, tried); the request train and the commit to `main` stay on one
+thread. Its steps are our proposal, not yet put to the human; its "To
+settle" lists are what to go through, point by point.
 
 **Then, the human's priority: swarm nodes up and running** ("The
 roadmap", item 2): a command at a deeper position (the execution's
