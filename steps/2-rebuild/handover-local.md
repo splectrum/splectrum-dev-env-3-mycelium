@@ -1,6 +1,6 @@
 # For the local agent: what the release is now
 
-Updated 2026-11-13 by the cloud session, for the local agent (a Linux
+Updated 2026-11-14 by the cloud session (parts 60 to 64), for the local agent (a Linux
 x86-64 machine with git, curl and tar; no Node.js needed). The task itself
 is in `prompt-local.md`; this is its background. The earlier releases (a
 setup file, three signed bundles, an executable) are in `local-run.md`,
@@ -34,15 +34,17 @@ sh haiccing/base-linux-haicc/haicc-install.sh
 haicc sources link <clone>/sources
 haicc prereq
 haicc boot/deploy
-haicc / boot/deploy host base-component-haicc
-haicc /host service/initialise
-haicc /host service/start
+haicc . boot/deploy host base-component-haicc
+haicc host service/initialise
+haicc host service/start
+haicc . crud/create swarms/swarm-1
+haicc . crud/read swarms
 ```
 
 - `haicc`'s own folder is `~/.haicc`: its scripts, the pins, the sources
   list, Bare (unpacked by `haicc prereq` from the sources) and the work
   folder (`~/.haicc/work`: the boot mrepo, the package store).
-- Only `haicc sources download` reaches the network; nothing in a run
+- Only `haicc sources download bare` reaches the network; nothing in a run
   above does, once `tools/release.js` has fetched Bare's tarball.
 - A runtime is a process that keeps running: the boot mrepo's after
   `haicc boot/deploy`, one more for each mrepo deployed. To stop them all
@@ -52,6 +54,15 @@ haicc /host service/start
 - A command prints its response record whole, unpacked across lines;
   `haicc --raw <URI> ...` prints it as stored, one line;
   `haicc --output <URI> ...` the output alone.
+- **A URI is relative** (part 61): no leading slash; `.` is the local
+  root, `host` the position `host`; a leading slash is refused. What an
+  action is about comes after it: `haicc host help/get . packages`.
+- **A command takes about half a second to start** since it is a Bare
+  app (part 60); the sh scripts answer only `sources link`, `sources
+  download bare`, `prereq` and the first part of `--help`.
+- **Each package carries its test report** (`test-reports/`), written by
+  the cloud session's pre-release; `tools/bare tools/release.js
+  --strict` says whether each is the one of the bundle just built.
 
 ## Releases: created on the local machine
 
@@ -82,8 +93,13 @@ GitHub release; it can only push commits. So:
 
 ## Where things stand
 
-
-`readme.md`, parts 30 to 37, and `handover-next.md`. Known and not built:
-our packages are not published, so `haicc sources download` fetches Bare
-only; a position deeper inside `main` is refused by `haicc`; teardown does
-not cascade (tear down a node before its host).
+`readme.md`, parts 30 to 64, and `handover-next.md`. Since your last run
+(`381bbae`): every package has its own tests and a test report (parts 47
+to 59); the `haicc` command is a Bare app (60); URIs are relative (61,
+62); `crud` makes structure in `main`, the shortcuts are in `main` and
+the `xpath` layer is gone (63); the `rest` actions are removed and a
+race of `haicc boot/deploy` run again is fixed (64). Known and not
+built: our packages are not published, so `haicc sources download`
+fetches Bare only; a position deeper inside `main` is refused by
+`haicc`; teardown does not cascade (tear down a node before its host;
+`haicc boot/teardown` stops everything).
