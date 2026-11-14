@@ -584,6 +584,19 @@ item 3), wanted for creating structure in `main`.
     on the user's initiative, so it is good to be able to put some
     structure in. The boot mrepo has no service: there `crud` is
     activated by a `boot` hook, as its other protocols are.
+- **Shortcuts are registered in `.node.json`** (the human, 2026-11-14),
+  not on the `xpath` layer as planned and built: part of the hidden
+  visible state. Ours, put to the human, not answered: only what is true
+  for everyone goes in, the link (the linked mrepo's unique URI); what is
+  local to the machine that deployed it (its folder, its runtime's pid,
+  the packages placed) stays out. The node document becomes an envelope,
+  `{ "value": ... }` for data, `{ "shortcut": { "mrepo": ... } }` for a
+  link, so system facts and the node's own value do not mix. The `xpath`
+  layer can then go; `resolve`, the boot protocol's actions, `goto` and
+  their tests follow (`pear-full-square/mrepo-base-xpath`,
+  `mrepo-base-boot/internal/child.js`, `external/deploy`, `teardown`; the
+  `mounted` tests of `base-package-boot` and `base-package-haicc`;
+  `package-docs-mrepo`'s `xpath` page).
 - The names (agreed): protocol `crud`, module
   `pear-full-square/mrepo-base-crud`, package
   `haiccing/base-package-crud`.
