@@ -584,19 +584,37 @@ item 3), wanted for creating structure in `main`.
     on the user's initiative, so it is good to be able to put some
     structure in. The boot mrepo has no service: there `crud` is
     activated by a `boot` hook, as its other protocols are.
-- **Shortcuts are registered in `.node.json`** (the human, 2026-11-14),
-  not on the `xpath` layer as planned and built: part of the hidden
-  visible state. Ours, put to the human, not answered: only what is true
-  for everyone goes in, the link (the linked mrepo's unique URI); what is
-  local to the machine that deployed it (its folder, its runtime's pid,
-  the packages placed) stays out. The node document becomes an envelope,
-  `{ "value": ... }` for data, `{ "shortcut": { "mrepo": ... } }` for a
-  link, so system facts and the node's own value do not mix. The `xpath`
-  layer can then go; `resolve`, the boot protocol's actions, `goto` and
-  their tests follow (`pear-full-square/mrepo-base-xpath`,
-  `mrepo-base-boot/internal/child.js`, `external/deploy`, `teardown`; the
-  `mounted` tests of `base-package-boot` and `base-package-haicc`;
-  `package-docs-mrepo`'s `xpath` page).
+- **Shortcuts are part of the hidden visible state** (the human,
+  2026-11-14), in `main` beside the node's document, not on the `xpath`
+  layer as planned and built.
+  - **A file per data unit** (the human): `.shortcuts.json`, beside
+    `.node.json`, not an envelope in one file (our proposal, dropped).
+    Agreed: each file one concern and one writer (`crud` the node's
+    document, the boot protocol the shortcuts), no collision between a
+    change of the value and a change of the links, a new kind of system
+    data a new hidden file.
+  - **Several for one node** (the human): the file sits in the node and
+    can name more than one mrepo its data comes from.
+  - **Plus local data**, for more sophisticated setups (the human): for
+    instance a local layer can add processed documents to an input data
+    structure while keeping both separate.
+  - **XPath processing has become simpler** (the human): with `haicc`
+    for the segments, a path is resolved inside one mrepo.
+  - Ours, put to the human, not answered: only what is true for everyone
+    goes in the file (each source's unique URI); what is local to the
+    machine that deployed a child (its folder, its runtime's pid, the
+    packages placed) stays out, `main` replicates. What is seen at such a
+    node is the combination of its sources and the local data, each kept
+    where it is stored; a write goes to the local side only. Built first:
+    the file a list from the start, one source in use (a deployed child,
+    as today); combining several sources and local data when a real case
+    comes.
+  - What follows in the code: the `xpath` layer can go; `resolve`, the
+    boot protocol's actions, `goto` and their tests
+    (`pear-full-square/mrepo-base-xpath`,
+    `mrepo-base-boot/internal/child.js`, `external/deploy`, `teardown`;
+    the `mounted` tests of `base-package-boot` and `base-package-haicc`;
+    `package-docs-mrepo`'s `xpath` page).
 - The names (agreed): protocol `crud`, module
   `pear-full-square/mrepo-base-crud`, package
   `haiccing/base-package-crud`.
