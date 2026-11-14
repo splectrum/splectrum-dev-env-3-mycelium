@@ -2398,3 +2398,27 @@ test 7 tests and 40 asserts, the report written. The `haicc` test with
 the rebuilt bundle, 107 of 107. The READMEs, 165, no problems. Nothing
 left running. Its repository pushed.
 
+
+## 55. base-package-service brought to the template (2026-11-14)
+
+The human: continue working through until the end; the tests are in place
+to ensure it comes out right.
+
+- **`base-package-service`** brought to the template, pinned to
+  `haiccing/package-docs-template@6f78874`.
+- **Its own test, `test/mounted/`**, no mrepo: what it provides; its
+  config value by value (the four actions at the mrepo itself, each in
+  the states that allow it); its config in effect (the request check on
+  each state: allowed only where named, refused with the state it is in,
+  not offered elsewhere, refused when not activated); its structure (it
+  starts `booted`; its list, itself last); its hooks file by file (at
+  boot `help`, `runtime`, `service` activated; on `initialise` the help
+  extracted; a hook file not named in the test fails it); its actions on
+  a minimal execution over the package's own state file and hooks (the
+  hook first, as the mrepo's own, then the state; dropped-in hooks on
+  their own transition, in name order; a failing hook, the state not
+  moved); the last test failing when an action was not run.
+
+**Validated**: its pre-release: 14 units, 183 tests, 790 asserts, its own
+test 9 tests and 42 asserts, the report written. The READMEs, 173, no
+problems. Nothing left running.
