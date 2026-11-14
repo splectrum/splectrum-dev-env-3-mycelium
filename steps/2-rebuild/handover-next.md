@@ -102,11 +102,15 @@ and stacked (several layers at one position); the aim full coverage of
 the operations that look forward, in steps. With it, the human:
 requests can run on threads, several at once (reads of the Corestore are
 parallel, tried); the request train and the commit to `main` stay on one
-thread; the commits measured (git is not the limit for the commits; the
-train's bookkeeping slows as requests are done, two repairs named; the
-merge into `main` is to become a squash). Its steps are our proposal,
-not yet put to the human; its "To settle" lists are what to go through,
-point by point.
+thread; the commits measured (`tools/commit-bench.js`: git is not the
+limit for the commits; the train's bookkeeping slows as requests are
+done). **The next to build: `tasks.md`, task 4**, the two repairs (a
+removed branch takes its empty folders; the merge into `main` a squash):
+its "Proposed" is confirmed with the human first. XPath itself: a good
+first implementation, measured, then single or several requests decided
+from the figures (the human). The readings marked "to confirm" in
+`xpath.md` and its "To settle" lists are what to go through with the
+human, point by point.
 
 **Then, the human's priority: swarm nodes up and running** ("The
 roadmap", item 2): a command at a deeper position (the execution's
@@ -143,7 +147,10 @@ with the human first, unless the task says it is ours ("Left to us").
   the older sources copy (`~/.haicc/sources/`, of `381bbae`) first in
   `sources.list`, where it could shadow the new bundles, and unlinked
   it. Its prompt, `prompt-local.md`, and its background,
-  `handover-local.md`, are current for parts 60 to 64. Its notes come
+  `handover-local.md`, are current for parts 60 to 64. **Asked since**
+  (the human, 2026-11-14): the commits measured on the human's laptop,
+  twelve cores, with `tools/commit-bench.js` (the prompt's step 6); the
+  figures to be set beside ours in `xpath.md`, "Commits". Its notes come
   back in `local-note.md`: fetch and read them when told, and act on
   what they report.
 - No release yet: on the human's word, created by the local agent

@@ -140,7 +140,21 @@ document.
 
 ## The steps
 
-**Proposed** (ours, not yet put to the human). Each as a feature is
+**Settled** (the human, after the measurements of the commits)
+
+- "I think we should do a good first implementation and measure its
+  performance to see if we should go single or multiple requests
+  (processing duration vs request and commit overhead)." Our reading, to
+  confirm: the first implementation evaluates a query inside one mrepo
+  in one request; it is measured (what the selecting and filtering
+  takes, against what a request and its commits cost: about 44 ms a
+  request's cycle and 7 to 9 ms a commit here); from the figures it is
+  decided whether a query is cut into several requests inside one
+  mrepo. Across a link a hop is a request either way.
+
+**Proposed** (ours, not yet put to the human; written before the line
+above: the cut into requests inside one mrepo now waits for the
+figures). Each as a feature is
 built now: a demo with the `haicc` tool first, then the real thing, the
 demo kept as its how-to.
 
@@ -261,6 +275,19 @@ this."
   lower frequency. Request branches should be cleaned up under normal
   circumstance."
 
+- **The rates** (after the measurements): "Our request rate and request
+  branch commit rate will be significantly higher than the request
+  branch creation rate. The number of commits per request branch will be
+  low (<100)." Our reading, to confirm: a request branch carries several
+  requests (a pipeline's steps) and their commits; what is paid a
+  branch (made, merged into `main`, removed: the train's part) is paid
+  far less often than what is paid a commit, which is cheap and runs in
+  parallel.
+- **The two repairs are a task**: "Yes, put them on the task list.
+  Sounds like a good starting position" (`tasks.md`, task 4).
+- **The same measured on the human's laptop** (twelve cores), by the
+  local agent: in `prompt-local.md`.
+
 **Against what is built** (found, 2026-11-14)
 
 - **The merge into `main` is a plain merge today**, not a squash
@@ -276,7 +303,9 @@ this."
 **Found** (measured here, 2026-11-14: the machine and versions as above;
 the filesystem with the p2p-git engine unless said; each commit one
 small document put at `swarms/n<x>/.node.json`, a folder of 100
-children; ext4, nothing forced to disk; the scripts not kept)
+children; ext4, nothing forced to disk). Kept since as a tool, to be run
+again: `tools/bare tools/commit-bench.js` (one line of JSON a
+measurement; about six and a half minutes here).
 
 - **Writers at once, each on its own branch** (threads really, this
   time; branches of one layer, `execute/<id>/main`, made from `main`;
@@ -363,9 +392,6 @@ children; ext4, nothing forced to disk; the scripts not kept)
 - Where the two repairs go: `mycelium-git`'s adapter, or `p2p-git`
   (which has two open defects on refs already: the handover,
   "Elsewhere").
-- Whether the measurements become a tool that is kept (`tools/`), run
-  again after each repair.
-
 ## To settle
 
 - **The syntax**: XPath's own or ours. A URI is typed in a shell: `*`,

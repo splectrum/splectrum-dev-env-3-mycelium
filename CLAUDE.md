@@ -51,7 +51,8 @@ the work reaches it.
   generic tests' folders and `test-reports/` copied from the template's
   repository, the package pinned to that commit), the product
   repositories (`products.sh` for the modules, `packages.sh` for the
-  packages), the checks (`help-extract.js`, `code-check.js`). `sources/`
+  packages), the checks (`help-extract.js`, `code-check.js`), the commits
+  measured (`commit-bench.js`). `sources/`
   and `node_modules/` are ignored by git: a fresh clone needs
   `sh tools/install.sh`, then `tools/bare tools/release.js`.
 - `rules.md`: this repository's own rules (branches, layers, commits,

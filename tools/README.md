@@ -32,6 +32,12 @@ another can use it.
 | `code-check.js` | the code rules over the carried modules; each package against the package structure |
 | `help-extract.js` | the help tree extracted from the bundles; the README rules on it, and on the source READMEs |
 
+## Measuring
+
+| tool | does |
+|---|---|
+| `commit-bench.js` | the commits measured on this machine: writers at once (threads, processes), a folder's width, a long history, the Corestore, native git, a request's cycle |
+
 ## The product repositories
 
 | tool | does |
@@ -45,3 +51,4 @@ another can use it.
 |---|---|
 | `lib/dispatcher.js` | a package's dispatcher and test runner, written into the package |
 | `lib/report.js` | a package's test report: its status against a bundle, the report to read |
+| `lib/commit-bench-worker.js` | a writer of `commit-bench.js`, run as a thread or as a process |
