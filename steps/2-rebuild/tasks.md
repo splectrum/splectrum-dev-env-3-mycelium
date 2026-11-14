@@ -415,9 +415,22 @@ Discussed 2026-11-13, while designing task 2, which builds on it.
   the layer, each jump, the URI where the command was executed:
   `["main", "host", "swarms/swarm-1/node-1"]`. The prefix is of the same
   type, so joining prefix and URI is joining two arrays, and the
-  boundaries stay. The string form is how one segment is typed. Where the
-  type applies (the URIs in a response and the prefix only, or the
-  request's form too) is asked.
+  boundaries stay. The string form is how one segment is typed.
+- **In the request's form: one segment per command** (the human,
+  2026-11-14, asked whether the type applies to the form too: "Request
+  form one segment per command"). So the form's URI is of that type too,
+  and each command in a chain gives one segment, its URI whole as typed.
+  Our reading of the details, put to the human, not yet answered:
+  - the layer the writer stands at comes first, as a segment of its own
+    (`main` from outside), then one segment for the command:
+    `haicc host service/start` is `["main", "host"]`;
+  - a command executed at a position has the position's segments, then
+    its own: `haicc test/mydata/users users/check-addresses a/b` runs
+    `users/check-addresses` with `["main", "test/mydata/users", "a/b"]`;
+  - exactly one each, `.` included (`service/start` with no URI:
+    `["main", "."]`), so the last segment is always the command's own
+    URI and those between the layer and it are the jumps: the chain of
+    commands can be read back from the array.
 - **An empty selection is not an error** inside: it gives an empty
   array, also for a plain path with a typo in it. Whether that is an
   error is for the one who submits the request to check. No rule of ours
