@@ -128,25 +128,40 @@ step shown to the human first)
   `protocol.js` loaded, the config value by value, each action on a
   minimal execution, the last test failing when an action was not run);
   the runner fails a unit that reports no summary.
-- **What is left, as the check lists it** (78 lines, by package; each of
-  the eight also lacks `test-reports/` and the pin):
+- Parts 54 to 59: `base-package-help`, `-service`, `-boot`, `-haicc`,
+  `base-component-boot` and `base-component-haicc` brought to the
+  template, each with a test of its own.
+- **Where it stands** (2026-11-14): all ten bundle packages are brought
+  to the template and pinned, each with a current, passing report;
+  `tools/bare tools/release.js --strict` passes; `tools/bare
+  tools/code-check.js`: no problems.
 
-  | package | the generic folders | a test of its own |
+  | package | its own test | still to come, in a running mrepo |
   |---|---|---|
-  | `package-docs-template` | there | none asked |
-  | `package-docs-mrepo` | there (part 50, pinned) | none asked |
-  | `base-package-runtime` | there (part 51, pinned) | has one (`start`) |
-  | `base-component-boot` | to bring in | has one (`boot`) |
-  | `base-package-protocol` | there (part 53, pinned) | `mounted`: its protocol as mounted, no mrepo; in a running mrepo still to come |
-  | `base-package-help` | there (part 54, pinned) | `mounted`, no mrepo; in a running mrepo still to come |
-  | `base-package-service`, `-haicc`, `-boot` | to bring in | lacking |
-  | `base-component-haicc` | to bring in | lacking |
-  | `base-linux-haicc` | not a bundle: carries no generic test, its own is `test/run.sh`; to settle |
+  | `package-docs-template` | none asked (the template) | |
+  | `package-docs-mrepo` | `none`: a dummy, nothing package specific | |
+  | `base-package-runtime` | `start`: the runtime started over an mrepo | `runtime/run` requested, its boot hooks |
+  | `base-package-protocol` | `mounted` | activate and deactivate requested, the gate |
+  | `base-package-help` | `mounted` | extracted by a hook, read by commands |
+  | `base-package-service` | `mounted` | requested, the door, a failing hook rolled back |
+  | `base-package-boot` | `mounted` | a child built and started by a request |
+  | `base-package-haicc` | `mounted` | a command as typed, carried through shortcuts |
+  | `base-component-boot` | `boot`: end to end, between running mrepos | |
+  | `base-component-haicc` | `configured` | deployed whole, its door, a node inside it |
 
-  The eight other bundle packages were not rebuilt since part 47: they
-  carry the check as of then until each is brought in line. Their own
-  validation (part 47) is red on `/test/package`; `base-component-boot`'s
-  `boot` test red with the runtime's.
+  `mounted` and `configured` need no mrepo (this session's kind): the
+  package's `protocol.js` or its list and hooks, value by value, each
+  action on a minimal execution, a last test failing when an action or a
+  hook was left out. Each test's README says what is "Not here".
+- **Left**:
+  - the tests in a running mrepo, the third column: a test mrepo with
+    test data, the helper that makes one, and the check from the `done`
+    history that every action was requested and every hook ran
+    ("Proposed", below);
+  - `base-linux-haicc`: shell scripts, no bundle, so it carries no
+    generic test and the package check skips it; its own test is
+    `test/run.sh`. To settle with the human whether it gets the generic
+    tests and a report too.
 
 **Open**
 

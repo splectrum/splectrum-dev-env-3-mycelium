@@ -13,7 +13,7 @@ mrepo's own packages: `bare
 
 | | |
 |---|---|
-| [lib/](lib/) | its parts, a file each |
+| [external/](external/) | the runtime protocol's action, `run` |
 | [test/](test/) | its tests, what each checks |
 
 ## Design
@@ -35,7 +35,7 @@ mrepo's own packages: `bare
   how the mrepo is addressed: its inbox's topic, its requests'. In its
   status: `repository.uri`.
 - Its own package's protocols, passed in by its `run.js` (`run({ own })`;
-  its bundle not imported again): `runtime run`, from `lib/protocol.js`.
+  its bundle not imported again): `runtime run`, the method `external/run/`.
   `runtime run
   /packages/<org>/<package><target> [dry-run]`: a linked package's
   entry through its dispatcher, its tests above all (a floating instance of

@@ -2398,3 +2398,111 @@ test 7 tests and 40 asserts, the report written. The `haicc` test with
 the rebuilt bundle, 107 of 107. The READMEs, 165, no problems. Nothing
 left running. Its repository pushed.
 
+
+## 55. base-package-service brought to the template (2026-11-14)
+
+The human: continue working through until the end; the tests are in place
+to ensure it comes out right.
+
+- **`base-package-service`** brought to the template, pinned to
+  `haiccing/package-docs-template@6f78874`.
+- **Its own test, `test/mounted/`**, no mrepo: what it provides; its
+  config value by value (the four actions at the mrepo itself, each in
+  the states that allow it); its config in effect (the request check on
+  each state: allowed only where named, refused with the state it is in,
+  not offered elsewhere, refused when not activated); its structure (it
+  starts `booted`; its list, itself last); its hooks file by file (at
+  boot `help`, `runtime`, `service` activated; on `initialise` the help
+  extracted; a hook file not named in the test fails it); its actions on
+  a minimal execution over the package's own state file and hooks (the
+  hook first, as the mrepo's own, then the state; dropped-in hooks on
+  their own transition, in name order; a failing hook, the state not
+  moved); the last test failing when an action was not run.
+
+**Validated**: its pre-release: 14 units, 183 tests, 790 asserts, its own
+test 9 tests and 42 asserts, the report written. The READMEs, 173, no
+problems. Nothing left running.
+
+## 56. base-package-boot brought to the template (2026-11-14)
+
+- **`base-package-boot`** brought to the template, pinned to
+  `haiccing/package-docs-template@6f78874`.
+- **Its own test, `test/mounted/`**, no mrepo, no runtime: what it
+  provides; its config value by value (the three actions at one name
+  below the mrepo, a target needed; `deploy` its package required,
+  `redeploy` optional, `teardown` none; no state of its own); its config
+  in effect (the request check: no target, no package, a deeper URI, not
+  activated); `deploy`, each refusal before anything is built (the mrepo
+  itself, not a name, deployed already, data in `main` there, a folder in
+  the way, no package, no store, a package in no source; nothing written,
+  no folder left); `teardown` of a child without a runtime (its folder
+  and its shortcut removed) and its refusals; `redeploy` (torn down first
+  and that committed, then the deploy, from the package it was deployed
+  from by default); the last test failing when an action was not run. Its
+  README says what is not there: a child really built and its runtime
+  started, which the module's own tests do in this package's `modules`
+  test, and the boot component's between running mrepos.
+
+**Validated**: its pre-release: 22 units, 238 tests, 1165 asserts, its
+own test 7 tests and 49 asserts, the report written. The READMEs, 181, no
+problems. Nothing left running.
+
+## 57. base-package-haicc brought to the template (2026-11-14)
+
+- **`base-package-haicc`** brought to the template, pinned to
+  `haiccing/package-docs-template@6f78874`.
+- **Its own test, `test/mounted/`**, no mrepo: what it provides; its
+  config value by value (`goto`, the default action, at any position, its
+  argument the command that follows; no state, no target); `goto` at the
+  root (the command executed here, once, as given, its value returned);
+  at a shortcut (sent on unchanged to the mrepo linked there, nothing
+  executed here; a `haicc` of its own goes on as it is); what it refuses
+  (no command, a position inside `main` other than the root, a URI
+  through a shortcut, a URI not canonical; nothing executed, nothing
+  sent); the last test failing when an action was not run. Its README
+  says what is not there: a command as typed (the runtime's
+  interpreting), and one really carried between running mrepos.
+
+**Validated**: its pre-release: 10 units, 48 tests, 222 asserts, its own
+test 6 tests and 24 asserts, the report written. The READMEs, 189, no
+problems.
+
+
+## 58. base-component-boot brought to the template (2026-11-14)
+
+- **`base-component-boot`** brought to the template, pinned to
+  `haiccing/package-docs-template@6f78874`. Its own test is the one it
+  had, `boot`: the boot end to end, between running mrepos. Its
+  `test/README.md` links each test's folder; its README `test-reports/`.
+
+**Validated**: its pre-release: 22 units, 233 tests, 1235 asserts, the
+report written (four minutes; its `boot` test 119 asserts). The READMEs,
+196, no problems. Nothing left running.
+
+## 59. base-component-haicc brought to the template; all ten in line (2026-11-14)
+
+- **`base-component-haicc`** brought to the template, pinned to
+  `haiccing/package-docs-template@6f78874`.
+- **Its own test, `test/configured/`**, no mrepo: what defines the haicc
+  mrepo. Its list, in deploy order, itself last; its hooks file by file,
+  the state it starts in; then against the packages it lists, their
+  bundles read from the sources (`SOURCES`): each is there, the six
+  protocols they provide; every hook names a protocol and an action one
+  of them provides; and what the hooks do, run with those packages' own
+  actions on a minimal execution in memory: after the boot `haicc`,
+  `help`, `runtime` and `service` open; `initialise` extracts the help;
+  `start` opens `boot`, `stop` closes it, `shutdown` back to booted;
+  every hook file must have run. Every protocol the listed packages
+  provide is opened by a hook, except the protocol protocol, on purpose:
+  a package added to the list without a hook for its protocol fails it.
+
+**Validated, the whole**: its pre-release: 7 units, 29 tests, 87 asserts,
+its own test 6 tests and 34 asserts. Then everything rebuilt,
+`tools/bare tools/release.js --strict`: ten packages, every report
+current (nothing rerun: the same bundles). `tools/bare tools/code-check.js`:
+18 modules, 11 packages, no problems (it listed 104 lines when the folder
+rule went in). The READMEs: 204 in the sources, 413 in the help tree, no
+problems. The `haicc` test, 107 of 107. `base-component-boot`'s
+`validate` twice more, its `boot` test 119 of 119 each time. Nothing left
+running. Every package's repository pushed.
+

@@ -1,13 +1,22 @@
 # test/
 
-The haicc component's tests: the generic ones.
+The haicc component's tests: one of its own, `configured`, and the generic ones, a folder each.
+
+| | |
+|---|---|
+| [configured/](configured/) | its own: its list and its hooks, value by value, against the packages it lists, and what the hooks do |
+| [help/](help/) | generic: the READMEs against the README rules |
+| [code/](code/) | generic: the code against the code rules |
+| [mrepo/](mrepo/) | generic: the integrity of the mrepo side |
+| [package/](package/) | generic: the package against the template's structure |
+| [modules/](modules/) | generic: every carried module's own tests |
+| [help-in-situ/](help-in-situ/) | generic: the help where it is deployed |
+| [mrepo-in-situ/](mrepo-in-situ/) | generic: the package as a running mrepo holds it |
+
+## Sets
 
 | set | tests |
 |---|---|
-| `validate` | `help`, `code`, `mrepo`, `package` |
+| `validate` | `configured`, `help`, `code`, `mrepo`, `package` |
 | `validate-in-situ` | `help-in-situ`, `mrepo-in-situ`: run in a running mrepo with `runtime run` |
-| `full` | `help`, `code`, `mrepo`, `package`, `modules` |
-
-The component deployed, its service started, a node deployed inside it and
-commands chained through both are tested by the boot package, which can
-deploy one; from the command line, by `base-linux-haicc`.
+| `full` | `configured`, `help`, `code`, `mrepo`, `package`, `modules` |

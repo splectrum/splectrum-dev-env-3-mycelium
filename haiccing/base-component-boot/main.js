@@ -15,12 +15,12 @@ const ENTRIES = {
 // carried module's unit tests.
 const UNITS = {
   "/test/boot": () => Promise.all([import("./test/boot/run.js")]),
-  "/test/help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/validate/help.test.js")]),
-  "/test/help-in-situ": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/validate/help-in-situ.test.js")]),
-  "/test/code": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/code.test.js")]),
-  "/test/mrepo": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/mrepo.test.js")]),
-  "/test/mrepo-in-situ": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/mrepo-in-situ.test.js")]),
-  "/test/package": () => Promise.all([import("./modules/pear-full-square/pkgm-base-check/validate/package.test.js")]),
+  "/test/code": () => Promise.all([import("./test/code/run.js")]),
+  "/test/help": () => Promise.all([import("./test/help/run.js")]),
+  "/test/help-in-situ": () => Promise.all([import("./test/help-in-situ/run.js")]),
+  "/test/mrepo": () => Promise.all([import("./test/mrepo/run.js")]),
+  "/test/mrepo-in-situ": () => Promise.all([import("./test/mrepo-in-situ/run.js")]),
+  "/test/package": () => Promise.all([import("./test/package/run.js")]),
   "/test/modules/pear-full-square/mrepo-base-boot": () => Promise.all([import("./modules/pear-full-square/mrepo-base-boot/test/build.test.js"), import("./modules/pear-full-square/mrepo-base-boot/test/deploy.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-execute": () => Promise.all([import("./modules/pear-full-square/mrepo-base-execute/test/execute.test.js")]),
   "/test/modules/pear-full-square/mrepo-base-help": () => Promise.all([import("./modules/pear-full-square/mrepo-base-help/test/help.test.js")]),
@@ -136,7 +136,9 @@ async function runEach (target, units, program, print, extra) {
       let out = ''
       child.stdout.on('data', d => { out += d; if (print) for (const l of d.toString().split('\n')) if (l) print(l) })
       child.stderr.on('data', d => { out += d })
-      child.on('exit', code => { const s = summary(out); resolve({ unit: u, ok: code === 0 && !s.failures.length, ...s }) })
+      // a unit that reports no summary ran no test: not a pass (one that has
+      // nothing to test says so: a dummy, reported as 0 of 0)
+      child.on('exit', code => { const s = summary(out); if (!s.tests) s.failures.push('no test ran: no summary reported'); resolve({ unit: u, ok: code === 0 && !s.failures.length, ...s }) })
     }))
   }
   return { target, ok: results.every(r => r.ok), units: results }

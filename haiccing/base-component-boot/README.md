@@ -15,7 +15,8 @@ bare base-component-boot.bundle --work=<folder> --sources=folder:<sources>
 | | |
 |---|---|
 | [mrepo/](mrepo/) | its part of the structure: the list of its packages |
-| [test/](test/) | its tests |
+| [test/](test/) | its tests: the boot end to end, and the generic ones |
+| [test-reports/](test-reports/) | the report of its last pre-release |
 | [modules/](modules/) | its code, assembled: ours and the third-party code |
 
 ## Packages

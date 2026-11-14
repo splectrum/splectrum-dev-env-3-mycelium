@@ -1,12 +1,12 @@
 # For the next session: where step 2 stands
 
-Kept current by the cloud session (last: 2026-11-14, part 54). Read `CLAUDE.md`
+Kept current by the cloud session (last: 2026-11-14, part 59). Read `CLAUDE.md`
 first (what is here, how to validate), then this, then `readme.md` here
 (each part's record; the latest parts last: 30 to 45 are the haicc work; 46 is a note on future design; 47 the
 package check; 48 the template up to standard; 49 the test
 reports; 50 the pin, `package-docs-mrepo` brought to the template; 51
 `base-package-runtime`; 52 an action a documented method, a test of its
-own always; 53 `base-package-protocol`; 54 `base-package-help`).
+own always; 53 to 59 the other packages, one by one, up the stack).
 The documentation of what is built is in the packages:
 `haiccing/package-docs-template` and `haiccing/package-docs-mrepo`, and
 each folder's README.
@@ -50,26 +50,22 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   Its notes come back in `local-note.md`: fetch and read them when told.
 - **No release yet**: on the human's word, created by the local agent
   (`handover-local.md`, "Releases").
-- **Red on purpose** (2026-11-14): the package check (part 47), the
-  template brought up to standard (part 48: a folder for every test, the
-  generic ones too) and the test reports (part 49: `test-reports/`, a
-  package's pre-release, `tools/package-test.js`) are in `main`, merged
-  on the human's word once the template passed its own full set. The
-  template's repository (`haiccing/package-docs-template`) and the check
-  module's (`pear-full-square/pkgm-base-check`) are pushed.
-  `package-docs-mrepo` (part 50), `base-package-runtime` (part 51),
-  `base-package-protocol` (part 53) and `base-package-help` (part 54) are
-  brought to the template and pinned, their repositories pushed; the
-  human's order from here: up the protocol stack, one by one (next
-  `base-package-service`, `-boot`, `-haicc`, then the components), each
-  on the human's word. A protocol package's own test in this session:
-  `test/mounted/` in `base-package-protocol` and `-help` is the pattern
-  (no mrepo). The other five bundle packages are not yet
-  brought to the template (`sh tools/package-template.sh <package>`, its
-  pages by hand, `tools/bare tools/package-test.js`), and six lack
-  a test of their own: `tools/bare tools/code-check.js` lists it all, and
-  `tasks.md` ("First") says what is left. One step at a time, each shown
-  to the human; a package's repository is pushed when it passes.
+- **All ten bundle packages are brought to the template** (2026-11-14,
+  parts 47 to 59), pinned, each with a test of its own and a current,
+  passing report; `tools/bare tools/release.js --strict` passes and
+  `tools/bare tools/code-check.js` has no problems. All in `main`, every
+  package's and changed module's repository pushed. What that gave: a
+  folder for every test (the generic ones from the template), the package
+  check (`/test/package`), an action a documented method, the test report
+  (`test-reports/`, a package's pre-release, `tools/package-test.js`),
+  the pin and the step that brings a package to the template
+  (`tools/package-template.sh`), the runner failing a unit that reports
+  nothing.
+- **Left from it** (`tasks.md`, "First"): the packages' tests in a
+  running mrepo (a test mrepo with test data; each `mounted` or
+  `configured` test's README says what is "Not here"); whether
+  `base-linux-haicc` gets the generic tests; then "Coverage", and the
+  tasks 1 to 3.
 - **A dummy test is a decision, not a default** (the human, 2026-11-14):
   a package with nothing of its own to test says so with a dummy (0 of
   0), written for it after asking: is there anything package specific

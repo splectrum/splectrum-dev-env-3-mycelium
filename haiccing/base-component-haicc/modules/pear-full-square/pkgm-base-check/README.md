@@ -35,6 +35,10 @@ The mrepo side:
   name.
 - **Protocol**: every action its `protocol.js` configures has its
   function, and the other way round; each has its description and URIs.
+  Every action is a documented method: the function mounted is the one
+  `external/<action>/` of a carried module exports, and its README states
+  its signature, what it returns, its errors, and its arguments where the
+  config names any.
 - **Carried**: no third-party module is carried that its record does not
   name, each at its recorded version; an omitted one is only its stub.
 - **In situ**: the package is in the mrepo's packages manifest, its bundle
@@ -43,12 +47,16 @@ The mrepo side:
 
 The package itself:
 
-- **Files**: its README, its LICENSE, its `package.json`.
+- **Files**: its README, its LICENSE, its `package.json`, the folder its
+  test report goes in.
+- **Its pin**: the commit of the package template it was brought to.
 - **Sets**: `validate`, `validate-in-situ` and `full`, the generic tests
-  in the sets they belong to, every name a test that is there.
-- **Its own tests**: each a unit; one for each protocol it provides,
-  `test/protocol-<name>/`; at least one where it has a program, hooks or
-  an mrepo of its own. A documentation package is asked for none.
+  in the sets they belong to.
+- **A folder for every test**: each test a set names, the generic ones
+  too, is `test/<name>/` with its `run.js` and README.
+- **Its own tests**: at least one, always; their names are the
+  package's. Where nothing is specific to the package, a dummy that says
+  so, an explicit decision.
 
 ## Tests
 
