@@ -2446,3 +2446,24 @@ problems. Nothing left running.
 **Validated**: its pre-release: 22 units, 238 tests, 1165 asserts, its
 own test 7 tests and 49 asserts, the report written. The READMEs, 181, no
 problems. Nothing left running.
+
+## 57. base-package-haicc brought to the template (2026-11-14)
+
+- **`base-package-haicc`** brought to the template, pinned to
+  `haiccing/package-docs-template@6f78874`.
+- **Its own test, `test/mounted/`**, no mrepo: what it provides; its
+  config value by value (`goto`, the default action, at any position, its
+  argument the command that follows; no state, no target); `goto` at the
+  root (the command executed here, once, as given, its value returned);
+  at a shortcut (sent on unchanged to the mrepo linked there, nothing
+  executed here; a `haicc` of its own goes on as it is); what it refuses
+  (no command, a position inside `main` other than the root, a URI
+  through a shortcut, a URI not canonical; nothing executed, nothing
+  sent); the last test failing when an action was not run. Its README
+  says what is not there: a command as typed (the runtime's
+  interpreting), and one really carried between running mrepos.
+
+**Validated**: its pre-release: 10 units, 48 tests, 222 asserts, its own
+test 6 tests and 24 asserts, the report written. The READMEs, 189, no
+problems.
+
