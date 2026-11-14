@@ -654,7 +654,15 @@ Discussed 2026-11-14; to design properly later.
 - One package with many how-tos, or several packages: ours to decide, we
   are the user of them.
 
-**Decided** (ours, told to the human)
+- **The name** (the human's proposal, after our decision below):
+  `base-how-[category]-[collection]`: a how-to package is a collection,
+  in a category. Our reading, put to the human: it names every how-to
+  package, the ones to read too, so the split below becomes: a collection
+  may hold how-tos to read and scenarios to run; examples:
+  `base-how-package-making`, `base-how-package-testing`,
+  `base-how-haicc-deploying`. Not confirmed.
+
+**Decided** (ours, told to the human; before the name was proposed)
 
 - Not one collection. By what a how-to is:
   - **one that is read** (a procedure for making something) lives with
