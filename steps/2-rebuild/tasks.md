@@ -1,8 +1,9 @@
 # Tasks: discussed, waiting to be built
 
 Tasks discussed with the human and stacked here, to be built later in
-batches, in this order: "First", "Deployed tests" (in design), "Test reports",
-"Coverage", then 1, 2, 3. A task is removed from this file when it is built:
+batches, in this order: 1, 2, 3 and on to swarm nodes up and running; then
+"Deployed tests" and "Coverage". ("First" and "Test reports" are built:
+kept here for what they left.) A task is removed from this file when it is built:
 its record is then a part in `readme.md`.
 
 How to read a task:
@@ -249,7 +250,20 @@ What "First" left: each package's test in a running mrepo.
   fresh through the documentation and implementation rules. Very few
   designs can beat this.
 
-**To settle** (the points still to discuss)
+- **Not constrained** (the human): what a deployed test is, is not
+  fixed. There are types of deployed test, and types keep being added
+  over time. (Our proposal of one list of steps, the source of both the
+  test's script and the how-to's text, is then one type to consider, not
+  the definition.)
+- **When** (the human's proposal, agreed by us): deployed tests are
+  tackled after swarm nodes are up and running. Until then (ours): a new
+  feature starts as a POC demo run with the `haicc` tool, kept as its
+  first how-to; the two end to end tests (`base-component-boot`'s `boot`,
+  `base-linux-haicc`'s `run.sh`) stay green and are extended where the
+  behaviour changes; each package's `mounted` or `configured` test says
+  what is "Not here".
+
+**To settle** (when the work reaches it)
 
 - What a test deploys as its target: a unit inside a package
   (`<org>/<package>/test/<name>`), where `boot/deploy` takes a package
