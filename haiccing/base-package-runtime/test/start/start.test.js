@@ -74,7 +74,7 @@ test('the runtime: started, answering, stopped', { timeout: 60000 }, async (t) =
     t.alike(await repo.select('/protocols/*'), [], 'so nothing is active')
     // through its inbox: nothing is active by default
     t.is((await send(work, backend, { protocol: 'runtime', action: 'run', uri: '.', args: ['packages/haiccing/x/test/validate'] }))?.error, 'not now: runtime run (runtime is not active)', 'a request from outside for a protocol that is loaded and not active: refused as it executes')
-    t.is((await send(work, backend, { protocol: 'rest', action: 'get', uri: '.' }))?.error, 'no protocol: rest ()', 'a protocol it does not have: refused at once, said with the active ones (none)')
+    t.is((await send(work, backend, { protocol: 'crud', action: 'read', uri: '.' }))?.error, 'no protocol: crud ()', 'a protocol it does not have: refused at once, said with the active ones (none)')
     t.ok((await ask({ work, op: 'stop' }))?.stopping, 'asked to stop')
     for (let i = 0; i < 100 && alive(child.pid); i++) await wait(100)
     t.absent(alive(child.pid), 'its process ended')

@@ -227,7 +227,7 @@ test('the boot: put in place, its runtime started, nothing deployed; the host de
     t.alike(svcInit?.log?.filter(e => e.event === 'hook').map(e => [e.transition, e.hook, e.command]), [['initialise', 'help-extract', 'help/extract']], 'its initialise hook run in the same request, logged')
     t.ok((await svcReq('help', 'get', '.'))?.output?.oneliner, 'initialised: its help extracted by the hook, answered')
     t.alike((await svcReq('service', 'start', '.'))?.output, { service: 'started', state: 'started' })
-    t.is((await svcReq('rest', 'get', '.'))?.error, 'no protocol: rest (help, runtime, service)', 'a protocol it does not link: said, with the active ones')
+    t.is((await svcReq('crud', 'read', '.'))?.error, 'no protocol: crud (help, runtime, service)', 'a protocol it does not link: said, with the active ones')
     t.is((await svcReq('service', 'start', 'host'))?.error, 'not offered: service start at host', 'an action, only at the URIs its config names')
     const svcSitu = await svcReq('runtime', 'run', '.', ['packages/haiccing/base-package-service/test/validate-in-situ'])
     t.alike([svcSitu?.error, svcSitu?.output?.ok, svcSitu?.output?.units?.map(u => u.unit)], [undefined, true, ['/test/help-in-situ', '/test/mrepo-in-situ']], `the service package validated in situ, in the mrepo it serves ${svcSitu?.error ?? JSON.stringify(svcSitu?.output?.units?.map(u => u.failures) ?? '')}`)

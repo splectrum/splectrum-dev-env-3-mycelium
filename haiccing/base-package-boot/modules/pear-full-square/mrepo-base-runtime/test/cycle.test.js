@@ -11,12 +11,16 @@ import { bootedHost, send, sendForm } from './fixture.js'
 const here = join(dirname(fileURLToPath(import.meta.url)), '..')
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const alive = pid => spawnSync('kill', ['-0', String(pid)], { stdio: 'ignore' }).status === 0
-// its fourth: a document, the rest put's argument (JSON text)
-const req = (protocol, action, uri, doc) => ({ protocol, action, uri, ...(doc !== undefined ? { args: [JSON.stringify(doc)] } : {}) })
+// its fourth: a document, the crud create's argument (JSON text)
+const req = (protocol, action, uri, doc) => ({ protocol, action, uri, ...(doc !== undefined ? { args: [typeof doc === 'string' ? doc : JSON.stringify(doc)] } : {}) })
+// The nodes the cycle makes, as crud answers them: the note, its parent.
+const HELLO = { uri: ['main', 'notes/hello'], value: { text: 'hi' }, children: [] }
+const NOTES = { uri: ['main', 'notes'], value: {}, children: ['hello'] }
+const CREATED = [{ ...NOTES, outcome: 'created' }, { ...HELLO, outcome: 'created' }]
 
 // The same cycle on both storages: the p2p host and a repository on native git.
 for (const storage of ['p2p', 'git']) {
-  test(`the cycle on ${storage}: initialise (preloaded), start, put, get, delete, refused, stop, shutdown`, { timeout: 180000 }, async (t) => {
+  test(`the cycle on ${storage}: initialise (preloaded), start, create, read, delete, refused, stop, shutdown`, { timeout: 180000 }, async (t) => {
     const work = mkdtempSync(join(tmpdir(), `cycle-${storage}-`))
     try {
       await bootedHost(work, { storage })
@@ -24,26 +28,26 @@ for (const storage of ['p2p', 'git']) {
       t.ok(s?.pid, 'the runtime started')
       t.is(s.repository.storage, storage)
       t.alike(await send(work, req('service', 'initialise', '.')), { ok: false, error: 'not now: service initialise (the service is initialised)' }, 'initialised already: the preloaded request ran first, this one refused as it executed')
-      t.alike(await send(work, req('rest', 'get', '.')), { ok: false, error: 'not now: rest get (rest is not active; the service is initialised)' }, 'before start: rest loaded, not active: nothing is by default')
-      t.alike(await send(work, req('protocol', 'activate', '.', 'rest')), { ok: false, error: 'not now: protocol activate (protocol is not active; the service is initialised)' }, 'nor can it be activated from outside: that is the hooks\'')
+      t.alike(await send(work, req('crud', 'read', '.')), { ok: false, error: 'not now: crud read (crud is not active; the service is initialised)' }, 'before start: crud loaded, not active: nothing is by default')
+      t.alike(await send(work, req('protocol', 'activate', '.', 'crud')), { ok: false, error: 'not now: protocol activate (protocol is not active; the service is initialised)' }, 'nor can it be activated from outside: that is the hooks\'')
       t.alike(await send(work, req('service', 'start', '.')), { ok: true, value: { service: 'started', state: 'started' } })
-      t.alike(await send(work, req('rest', 'put', 'notes/hello.json', { text: 'hi' })), { ok: true, value: { put: 'main/notes/hello.json' } }, 'written at main, where the outside stands; said from the root')
-      t.alike(await send(work, req('rest', 'get', 'notes/hello.json')), { ok: true, value: { text: 'hi' } }, 'read back')
-      t.alike(await send(work, req('rest', 'get', 'notes')), { ok: true, value: { entries: ['hello.json'] } })
-      t.alike(await send(work, ['rest/get', 'notes/hello.json']), { ok: true, value: { text: 'hi' } }, 'a request sent as a command, its parts: interpreted on its way in')
-      t.alike(await send(work, { command: 'rest/get ./notes' }), { ok: true, value: { entries: ['hello.json'] } }, 'as a string; ./ in front allowed')
-      t.alike(await send(work, ['rest']), { ok: false, error: 'no action: rest (rest has no default action)' }, 'not a command that can be told: refused')
-      t.alike(await send(work, req('rest', 'get', '.')), { ok: true, value: { entries: ['notes'] } }, '. from outside: main itself')
-      t.alike(await send(work, req('rest', 'put', '.', 1)), { ok: false, error: 'not offered: rest put at .' }, 'the API: only what it offers')
-      t.alike(await send(work, req('rest', 'get', 'none.json')), { ok: false, error: 'nothing at main/none.json' }, 'failed in execution: answered')
-      t.alike(await send(work, req('rest', 'get', '.'), { to: '/elsewhere/inbox' }), { ok: false, error: 'misdelivered: for /elsewhere/inbox, this is /host/inbox' }, 'an envelope for another inbox: refused')
-      const form = await sendForm(work, req('rest', 'get', 'notes/hello.json'))
+      t.alike(await send(work, req('crud', 'create', 'notes/hello', { text: 'hi' })), { ok: true, value: CREATED }, 'written at main, where the outside stands: the node and the one above it made')
+      t.alike(await send(work, req('crud', 'read', 'notes/hello')), { ok: true, value: [HELLO] }, 'read back')
+      t.alike(await send(work, req('crud', 'read', 'notes')), { ok: true, value: [NOTES] })
+      t.alike(await send(work, ['crud/read', 'notes/hello']), { ok: true, value: [HELLO] }, 'a request sent as a command, its parts: interpreted on its way in')
+      t.alike(await send(work, { command: 'crud/read ./notes' }), { ok: true, value: [NOTES] }, 'as a string; ./ in front allowed')
+      t.alike(await send(work, ['crud']), { ok: false, error: 'no action: crud (crud has no default action)' }, 'not a command that can be told: refused')
+      t.alike(await send(work, req('crud', 'read', '.')), { ok: true, value: [{ uri: ['main', '.'], value: {}, children: ['notes'] }] }, '. from outside: main itself')
+      t.alike(await send(work, req('crud', 'update', 'notes', 1)), { ok: false, error: 'no action: crud update (create, delete, read)' }, 'the API: only what it offers')
+      t.alike(await send(work, req('crud', 'delete', 'notes')), { ok: false, error: 'notes has children: not deleted (crud/delete notes recurse)' }, 'failed in execution: answered')
+      t.alike(await send(work, req('crud', 'read', '.'), { to: '/elsewhere/inbox' }), { ok: false, error: 'misdelivered: for /elsewhere/inbox, this is /host/inbox' }, 'an envelope for another inbox: refused')
+      const form = await sendForm(work, req('crud', 'read', 'notes/hello'))
       t.is(form.topic, '/haicc/terminal', 'back: the core, its topic the sender')
       t.alike(form.headers, {}, 'no headers yet')
-      t.alike(form.value, { protocol: 'rest', action: 'get', uri: ['main', 'notes/hello.json'], output: { text: 'hi' } }, 'the form completed: the request, its URI from the root, and its output')
-      t.alike(await send(work, req('rest', 'delete', 'notes/hello.json')), { ok: true, value: { deleted: 'main/notes/hello.json' } })
+      t.alike(form.value, { protocol: 'crud', action: 'read', uri: ['main', 'notes/hello'], output: [HELLO] }, 'the form completed: the request, its URI as held inside, and its output')
+      t.alike(await send(work, req('crud', 'delete', 'notes', 'recurse')), { ok: true, value: [{ ...NOTES, outcome: 'deleted' }] }, 'deleted, with what was below it')
       t.alike(await send(work, req('service', 'stop', '.')), { ok: true, value: { service: 'stopped', state: 'initialised' } })
-      t.alike(await send(work, req('rest', 'get', '.')), { ok: false, error: 'not now: rest get (rest is not active; the service is initialised)' }, 'stopped: rest deactivated by the stop hook, not available')
+      t.alike(await send(work, req('crud', 'read', '.')), { ok: false, error: 'not now: crud read (crud is not active; the service is initialised)' }, 'stopped: crud deactivated by the stop hook, not available')
       t.alike(await send(work, req('service', 'shutdown', '.')), { ok: true, value: { service: 'shut down', state: 'booted' } })
       t.ok(alive(s.pid), 'shut down: its service booted again, the runtime still running (it runs until stopped)')
       t.ok((await ask({ work, op: 'stop' }))?.stopping, 'asked to stop')
@@ -59,7 +63,7 @@ for (const storage of ['p2p', 'git']) {
         const recs = await Promise.all(done.map(async ([p]) => JSON.parse((await repo.read(p)).toString())))
         t.ok(recs.every(x => x.topic === '/request/done' && ('output' in x.value.value || 'error' in x.value.value)), 'each in its envelope at its topic, its form completed')
         t.is(recs.filter(x => x.value.topic === null).length, 2, 'the preloaded one and the boot hook: no sender')
-        t.alike((await repo.select('/protocols/*')).map(([p]) => p), ['/protocols/service.json'], 'the active set: service (the boot hook); rest activated by start, deactivated by stop')
+        t.alike((await repo.select('/protocols/*')).map(([p]) => p), ['/protocols/service.json'], 'the active set: service (the boot hook); crud activated by start, deactivated by stop')
         t.alike((await r.backend.listBranches()).map(([b]) => b).filter(b => !b.startsWith('execute/')).sort(), ['inbox', 'main', 'outbox', 'packages', 'protocols', 'request/done', 'request/execute', 'request/pending/default', 'runtime'], 'the layers (the execution branches not among them)')
         t.alike(await repo.select('/request/execute/*'), [], 'nothing left executing')
         t.alike(await repo.select('/main/*'), [], 'main: the note deleted again')
@@ -76,7 +80,7 @@ for (const storage of ['p2p', 'git']) {
         let name = null
         for (const [p] of await repo.select('/inbox/*')) {
           const env = JSON.parse((await repo.read(p)).toString())
-          if (env.value.value.action === 'put' && env.value.value.uri === 'notes/hello.json') { name = p.slice('/inbox/'.length, -'.json'.length); break }
+          if (env.value.value.action === 'create' && env.value.value.uri === 'notes/hello') { name = p.slice('/inbox/'.length, -'.json'.length); break }
         }
         const input = JSON.parse((await repo.read(`/inbox/${name}.json`)).toString())
         const done = JSON.parse((await repo.read(`/request/done/${name}.json`)).toString())
@@ -84,7 +88,7 @@ for (const storage of ['p2p', 'git']) {
         t.alike([input.topic, done.topic, output.topic], ['/host/inbox', '/request/done', '/outbox'], 'each place: a new envelope, its topic the place')
         t.ok([input, done, output].every(r => r.key === name && r.value.key === name), 'one key throughout: every envelope, its core')
         t.alike(done.value, output.value, 'the core completed: in done, and sent back')
-        t.alike({ ...input.value, value: { ...input.value.value, uri: ['main', 'notes/hello.json'], output: { put: 'main/notes/hello.json' } } }, done.value, 'the core as posted, its URI from the root, completed (its output)')
+        t.alike({ ...input.value, value: { ...input.value.value, uri: ['main', 'notes/hello'], output: CREATED } }, done.value, 'the core as posted, its URI as held inside, completed (its output)')
         t.comment(`the journey of ${name} (${storage}): the input, the done request, the output, as records`)
         t.comment(`input  ${JSON.stringify(input)}`)
         t.comment(`done   ${JSON.stringify(done)}`)
@@ -100,7 +104,7 @@ test('where the layers live on the p2p host: the atomic ones in the store, the r
     await bootedHost(work)
     const s = await start({ work, bundle: join(here, 'test', 'runtime.js') })
     t.alike(await send(work, req('service', 'start', '.')), { ok: true, value: { service: 'started', state: 'started' } })
-    t.alike(await send(work, req('rest', 'put', 'x.json', 1)), { ok: true, value: { put: 'main/x.json' } })
+    t.alike(await send(work, req('crud', 'create', 'x')), { ok: true, value: [{ uri: ['main', 'x'], value: {}, children: [], outcome: 'created' }] })
     await send(work, req('service', 'stop', '.'))
     await send(work, req('service', 'shutdown', '.'))
     await ask({ work, op: 'stop' })

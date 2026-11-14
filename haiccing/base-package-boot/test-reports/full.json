@@ -1,8 +1,8 @@
 {
   "package": "haiccing/base-package-boot",
-  "content": "b61c7e76197145b82247865d7b61d6b0a01d1b372a36dc346f18c1939f9dd2c8",
+  "content": "9f8b004edb3de895b8920157a51ba64484d262b1768b8d5acf536a12e062b7a0",
   "bare": "v1.36.0",
-  "date": "2026-11-14T09:59:08.760Z",
+  "date": "2026-11-14T11:40:27.423Z",
   "set": "full",
   "ok": true,
   "units": [
@@ -85,6 +85,19 @@
       "failures": []
     },
     {
+      "unit": "/test/modules/pear-full-square/mrepo-base-crud",
+      "ok": true,
+      "tests": {
+        "passed": 7,
+        "total": 7
+      },
+      "asserts": {
+        "passed": 55,
+        "total": 55
+      },
+      "failures": []
+    },
+    {
       "unit": "/test/modules/pear-full-square/mrepo-base-execute",
       "ok": true,
       "tests": {
@@ -92,8 +105,8 @@
         "total": 7
       },
       "asserts": {
-        "passed": 43,
-        "total": 43
+        "passed": 46,
+        "total": 46
       },
       "failures": []
     },

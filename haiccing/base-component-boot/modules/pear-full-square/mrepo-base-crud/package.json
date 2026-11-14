@@ -1,0 +1,11 @@
+{
+  "name": "mrepo-base-crud",
+  "version": "0.1.0",
+  "description": "Module: the mrepo crud protocol, an mrepo's nodes created, read and deleted by URI.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "bare ../../node_modules/brittle/cmd.js test/*.test.js"
+  },
+  "license": "MIT"
+}

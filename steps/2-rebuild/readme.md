@@ -2855,3 +2855,42 @@ packages, no problems. The READMEs: 241 in the sources, 466 in the help
 tree, no problems. `base-component-boot`'s `validate` twice more, its
 `boot` test 120 of 120 each time. The `haicc` test again, 136 of 136.
 Nothing left running.
+
+## 64. The rest actions removed; a race in the boot run again (2026-11-14)
+
+Task 3 of `tasks.md`, on the human's word ("Move tests to crud").
+
+- **The `rest` actions are gone** from `mrepo-base-execute` (`lib/actions.js`,
+  `ACTIONS`): no package mounted them. The execute module has no actions
+  of its own; `execute(ctx, { actions })` runs what it is given.
+- **The tests that used them are on `crud`**: the execute module's (the
+  execution run with `crud`, `service` and `protocol`; its own stand-in
+  actions for commit, rollback and the log now replace `create` and
+  `read`), the runtime module's harness and its cycle (a node created,
+  read, deleted with what is below it, through a real runtime on both
+  storages), the boot module's build test, and two places that only
+  named a protocol that is not there.
+- **A race found by `run.sh`, one run in about four, and fixed.** `haicc
+  boot/deploy` run again while the boot mrepo's runtime is running: the
+  boot hands its own completed request over through a request branch,
+  and the running runtime sees that branch as a request completed and
+  merges it too. Whichever merged second failed (`git update-ref:
+  refs/heads/request/execute is at ..., expected ...`), and when that was
+  the boot, `haicc boot/deploy` failed. It was there before today: the
+  timing made it rare. `executed` (`mrepo-base-execute`) now finds the
+  branch gone and takes the hand-over as done; a test runs the runtime's
+  pass between its commit and its merge.
+
+**Validated**: the modules' tests on `crud` (`mrepo-base-execute` 7
+tests, 46 asserts; `mrepo-base-runtime` 6, 110). The rebuild said which
+packages were stale, the four that carry what changed; their
+pre-release, each passing: `base-app-haicc` 23 units, 261 tests, 1407
+asserts; `base-package-runtime` 22, 239, 1211; `base-package-boot` 23,
+250, 1317; `base-component-boot` 23, 245, 1384 (each carries the crud
+module now: the tests it runs use it). `tools/bare tools/release.js
+--strict`: twelve packages, every report current. `tools/bare
+tools/code-check.js`: 20 modules, 13 packages, no problems. The READMEs:
+241 in the sources, 490 in the help tree, no problems. The `haicc` test
+seven times in a row, 136 of 136 each (before the fix two of seven
+failed, on `haicc boot/deploy` again). `base-component-boot`'s `validate`
+twice more, its `boot` test 120 of 120. Nothing left running.

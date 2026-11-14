@@ -20,7 +20,7 @@ mrepo's own packages: `bare
 
 - `index.js`: the library. No protocol is built in: every action comes
   from a package. `test/runtime.js`: a command line for the tests, started
-  with `rest` and `service` as packages would offer them.
+  with `crud` and `service` as packages would offer them.
 - The protocols its linked packages offer (`protocolsOf`): each package
   in its `packages` layer with a `protocol` entry, imported from its
   `packages/` (the bundle's dispatcher, `run('/protocol')`: nothing else
