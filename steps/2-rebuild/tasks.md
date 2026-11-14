@@ -672,7 +672,21 @@ Discussed 2026-11-14; to design properly later.
 - **A way to develop functionality** (the human): prove it in a POC
   demo, then implement the real thing, and turn the POC into a how-to.
 
-**Decided** (ours, told to the human; before the name was proposed)
+- **A package's deployed test can be the how-to** (the human, the last
+  word so far): that makes sense, because how-tos live where they are
+  generated. Then there are **no special how-to packages** (the name
+  `base-how-[category]-[collection]` and the collections above are
+  dropped): instead **an extraction, like help**, from which an up to
+  date selection can be built.
+- What follows for a deployed test (ours): it has to read as a how-to:
+  its README says what the functionality is, the configs available and
+  the steps; its steps are the commands as someone would type them. The
+  help layer already extracts every test's README at its URI: the
+  selection is a view over that; how a test is marked as a how-to is to
+  design.
+
+**Decided** (ours, told to the human; before the name was proposed, and
+overtaken by the line above for the how-tos that are run)
 
 - Not one collection. By what a how-to is:
   - **one that is read** (a procedure for making something) lives with
