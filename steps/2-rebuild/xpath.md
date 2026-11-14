@@ -157,6 +157,81 @@ demo kept as its how-to.
 6. **Filters with a path inside, the union**; then position, what comes
    back, aggregates.
 
+## Parallel execution: threads
+
+Raised by the human with the XPath pipeline, 2026-11-14; it reaches
+beyond XPath, into the runtime and the request layer.
+
+**Settled** (the human)
+
+- "For corestore, single is for write, read can be parallel."
+- "If we cut xpath in haicc segments and this is read only, then having
+  multiple threads processing on input is very beneficial."
+- "Furthermore all our requests can go multithreaded. What needs a
+  single thread is the request train and commit to main."
+
+**Found** (tried here, 2026-11-14: Bare v1.36.0, four cores, a shared
+machine; Corestore 7.16.1, Hypercore 11.39.6, rocksdb-native 3.19.3)
+
+- **Bare runs threads in parallel**: `Bare.Thread`, in Bare itself, a
+  JavaScript entry on an OS thread of its own. Four runs of a loop:
+  2107 ms one after another, 859 ms a thread each. A thread has its own
+  heap: nothing shared but what is passed (its `data`, a message over
+  `bare-channel`, a shared buffer).
+- **A thread does not load its modules from disk**: its module graph is
+  bundled ahead (`bare-thread`, `Thread.prepare`; in `node_modules/`
+  already, with `bare-channel`, brought by `brittle` and `bare-fs`), and
+  the bundler follows only a `require` written as a plain string. Our
+  packages are bundles already.
+- **Threads and processes perform alike** (the human's question; three
+  runs each, the spread between runs larger than the gap). Starting: 20
+  empty processes 660 ms, 20 empty threads 648 ms, started together. A
+  plain loop, 2 at once: processes 1021 to 1188 ms, threads 1015 to
+  1164; 4 at once: 943 to 1070 against 993 to 1083. Work that allocates
+  (node sets built, as JSON and back, filtered, sorted), 2 at once:
+  processes 1510 to 2033, threads 1216 to 1616; 4 at once: 1786 to 2747
+  against 1925 to 2120.
+- **The Corestore is as the human says**: with a store open for writing
+  and kept open, a second writable open is refused, from a thread and
+  from a process ("File descriptor could not be locked"); a read-only
+  open (`new Corestore(dir, { readOnly: true })`) reads it, from a
+  second thread, from a second process, from four threads at once; one
+  opened after a later write sees that write. Not tried: whether a
+  reader that stays open sees what is written after it opened.
+- **What is there today** (`pear-full-square/mrepo-base-request`): a
+  request begins on a branch of its own (`execute/<key>/request/execute`)
+  and is merged at its end, so the shape is there; but one at a time:
+  "the next begins when no branch is being processed". The request and
+  execute layers are on the filesystem whatever the storage, each its
+  own writer. Nothing of ours uses threads: an mrepo's runtime is a
+  process (`bare-subprocess`).
+
+**Ours** (not answered)
+
+- Our reading: the train (a request admitted, the queue, its order, a
+  request begun, moved to done) and the merge into `main` stay on the
+  one thread; what a request executes between its beginning and its
+  merge runs on a thread, several at once. For the XPath pipeline: each
+  select and filter a thread reading the store read-only.
+- A thread reads one fixed state throughout, the commit of `main` its
+  request began on: the same input gives the same result whenever it
+  runs, so a run can still be repeated exactly.
+
+**To settle**
+
+- **Two requests that write, run at once**: both began on a state of
+  `main`; the one merged second was based on an older one. Read-only
+  requests have nothing to settle. For the others, the rule at the
+  merge: different paths merge; the same path is a conflict (the later
+  one refused, or run again on the new state). The train's order says
+  which is first.
+- How a thread writes its request's branch (the execute layer has its
+  own writer on the filesystem) and hands its result to the train.
+- How many threads (the cores), and what a thread is given: a package's
+  bundle, the request, the state to read.
+- p2p-git's two open defects for a reader beside a writer (the handover,
+  "Elsewhere") come first: they are met at once with threads.
+
 ## To settle
 
 - **The syntax**: XPath's own or ours. A URI is typed in a shell: `*`,
@@ -170,15 +245,6 @@ demo kept as its how-to.
   and with one that fails.
 - **A hop that cannot be made**: the linked mrepo not running, the
   protocol not active there, no answer in time.
-- **Parallel work: processes or threads** (the human's question; our
-  opinion, not answered). Across mrepos: processes, as it is: every
-  linked mrepo has its runtime, so a fan-out over links runs in
-  parallel already. Inside one mrepo: its store has one owner (RocksDB
-  under the Corestore is opened by one process), so a second process on
-  the same mrepo is not the way; reading is asynchronous in the one
-  process already; threads only where a step computes heavily over a
-  large set (a function, a sort), fed by the runtime that owns the
-  store. Neither until a measurement asks for it.
 - **Where the merge lives** (an action of the `haicc` protocol, the
   request layer) and where the rewrite's code does.
 - **How the plan is recorded**, so a run can be repeated exactly.
@@ -203,24 +269,6 @@ moved.
   URI does not run through a shortcut.
 - `pear-full-square/mrepo-base-request`: a command interpreted on its
   way in (`lib/command.js`), where a rewrite would sit.
-- **Bare runs threads in parallel** (the human's question, tried here
-  2026-11-14, Bare v1.36.0, four cores): `Bare.Thread`, in Bare itself,
-  a JavaScript entry on an OS thread of its own; `bare-thread` (an entry
-  bundled with its modules) and `bare-channel` (messages between
-  threads) are in `node_modules/` already, brought by `brittle` and
-  `bare-fs`. Four runs of a loop: 2107 ms one after another, 859 ms a
-  thread each. A thread has its own heap: nothing shared but what is
-  passed (a message, a shared buffer). Nothing of ours uses threads: an
-  mrepo's runtime is a process (`bare-subprocess`). Starting one costs
-  the same either way: 20 empty processes 660 ms, 20 empty threads
-  648 ms, started together. **Running, no difference to speak of** (the
-  human's question: do two processes in parallel perform better than
-  two threads; three runs each, a shared machine, the spread between
-  runs larger than the gap): a plain loop, 2 at once: processes 1021 to
-  1188 ms, threads 1015 to 1164; 4 at once: 943 to 1070 against 993 to
-  1083. Work that allocates (node sets built, as JSON and back,
-  filtered, sorted), 2 at once: processes 1510 to 2033, threads 1216 to
-  1616; 4 at once: 1786 to 2747 against 1925 to 2120.
 - `vision.md`, "Pipelines, and mycelium as a database server" and
   "Overlays"; `tasks.md`, task 1 (the prefix, the jumps, selections as
   arrays) and "Predicates in a URI".
