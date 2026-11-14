@@ -2374,3 +2374,27 @@ with the new runner: the template, `package-docs-mrepo` (7 units),
 READMEs, 157, no problems (the rule caught the new test's page, its
 summary 129 words). Nothing left running.
 
+## 54. base-package-help brought to the template (2026-11-14)
+
+The human: go on with `base-package-help`.
+
+- **`base-package-help`** brought to the template, pinned to
+  `haiccing/package-docs-template@6f78874`.
+- **Its own test, `test/mounted/`**, the pattern of part 53, no mrepo:
+  what it provides (one protocol, `help`); its config value by value
+  (`get` at any URI, `extract` at the mrepo itself, no required argument,
+  no default, no state, no target); its structure (the help layer it
+  brings, atomic); `extract`, from small bundles the test writes into a
+  temporary folder (each README at the URI it documents, the index, the
+  problems; run again, nothing written; a README gone, removed; a README
+  against the rules, counted; a URI other than `/`, refused; no packages,
+  nothing); `get` (the three levels, a section by its title, the root, a
+  URI under `/help`; nothing extracted yet, a section or a URI not there,
+  each said; it writes nothing); the last test failing when an action was
+  not run.
+
+**Validated**: its pre-release: 7 units, 30 tests, 93 asserts, its own
+test 7 tests and 40 asserts, the report written. The `haicc` test with
+the rebuilt bundle, 107 of 107. The READMEs, 165, no problems. Nothing
+left running. Its repository pushed.
+

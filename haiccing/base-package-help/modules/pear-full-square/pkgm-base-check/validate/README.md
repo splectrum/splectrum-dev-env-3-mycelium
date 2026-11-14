@@ -14,9 +14,9 @@ Run in a floating instance, as `/test/mrepo`.
 
 ## `package.test.js`
 
-The package against the structure it is to have: its files, its sets, its
-tests, and a test of its own for what it provides. Run in a floating
-instance, as `/test/package`.
+The package against the structure it is to have: its files, its sets, a
+folder for every test, and a test of its own for what it provides. Run in
+a floating instance, as `/test/package`.
 
 ## `mrepo-in-situ.test.js`
 

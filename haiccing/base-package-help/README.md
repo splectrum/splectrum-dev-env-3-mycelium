@@ -10,7 +10,8 @@ it, so the help can be walked down from the root.
 | | |
 |---|---|
 | [mrepo/](mrepo/) | its part of the structure: the help layer |
-| [test/](test/) | its tests |
+| [test/](test/) | its tests: its protocol as mounted, and the generic ones |
+| [test-reports/](test-reports/) | the report of its last pre-release |
 | [modules/](modules/) | its code, assembled: ours and the third-party code |
 
 ## Commands
