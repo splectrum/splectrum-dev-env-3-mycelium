@@ -57,8 +57,9 @@ is implemented first). In `tasks.md`, in this order:
 
 0. **A Bare app for `haicc`** (task 0), in place of the shell scripts,
    with today's command form exactly: `run.sh`'s 107 checks unchanged
-   are the proof the port is right. Its package's name and repository
-   are put to the human, not answered: ask first.
+   are the proof the port is right. Its package: `haiccing/base-app-haicc`
+   (agreed; the human creates the repository, needed only to push);
+   `base-linux-haicc` stays as the first step on Linux.
 1. **Relative URIs** (task 1). Settled with the human point by point;
    the build is planned there in pieces ("The build"): begin with piece
    A. Nothing of it is built yet.

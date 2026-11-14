@@ -389,10 +389,12 @@ others.
   exactly, `run.sh`'s 107 checks unchanged as the proof that the port is
   right; then relative URIs, changed in one place. Not both at once.
 
-**Proposed** (put to the human, not answered)
+**Agreed by the human** (2026-11-14)
 
 - Its package: `haiccing/base-app-haicc`, a new repository for the human
-  to create ("App: the haicc command, run with Bare: it boots the local
+  to create (not needed until the app is ready to push; check it exists
+  then: `gh api -X GET search/repositories -f q='base-app-haicc in:name
+  org:haiccing'`); its description: ("App: the haicc command, run with Bare: it boots the local
   root and puts commands in the boot mrepo's inbox."). A new type beside
   `base-package-` and `base-component-`.
 - `haiccing/base-linux-haicc` stays, reduced to the first step on Linux:
