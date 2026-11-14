@@ -2422,3 +2422,27 @@ to ensure it comes out right.
 **Validated**: its pre-release: 14 units, 183 tests, 790 asserts, its own
 test 9 tests and 42 asserts, the report written. The READMEs, 173, no
 problems. Nothing left running.
+
+## 56. base-package-boot brought to the template (2026-11-14)
+
+- **`base-package-boot`** brought to the template, pinned to
+  `haiccing/package-docs-template@6f78874`.
+- **Its own test, `test/mounted/`**, no mrepo, no runtime: what it
+  provides; its config value by value (the three actions at one name
+  below the mrepo, a target needed; `deploy` its package required,
+  `redeploy` optional, `teardown` none; no state of its own); its config
+  in effect (the request check: no target, no package, a deeper URI, not
+  activated); `deploy`, each refusal before anything is built (the mrepo
+  itself, not a name, deployed already, data in `main` there, a folder in
+  the way, no package, no store, a package in no source; nothing written,
+  no folder left); `teardown` of a child without a runtime (its folder
+  and its shortcut removed) and its refusals; `redeploy` (torn down first
+  and that committed, then the deploy, from the package it was deployed
+  from by default); the last test failing when an action was not run. Its
+  README says what is not there: a child really built and its runtime
+  started, which the module's own tests do in this package's `modules`
+  test, and the boot component's between running mrepos.
+
+**Validated**: its pre-release: 22 units, 238 tests, 1165 asserts, its
+own test 7 tests and 49 asserts, the report written. The READMEs, 181, no
+problems. Nothing left running.
