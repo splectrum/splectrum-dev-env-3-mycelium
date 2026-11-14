@@ -7,6 +7,27 @@ kept in a local source, `~/haicc-mirror/` since 2026-11-13 (before:
 them, git URLs to local mirrors), so `tools/install.sh` and
 `tools/release.js` run with no network.
 
+## 2026-11-14: `6ebec98`
+
+The prompt ran as written, every step passed. The code not changed here.
+No release created.
+
+| Step | Result |
+|---|---|
+| 1. update | `main` fast-forwarded to `6ebec98` (parts 46 to 64) |
+| 2. `sh tools/install.sh` | exit 0: 0 fetched, 207 kept, 2 linked; Bare there |
+| 3. `tools/bare tools/release.js` | exit 0: the twelve bundles, from `6ebec98`, Bare v1.36.0; every report `current`; `git status` clean |
+| 4. `sh haiccing/base-linux-haicc/test/run.sh`, three times | each exit 0, `# checks = 136/136 pass`, `# ok`; nothing left running |
+| 5. the packages' `/test/full` | all twelve exit 0, `"ok":true`; `release.js --strict`: every report `current`; nothing left running |
+| 6. `haicc-install.sh`, sources, `haicc prereq` | `/usr/local/bin/haicc`, its folder `~/.haicc`; the clone's `sources/` linked; `prereq`: all ok, the app found, Bare 1.36.0 as pinned; no boot mrepo was running |
+
+On step 6, one thing done beyond the prompt: the copy linked last time,
+`~/.haicc/sources/` (the bundles of `381bbae`, no `base-app-haicc`), stood
+first in `sources.list`, ahead of the clone's `sources/`, so its old
+runtime, boot and service bundles could have shadowed the new ones. It was
+unlinked (`haicc sources unlink`); its files are left in place.
+`~/.haicc/work` was not there: nothing to tear down.
+
 ## 2026-11-13: `381bbae`
 
 The prompt ran as written, every step passed, nothing downloaded. Then the
