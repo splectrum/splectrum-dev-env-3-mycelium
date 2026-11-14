@@ -23,34 +23,53 @@ Only its note is committed.
 >    the installer again, `haiccing/base-linux-haicc/haicc-install.sh`;
 >    `git status` must show no change after it (if it does, say so in your
 >    note and do not commit it).
-> 4. **Run the test of the `haicc` command**, from the clone's folder:
+> 4. **Run the test of the `haicc` command**, from the clone's folder,
+>    three times (a race shows one run in a few):
 >    `sh haiccing/base-linux-haicc/test/run.sh`. It works in a temporary
->    folder and ends by itself: the installer, the sources linked, Bare put
->    in place, the boot, the host deployed from `base-component-haicc`, its
->    service started, a node deployed inside it, commands chained through
->    both, the teardowns. One line a check; the last lines say
+>    folder and ends by itself (two to three minutes): the installer, the
+>    sources linked, Bare put in place, the boot, the host deployed from
+>    `base-component-haicc`, its service started, a node deployed inside
+>    it, commands chained through both, nodes created, read and deleted
+>    with `crud`, the teardowns. One line a check (136 of them); the last
+>    lines say
 >    `# checks = <n>/<n> pass` and `# ok`; exit 0 passed, 1 failed. It
 >    leaves nothing running: check with `pgrep -fa "bin/bare"`.
 > 5. **Run the packages' own tests**, each from its bundle, from the clone's
 >    folder, for each of `base-package-runtime`, `base-package-protocol`,
->    `base-package-help`, `base-package-boot`, `base-package-service`, `base-package-haicc`,
->    `base-component-boot`, `base-component-haicc`, `package-docs-mrepo`,
+>    `base-package-help`, `base-package-boot`, `base-package-service`,
+>    `base-package-haicc`, `base-package-crud`, `base-component-boot`,
+>    `base-component-haicc`, `base-app-haicc`, `package-docs-mrepo`,
 >    `package-docs-template`:
 >    `SOURCES=$PWD/sources tools/bare sources/haiccing/<package>.bundle /test/full`
->    (exit 0 passed; the boot component's takes a few minutes).
+>    (exit 0 passed; its last line is the result, `"ok":true`; the boot
+>    component's, the runtime's, the boot package's and the app's take a
+>    few minutes each). Do not run `tools/package-test.js`: it writes the
+>    packages' test reports, which are the cloud session's to commit.
+>    Then `tools/bare tools/release.js --strict`: it says, for each
+>    package, whether the report committed with it is the one of the
+>    bundle you built (`current`); say in your note if one is not.
 > 6. **Install it for the human**, in their home folder:
 >    `sh haiccing/base-linux-haicc/haicc-install.sh` (it puts the scripts in
 >    `~/.haicc` and registers `haicc` in `/usr/local/bin` when that can be
 >    written, else in `~/.local/bin`; it says if that folder is not on the
->    PATH). Then `haicc sources link "$PWD/sources"` and `haicc prereq`.
->    Do not run `haicc boot/deploy`: that is the human's.
+>    PATH). Then `haicc sources link "$PWD/sources"` and `haicc prereq`
+>    (it must end with every line `ok`: Bare put in place, and a source
+>    holding the app, `haiccing/base-app-haicc.bundle`). If an earlier
+>    install left a boot mrepo running (`pgrep -fa "bin/bare"`), say so in
+>    your note and leave it: stopping it is the human's (`haicc
+>    boot/teardown`). Do not run `haicc boot/deploy`: that is the human's.
 > 7. **Tell the human** it is ready: what steps 4 and 5 printed last (or
 >    what failed and how), where `haicc` was registered, and the commands
 >    to try, in this order:
->    `haicc boot/deploy`, `haicc / boot/deploy host base-component-haicc`,
->    `haicc /host service/initialise`, `haicc /host service/start`,
->    `haicc /host help/get /`; and to undo: `haicc / boot/teardown host`,
->    then `haicc boot/teardown`. The boot mrepo's runtime keeps running
+>    `haicc boot/deploy`, `haicc . boot/deploy host base-component-haicc`,
+>    `haicc host service/initialise`, `haicc host service/start`,
+>    `haicc host help/get`, `haicc . crud/create swarms/swarm-1`,
+>    `haicc . crud/read swarms`, `haicc . crud/read .`; and to undo:
+>    `haicc . boot/teardown host`, then `haicc boot/teardown`. A URI has
+>    no leading slash any more: `.` is the root, `host` the position
+>    `host`. A work folder left by an earlier version (`~/.haicc/work`)
+>    is not carried over: `haicc boot/teardown` first, with the `haicc`
+>    that made it, or remove the folder. The boot mrepo's runtime keeps running
 >    after `haicc boot/deploy`; its work folder is `~/.haicc/work`. A
 >    command prints its response record whole, unpacked across lines;
 >    `haicc --raw ...` as it is stored, one line; `haicc --output ...` the

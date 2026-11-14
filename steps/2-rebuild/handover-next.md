@@ -48,7 +48,7 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   and chains commands through both (parts 30 to 45).
 - All twelve bundle packages are brought to the package template and
   pinned, each with a test of its own and a current, passing report
-  (parts 47 to 60). `tools/bare tools/release.js --strict` passes;
+  (parts 47 to 64). `tools/bare tools/release.js --strict` passes;
   `tools/bare tools/code-check.js` and the README checks have no
   problems; the `haicc` test 136 of 136; `base-component-boot`'s `boot`
   test passing.
@@ -58,9 +58,11 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   `internal/command/`.
 - **A request's URI is relative** (part 61): no leading slash, `.` the
   position itself; from outside it is read at `main`, the mrepo's own at
-  its root; the form holds it from the root (`main/host`). `haicc .
+  its root. `haicc .
   boot/deploy host <package>`, `haicc host service/start`, `haicc host
-  help/get . packages`. Inside, reads and writes are still slash-led.
+  help/get . packages`. Inside, a path read or written is accepted
+  relative (`runtime/service.json`) or slash-led; older code is still
+  slash-led and changes over as it is touched.
 - **Inside, a URI is an array of segments** (part 62): in a request's
   form the prefix `main` and the URI as written, `["main", "host"]`;
   the mrepo's own without a prefix, `["."]`. Outside it is one segment,
@@ -72,20 +74,30 @@ Then the validation in `CLAUDE.md` works. To see the whole thing run:
   in `.shortcuts.json`; the `xpath` layer is gone. What is local about a
   deployed child is in the parent's `runtime/deployed/<name>.json`.
 
-**Next: build what is planned** (the human, 2026-11-14: what remains to
-plan depends heavily on having floating mrepo tests, so the planned work
-is implemented first). In `tasks.md`, in this order:
+- The `rest` actions are removed; a race of `haicc boot/deploy` run again
+  while the boot mrepo's runtime runs is fixed (part 64).
+- **Every package and module has its own repository, up to date**
+  (2026-11-14): `haiccing/base-app-haicc` and
+  `pear-full-square/haicc-base-app` were the last two created.
 
-1. **Relative URIs** (task 1): built as far as it goes for now (parts 61
-   to 63). Left: the rest of piece C (selections as arrays in `resolve`
-   and `goto`, deeper positions, the jumps and the prefix), which the
-   human left to come with the `haicc` commands that need them.
-2. **The `crud` protocol** (task 2): built (part 63). XPath across
-   linked mrepos is later (the human).
-3. **The rest actions removed** (task 3): done (part 64).
-4. On towards swarm nodes up and running: the execution's current root,
-   a node's unique URI, a node in its container, a swarm (not planned
-   yet: "The roadmap", item 2). Then "Deployed tests" and "Coverage".
+**Next: a planning round with the human.** The task list (`tasks.md`) is
+built out: tasks 0 to 3 are done (parts 60 to 64). What it still holds
+is what they left, each to come with what needs it:
+
+- of relative URIs (task 1): more than the two segments of a URI
+  (selections as arrays in `resolve` and `goto`, a command at a deeper
+  position, the jumps and the prefix on an answer): the human, "Multi
+  segment will become clear with haicc commands";
+- of `crud` (task 2): XPath across linked mrepos (the human: "we will do
+  xpath for linked repos later"), `update`;
+- "Deployed tests" and "Coverage": after swarm nodes run;
+- "Future additions": the `error-on-empty` flag, predicates, how-tos.
+
+**Then, the human's priority: swarm nodes up and running** ("The
+roadmap", item 2): a command at a deeper position (the execution's
+current root), a node's unique URI, a node in its container, a swarm.
+None of it is planned: it starts with discussion, point by point, what
+settles written into `tasks.md`, built when the human says so.
 
 A task's **Settled** is built as written. Its **Proposed** is confirmed
 with the human first, unless the task says it is ours ("Left to us").
@@ -110,10 +122,12 @@ with the human first, unless the task says it is ours ("Left to us").
 
 **With the human, open**
 
-- Testing by hand on the local machine: the local agent ran `381bbae`
-  (its note, 2026-11-13) and nothing after; its prompt, `prompt-local.md`,
-  predates parts 47 to 59 (`tools/package-test.js`, the reports). Its
-  notes come back in `local-note.md`: fetch and read them when told.
+- Testing by hand on the local machine: the human is asking the local
+  agent to test `main` as of part 64 (2026-11-14); it last ran `381bbae`.
+  Its prompt, `prompt-local.md`, and its background, `handover-local.md`,
+  are current for parts 60 to 64. Its notes come back in
+  `local-note.md`: fetch and read them when told, and act on what they
+  report.
 - No release yet: on the human's word, created by the local agent
   (`handover-local.md`, "Releases").
 - Settled since (2026-11-14): only the link goes into `.shortcuts.json`
@@ -185,6 +199,26 @@ with the human first, unless the task says it is ours ("Left to us").
   that changes means the pre-release of every package carrying it.)
 - **The tools are kept well structured** (`tools/README.md`): they are to
   become packages running on the haicc platform.
+- **Short answers, read literally** (2026-11-14): the human answers in a
+  line ("Yes with default", "Request form one segment per command"). Say
+  the reading back in a few lines with one example, ask only what is
+  still open, one question; record what was said, in its words, in
+  `tasks.md` before building. When a batch is done and the next task has
+  proposals never answered, list them compactly and ask for a go.
+- **A long run in the background, the turn kept open** (2026-11-14): the
+  pre-releases take up to an hour; a turn that ends while they write
+  files is made to commit and push what is half done. Start them in the
+  background and wait in the foreground for the process to end (`timeout
+  590 tail -f --pid=<pid> /dev/null`, again until it has); a foreground
+  `sleep` is refused. Before a long run: `tools/bare tools/release.js`
+  (every bundle current: some tests read the others' bundles), then each
+  changed package's own test from its folder (`bare test/<name>/run.js`):
+  a slip in a test is found in seconds, not after forty minutes.
+- **When a test fails after a change, look at whose mistake it is**: in
+  parts 60 to 64 every failure but one was a test still in the old form;
+  the one that was not (the race of part 64) showed only one run in four:
+  run the `haicc` test several times after anything that touches the
+  request layers.
 - **A file removal by variable is refused here**: `rm -rf "$VAR/..."`
   is blocked by a safety check; make a fresh folder with `mktemp -d`
   instead of clearing one.
